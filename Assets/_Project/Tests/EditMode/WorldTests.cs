@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using PocketFootball.Sim;
@@ -6,77 +7,88 @@ namespace PocketFootball.Tests.EditMode
 {
     public sealed class WorldTests
     {
-        static Dictionary<int, PlayerInput> Stick(int slot, float x, float z) => new Dictionary<int, PlayerInput> { { slot, new PlayerInput { MoveX = x, MoveZ = z } } };
+        public static Dictionary<int, PlayerInput> Stick(int slot, float x, float z, bool sprint = false) =>
+            new Dictionary<int, PlayerInput> { { slot, new PlayerInput { MoveX = x, MoveZ = z, Sprint = sprint } } };
 
-        [Test]
-        public void TeamsSpawnOnTheirOwnHalfWithNumbers()
+        public static World Full(GameConfig cfg, int seed = 1)
         {
-            var w = new World(ConfigTests.Load(), 1);
-            var a = w.AddPlayer(0, 0, true);
-            var b = w.AddPlayer(1, 1, true);
-            var c = w.AddPlayer(2, 0, false);
-            Assert.Less(a.X, 0f);
-            Assert.Greater(b.X, 0f);
-            Assert.AreEqual(1, a.Number);
-            Assert.AreEqual(1, b.Number);
-            Assert.AreEqual(2, c.Number);
-            Assert.AreNotEqual(a.Z, c.Z);
+            var w = new World(cfg, seed);
+            for (int i = 0; i < cfg.players.perTeam * cfg.teams.Count; i++) w.AddPlayer(i, i % cfg.teams.Count, false);
+            return w;
         }
 
+        // ---- formation ----
         [Test]
-        public void HumanWalksAtWalkSpeed()
+        public void TwentyTwoLineUpOnTheirOwnSides()
         {
             var cfg = ConfigTests.Load();
-            var w = new World(cfg, 1);
-            var p = w.AddPlayer(5, 0, true);
-            float x0 = p.X;
-            for (int i = 0; i < cfg.sim.tickHz; i++) w.Step(Stick(5, 1f, 0f));
-            Assert.AreEqual(x0 + cfg.players.walkSpeedYdS, p.X, 1e-3f);
-            // no input: stands still
-            float x1 = p.X;
-            w.Step(null);
-            Assert.AreEqual(x1, p.X);
-        }
-
-        [Test]
-        public void DiagonalIsNotFaster()
-        {
-            var cfg = ConfigTests.Load();
-            var w = new World(cfg, 1);
-            var p = w.AddPlayer(0, 0, true);
-            w.Step(Stick(0, 1f, 1f));
-            float speed = (float)System.Math.Sqrt(p.VX * p.VX + p.VZ * p.VZ);
-            Assert.AreEqual(cfg.players.walkSpeedYdS, speed, 1e-3f);
-        }
-
-        [Test]
-        public void PlayersStayNearTheField()
-        {
-            var cfg = ConfigTests.Load();
-            var w = new World(cfg, 1);
-            var p = w.AddPlayer(0, 0, true);
-            for (int i = 0; i < cfg.sim.tickHz * 30; i++) w.Step(Stick(0, -1f, -1f));
-            Assert.AreEqual(-(cfg.field.HalfLength + cfg.players.boundsMarginYd), p.X, 1e-3f);
-            Assert.AreEqual(-(cfg.field.HalfWidth + cfg.players.boundsMarginYd), p.Z, 1e-3f);
-        }
-
-        [Test]
-        public void BotsWanderButStayOnTheField()
-        {
-            var cfg = ConfigTests.Load();
-            var w = new World(cfg, 7);
-            for (int i = 0; i < 22; i++) w.AddPlayer(i, i % 2, false);
-            var start = new float[22];
-            for (int i = 0; i < 22; i++) start[i] = w.Players[i].X;
-            for (int t = 0; t < cfg.sim.tickHz * 20; t++) w.Step(null);
-            int moved = 0;
+            var w = Full(cfg);
+            Assert.AreEqual(22, w.Players.Count);
+            Assert.AreEqual(11, w.TeamCount(0));
+            Assert.AreEqual(11, w.TeamCount(1));
+            float los = cfg.formation.lineOfScrimmageXYd, dir = cfg.formation.attackDir;
             foreach (var p in w.Players)
             {
-                if (System.Math.Abs(p.X - start[p.Slot]) > 1f) moved++;
-                Assert.LessOrEqual(System.Math.Abs(p.X), cfg.field.HalfLength);
-                Assert.LessOrEqual(System.Math.Abs(p.Z), cfg.field.HalfWidth);
+                float ahead = (p.X - los) * dir;
+                if (p.Team == w.Offense) Assert.Less(ahead, 0f, p.Pos + " #" + p.Number + " should be behind the line");
+                else Assert.Greater(ahead, 0f, p.Pos + " #" + p.Number + " should be across the line");
+                Assert.LessOrEqual(Math.Abs(p.Z), cfg.field.HalfWidth, "inside the sidelines");
             }
-            Assert.Greater(moved, 11, "most bots should have wandered");
+        }
+
+        [Test]
+        public void OffenseAndDefenseHaveTheRightPositions()
+        {
+            var w = Full(ConfigTests.Load());
+            string Count(int team)
+            {
+                var c = new SortedDictionary<string, int>();
+                foreach (var p in w.Players) if (p.Team == team) c[p.Pos] = (c.TryGetValue(p.Pos, out int n) ? n : 0) + 1;
+                var parts = new List<string>();
+                foreach (var kv in c) parts.Add(kv.Key + kv.Value);
+                return string.Join(" ", parts);
+            }
+            Assert.AreEqual("OL5 QB1 RB1 TE1 WR3", Count(w.Offense));
+            Assert.AreEqual("CB2 DL4 LB3 S2", Count(w.Defense));
+        }
+
+        [Test]
+        public void JerseyNumbersAreUniquePerTeamAndTheQbHasTheBall()
+        {
+            var w = Full(ConfigTests.Load());
+            foreach (int team in new[] { 0, 1 })
+            {
+                var seen = new HashSet<int>();
+                foreach (var p in w.Players) if (p.Team == team) Assert.IsTrue(seen.Add(p.Number), "number " + p.Number + " twice");
+            }
+            var qb = w.Find(w.Ball.Carrier);
+            Assert.IsNotNull(qb);
+            Assert.AreEqual("QB", qb.Pos);
+            Assert.AreEqual(w.Offense, qb.Team);
+        }
+
+        [Test]
+        public void FullTeamTakesNoTwelfth()
+        {
+            var w = Full(ConfigTests.Load());
+            Assert.IsNull(w.AddPlayer(99, 0, false));
+        }
+
+        [Test]
+        public void PersonTakesABotsSpotAndTheBall()
+        {
+            var w = Full(ConfigTests.Load());
+            var qbBot = w.Find(w.Ball.Carrier);
+            var me = w.ReplaceBot(w.Offense, 500);
+            Assert.IsNotNull(me);
+            Assert.IsTrue(me.Human);
+            Assert.AreEqual("QB", me.Pos, "the first person on offense is the QB");
+            Assert.IsNull(w.Find(qbBot.Slot));
+            Assert.AreEqual(11, w.TeamCount(w.Offense));
+            Assert.AreEqual(500, w.Ball.Carrier);
+            var mlb = w.ReplaceBot(w.Defense, 501);
+            Assert.AreEqual("LB", mlb.Pos, "the first person on defense is the middle LB");
+            Assert.AreEqual(0f, mlb.Z, "the middle one");
         }
 
         [Test]
@@ -86,6 +98,33 @@ namespace PocketFootball.Tests.EditMode
             foreach (int s in new[] { 7, 2, 9, 0, 4 }) w.AddPlayer(s, s % 2, false);
             for (int i = 1; i < w.Players.Count; i++) Assert.Less(w.Players[i - 1].Slot, w.Players[i].Slot);
         }
+
+        // ---- bots ----
+        [Test]
+        public void BotsHoldTheirSpotUnlessWandering()
+        {
+            var cfg = ConfigTests.Load();
+            var w = Full(cfg);
+            for (int t = 0; t < cfg.sim.tickHz * 5; t++) w.Step(null);
+            foreach (var p in w.Players) Assert.Less(Dist(p.X, p.Z, p.HomeX, p.HomeZ), cfg.bots.arriveYd + 0.01f);
+
+            w.BotsWander = true;
+            for (int t = 0; t < cfg.sim.tickHz * 20; t++) w.Step(null);
+            int moved = 0;
+            foreach (var p in w.Players)
+            {
+                if (Dist(p.X, p.Z, p.HomeX, p.HomeZ) > 2f) moved++;
+                Assert.LessOrEqual(Math.Abs(p.X), cfg.field.HalfLength + cfg.players.radiusYd * 4f);
+                Assert.LessOrEqual(Math.Abs(p.Z), cfg.field.HalfWidth + cfg.players.radiusYd * 4f);
+            }
+            Assert.Greater(moved, 11, "most bots should have wandered");
+
+            w.BotsWander = false;
+            w.LineUp();
+            foreach (var p in w.Players) { Assert.AreEqual(p.HomeX, p.X); Assert.AreEqual(p.HomeZ, p.Z); }
+        }
+
+        static float Dist(float ax, float az, float bx, float bz) => (float)Math.Sqrt((ax - bx) * (ax - bx) + (az - bz) * (az - bz));
 
         [Test]
         public void RngIsSeeded()

@@ -11,6 +11,8 @@ namespace PocketFootball.Sim
         public CameraConfig camera = new CameraConfig();
         public PlayersConfig players = new PlayersConfig();
         public BotsConfig bots = new BotsConfig();
+        public FormationConfig formation = new FormationConfig();
+        public BallConfig ball = new BallConfig();
         public BaselineConfig baseline = new BaselineConfig();
         public List<TeamConfig> teams = new List<TeamConfig>();
         public NetConfig net = new NetConfig();
@@ -26,17 +28,46 @@ namespace PocketFootball.Sim
         public int tickHz, hashEveryTicks, maxTicksPerFrame;
     }
 
+    // The mover: jog / sprint speeds, how fast you speed up and slow down, sprint stamina (1 = full), the bump circle.
     public sealed class PlayersConfig
     {
-        public float walkSpeedYdS, boundsMarginYd, spawnXYd, spawnSpacingYd, spawnRowYd;
+        public float jogSpeedYdS, sprintSpeedYdS, accelYdS2, decelYdS2;
+        public float staminaDrainPerS, staminaRegenPerS, staminaRestart;
+        public float radiusYd, bumpPushFrac, boundsMarginYd;
         public int perTeam;
     }
 
-    // Bot v0: wanders to a random nearby spot, picks a new one every thinkEveryTicks (+ up to thinkJitterTicks).
+    // Bot v0: stands on its formation spot (walks back when bumped off it); with wander on (the baseline, B key)
+    // it picks a random nearby spot every thinkEveryTicks (+ up to thinkJitterTicks) and walks there.
     public sealed class BotsConfig
     {
         public int thinkEveryTicks, thinkJitterTicks;
         public float wanderYd, speedFrac, arriveYd;
+        public bool wander;
+    }
+
+    // One spot in a formation: back = yards from the line of scrimmage onto the team's own side, z = across.
+    public sealed class SpotConfig
+    {
+        public string pos;
+        public float back, z;
+        public int number;
+    }
+
+    // The order of each list is the order humans fill spots: offense QB first, defense middle LB first.
+    public sealed class FormationConfig
+    {
+        public float lineOfScrimmageXYd, attackDir;
+        public int offenseTeam;
+        public List<SpotConfig> offense = new List<SpotConfig>();
+        public List<SpotConfig> defense = new List<SpotConfig>();
+    }
+
+    // The ball flies in 3D: Y is height in yards. A pass lands at catchHeightYd.
+    public sealed class BallConfig
+    {
+        public float gravityYdS2, carryHeightYd, catchHeightYd, bulletSpeedYdS, lobApexYd;
+        public float bounce, settleVyYdS, rollDecelYdS2, restSpeedYdS;
     }
 
     // The safety net: these seeded bot games must replay with the same hashes (Tests/Fixtures/baseline).
@@ -60,7 +91,7 @@ namespace PocketFootball.Sim
 
     public sealed class ViewConfig
     {
-        public float playerHeightM, playerRadiusM, findMeS, plateFontPx, joinPanelQrPx;
+        public float playerHeightM, playerRadiusM, findMeS, plateFontPx, joinPanelQrPx, ballLengthM, ballWidthM, meSendHz;
     }
 
     // The field runs along X (goal line to goal line), across Z (sideline to sideline); the centre is (0, 0).

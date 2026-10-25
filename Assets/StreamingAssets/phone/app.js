@@ -48,6 +48,7 @@
       else if (msg.t === 'lobby') { teams = msg.teams || teams; drawTeams(); }
       else if (msg.t === 'picked') onPicked(msg);
       else if (msg.t === 'ui') onUi(msg);
+      else if (msg.t === 'me') onMe(msg);
       else if (msg.t === 'err') onErr(msg.m);
     };
     ws.onclose = function () {
@@ -88,8 +89,19 @@
     document.documentElement.style.setProperty('--team', msg.color);
     document.documentElement.style.setProperty('--team-2', msg.color2);
     $('meName').textContent = msg.name + ' · ' + msg.teamName;
-    $('meNum').textContent = '#' + msg.number;
+    $('meNum').textContent = msg.pos + ' #' + msg.number;
     drawTeams();
+  }
+
+  // stamina bar and the one-line status: out of bounds beats tired beats the normal hint
+  function onMe(msg) {
+    $('stam').style.width = Math.max(0, Math.min(100, msg.st)) + '%';
+    $('stam').parentNode.classList.toggle('tired', !!msg.tired);
+    var line = $('line');
+    line.classList.toggle('warn', !!(msg.oob || msg.tired));
+    line.textContent = msg.oob ? 'Out of bounds! Get back on the field.'
+      : msg.tired ? 'Out of breath! Sprint comes back soon.'
+      : 'Run with the stick. Hold SPRINT to go faster.';
   }
 
   function onUi(msg) {

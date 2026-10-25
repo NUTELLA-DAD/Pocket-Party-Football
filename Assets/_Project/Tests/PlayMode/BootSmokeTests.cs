@@ -28,8 +28,8 @@ namespace PocketFootball.Tests.PlayMode
             var cam = Camera.main;
             Assert.IsNotNull(cam, "no main camera");
             Assert.Less(cam.transform.position.z, 0f, "the camera should stand on the near sideline");
-            var mid = cam.WorldToViewportPoint(Vector3.zero);
-            Assert.That(mid.x, Is.InRange(0.4f, 0.6f), "midfield should be centred");
+            var mid = cam.WorldToViewportPoint(new Vector3(boot.Host.World.LineOfScrimmageX * boot.Config.field.yardM, 0f, 0f));
+            Assert.That(mid.x, Is.InRange(0.4f, 0.6f), "the line of scrimmage should be centred");
             Assert.That(mid.y, Is.InRange(0.1f, 0.9f));
             Assert.Greater(mid.z, 0f);
         }

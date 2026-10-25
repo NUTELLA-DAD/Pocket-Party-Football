@@ -119,7 +119,8 @@ namespace PocketFootball.Tests.PlayMode
             Assert.IsNotNull(player, "no capsule for the phone");
             Assert.IsTrue(player.Human);
             Assert.AreEqual(1, player.Team);
-            Assert.AreEqual(1, host.Players.Count);
+            Assert.AreEqual(22, host.World.Players.Count, "the person took a bot's spot: still 22");
+            Assert.AreEqual(11, host.World.TeamCount(1));
 
             // walk right (screen right = +X along the field) for about a second
             float x0 = player.X, z0 = player.Z;
@@ -153,7 +154,7 @@ namespace PocketFootball.Tests.PlayMode
             Assert.AreEqual((int)picked["number"], (int)repicked["number"]);
             Assert.AreEqual("walk", (string)ui["layout"]);
             Assert.IsTrue(host.Roster[slot].Connected);
-            Assert.AreEqual(1, host.Players.Count, "still one capsule, not two");
+            Assert.AreEqual(22, host.World.Players.Count, "still 22 players, not 23");
             again.Dispose();
         }
 

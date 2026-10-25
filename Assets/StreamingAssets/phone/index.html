@@ -25,11 +25,13 @@
 
   <section id="playView" class="view hidden">
     <header class="me" id="me"><span id="meName">YOU</span><span id="meNum" class="num">#1</span></header>
-    <p class="line" id="line" aria-live="polite">Walk with the stick. Find your name on the TV.</p>
+    <p class="line" id="line" aria-live="polite">Run with the stick. Hold SPRINT to go faster.</p>
+    <div class="stam" aria-label="Stamina"><i id="stam"></i></div>
     <div class="pad">
       <div class="stick" id="stick" aria-label="Movement stick: drag to walk"><div class="knob" id="knob"></div></div>
       <div class="btns">
-        <button class="btn main" id="findBtn" data-b="find" aria-label="Find me: flash my name on the TV">FIND ME<span class="k">Your name gets big on the TV</span></button>
+        <button class="btn main" id="sprintBtn" data-b="sprint" aria-label="Sprint: hold to run faster (uses stamina)">SPRINT<span class="k">Hold. Uses stamina</span></button>
+        <button class="btn" id="findBtn" data-b="find" aria-label="Find me: flash my name on the TV">FIND ME<span class="k">Your name gets big on the TV</span></button>
         <button class="btn small" id="teamBtn" aria-label="Change team">Change team</button>
       </div>
     </div>

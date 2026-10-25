@@ -46,6 +46,10 @@ button:focus-visible { outline: 3px solid var(--warn); outline-offset: 2px; }
 }
 .num { font-size: 30px; }
 .line { font-size: 16px; font-weight: 800; min-height: 1.4em; margin: 0; }
+.stam { height: 12px; border-radius: 999px; background: var(--ink); overflow: hidden; }
+.stam i { display: block; height: 100%; width: 100%; background: #5fd38a; }
+.stam.tired i { background: var(--warn); }
+.line.warn { color: var(--warn); }
 .pad { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: end; }
 .stick {
   position: relative; aspect-ratio: 1; max-width: 240px; width: 100%; border-radius: 50%;

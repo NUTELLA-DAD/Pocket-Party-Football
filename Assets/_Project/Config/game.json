@@ -33,19 +33,67 @@
     "sideline": -1
   },
   "players": {
-    "walkSpeedYdS": 6,
+    "jogSpeedYdS": 6,
+    "sprintSpeedYdS": 8.5,
+    "accelYdS2": 18,
+    "decelYdS2": 26,
+    "staminaDrainPerS": 0.25,
+    "staminaRegenPerS": 0.2,
+    "staminaRestart": 0.3,
+    "radiusYd": 0.5,
+    "bumpPushFrac": 0.5,
     "boundsMarginYd": 4,
-    "spawnXYd": 8,
-    "spawnSpacingYd": 4,
-    "perTeam": 11,
-    "spawnRowYd": 3
+    "perTeam": 11
   },
   "bots": {
     "thinkEveryTicks": 45,
     "thinkJitterTicks": 30,
     "wanderYd": 12,
     "speedFrac": 0.5,
-    "arriveYd": 1
+    "arriveYd": 1,
+    "wander": false
+  },
+  "formation": {
+    "lineOfScrimmageXYd": -15,
+    "offenseTeam": 0,
+    "attackDir": 1,
+    "offense": [
+      { "pos": "QB", "back": 5, "z": 0, "number": 9 },
+      { "pos": "RB", "back": 7.5, "z": 0, "number": 21 },
+      { "pos": "WR", "back": 1, "z": -20, "number": 11 },
+      { "pos": "WR", "back": 1, "z": 20, "number": 17 },
+      { "pos": "WR", "back": 1.5, "z": 13, "number": 19 },
+      { "pos": "TE", "back": 1, "z": -4.5, "number": 87 },
+      { "pos": "OL", "back": 1, "z": 0, "number": 64 },
+      { "pos": "OL", "back": 1, "z": -1.5, "number": 68 },
+      { "pos": "OL", "back": 1, "z": 1.5, "number": 72 },
+      { "pos": "OL", "back": 1, "z": -3, "number": 74 },
+      { "pos": "OL", "back": 1, "z": 3, "number": 76 }
+    ],
+    "defense": [
+      { "pos": "LB", "back": 5, "z": 0, "number": 54 },
+      { "pos": "CB", "back": 6, "z": -19, "number": 24 },
+      { "pos": "CB", "back": 6, "z": 19, "number": 26 },
+      { "pos": "S", "back": 13, "z": -9, "number": 31 },
+      { "pos": "S", "back": 13, "z": 9, "number": 33 },
+      { "pos": "LB", "back": 5, "z": -4.5, "number": 50 },
+      { "pos": "LB", "back": 5, "z": 4.5, "number": 58 },
+      { "pos": "DL", "back": 1, "z": -1, "number": 90 },
+      { "pos": "DL", "back": 1, "z": 1, "number": 93 },
+      { "pos": "DL", "back": 1, "z": -3.5, "number": 97 },
+      { "pos": "DL", "back": 1, "z": 3.5, "number": 99 }
+    ]
+  },
+  "ball": {
+    "gravityYdS2": 10.72,
+    "carryHeightYd": 1.2,
+    "catchHeightYd": 1.2,
+    "bulletSpeedYdS": 22,
+    "lobApexYd": 7,
+    "bounce": 0.35,
+    "settleVyYdS": 1.5,
+    "rollDecelYdS2": 8,
+    "restSpeedYdS": 0.3
   },
   "baseline": {
     "seconds": 60,
@@ -84,7 +132,10 @@
     "playerRadiusM": 0.45,
     "findMeS": 2,
     "plateFontPx": 22,
-    "joinPanelQrPx": 260
+    "joinPanelQrPx": 260,
+    "ballLengthM": 0.8,
+    "ballWidthM": 0.5,
+    "meSendHz": 5
   },
   "features": {
     "fieldStripes": true

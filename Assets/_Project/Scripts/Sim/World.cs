@@ -13,9 +13,15 @@ namespace PocketFootball.Sim
 
     public sealed class Player
     {
-        public int Slot, Team, Number;
+        public int Slot, Team, Spot, Number;
+        public string Pos = "";
         public bool Human;
         public float X, Z, VX, VZ;           // yards, yards per second
+        public float HomeX, HomeZ;           // the formation spot
+        public float Stamina = 1f;           // 1 = full
+        public bool Tired;                   // emptied the tank: no sprint until staminaRestart
+        public bool Sprinting;
+        public bool OutOfBounds;
         // bot v0
         public float GoalX, GoalZ;
         public int NextThinkTick;
@@ -28,15 +34,23 @@ namespace PocketFootball.Sim
         public readonly GameConfig Cfg;
         public readonly Rng Rng;
         public readonly List<Player> Players = new List<Player>();
+        public readonly Ball Ball = new Ball();
         public int Tick;
+        public int Offense;                  // the team with the ball
+        public float LineOfScrimmageX;
+        public bool BotsWander;
 
         public World(GameConfig cfg, int seed)
         {
             Cfg = cfg;
             Rng = new Rng(seed);
+            Offense = cfg.formation.offenseTeam;
+            LineOfScrimmageX = cfg.formation.lineOfScrimmageXYd;
+            BotsWander = cfg.bots.wander;
         }
 
         public float Dt => 1f / Cfg.sim.tickHz;
+        public int Defense => Offense == 0 ? 1 : 0;
 
         public Player Find(int slot)
         {
@@ -51,10 +65,16 @@ namespace PocketFootball.Sim
             return n;
         }
 
-        // Adds a player (or moves an existing one to a new team) at the team's next spawn spot.
-        public Player AddPlayer(int slot, int team, bool human)
+        public List<SpotConfig> Spots(int team) => team == Offense ? Cfg.formation.offense : Cfg.formation.defense;
+
+        // Adds a player on the team's first free formation spot (spot >= 0: that one). Null when the team is full.
+        // A player already in the world on another team moves over.
+        public Player AddPlayer(int slot, int team, bool human, int spot = -1)
         {
             var p = Find(slot);
+            if (p != null && p.Team == team) { p.Human = human; return p; }
+            if (spot < 0) spot = FreeSpot(team);
+            if (spot < 0) return null;
             if (p == null)
             {
                 p = new Player { Slot = slot };
@@ -62,69 +82,93 @@ namespace PocketFootball.Sim
                 while (at < Players.Count && Players[at].Slot < slot) at++;
                 Players.Insert(at, p);
             }
-            else if (p.Team == team) { p.Human = human; return p; }
             p.Human = human;
             p.Team = team;
-            p.Number = NextNumber(team, p);
-            Spawn(p);
+            p.Spot = spot;
+            Formation.Place(this, p);
+            p.X = p.HomeX; p.Z = p.HomeZ;
+            p.VX = p.VZ = 0;
+            p.GoalX = p.X; p.GoalZ = p.Z;
+            p.NextThinkTick = Tick;
+            if (Ball.State == BallState.Held && Ball.Carrier < 0 && team == Offense && spot == 0) Ball.GiveTo(p, Cfg.ball);
+            return p;
+        }
+
+        int FreeSpot(int team)
+        {
+            int n = Spots(team).Count;
+            for (int s = 0; s < n; s++)
+            {
+                bool taken = false;
+                foreach (var q in Players) if (q.Team == team && q.Spot == s) { taken = true; break; }
+                if (!taken) return s;
+            }
+            return -1;
+        }
+
+        // A person takes a bot's place on a team: the bot with the lowest spot leaves, the person stands where it stood.
+        // Null when the team has no bots left.
+        public Player ReplaceBot(int team, int humanSlot)
+        {
+            Player bot = null;
+            foreach (var q in Players) if (q.Team == team && !q.Human && (bot == null || q.Spot < bot.Spot)) bot = q;
+            if (bot == null) return null;
+            float x = bot.X, z = bot.Z;
+            bool hadBall = Ball.Carrier == bot.Slot;
+            RemovePlayer(bot.Slot);
+            var old = Find(humanSlot);
+            if (old != null) RemovePlayer(humanSlot);
+            var p = AddPlayer(humanSlot, team, true, bot.Spot);
+            p.X = x; p.Z = z;
+            if (hadBall) Ball.GiveTo(p, Cfg.ball);
             return p;
         }
 
         public void RemovePlayer(int slot)
         {
             var p = Find(slot);
-            if (p != null) Players.Remove(p);
+            if (p == null) return;
+            Players.Remove(p);
+            if (Ball.Carrier == slot) Ball.Drop();
         }
 
-        int NextNumber(int team, Player self)
+        // Everyone back to their formation spot, the ball to the QB (spot 0 on offense).
+        public void LineUp()
         {
-            int n = 1;
-            bool taken = true;
-            while (taken)
+            foreach (var p in Players)
             {
-                taken = false;
-                foreach (var q in Players) if (q != self && q.Team == team && q.Number == n) { taken = true; n++; break; }
+                Formation.Place(this, p);
+                p.X = p.HomeX; p.Z = p.HomeZ; p.VX = p.VZ = 0;
+                p.GoalX = p.X; p.GoalZ = p.Z; p.NextThinkTick = Tick;
             }
-            return n;
+            Ball.Reset();
+            foreach (var p in Players) if (p.Team == Offense && p.Spot == 0) Ball.GiveTo(p, Cfg.ball);
         }
 
-        // Spawn spots: each team in a column on its own half, spread across the field.
-        void Spawn(Player p)
+        // Throws from the carrier to a spot on the field: bullet (flat and fast) or lob (high, apex lobApexYd).
+        public bool Throw(float targetX, float targetZ, bool lob)
         {
-            var c = Cfg.players;
-            int index = p.Number - 1;
-            int row = index / c.perTeam, col = index % c.perTeam;
-            float side = p.Team == 0 ? -1f : 1f;
-            p.X = side * (c.spawnXYd + row * c.spawnRowYd);
-            p.Z = (col - (c.perTeam - 1) * 0.5f) * c.spawnSpacingYd;
-            p.VX = p.VZ = 0;
-            p.GoalX = p.X; p.GoalZ = p.Z;
-            p.NextThinkTick = Tick;
+            if (Ball.State != BallState.Held || Ball.Carrier < 0) return false;
+            Ball.Launch(targetX, targetZ, lob, Cfg.ball);
+            return true;
         }
 
         // inputs: by slot, for human players. Bots think for themselves.
         public void Step(IReadOnlyDictionary<int, PlayerInput> inputs)
         {
-            var c = Cfg.players;
             float dt = Dt;
-            float maxX = Cfg.field.HalfLength + c.boundsMarginYd, maxZ = Cfg.field.HalfWidth + c.boundsMarginYd;
             foreach (var p in Players)
             {
                 PlayerInput input = default;
                 if (p.Human) { if (inputs != null) inputs.TryGetValue(p.Slot, out input); }
                 else input = Bots.Think(this, p);
-                float mx = input.MoveX, mz = input.MoveZ;
-                float m = (float)Math.Sqrt(mx * mx + mz * mz);
-                if (m > 1f) { mx /= m; mz /= m; }
-                p.VX = mx * c.walkSpeedYdS;
-                p.VZ = mz * c.walkSpeedYdS;
-                p.X = Clamp(p.X + p.VX * dt, -maxX, maxX);
-                p.Z = Clamp(p.Z + p.VZ * dt, -maxZ, maxZ);
+                Mover.Move(this, p, input, dt);
             }
+            Mover.Bump(this);
+            Mover.Bounds(this);
+            Ball.Step(this, dt);
             Tick++;
         }
-
-        static float Clamp(float v, float lo, float hi) => v < lo ? lo : v > hi ? hi : v;
 
         // FNV-1a over everything that matters. Same inputs, same hash, every tick.
         public ulong Hash()
@@ -137,17 +181,20 @@ namespace PocketFootball.Sim
                     for (int i = 0; i < 4; i++) { h ^= (byte)(v >> (8 * i)); h *= 1099511628211UL; }   // hygiene:allow (4 bytes; FNV prime)
                 }
             }
+            void MixF(float f) => Mix(BitConverter.SingleToInt32Bits(f));
             Mix(Tick);
             Mix((int)Rng.State);
+            Mix(Offense);
             foreach (var p in Players)
             {
-                Mix(p.Slot); Mix(p.Team); Mix(p.Number); Mix(p.Human ? 1 : 0);
-                Mix(Bits(p.X)); Mix(Bits(p.Z)); Mix(Bits(p.VX)); Mix(Bits(p.VZ));
-                Mix(Bits(p.GoalX)); Mix(Bits(p.GoalZ)); Mix(p.NextThinkTick);
+                Mix(p.Slot); Mix(p.Team); Mix(p.Spot); Mix(p.Number); Mix(p.Human ? 1 : 0);
+                MixF(p.X); MixF(p.Z); MixF(p.VX); MixF(p.VZ); MixF(p.Stamina);
+                Mix(p.Tired ? 1 : 0); Mix(p.OutOfBounds ? 1 : 0);
+                MixF(p.GoalX); MixF(p.GoalZ); Mix(p.NextThinkTick);
             }
+            Mix((int)Ball.State); Mix(Ball.Carrier);
+            MixF(Ball.X); MixF(Ball.Y); MixF(Ball.Z); MixF(Ball.VX); MixF(Ball.VY); MixF(Ball.VZ);
             return h;
         }
-
-        static int Bits(float f) => BitConverter.SingleToInt32Bits(f);
     }
 }
