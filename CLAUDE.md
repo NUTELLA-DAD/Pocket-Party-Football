@@ -2,7 +2,7 @@
 
 A couch football party game in Unity: one TV runs the game, up to 22 phones join by QR code and act as controllers. 11 players per team (Chiefs vs Roughriders), bots fill every spot no human took. Side-on camera, Wind Waker-style toon look.
 
-Read first: `docs/PLAN.md` (the design), then `docs/BUILD_BRIEF.md` (the M0/M1 jobs, in order). The phone UI target is `docs/mockup/controller.html`.
+Read first: `docs/PLAN.md` (the design), then `docs/BUILD_BRIEF.md` (the M0/M1 jobs, in order). The phone UI target is `docs/mockup/controller.html`. The visual target is `docs/art/ART_DIRECTION.md` and the concept pictures next to it (camera and HUD from `concepts/04-in-game-camera.png`).
 
 This game reuses the design of the Airship Crew Unity remake: clone https://github.com/NUTELLA-DAD/QR-PHONE-GAME (public) and read `UNITY.md` (sections 4 and 5: architecture, phone server, protocol, gates) and `LESSONS.md`. Bring the designs and lessons, not the old JavaScript code.
 

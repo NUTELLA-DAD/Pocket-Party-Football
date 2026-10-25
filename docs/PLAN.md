@@ -85,7 +85,7 @@ In v1: kickoffs (bot kicker, humans return), punts, field goals, extra points, T
 
 ## Toon look
 
-URP with a hand-written toon shader: two flat light bands + soft rim, saturated team colours, thin outlines on players only. Players about 3 heads tall, big helmets and numbers, stepped toon animations. Stadium: striped painted grass, chunky posts, card crowd that waves, puffy clouds, gradient sky. Effects stepped at 8 fps. Three concept looks for Kenny to pick before real art; grey capsules until then.
+URP with a hand-written toon shader: two flat light bands + soft rim, saturated team colours, thin outlines on players only. Players about 3 heads tall, big helmets and numbers, stepped toon animations. Stadium: striped painted grass, chunky posts, card crowd that waves, puffy clouds, gradient sky. Effects stepped at 8 fps. **Direction chosen:** Kenny's concept art in `docs/art/` (see `docs/art/ART_DIRECTION.md`) is the target look; it overrides the details above where they differ (for example the higher camera and the scoreboard bar). Grey capsules until M4.
 
 ## Architecture
 
@@ -118,7 +118,7 @@ Safety net: three seeded 22-bot games must replay identically after every change
 | M1 Ugly playable slice | ~1 week | 22 capsules, bots fill spots, secret call with 2 plays a side, hike/throw/run/tackle, downs + scoreboard → **Playtest 1** |
 | M2 Playbook and controls | ~1 week | All 14 plays, every position's buttons, juke/spin/swat/pick, smarter bots |
 | M3 A full game | ~1 week | Kicks, clock, quarters, halftime, instant replay, rejoin + bot cover → **Playtest 2** |
-| M4 Toon art pass | 1-2 weeks | 3 concept looks, toon shader, players, teams, stadium, crowd, effects |
+| M4 Toon art pass | 1-2 weeks | Build the look in docs/art/ART_DIRECTION.md: toon shader, players, teams, stadium, crowd, effects |
 | M5 Party polish | ~1 week | Sound, celebrations, gamepads, audibles, hot routes, post-game stats |
 
 ## Open decisions (recommended answers in use until Kenny says otherwise)
