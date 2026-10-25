@@ -30,7 +30,7 @@ Lessons (LESSONS.md): a rough playable in days then real people; the core fantas
 
 - 11 on the field per team; up to 22 phones. Chiefs red/gold/white, Roughriders green/white/black.
 - Offense: QB 1, RB 1, WR 2, TE 1, OL 5. Defense: DL 4, LB 3, CB 2, S 2. Kicker/punter are bots; the play caller gets a kicking meter.
-- Two-way players when fewer than 22 humans: one offense spot + one defense spot each (recommended, awaiting Kenny's yes).
+- Two-way players when fewer than 22 humans: one offense spot + one defense spot each (confirmed).
 - A human idle 5 s during a live play gets bot help until they move (robot icon on the plate).
 - Own helmet marks, never official logos.
 
@@ -121,9 +121,10 @@ Safety net: three seeded 22-bot games must replay identically after every change
 | M4 Toon art pass | 1-2 weeks | Build the look in docs/art/ART_DIRECTION.md: toon shader, players, teams, stadium, crowd, effects |
 | M5 Party polish | ~1 week | Sound, celebrations, gamepads, audibles, hot routes, post-game stats |
 
-## Open decisions (recommended answers in use until Kenny says otherwise)
+## Decisions (confirmed by Kenny, 2026-10-25)
 
-- American rules for both teams: recommended yes.
-- Two-way players: recommended yes.
-- Play callers QB / middle LB with suggestions: recommended yes.
-- Downloads: CC0 Quaternius characters (M4) and the MIT QR encoder `QrCode.cs` (M0): ask Kenny before downloading.
+- American rules for both teams (11 players, 4 downs, 100 yards).
+- Two-way players when fewer than 22 humans: one offense spot + one defense spot each.
+- Play callers: the QB on offense and the middle LB on defense, with teammates suggesting.
+- Downloads OK: the MIT QR encoder (M0) and CC0 Quaternius character art (M4).
+- Art direction: Kenny's concept art in `docs/art/`, real logos allowed for private play.
