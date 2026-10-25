@@ -58,3 +58,8 @@ Phones on the same Wi-Fi, TV about 2.5 m away, nobody coached.
 - [ ] Ask: play again next week? The one thing to change?
 
 Everything goes into `docs/PLAYTEST1.md`, which becomes the M2 job list.
+
+## Status
+
+- 2026-10-25 **M0-a done.** Unity 6000.3.26f1 was already installed (from Airship Crew); pinned in `tools/pinned-unity.txt`. The Personal licence comes from Unity Hub's licensing service, so `tools/env.ps1` starts the Hub if it isn't running.
+- 2026-10-25 **M0-b done.** Project, packages, 8 asmdefs, Boot scene, flat 120 x 53.3 yd field with stripes, yard lines, hash marks and end zones, sideline camera (60 yd wide), `BuildScript`, gates `env-check / hygiene / test-editmode / test-playmode / build / shots / gates`. `Play.bat` launches the build. Deviation: `shots.ps1` saves the pictures but there is no pixel-compare test yet (comes with the first players in M1-a).

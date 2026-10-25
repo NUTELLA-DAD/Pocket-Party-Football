@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "sim": {
+    "tickHz": 30
+  },
+  "field": {
+    "lengthYd": 120,
+    "widthYd": 53.3,
+    "endZoneYd": 10,
+    "yardM": 0.9144,
+    "stripeYd": 5,
+    "lineEveryYd": 5,
+    "lineWidthYd": 0.25,
+    "sidelineBorderYd": 2,
+    "hashFromSidelineYd": 23.58,
+    "hashLengthYd": 0.67,
+    "surroundYd": 14,
+    "grassColor": "#73905f",
+    "grassAltColor": "#68845a",
+    "lineColor": "#f1f1e8",
+    "endZoneColor": "#5f7a52",
+    "surroundColor": "#55654d",
+    "skyColor": "#a9c8dc"
+  },
+  "camera": {
+    "visibleYards": 60,
+    "fovDeg": 20,
+    "pitchDeg": 16,
+    "lookAtXYd": 0,
+    "lookAtZYd": 0,
+    "sideline": -1
+  },
+  "features": {
+    "fieldStripes": true
+  }
+}

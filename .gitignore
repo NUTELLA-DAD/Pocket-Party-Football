@@ -1,4 +1,4 @@
-# Unity
+# Unity generated
 /[Ll]ibrary/
 /[Tt]emp/
 /[Oo]bj/
@@ -9,13 +9,27 @@
 /[Mm]emoryCaptures/
 *.csproj
 *.sln
+*.slnx
 *.suo
 *.user
 *.pidb
 *.booproj
-*.unityproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
 .vs/
+.vscode/
 .idea/
-# our tooling
-.logs/
-.shots/
+crashlytics-buildid.txt
+sysinfo.txt
+*.apk
+*.aab
+# our tool output
+/.shots/
+/.logs/
+# generated at build time from Assets/_Project/Config
+/Assets/StreamingAssets/config/
+/Assets/StreamingAssets/config.meta
+

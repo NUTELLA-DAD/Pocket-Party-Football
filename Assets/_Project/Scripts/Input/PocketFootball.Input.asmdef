@@ -1,0 +1,14 @@
+{
+    "name": "PocketFootball.Input",
+    "rootNamespace": "PocketFootball.Input",
+    "references": ["PocketFootball.Sim", "PocketParty.Net", "Unity.InputSystem"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
