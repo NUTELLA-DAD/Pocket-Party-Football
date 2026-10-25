@@ -1,0 +1,19 @@
+{
+  "id": "slants",
+  "name": "Slants",
+  "side": "offense",
+  "desc": "Quick throw inside",
+  "jobs": [
+    { "kind": "route", "pts": [[-8, 0]], "text": "Three-step drop. Throw to a receiver as he cuts" },
+    { "kind": "block", "pts": [[-4, -2]], "text": "Stay in and block a blitzer" },
+    { "kind": "route", "pts": [[4, -20], [12, -12]], "text": "Slant: 4 steps, cut inside hard" },
+    { "kind": "route", "pts": [[4, 20], [12, 12]], "text": "Slant: 4 steps, cut inside hard" },
+    { "kind": "route", "pts": [[5, 13], [5, 3]], "text": "Drag across the middle at 5 yards" },
+    { "kind": "route", "pts": [[5, -4.5], [7, -14]], "text": "Short out route under the slant" },
+    { "kind": "block", "pts": [[-1, 0]], "text": "Pass block: stay between him and the QB" },
+    { "kind": "block", "pts": [[-1, -1.5]], "text": "Pass block: stay between him and the QB" },
+    { "kind": "block", "pts": [[-1, 1.5]], "text": "Pass block: stay between him and the QB" },
+    { "kind": "block", "pts": [[-1, -3]], "text": "Pass block: stay between him and the QB" },
+    { "kind": "block", "pts": [[-1, 3]], "text": "Pass block: stay between him and the QB" }
+  ]
+}

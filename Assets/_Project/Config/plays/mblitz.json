@@ -1,0 +1,19 @@
+{
+  "id": "mblitz",
+  "name": "Man Blitz",
+  "side": "defense",
+  "desc": "Send the house",
+  "jobs": [
+    { "kind": "rush", "text": "Blitz the middle: get the QB" },
+    { "kind": "man", "target": 2, "text": "Man on the outside receiver, stay tight" },
+    { "kind": "man", "target": 3, "text": "Man on the outside receiver, stay tight" },
+    { "kind": "man", "target": 5, "text": "Man on the tight end" },
+    { "kind": "man", "target": 1, "text": "Man on the running back" },
+    { "kind": "man", "target": 4, "text": "Man on the slot receiver" },
+    { "kind": "rush", "text": "Blitz off the edge" },
+    { "kind": "rush", "text": "Rush the QB" },
+    { "kind": "rush", "text": "Rush the QB" },
+    { "kind": "rush", "text": "Rush the QB" },
+    { "kind": "rush", "text": "Rush the QB" }
+  ]
+}

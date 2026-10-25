@@ -1,0 +1,19 @@
+{
+  "id": "dive",
+  "name": "HB Dive",
+  "side": "offense",
+  "desc": "Handoff up the middle",
+  "jobs": [
+    { "kind": "route", "pts": [[-6, -1]], "text": "Hand off to the RB, then carry out the fake" },
+    { "kind": "route", "pts": [[-3, 0], [4, 0], [15, 0]], "text": "Take the handoff, hit the hole over center" },
+    { "kind": "route", "pts": [[16, -20]], "text": "Go route: run your corner off" },
+    { "kind": "route", "pts": [[16, 20]], "text": "Go route: run your corner off" },
+    { "kind": "block", "pts": [[4, 9]], "text": "Block the linebacker on your side" },
+    { "kind": "block", "pts": [[1.5, -4.5]], "text": "Block the end on your side" },
+    { "kind": "block", "pts": [[2, 0]], "text": "Drive the man in front of you" },
+    { "kind": "block", "pts": [[2, -1.5]], "text": "Drive the man in front of you" },
+    { "kind": "block", "pts": [[2, 1.5]], "text": "Drive the man in front of you" },
+    { "kind": "block", "pts": [[2, -3]], "text": "Drive the man in front of you" },
+    { "kind": "block", "pts": [[2, 3]], "text": "Drive the man in front of you" }
+  ]
+}
