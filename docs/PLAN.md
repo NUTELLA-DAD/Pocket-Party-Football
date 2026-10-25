@@ -118,10 +118,12 @@ Safety net: three seeded 22-bot games must replay identically after every change
 | M1 Ugly playable slice | ~1 week | 22 capsules, bots fill spots, secret call with 2 plays a side, hike/throw/run/tackle, downs + scoreboard → **Playtest 1** |
 | M2 Playbook and controls | ~1 week | All 14 plays, every position's buttons, juke/spin/swat/pick, smarter bots |
 | M3 A full game | ~1 week | Kicks, clock, quarters, halftime, instant replay, rejoin + bot cover → **Playtest 2** |
-| M4 Toon art pass | 1-2 weeks | Build the look in docs/art/ART_DIRECTION.md: toon shader, players, teams, stadium, crowd, effects |
+| M4 Toon art pass | 1-2 weeks | Run Kenny's gauntlet loop until the game matches the concept art (see ART_DIRECTION.md). Build the look: toon shader, players, teams, stadium, crowd, effects |
 | M5 Party polish | ~1 week | Sound, celebrations, gamepads, audibles, hot routes, post-game stats |
 
 ## Decisions (confirmed by Kenny, 2026-10-25)
+
+- **Graphics phase (M4) uses the gauntlet loop** (Kenny's standing request): keep iterating on the graphics until they match the concept art in `docs/art/`.
 
 - American rules for both teams (11 players, 4 downs, 100 yards).
 - Two-way players when fewer than 22 humans: one offense spot + one defense spot each.

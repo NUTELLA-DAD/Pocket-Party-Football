@@ -9,6 +9,13 @@ These four pictures are the target look. They replace the "three concept looks" 
 | `concepts/03-position-poses.png` | Key poses: receiver catch and dive, linebacker stance, kicker follow-through |
 | `concepts/04-in-game-camera.png` | THE in-game view: camera, field markings, HUD |
 
+## How we get there: the gauntlet loop (Kenny's standing request)
+For the graphics phase, run the gauntlet loop until the game matches these pictures. If a gauntlet loop skill or workflow exists on Kenny's machine, use that. Otherwise each round is:
+1. Take seeded screenshots of fixed scenes that match each concept: lineup (01), action (02), poses (03), and the in-game view (04).
+2. Put each screenshot next to its concept picture and list every visible difference: proportions, colours, outlines, camera, HUD, field, crowd, effects.
+3. Fix the biggest differences, then take new screenshots.
+4. Keep going until a fresh reviewer, comparing the pairs with no other context, finds no meaningful difference. Then show Kenny the side-by-sides.
+
 ## Characters
 - Chibi proportions: about 2.5 to 3 heads tall, oversized glossy helmets with a white face mask, big expressive anime-style eyes, big jersey numbers on chest and shoulders.
 - Body type by position: linemen are wide and bulky (big arms, black elbow bands, black gloves), QBs and kickers slim, RBs and receivers compact and athletic. Same head size for all, so silhouettes read by width.
