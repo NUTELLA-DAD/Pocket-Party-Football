@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phone layouts harness</title>
+<link rel="stylesheet" href="../../Assets/StreamingAssets/phone/style.css">
+<link rel="stylesheet" href="../../Assets/StreamingAssets/phone/layouts.css">
+</head>
+<body>
+<!-- Dev only: open in a browser to click through every layout; tools/phone/layouts-test.js drives it headless. -->
+<div class="app"><div class="view">
+  <p class="line" id="line"></p>
+  <div class="pad"><div class="stick"><div class="knob"></div></div><div class="btns" id="btnBox"></div></div>
+  <div id="pick"></div>
+</div></div>
+<script src="../../Assets/StreamingAssets/phone/layouts.js"></script>
+<script>
+  window.sent = [];
+  PPLayouts.mount(document.getElementById('btnBox'), function (m) { window.sent.push(m); }, function () { return 'a7'; });
+  var RECV = [{ shape: '△', label: 'WR #11', open: true }, { shape: '○', label: 'WR #17' }, { shape: '□', label: 'TE #87' }, { shape: '◇', label: 'RB #21' }];
+  function go(name) { var r = PPLayouts.show(name, { receivers: RECV }); document.getElementById('line').textContent = r.line; document.querySelector('.pad').classList.toggle('no-stick', !r.stick); }
+  PPLayouts.names.forEach(function (n) {
+    var b = document.createElement('button'); b.textContent = n; b.className = 'btn small'; b.onclick = function () { go(n); };
+    document.getElementById('pick').appendChild(b);
+  });
+  go('qb');
+</script>
+</body>
+</html>

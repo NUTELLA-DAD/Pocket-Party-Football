@@ -1,0 +1,19 @@
+{
+  "id": "cover2",
+  "name": "Cover 2",
+  "side": "defense",
+  "desc": "Two deep safeties, corners sit short",
+  "jobs": [
+    { "kind": "zone", "pts": [[8, 0]], "radius": 5, "text": "Middle hook zone" },
+    { "kind": "zone", "pts": [[6, -20]], "radius": 6, "text": "Sit in the flat, jam the receiver" },
+    { "kind": "zone", "pts": [[6, 20]], "radius": 6, "text": "Sit in the flat, jam the receiver" },
+    { "kind": "zone", "pts": [[22, -12]], "radius": 12, "text": "Deep half: nothing gets behind you" },
+    { "kind": "zone", "pts": [[22, 12]], "radius": 12, "text": "Deep half: nothing gets behind you" },
+    { "kind": "zone", "pts": [[7, -9]], "radius": 5, "text": "Hook zone on your side" },
+    { "kind": "zone", "pts": [[7, 9]], "radius": 5, "text": "Hook zone on your side" },
+    { "kind": "rush", "text": "Rush the QB" },
+    { "kind": "rush", "text": "Rush the QB" },
+    { "kind": "rush", "text": "Rush the QB" },
+    { "kind": "rush", "text": "Rush the QB" }
+  ]
+}

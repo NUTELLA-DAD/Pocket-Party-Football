@@ -1,0 +1,19 @@
+{
+  "id": "goalline",
+  "name": "Goal Line",
+  "side": "defense",
+  "desc": "Everyone up close to stop the run",
+  "jobs": [
+    { "kind": "route", "pts": [[1, 0]], "text": "Fill the hole and hit the RB" },
+    { "kind": "man", "target": 2, "text": "Press your receiver on the line" },
+    { "kind": "man", "target": 3, "text": "Press your receiver on the line" },
+    { "kind": "man", "target": 5, "text": "Man on the tight end" },
+    { "kind": "man", "target": 4, "text": "Man on the slot receiver" },
+    { "kind": "rush", "text": "Shoot your gap" },
+    { "kind": "rush", "text": "Shoot your gap" },
+    { "kind": "rush", "text": "Fire low, plug your gap" },
+    { "kind": "rush", "text": "Fire low, plug your gap" },
+    { "kind": "rush", "text": "Fire low, plug your gap" },
+    { "kind": "rush", "text": "Fire low, plug your gap" }
+  ]
+}

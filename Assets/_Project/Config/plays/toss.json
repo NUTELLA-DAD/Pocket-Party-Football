@@ -1,0 +1,19 @@
+{
+  "id": "toss",
+  "name": "Toss Sweep",
+  "side": "offense",
+  "desc": "Pitch to the RB running wide",
+  "jobs": [
+    { "kind": "route", "pts": [[-6, -2]], "text": "Pitch to the RB, then lead block" },
+    { "kind": "route", "pts": [[-6, -4], [-4, -14], [10, -22]], "text": "Catch the pitch, race for the edge" },
+    { "kind": "block", "pts": [[6, -19]], "text": "Block your cornerback" },
+    { "kind": "block", "pts": [[6, 19]], "text": "Block your cornerback" },
+    { "kind": "block", "pts": [[5, 9]], "text": "Block the safety on your side" },
+    { "kind": "block", "pts": [[3, -9]], "text": "Seal the edge: block the linebacker" },
+    { "kind": "block", "pts": [[2, 0]], "text": "Drive the man in front of you" },
+    { "kind": "route", "pts": [[-1, -6], [3, -14]], "text": "Pull left and lead the sweep" },
+    { "kind": "block", "pts": [[2, 1.5]], "text": "Drive the man in front of you" },
+    { "kind": "block", "pts": [[2, -3]], "text": "Drive the man in front of you" },
+    { "kind": "block", "pts": [[2, 3]], "text": "Drive the man in front of you" }
+  ]
+}
