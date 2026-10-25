@@ -22,7 +22,7 @@ This game reuses the design of the Airship Crew Unity remake: clone https://gith
 - Every tunable number in `Assets/_Project/Config/game.json`; plays in `Config/plays/*.json`. Every new rule behind `FEATURES.<name>` plus an `NO_<NAME>=1` env override.
 - Scenes and objects are built from code and data at runtime (one near-empty Boot scene). No hand-placed prefabs, so no editor GUI work is needed.
 - No wobble: no sine-of-time animation; stepped 8 fps keys for effects.
-- Team names are used for a private game; draw our own helmet marks, never copy official NFL/CFL logos.
+- Private game: Kenny's concept art uses the real team logos, which is fine at home. Keep each team's logo as ONE replaceable texture so it can be swapped for our own mark if the game is ever shared publicly.
 
 ## How to work
 - Do one job from `docs/BUILD_BRIEF.md` at a time, in the stated order.

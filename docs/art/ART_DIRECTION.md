@@ -16,7 +16,7 @@ These four pictures are the target look. They replace the "three concept looks" 
 - Poses to animate first: QB throw and set, RB carry and cut, receiver leaping catch and diving catch, lineman stance and engaged block, linebacker read stance, diving tackle, kicker follow-through.
 
 ## Field and camera (concept 04)
-- Elevated sideline camera looking across the field, higher than first planned (roughly 40 to 50 degrees down) so all 22 players and about 45 yards of field fit, with both sidelines visible. The field runs left to right; the camera only slides along it.
+- Elevated sideline camera looking across the field, measured from the picture at about 16 degrees down and about 36 yards across (both numbers live in `game.json`), so all 22 players fit, with both sidelines visible. The field runs left to right; the camera only slides along it.
 - Painted stripes of mown grass, big yard numbers with arrows, hash marks, centre-field team logo.
 - Blue line of scrimmage, yellow first-down line, orange down markers on the sideline.
 - Sideline crowd of small team-coloured figures, coaches, refs, benches and tents; players on the near bench in the foreground.
