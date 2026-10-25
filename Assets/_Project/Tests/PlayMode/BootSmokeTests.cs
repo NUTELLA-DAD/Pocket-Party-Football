@@ -10,6 +10,10 @@ namespace PocketFootball.Tests.PlayMode
     // The Boot scene builds the field and the sideline camera from data, with no errors (an error log fails the test).
     public sealed class BootSmokeTests
     {
+        // the game's phone server listens on 127.0.0.1 in tests (no firewall prompt)
+        [SetUp] public void Loopback() { PartyHost.BindOverride = System.Net.IPAddress.Loopback; PartyHost.PortOverride = 0; }
+        [TearDown] public void Reset() { PartyHost.BindOverride = null; PartyHost.PortOverride = -1; }
+
         [UnityTest]
         public IEnumerator BootSceneBuildsFieldAndCamera()
         {

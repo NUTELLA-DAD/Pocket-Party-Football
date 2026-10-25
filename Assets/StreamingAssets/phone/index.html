@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#123b2c">
+<title>Pocket Party Football</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="app">
+  <section id="joinView" class="view">
+    <h1>Pocket Party Football</h1>
+    <label class="field">Your name<input id="name" maxlength="12" autocomplete="nickname" autocapitalize="characters"></label>
+    <label class="field">Room code (on the TV)<input id="code" maxlength="4" autocomplete="off" autocapitalize="characters"></label>
+    <button id="joinBtn" class="big" aria-label="Join the game">JOIN</button>
+    <p id="joinMsg" class="sub" aria-live="polite"></p>
+  </section>
+
+  <section id="pickView" class="view hidden">
+    <h2 id="pickTitle">Pick your side</h2>
+    <div class="pick" id="teams"></div>
+    <p class="sub">Every spot nobody takes is played by a bot.</p>
+  </section>
+
+  <section id="playView" class="view hidden">
+    <header class="me" id="me"><span id="meName">YOU</span><span id="meNum" class="num">#1</span></header>
+    <p class="line" id="line" aria-live="polite">Walk with the stick. Find your name on the TV.</p>
+    <div class="pad">
+      <div class="stick" id="stick" aria-label="Movement stick: drag to walk"><div class="knob" id="knob"></div></div>
+      <div class="btns">
+        <button class="btn main" id="findBtn" data-b="find" aria-label="Find me: flash my name on the TV">FIND ME<span class="k">Your name gets big on the TV</span></button>
+        <button class="btn small" id="teamBtn" aria-label="Change team">Change team</button>
+      </div>
+    </div>
+  </section>
+</div>
+<div id="reconnect" class="overlay hidden" role="status">Reconnecting...</div>
+<script src="/app.js"></script>
+</body>
+</html>

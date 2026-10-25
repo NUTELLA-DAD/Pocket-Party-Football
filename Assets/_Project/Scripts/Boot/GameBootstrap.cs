@@ -18,6 +18,7 @@ namespace PocketFootball.Boot
         public CameraRig Rig { get; private set; }
         public GameObject Field { get; private set; }
         public CliArgs Args { get; private set; }
+        public PartyHost Host { get; private set; }
 
         void Awake()
         {
@@ -30,6 +31,7 @@ namespace PocketFootball.Boot
             Field = FieldView.Build(Config, baseMaterial);
             Rig = CameraRig.Create(Config);
             if (Args.LookX.HasValue) Rig.SetLookAtX(Args.LookX.Value);
+            Host = PartyHost.Create(gameObject, Config, baseMaterial, Rig, Args);
 
             if (!string.IsNullOrEmpty(Args.ShotsDir))
             {
@@ -70,7 +72,7 @@ namespace PocketFootball.Boot
         // Shows the version in a corner until the real HUD exists (M1-e).
         void OnGUI()
         {
-            GUI.Label(new Rect(12, 8, 600, 24), "Pocket Party Football - M0 field   (Esc quits)");
+            GUI.Label(new Rect(12, 8, 600, 24), "Pocket Party Football - M0   (B adds a bot, Esc quits)");
         }
     }
 }

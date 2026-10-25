@@ -1,7 +1,7 @@
 {
     "name": "PocketFootball.Tests.EditMode",
     "rootNamespace": "PocketFootball.Tests.EditMode",
-    "references": ["UnityEngine.TestRunner", "UnityEditor.TestRunner", "PocketFootball.Sim", "PocketParty.Net", "PocketFootball.View"],
+    "references": ["UnityEngine.TestRunner", "UnityEditor.TestRunner", "PocketFootball.Sim", "PocketParty.Net", "PocketFootball.Input", "PocketFootball.View"],
     "includePlatforms": ["Editor"],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

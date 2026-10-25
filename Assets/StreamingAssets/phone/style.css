@@ -1,0 +1,71 @@
+/* Pocket Party Football phone controller. Offline only: system fonts, nothing loaded from the internet. */
+:root {
+  --turf: #123b2c; --turf-2: #1a4d39; --chalk: #f6f1de; --ink: #0d2219; --muted: #a8c4b4;
+  --team: #d7263d; --team-2: #ffb612; --team-ink: #ffffff; --warn: #ffcf4a;
+  --display: "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif;
+  --body: "Segoe UI", system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--turf); color: var(--chalk); font-family: var(--body); font-weight: 600;
+  background-image: repeating-linear-gradient(90deg, transparent 0 46px, rgba(255,255,255,.035) 46px 92px);
+  padding: env(safe-area-inset-top, 0) max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px));
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; overscroll-behavior: none;
+  touch-action: none;
+}
+.app { max-width: 760px; margin: 0 auto; padding: 12px 0 20px; min-height: 100%; }
+.view { display: grid; gap: 14px; }
+.hidden { display: none !important; }
+h1, h2 { font-family: var(--display); font-weight: 400; margin: 0; letter-spacing: .02em; }
+h1 { font-size: 30px; }
+.sub { color: var(--muted); font-size: 14px; margin: 0; }
+.field { display: grid; gap: 6px; font-size: 15px; color: var(--muted); }
+input {
+  font: inherit; font-size: 24px; padding: 12px; border-radius: 12px; border: 2px solid var(--turf-2);
+  background: var(--ink); color: var(--chalk); text-transform: uppercase; -webkit-user-select: text; user-select: text;
+  touch-action: manipulation;
+}
+button { font: inherit; color: inherit; cursor: pointer; touch-action: none; }
+button:focus-visible { outline: 3px solid var(--warn); outline-offset: 2px; }
+.big {
+  border: 0; border-radius: 16px; padding: 16px; font-family: var(--display); font-size: 26px;
+  background: var(--team); color: var(--team-ink); box-shadow: 0 5px 0 rgba(0,0,0,.35);
+}
+.pick { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.team {
+  border: 4px solid transparent; border-radius: 16px; padding: 22px 10px; font-family: var(--display); font-size: 22px;
+  color: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.35); min-height: 120px;
+}
+.team .sub { color: rgba(255,255,255,.85); margin-top: 8px; }
+.team[aria-pressed="true"] { border-color: var(--chalk); }
+.me {
+  display: flex; justify-content: space-between; align-items: center; border-radius: 14px; padding: 10px 14px;
+  background: var(--team); color: var(--team-ink); font-family: var(--display); font-size: 24px;
+}
+.num { font-size: 30px; }
+.line { font-size: 16px; font-weight: 800; min-height: 1.4em; margin: 0; }
+.pad { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: end; }
+.stick {
+  position: relative; aspect-ratio: 1; max-width: 240px; width: 100%; border-radius: 50%;
+  background: radial-gradient(circle, var(--turf-2) 0 55%, var(--ink) 56%); touch-action: none;
+}
+.knob {
+  position: absolute; left: 50%; top: 50%; width: 40%; aspect-ratio: 1; margin: -20% 0 0 -20%; border-radius: 50%;
+  background: var(--chalk); box-shadow: 0 4px 0 rgba(0,0,0,.35); pointer-events: none;
+}
+.btns { display: grid; gap: 12px; }
+.btn {
+  border: 0; border-radius: 18px; min-height: 96px; padding: 8px; font-family: var(--display); font-size: 22px; line-height: 1.05;
+  background: var(--chalk); color: var(--ink); box-shadow: 0 5px 0 rgba(0,0,0,.35);
+}
+.btn.main { background: var(--team); color: var(--team-ink); }
+.btn.small { min-height: 44px; font-size: 15px; background: var(--ink); color: var(--muted); }
+.btn.on, .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 rgba(0,0,0,.35); filter: brightness(1.12); }
+.btn .k { display: block; font-family: var(--body); font-size: 11px; font-weight: 800; opacity: .75; margin-top: 4px; }
+.overlay {
+  position: fixed; inset: 0; display: grid; place-items: center; background: rgba(13,34,25,.85);
+  font-family: var(--display); font-size: 28px;
+}
+@media (prefers-reduced-motion: reduce) { .btn.on, .btn:active { transform: none; } }

@@ -1,7 +1,9 @@
 {
   "schema": 1,
   "sim": {
-    "tickHz": 30
+    "tickHz": 30,
+    "hashEveryTicks": 30,
+    "maxTicksPerFrame": 4
   },
   "field": {
     "lengthYd": 120,
@@ -29,6 +31,60 @@
     "lookAtXYd": 0,
     "lookAtZYd": 0,
     "sideline": -1
+  },
+  "players": {
+    "walkSpeedYdS": 6,
+    "boundsMarginYd": 4,
+    "spawnXYd": 8,
+    "spawnSpacingYd": 4,
+    "perTeam": 11,
+    "spawnRowYd": 3
+  },
+  "bots": {
+    "thinkEveryTicks": 45,
+    "thinkJitterTicks": 30,
+    "wanderYd": 12,
+    "speedFrac": 0.5,
+    "arriveYd": 1
+  },
+  "baseline": {
+    "seconds": 60,
+    "players": 22,
+    "seeds": [
+      1,
+      2,
+      3
+    ]
+  },
+  "teams": [
+    {
+      "name": "CHIEFS",
+      "short": "KC",
+      "color": "#d7263d",
+      "color2": "#ffb612"
+    },
+    {
+      "name": "ROUGHRIDERS",
+      "short": "SSK",
+      "color": "#1f8a4c",
+      "color2": "#f6f1de"
+    }
+  ],
+  "net": {
+    "port": 8080,
+    "portTries": 10,
+    "bindAddress": "",
+    "maxPlayers": 22,
+    "codeLetters": "ABCDEFGHJKLMNPQRSTUVWXYZ",
+    "codeLength": 4,
+    "stickStaleS": 0.5
+  },
+  "view": {
+    "playerHeightM": 1.8,
+    "playerRadiusM": 0.45,
+    "findMeS": 2,
+    "plateFontPx": 22,
+    "joinPanelQrPx": 260
   },
   "features": {
     "fieldStripes": true
