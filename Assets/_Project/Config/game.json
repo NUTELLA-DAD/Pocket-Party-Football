@@ -23,8 +23,8 @@
     "skyColor": "#a9c8dc"
   },
   "camera": {
-    "visibleYards": 60,
-    "fovDeg": 20,
+    "visibleYards": 36,
+    "fovDeg": 7,
     "pitchDeg": 16,
     "lookAtXYd": 0,
     "lookAtZYd": 0,
