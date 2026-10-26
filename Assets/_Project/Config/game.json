@@ -612,14 +612,14 @@
     "carriermoves": true,
     "fumbles": true,
     "kicking": true,
-    "botcoach": false,
-    "botsV2": false,
+    "botcoach": true,
+    "botsV2": true,
     "grassShader": true,
     "audibles": true,
     "stats": true,
     "gamelog": true,
     "gamepad": true,
     "audio": true,
-    "defmoves": false
+    "defmoves": true
   }
 }
