@@ -102,7 +102,8 @@ namespace PocketFootball.Tests.EditMode
         [Test]
         public void TackleDrillTackleInReachIsLogged()
         {
-            var lab = Make("tackle", c => c.play.tackleBase = 1f);   // (you are the only defender: no bot tries)
+            // (you are the only defender: no bot tries; the carrier's spin, stiff arm and dive do not help him and nothing is fumbled, so in reach is a sure tackle)
+            var lab = Make("tackle", c => { c.play.tackleBase = 1f; c.carrier.spinTackleMul = c.carrier.stiffArmTackleMul = c.carrier.diveTackleMul = 1f; c.carrier.fumbleChance = c.carrier.fumbleBlindsideBonus = 0f; });
             var w = lab.W;
             for (int i = 0; i < Secs(lab, 5f) && w.Phase == Phase.Live; i++)
             {
