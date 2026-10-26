@@ -49,11 +49,11 @@
       else if (msg.t === 'picked') onPicked(msg);
       else if (msg.t === 'ui') onUi(msg);
       else if (msg.t === 'me') onMe(msg);
+      else if (msg.t === 'err') onErr(msg.m);
       else {
         if (msg.t === 'status') onStatus(msg);
         if (window.Huddle) window.Huddle.onMessage(msg);   // huddle, thumbs, job, status (huddle.js)
       }
-      else if (msg.t === 'err') onErr(msg.m);
     };
     ws.onclose = function () {
       ws = null;
