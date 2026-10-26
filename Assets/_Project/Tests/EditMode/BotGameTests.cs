@@ -50,18 +50,21 @@ namespace PocketFootball.Tests.EditMode
         // a punt or a field goal is not a play from scrimmage); a pass is a play where the ball was thrown.
         public sealed class Box
         {
-            public int Games, Plays, Yards, Passes, Incomplete, Intercepted, Scrambles, Punts, FieldGoalTries, GamesWithAKick;
+            public int Games, Plays, Yards, Passes, Incomplete, Intercepted, Scrambles, Punts, FieldGoalTries, GamesWithAKick, Runs, RunYards;
             public readonly SortedDictionary<string, int> Results = new SortedDictionary<string, int>(System.StringComparer.Ordinal);
             public readonly SortedDictionary<string, int> Calls = new SortedDictionary<string, int>(System.StringComparer.Ordinal);
             public float PerPlay => Yards / (float)System.Math.Max(1, Plays);
             public float IncompleteRate => Incomplete / (float)System.Math.Max(1, Passes);
             public float InterceptRate => Intercepted / (float)System.Math.Max(1, Passes);
+            public float PerCarry => RunYards / (float)System.Math.Max(1, Runs);
+            public int Count(string result) => Results.TryGetValue(result, out int n) ? n : 0;
+            public float SacksAGame => Count("SACKED") / (float)System.Math.Max(1, Games);
 
             public void Add(Box o)
             {
                 Games += o.Games; Plays += o.Plays; Yards += o.Yards; Passes += o.Passes; Incomplete += o.Incomplete;
                 Intercepted += o.Intercepted; Scrambles += o.Scrambles; Punts += o.Punts; FieldGoalTries += o.FieldGoalTries;
-                GamesWithAKick += o.GamesWithAKick;
+                GamesWithAKick += o.GamesWithAKick; Runs += o.Runs; RunYards += o.RunYards;
                 foreach (var kv in o.Results) Results[kv.Key] = (Results.TryGetValue(kv.Key, out int n) ? n : 0) + kv.Value;
                 foreach (var kv in o.Calls) Calls[kv.Key] = (Calls.TryGetValue(kv.Key, out int n) ? n : 0) + kv.Value;
             }
@@ -71,7 +74,7 @@ namespace PocketFootball.Tests.EditMode
                 var sb = new StringBuilder();
                 sb.Append(Plays).Append(" plays from scrimmage, ").Append(Yards).Append(" yards (").Append(PerPlay.ToString("0.0")).Append(" a play), ")
                   .Append(Passes).Append(" passes, ").Append(Incomplete).Append(" incomplete (").Append((IncompleteRate * 100f).ToString("0")).Append("%), ")
-                  .Append(Intercepted).Append(" picked off, ").Append(Scrambles).Append(" scrambles, ")
+                  .Append(Intercepted).Append(" picked off, ").Append(Runs).Append(" runs (").Append(PerCarry.ToString("0.0")).Append(" a carry), ").Append(Scrambles).Append(" scrambles, ")
                   .Append(Punts).Append(" punts, ").Append(FieldGoalTries).Append(" field goal tries; results:");
                 foreach (var kv in Results) sb.Append(' ').Append(kv.Key).Append(' ').Append(kv.Value).Append(',');
                 sb.Append(" calls:");
@@ -90,7 +93,7 @@ namespace PocketFootball.Tests.EditMode
             tweak?.Invoke(cfg);
             var w = WorldTests.Full(cfg, seed);
             var box = new Box { Games = 1 };
-            bool wasLive = false, scrambled = false;
+            bool wasLive = false, scrambled = false, run = false;
             string call = null;
             int yardsAtSnap = 0;
             for (int i = 0; i < minutes * 60 * cfg.sim.tickHz; i++)
@@ -102,6 +105,8 @@ namespace PocketFootball.Tests.EditMode
                     scrambled = false;
                     yardsAtSnap = w.YardsGained;
                     call = w.Calls[w.Offense] ?? KickoffCall;
+                    var called = LivePlay.Called(w, w.Offense);
+                    run = called != null && called.runner >= 0;   // a handoff play (the QB sneak counts with the passes)
                     box.Calls[call] = (box.Calls.TryGetValue(call, out int n) ? n : 0) + 1;
                     if (call == "punt") box.Punts++;
                     if (call == "fg" && w.Down >= cfg.downs.downsToGain) box.FieldGoalTries++;   // (not the extra point after a touchdown)
@@ -117,6 +122,7 @@ namespace PocketFootball.Tests.EditMode
                     box.Yards += w.YardsGained - yardsAtSnap;
                     box.Results[w.Result] = (box.Results.TryGetValue(w.Result, out int n) ? n : 0) + 1;
                     if (w.Thrown) box.Passes++;
+                    if (run) { box.Runs++; box.RunYards += w.YardsGained - yardsAtSnap; }
                     if (w.Result == "INCOMPLETE") box.Incomplete++;
                     if (w.Result == "INTERCEPTED" || w.Result == "PICK SIX") box.Intercepted++;
                 }
@@ -126,11 +132,13 @@ namespace PocketFootball.Tests.EditMode
             return box;
         }
 
-        // The seeded 10-minute games the WS-06 gates look at, added up (and each one printed). Twelve, not three: one
+        // The seeded 10-minute games the WS-06 gates look at, added up (and each one printed). Twenty-four, not three: one
         // game is only ~20 plays from scrimmage, so a single long run moves its average by a yard or two, and the laptop's
         // Unity runtime rounds floats a little differently from a plain .NET run, so its seeded games are different
-        // games. Over twelve the numbers settle to within about half a yard.
-        public const int GateGames = 12;
+        // games. WS-16: twelve was not enough: 12-game blocks of the same settings ranged from 4.5 to 6.6 yards a play and
+        // 27 to 42 percent incomplete (the laptop's 42% failed a gate that .NET passed at 34%). Over twenty-four the
+        // blocks stay within about a quarter of a yard and 3 points of incompletions.
+        public const int GateGames = 24;
 
         static Box GateRun(System.Action<GameConfig> tweak)
         {
@@ -153,7 +161,7 @@ namespace PocketFootball.Tests.EditMode
         }
 
         // The WS-06 gate, with every switch on (it needs kicking, defender moves and carrier moves, WS-01/03/04, merged):
-        // 10-minute bot games give 4 to 6 yards a play and 25 to 40 percent incomplete passes (over the twelve games
+        // 10-minute bot games give 4 to 6 yards a play and 25 to 40 percent incomplete passes (over the gate's games
         // together); punts and field goal tries happen (a 10-minute game is only ~6 drives, so not every game has both,
         // but nearly every one has a kick on 4th down).
         [Test]
@@ -165,7 +173,7 @@ namespace PocketFootball.Tests.EditMode
             var box = GateRun(EverythingOn);
             Assert.That(box.PerPlay, Is.InRange(4f, 6f), "yards a play: " + box);
             Assert.That(box.IncompleteRate, Is.InRange(0.25f, 0.4f), "incompletions: " + box);
-            Assert.Less(box.InterceptRate, 0.08f, "interceptions are rare: " + box);
+            Assert.Less(box.InterceptRate, TargetInterceptMax, "interceptions are rare (WS-16: about 1 in 12): " + box);
             Assert.GreaterOrEqual(box.Punts, box.Games / 2, "punts: " + box);
             Assert.GreaterOrEqual(box.FieldGoalTries, box.Games / 4, "field goal tries: " + box);
             Assert.GreaterOrEqual(box.GamesWithAKick, box.Games * 3 / 4, "games with a punt or a field goal try: " + box);
@@ -175,6 +183,30 @@ namespace PocketFootball.Tests.EditMode
             Assert.That(Count("SACKED") / (float)box.Plays, Is.InRange(0.02f, 0.12f), "sacks: " + box);
             Assert.GreaterOrEqual(Count("OUT OF BOUNDS"), 1, "a carrier goes out of bounds now and then: " + box);
             Assert.Less(Count("PLAY OVER"), box.Plays * 0.05f, "plays end on a whistle, not the clock: " + box);
+        }
+
+        // WS-16, the balance targets from Kenny's playtest (bots rarely got a sack once the hitboxes grew; dive tackles
+        // held runs to about 2 yards): over the gate's 10-minute games with every switch on, 4 to 6 yards a play,
+        // runs well clear of 2 yards a carry, 1 to 3 sacks a game, 25 to 40 percent of passes incomplete and about 1 pass
+        // in 12 picked off (anywhere from 1 in 20 to 1 in 7 passes, as the games give only ~350 passes).
+        public const float TargetYardsMin = 4f, TargetYardsMax = 6f;
+        public const float TargetCarryMin = 2.5f;
+        public const float TargetSacksMin = 1f, TargetSacksMax = 3f;
+        public const float TargetIncompleteMin = 0.25f, TargetIncompleteMax = 0.4f;
+        public const float TargetInterceptMin = 1f / 20f, TargetInterceptMax = 1f / 7f;
+
+        [Test]
+        public void BotGamesHitTheBalanceTargets()
+        {
+            var cfg = ConfigTests.Load();
+            foreach (var k in new[] { "kicking", "defmoves", "carriermoves", "botcoach", "botsV2" })
+                if (!cfg.features.ContainsKey(k)) Assert.Inconclusive("needs FEATURES." + k);
+            var box = GateRun(EverythingOn);
+            Assert.That(box.PerPlay, Is.InRange(TargetYardsMin, TargetYardsMax), "yards a play: " + box);
+            Assert.GreaterOrEqual(box.PerCarry, TargetCarryMin, "runs gain yards (dive tackles don't stuff them): " + box);
+            Assert.That(box.SacksAGame, Is.InRange(TargetSacksMin, TargetSacksMax), "sacks a game: " + box);
+            Assert.That(box.IncompleteRate, Is.InRange(TargetIncompleteMin, TargetIncompleteMax), "incompletions: " + box);
+            Assert.That(box.InterceptRate, Is.InRange(TargetInterceptMin, TargetInterceptMax), "interceptions (about 1 in 12): " + box);
         }
 
         // The coach and bots v2 on their own (what main has today): passes are thrown, mostly caught, rarely picked off.
@@ -187,7 +219,7 @@ namespace PocketFootball.Tests.EditMode
             Assert.That(box.PerPlay, Is.InRange(4f, 10f), "yards a play: " + box);
             Assert.GreaterOrEqual(box.Passes, GateGames * 10, "the coach calls passes: " + box);
             Assert.That(box.IncompleteRate, Is.InRange(0.25f, 0.5f), "incompletions: " + box);
-            Assert.Less(box.InterceptRate, 0.08f, "interceptions are rare: " + box);
+            Assert.Less(box.InterceptRate, TargetInterceptMax, "interceptions are rare (WS-16: about 1 in 12): " + box);
             Assert.Greater(box.Scrambles, 0, "the QB scrambles sometimes: " + box);
             int Count(string k) => box.Results.TryGetValue(k, out int n) ? n : 0;
             Assert.Greater(Count("SACKED"), 0, "the pass rush gets home sometimes: " + box);
