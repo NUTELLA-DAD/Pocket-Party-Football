@@ -61,6 +61,7 @@ namespace PocketFootball.Tests.EditMode
             public float PerCarry => RunYards / (float)System.Math.Max(1, Runs);
             public int Count(string result) => Results.TryGetValue(result, out int n) ? n : 0;
             public float SacksAGame => Count("SACKED") / (float)System.Math.Max(1, Games);
+            public float SackRate => Count("SACKED") / (float)System.Math.Max(1, Passes + Count("SACKED"));   // sacks a dropback (a pass thrown or a sack)
 
             public void Add(Box o)
             {
@@ -179,29 +180,30 @@ namespace PocketFootball.Tests.EditMode
             foreach (var k in new[] { "kicking", "defmoves", "carriermoves" })
                 if (!cfg.features.ContainsKey(k)) Assert.Inconclusive("needs FEATURES." + k + " (WS-01, WS-03 and WS-04) merged first");
             var box = GateRun(EverythingOn);
-            Assert.That(box.PerPlay, Is.InRange(4f, 6f), "yards a play: " + box);
-            Assert.That(box.IncompleteRate, Is.InRange(0.25f, 0.4f), "incompletions: " + box);
-            Assert.Less(box.InterceptRate, TargetInterceptMax, "interceptions are rare (WS-16: about 1 in 12): " + box);
+            Assert.That(box.PerPlay, Is.InRange(TargetYardsMin, TargetYardsMax), "yards a play: " + box);   // (retuned with botQuickCall on, 2026-10-26: was 4-6)
+            Assert.That(box.IncompleteRate, Is.InRange(TargetIncompleteMin, TargetIncompleteMax), "incompletions: " + box);   // (retuned with botQuickCall on, 2026-10-26: was 25-40%)
+            Assert.Less(box.InterceptRate, TargetInterceptMax, "interceptions are rare: " + box);   // (retuned with botQuickCall on, 2026-10-26: was under 1 in 7)
             Assert.GreaterOrEqual(box.Punts, box.Games / 2, "punts: " + box);
             Assert.GreaterOrEqual(box.FieldGoalTries, box.Games / 4, "field goal tries: " + box);
             Assert.GreaterOrEqual(box.GamesWithAKick, box.Games * 3 / 4, "games with a punt or a field goal try: " + box);
             Assert.Greater(box.Scrambles, 0, "the QB scrambles sometimes: " + box);
             int Count(string k) => box.Results.TryGetValue(k, out int n) ? n : 0;
             // the pass rush wins sometimes (with the swim and bull rush), but not most of the time
-            Assert.That(Count("SACKED") / (float)box.Plays, Is.InRange(0.02f, 0.12f), "sacks: " + box);
+            Assert.That(box.SackRate, Is.InRange(TargetSackRateMin, TargetSackRateMax), "sacks a dropback: " + box);   // (retuned with botQuickCall on, 2026-10-26: was 2-12% of plays)
             Assert.GreaterOrEqual(Count("OUT OF BOUNDS"), 1, "a carrier goes out of bounds now and then: " + box);
             Assert.Less(Count("PLAY OVER"), box.Plays * 0.05f, "plays end on a whistle, not the clock: " + box);
         }
 
         // WS-16, the balance targets from Kenny's playtest (bots rarely got a sack once the hitboxes grew; dive tackles
-        // held runs to about 2 yards): over the gate's 10-minute games with every switch on, 4 to 6 yards a play,
-        // runs well clear of 2 yards a carry, 1 to 3 sacks a game, 25 to 40 percent of passes incomplete and about 1 pass
-        // in 12 picked off (anywhere from 1 in 20 to 1 in 7 passes, as the games give only ~350 passes).
-        public const float TargetYardsMin = 4f, TargetYardsMax = 6f;
+        // held runs to about 2 yards), over the gate's 10-minute games with every switch on. Restated as rates on
+        // 2026-10-26 with botQuickCall on, so they don't depend on how many snaps fit in a game (quick calls double them):
+        // 4.5 to 6.5 yards a play, runs well clear of 2 yards a carry, 4 to 9 percent of dropbacks sacked, 28 to 42
+        // percent of passes incomplete, and 2 to 5 percent of passes picked off (real football is about 2.5%).
+        public const float TargetYardsMin = 4.5f, TargetYardsMax = 6.5f;              // (retuned with botQuickCall on, 2026-10-26: was 4-6)
         public const float TargetCarryMin = 2.5f;
-        public const float TargetSacksMin = 1f, TargetSacksMax = 3f;
-        public const float TargetIncompleteMin = 0.25f, TargetIncompleteMax = 0.4f;
-        public const float TargetInterceptMin = 1f / 20f, TargetInterceptMax = 1f / 7f;
+        public const float TargetSackRateMin = 0.04f, TargetSackRateMax = 0.09f;      // (retuned with botQuickCall on, 2026-10-26: was 1-3 sacks a 10-minute game)
+        public const float TargetIncompleteMin = 0.28f, TargetIncompleteMax = 0.42f;  // (retuned with botQuickCall on, 2026-10-26: was 25-40%)
+        public const float TargetInterceptMin = 0.02f, TargetInterceptMax = 0.05f;    // (retuned with botQuickCall on, 2026-10-26: was 1 in 20 to 1 in 7)
 
         [Test]
         public void BotGamesHitTheBalanceTargets()
@@ -212,9 +214,9 @@ namespace PocketFootball.Tests.EditMode
             var box = GateRun(EverythingOn);
             Assert.That(box.PerPlay, Is.InRange(TargetYardsMin, TargetYardsMax), "yards a play: " + box);
             Assert.GreaterOrEqual(box.PerCarry, TargetCarryMin, "runs gain yards (dive tackles don't stuff them): " + box);
-            Assert.That(box.SacksAGame, Is.InRange(TargetSacksMin, TargetSacksMax), "sacks a game: " + box);
+            Assert.That(box.SackRate, Is.InRange(TargetSackRateMin, TargetSackRateMax), "sacks a dropback: " + box);
             Assert.That(box.IncompleteRate, Is.InRange(TargetIncompleteMin, TargetIncompleteMax), "incompletions: " + box);
-            Assert.That(box.InterceptRate, Is.InRange(TargetInterceptMin, TargetInterceptMax), "interceptions (about 1 in 12): " + box);
+            Assert.That(box.InterceptRate, Is.InRange(TargetInterceptMin, TargetInterceptMax), "interceptions a pass: " + box);
         }
 
         // The coach and bots v2 on their own (what main has today): passes are thrown, mostly caught, rarely picked off.
@@ -227,7 +229,7 @@ namespace PocketFootball.Tests.EditMode
             Assert.That(box.PerPlay, Is.InRange(4f, 10f), "yards a play: " + box);
             Assert.GreaterOrEqual(box.Passes, GateGames * 10, "the coach calls passes: " + box);
             Assert.That(box.IncompleteRate, Is.InRange(0.25f, 0.5f), "incompletions: " + box);
-            Assert.Less(box.InterceptRate, TargetInterceptMax, "interceptions are rare (WS-16: about 1 in 12): " + box);
+            Assert.Less(box.InterceptRate, 1f / 7f, "interceptions are rare (WS-16: about 1 in 12): " + box);
             Assert.Greater(box.Scrambles, 0, "the QB scrambles sometimes: " + box);
             int Count(string k) => box.Results.TryGetValue(k, out int n) ? n : 0;
             Assert.Greater(Count("SACKED"), 0, "the pass rush gets home sometimes: " + box);

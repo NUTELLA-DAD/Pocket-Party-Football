@@ -38,6 +38,7 @@ namespace PocketFootball.Tests.PlayMode
             var host = PartyHost.Instance;
             var cfg = GameBootstrap.Instance.Config;
             cfg.features["clock"] = false;   // a game that never ends, so the bots keep playing however long this takes
+            cfg.features["botQuickCall"] = false;   // (the huddle clock's tick needs a full huddle; botQuickCall cuts an all-bot one to bots.coachCallS)
 
             // on (as game.json has it): the bots play (sped up) until every sound has been started
             Assert.IsTrue(cfg.Feature("audio"), "FEATURES.audio is on in game.json");

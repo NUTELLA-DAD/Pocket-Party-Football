@@ -91,6 +91,7 @@ namespace PocketFootball.Tests.EditMode
         public void BotGamesPlayEverySound()
         {
             var cfg = On();
+            cfg.features["botQuickCall"] = false;   // (this test times the full huddle; botQuickCall cuts an all-bot one to bots.coachCallS)
             var total = new int[AudioCues.All.Length];
             foreach (int seed in new[] { 1, 2, 3 })
             {
@@ -146,6 +147,7 @@ namespace PocketFootball.Tests.EditMode
         public void HuddleTicksOnlyAtTheEnd()
         {
             var cfg = On();
+            cfg.features["botQuickCall"] = false;   // (this test times the full huddle; botQuickCall cuts an all-bot one to bots.coachCallS)
             var w = WorldTests.Full(cfg, 1);
             var d = new AudioDirector(cfg);
             var at = new List<int>();

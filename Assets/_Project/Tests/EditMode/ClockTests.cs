@@ -78,6 +78,7 @@ namespace PocketFootball.Tests.EditMode
         public void TheClockWaitsForTheFirstSnap()
         {
             var cfg = Cfg();
+            cfg.features["botQuickCall"] = false;   // (this test times the full huddle; botQuickCall cuts an all-bot one to bots.coachCallS)
             var w = Fresh(cfg);
             int full = Ticks(cfg, cfg.clock.quarterS);
             Assert.AreEqual(1, w.GameClock.Quarter);

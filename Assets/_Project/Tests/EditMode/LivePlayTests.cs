@@ -208,6 +208,7 @@ namespace PocketFootball.Tests.EditMode
         public void HbDiveHandsOffToTheBack()
         {
             var cfg = ConfigTests.Load();
+            cfg.features["botQuickCall"] = false;   // (this test times the full huddle; botQuickCall cuts an all-bot one to bots.coachCallS)
             var w = WorldTests.Full(cfg);
             w.Step(null);
             w.Calls[w.Offense] = "dive"; w.Calls[w.Defense] = "cover3";

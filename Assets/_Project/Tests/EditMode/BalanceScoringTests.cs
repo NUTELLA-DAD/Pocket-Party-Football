@@ -21,19 +21,21 @@ namespace PocketFootball.Tests.EditMode
         public static BotGameTests.Box Run(out string table)
         {
             var all = new BotGameTests.Box();
-            var sb = new StringBuilder("| seed | score | TDs | picks | incomplete | yd/play | sacks | FG tries |\n|---|---|---|---|---|---|---|---|\n");
+            var sb = new StringBuilder("| seed | score | TDs | picks | incomplete | yd/play | sacks | FG tries | snaps |\n|---|---|---|---|---|---|---|---|---|\n");
             for (int seed = 1; seed <= Games; seed++)
             {
                 var g = BotGameTests.PlayV2(seed, Minutes, EverythingOn);
                 sb.Append("| ").Append(seed).Append(" | ").Append(g.Final).Append(" | ").Append(g.Touchdowns).Append(" | ").Append(g.Intercepted)
                   .Append(" | ").Append((g.IncompleteRate * 100f).ToString("0")).Append("% | ").Append(g.PerPlay.ToString("0.0"))
-                  .Append(" | ").Append(g.Count("SACKED")).Append(" | ").Append(g.FieldGoalTries).Append(" |\n");
+                  .Append(" | ").Append(g.Count("SACKED")).Append(" | ").Append(g.FieldGoalTries).Append(" | ").Append(g.Plays).Append(" |\n");
                 all.Add(g);
             }
             float n = all.Games;
             sb.Append("| **all " + Games + "** | " + (all.Points / n).ToString("0.0") + " pts/game | " + (all.Touchdowns / n).ToString("0.0") + "/game | " +
                       (all.Intercepted / n).ToString("0.0") + "/game | " + (all.IncompleteRate * 100f).ToString("0") + "% | " + all.PerPlay.ToString("0.0") +
-                      " | " + (all.Count("SACKED") / n).ToString("0.0") + "/game | " + all.GamesWithAFieldGoalTry + " of " + Games + " games |\n");
+                      " | " + (all.Count("SACKED") / n).ToString("0.0") + "/game (" + (all.SackRate * 100f).ToString("0") + "% of dropbacks) | " +
+                      all.GamesWithAFieldGoalTry + " of " + Games + " games | " + (all.Plays / n).ToString("0") + "/game |\n");
+            sb.Append("picks a pass: " + (all.InterceptRate * 100f).ToString("0.0") + "%\n");
             sb.Append("0-0 games: " + all.ScorelessGames + "\n");
             table = sb.ToString();
             return all;
@@ -46,17 +48,15 @@ namespace PocketFootball.Tests.EditMode
             TestContext.WriteLine(table);
             TestContext.WriteLine("all: " + all);
             float n = all.Games;
-            // OPEN: the target is 3 to 6 touchdowns a game. With PLAN's 15 s huddle and 4-minute quarters a bot game is only
-            // ~42 snaps, and at the 6.5 yd/play ceiling that is ~270 yards for both teams, so the pass (2026-10-26) reached
-            // 1.5 (2.3 with a 12 s huddle, which PLAN doesn't allow). Until the huddle or quarter length is decided this
-            // only guards against going back below where the pass left it.
-            Assert.GreaterOrEqual(all.Touchdowns / n, 1.2f, "touchdowns a game (both teams), no worse than the pass left it:\n" + table);
-            Assert.That(all.Intercepted / n, Is.InRange(1f, 2f), "interceptions a game:\n" + table);
-            Assert.That(all.IncompleteRate, Is.InRange(0.3f, 0.4f), "incompletions:\n" + table);
-            Assert.That(all.PerPlay, Is.InRange(4.5f, 6.5f), "yards a play:\n" + table);
-            Assert.That(all.Count("SACKED") / n, Is.InRange(1f, 3f), "sacks a game:\n" + table);
-            Assert.Greater(all.GamesWithAFieldGoalTry, Games / 2, "a field goal try in most games:\n" + table);
+            // per game (with botQuickCall on, 2026-10-26: a full bot game is ~90 snaps)
+            Assert.That(all.Touchdowns / n, Is.InRange(2.5f, 6f), "touchdowns a game (both teams):\n" + table);
+            Assert.That(all.Intercepted / n, Is.InRange(1f, 2.5f), "interceptions a game:\n" + table);
             Assert.AreEqual(0, all.ScorelessGames, "no 0-0 games:\n" + table);
+            Assert.Greater(all.GamesWithAFieldGoalTry, Games / 2, "a field goal try in most games:\n" + table);
+            // rates, as the 24-game gate (BotGameTests) has them
+            Assert.That(all.IncompleteRate, Is.InRange(BotGameTests.TargetIncompleteMin, BotGameTests.TargetIncompleteMax), "incompletions:\n" + table);
+            Assert.That(all.PerPlay, Is.InRange(BotGameTests.TargetYardsMin, BotGameTests.TargetYardsMax), "yards a play:\n" + table);
+            Assert.That(all.SackRate, Is.InRange(BotGameTests.TargetSackRateMin, BotGameTests.TargetSackRateMax), "sacks a dropback:\n" + table);
         }
     }
 }

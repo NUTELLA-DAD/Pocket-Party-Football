@@ -96,8 +96,10 @@ namespace PocketFootball.Tests.EditMode
             Assert.IsTrue(w.GameClock.SecondHalf, "there was a second half: " + s);
             Assert.AreEqual(w.Score[0] > w.Score[1] ? 0 : w.Score[1] > w.Score[0] ? 1 : -1, Clock.Winner(w), "the winner has more points");
 
-            // about 50 plays, no stalls, a sane score
-            Assert.That(g.ScrimmagePlays, Is.InRange(35, 75), "plays from scrimmage (PLAN: ~50): " + s);
+            // about 50 plays (PLAN's 15 s huddles; ~90 with botQuickCall, when all-bot teams call theirs in 3 s), no stalls,
+            // a sane score
+            if (Huddle.QuickOn(w)) Assert.That(g.ScrimmagePlays, Is.InRange(65, 120), "plays from scrimmage (all-bot quick calls): " + s);
+            else Assert.That(g.ScrimmagePlays, Is.InRange(35, 75), "plays from scrimmage (PLAN: ~50): " + s);
             Assert.Less(g.LongestPhaseTicks, (cfg.huddle.seconds + cfg.huddle.setSeconds + cfg.play.maxPlayS) * cfg.sim.tickHz, "no phase stalls: " + s);
             foreach (int pts in w.Score) Assert.That(pts, Is.InRange(0, 70), "a sane score: " + s);
             foreach (var p in g.Plays)
