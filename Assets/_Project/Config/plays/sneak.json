@@ -1,0 +1,19 @@
+{
+  "id": "sneak",
+  "name": "QB Sneak",
+  "side": "offense",
+  "desc": "For 4th and 1 or the goal line",
+  "jobs": [
+    { "kind": "route", "pts": [[-4, 0], [2, 0]], "text": "Take the snap and push straight ahead behind center" },
+    { "kind": "route", "pts": [[-4, 0]], "text": "Push the QB from behind" },
+    { "kind": "block", "pts": [[4, -19]], "text": "Block your man" },
+    { "kind": "block", "pts": [[4, 19]], "text": "Block your man" },
+    { "kind": "block", "pts": [[4, 10]], "text": "Block your man" },
+    { "kind": "block", "pts": [[1, -5]], "text": "Block down on the end" },
+    { "kind": "block", "pts": [[2, 0]], "text": "Fire low and drive forward" },
+    { "kind": "block", "pts": [[2, -1.5]], "text": "Fire low and drive forward" },
+    { "kind": "block", "pts": [[2, 1.5]], "text": "Fire low and drive forward" },
+    { "kind": "block", "pts": [[2, -3]], "text": "Fire low and drive forward" },
+    { "kind": "block", "pts": [[2, 3]], "text": "Fire low and drive forward" }
+  ]
+}

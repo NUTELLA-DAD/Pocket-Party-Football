@@ -1,0 +1,19 @@
+{
+  "id": "prevent",
+  "name": "Prevent",
+  "side": "defense",
+  "desc": "Everyone deep, gives up the short stuff",
+  "jobs": [
+    { "kind": "zone", "pts": [[15, 0]], "radius": 8, "text": "Drop deep to the middle" },
+    { "kind": "zone", "pts": [[30, -18]], "radius": 10, "text": "Deep outside: give up the short stuff" },
+    { "kind": "zone", "pts": [[30, 18]], "radius": 10, "text": "Deep outside: give up the short stuff" },
+    { "kind": "zone", "pts": [[38, -8]], "radius": 12, "text": "Deepest man on the field" },
+    { "kind": "zone", "pts": [[38, 8]], "radius": 12, "text": "Deepest man on the field" },
+    { "kind": "zone", "pts": [[12, -12]], "radius": 8, "text": "Drop to the deep hook" },
+    { "kind": "zone", "pts": [[12, 12]], "radius": 8, "text": "Drop to the deep hook" },
+    { "kind": "rush", "text": "Rush, but stay in your lane" },
+    { "kind": "rush", "text": "Rush, but stay in your lane" },
+    { "kind": "rush", "text": "Rush, but stay in your lane" },
+    { "kind": "rush", "text": "Rush, but stay in your lane" }
+  ]
+}
