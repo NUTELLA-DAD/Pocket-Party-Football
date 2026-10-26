@@ -69,6 +69,7 @@ namespace PocketFootball.Sim
         // readTimesS, open = no defender within openYd; at readDeadlineS he throws to the most open), and a bot that
         // helps a person who has been idle idleTakeoverS during a live play
         public float blockReachYd, blockedSpeedFrac, shedAfterS, shedFreeS, rushAroundYd, openYd, readDeadlineS, idleTakeoverS;
+        public float coachCallS;   // FEATURES.botQuickCall: a team with no people locks its coach's call this far into the huddle
         public List<float> readTimesS = new List<float>();
         // bots v2 (WS-06, FEATURES.botsV2, Bots.cs): a rusher this close with no block on him is pressure (throw it
         // or scramble); at the deadline or under pressure he throws only to a man with deadlineOpenYd of space; throws

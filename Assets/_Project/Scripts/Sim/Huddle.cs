@@ -104,6 +104,7 @@ namespace PocketFootball.Sim
         {
             if (!On(w)) return;
             if (w.Phase == Phase.Live) return;           // a live play ends on the whistle (LivePlay)
+            if (w.Phase == Phase.Huddle && QuickCall(w)) return;
             if (--w.PhaseTicks > 0) return;
             if (w.Phase == Phase.Huddle)
             {
@@ -120,6 +121,23 @@ namespace PocketFootball.Sim
                 }
                 Begin(w);
             }
+        }
+
+        // FEATURES.botQuickCall (NO_BOT_QUICK_CALL=1): a team with no people on it doesn't sit through the whole huddle;
+        // its coach locks the call after bots.coachCallS. A team with people keeps the full huddle.seconds, and the huddle
+        // ends as soon as both teams have locked. True when the huddle just ended.
+        public static bool QuickOn(World w) => w.Cfg.Feature("botQuickCall");
+
+        static bool QuickCall(World w)
+        {
+            if (!QuickOn(w)) return false;
+            int elapsed = Ticks(w, w.Cfg.huddle.seconds) - w.PhaseTicks;
+            if (elapsed < Ticks(w, w.Cfg.bots.coachCallS)) return false;
+            for (int t = 0; t < w.Calls.Length; t++)
+                if (w.Calls[t] == null && Caller(w, t) == null) w.Calls[t] = BotCoach(w, t);
+            if (!AllLocked(w)) return false;
+            GoSet(w);
+            return true;
         }
 
         static void GoSet(World w)
