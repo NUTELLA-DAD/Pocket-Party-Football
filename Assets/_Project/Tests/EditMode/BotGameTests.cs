@@ -51,6 +51,8 @@ namespace PocketFootball.Tests.EditMode
         public sealed class Box
         {
             public int Games, Plays, Yards, Passes, Incomplete, Intercepted, Scrambles, Punts, FieldGoalTries, GamesWithAKick, Runs, RunYards;
+            public int Points, Touchdowns, ScorelessGames, GamesWithAFieldGoalTry;   // whole games (balance/scoring)
+            public string Final = "";
             public readonly SortedDictionary<string, int> Results = new SortedDictionary<string, int>(System.StringComparer.Ordinal);
             public readonly SortedDictionary<string, int> Calls = new SortedDictionary<string, int>(System.StringComparer.Ordinal);
             public float PerPlay => Yards / (float)System.Math.Max(1, Plays);
@@ -65,6 +67,7 @@ namespace PocketFootball.Tests.EditMode
                 Games += o.Games; Plays += o.Plays; Yards += o.Yards; Passes += o.Passes; Incomplete += o.Incomplete;
                 Intercepted += o.Intercepted; Scrambles += o.Scrambles; Punts += o.Punts; FieldGoalTries += o.FieldGoalTries;
                 GamesWithAKick += o.GamesWithAKick; Runs += o.Runs; RunYards += o.RunYards;
+                Points += o.Points; Touchdowns += o.Touchdowns; ScorelessGames += o.ScorelessGames; GamesWithAFieldGoalTry += o.GamesWithAFieldGoalTry;
                 foreach (var kv in o.Results) Results[kv.Key] = (Results.TryGetValue(kv.Key, out int n) ? n : 0) + kv.Value;
                 foreach (var kv in o.Calls) Calls[kv.Key] = (Calls.TryGetValue(kv.Key, out int n) ? n : 0) + kv.Value;
             }
@@ -129,6 +132,11 @@ namespace PocketFootball.Tests.EditMode
                 wasLive = live;
             }
             if (box.Punts + box.FieldGoalTries > 0) box.GamesWithAKick = 1;
+            if (box.FieldGoalTries > 0) box.GamesWithAFieldGoalTry = 1;
+            box.Points = w.Score[0] + w.Score[1];
+            box.Touchdowns = w.Events.Total(EventKind.Touchdown);
+            box.ScorelessGames = box.Points == 0 ? 1 : 0;
+            box.Final = w.Score[0] + "-" + w.Score[1] + (Clock.IsOver(w) ? " final" : " (not over)");
             return box;
         }
 
