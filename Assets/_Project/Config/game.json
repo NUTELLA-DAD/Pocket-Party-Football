@@ -233,6 +233,19 @@
     "cardLinePx": 30,
     "cardWidthPx": 640
   },
+  "clock": {
+    "quarters": 4,
+    "quarterS": 240,
+    "halftimeAfterQuarter": 2,
+    "halftimeS": 8,
+    "runsBetweenPlays": true,
+    "stopOn": [
+      "INCOMPLETE",
+      "OUT OF BOUNDS",
+      "TOUCHDOWN",
+      "PICK SIX"
+    ]
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
@@ -241,6 +254,7 @@
     "intreturn": true,
     "moves": true,
     "replay": true,
-    "receiving": false
+    "receiving": false,
+    "clock": false
   }
 }

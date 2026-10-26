@@ -73,6 +73,7 @@ namespace PocketFootball.Sim
         public int PlaysRun, YardsGained;
         public readonly SortedDictionary<string, int> Results = new SortedDictionary<string, int>(StringComparer.Ordinal);
         public readonly EventLog Events = new EventLog();   // WS-00: what happened (Events.cs); not hashed, the sim never reads it
+        public readonly ClockState GameClock = new ClockState();   // WS-02: the game clock and quarters (Clock.cs)
 
         public World(GameConfig cfg, int seed)
         {
@@ -220,6 +221,7 @@ namespace PocketFootball.Sim
             LivePlay.Step(this);
             Huddle.Step(this);
             Receiving.Step(this, inputs);   // WS-05
+            Clock.Step(this);   // WS-02
             Tick++;
         }
 
