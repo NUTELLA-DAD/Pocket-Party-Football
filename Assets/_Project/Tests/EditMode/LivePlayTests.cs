@@ -118,6 +118,9 @@ namespace PocketFootball.Tests.EditMode
                 w.Step(null);
             }
             Assert.IsTrue(w.Intercepted, "picked off");
+            // whoever made the pick (a cover man next to the receiver can get there before d does)
+            foreach (var p in w.Players) if (p.Slot == w.Ball.Carrier) d = p;
+            Assert.AreEqual(w.Defense, d.Team, "a defender has it");
             return (w, d);
         }
 

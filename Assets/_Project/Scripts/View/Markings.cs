@@ -81,7 +81,7 @@ namespace PocketFootball.View
     }
 
     // The screen overlay (immediate-mode GUI, no assets): the scoreboard bar at the top centre, the triangle over your
-    // player, the shape badges over receivers. Pieces are painted once into small textures.
+    // player (team colour), the shape badges over receivers. Pieces are painted once into small textures.
     public static class Hud
     {
         static Texture2D round, disc, tri;
@@ -191,14 +191,15 @@ namespace PocketFootball.View
             return true;
         }
 
-        // A small cyan triangle pointing down at `screen` (GUI coordinates: y down).
-        public static void Pointer(Vector2 screen, float s)
+        // A small triangle in `fill` (the team colour) pointing down at `screen` (GUI coordinates: y down), with a dark
+        // edge so it reads on grass and on jerseys. `dim` fades it (phone asleep, or a bot is playing for them).
+        public static void Pointer(Vector2 screen, Color fill, bool dim, float s)
         {
             Init();
-            float w = 26 * s;
-            GUI.color = new Color(0.1f, 0.25f, 0.3f, 0.9f);
-            GUI.DrawTexture(new Rect(screen.x - w * 0.5f - 2 * s, screen.y - w - 2 * s, w + 4 * s, w + 4 * s), tri);
-            GUI.color = Markings.Cyan;
+            float w = 22 * s, a = dim ? 0.45f : 1f;
+            GUI.color = new Color(0.06f, 0.06f, 0.08f, 0.9f * a);
+            GUI.DrawTexture(new Rect(screen.x - w * 0.5f - 3 * s, screen.y - w - 3 * s, w + 6 * s, w + 6 * s), tri);
+            GUI.color = new Color(fill.r, fill.g, fill.b, a);
             GUI.DrawTexture(new Rect(screen.x - w * 0.5f, screen.y - w, w, w), tri);
             GUI.color = Color.white;
         }
