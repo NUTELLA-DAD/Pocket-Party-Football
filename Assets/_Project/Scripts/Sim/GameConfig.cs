@@ -23,6 +23,7 @@ namespace PocketFootball.Sim
         public NetConfig net = new NetConfig();
         public ViewConfig view = new ViewConfig();
         public AnimConfig anim = new AnimConfig();
+        public LobbyConfig lobby = new LobbyConfig();   // WS-07
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 
@@ -157,6 +158,15 @@ namespace PocketFootball.Sim
     public sealed class AnimConfig
     {
         public float fps, throwS, handoffS, secureS, bobbleS, reachYd, reachS, getUpS, blockShoveS;
+    }
+
+    // WS-07 the lobby (FEATURES.lobby): each person picks an offense spot and a defense spot before kickoff. The game
+    // waits on the lobby until a phone taps KICK OFF (holdUntilKickoff), a bot plays for a dropped phone until it comes
+    // back (botCoversDropped), and a swap request waits swapAskS seconds for the other person's answer.
+    public sealed class LobbyConfig
+    {
+        public bool holdUntilKickoff, botCoversDropped;
+        public float swapAskS;
     }
 
     // The field runs along X (goal line to goal line), across Z (sideline to sideline); the centre is (0, 0).

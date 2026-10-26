@@ -211,12 +211,18 @@
     "getUpS": 0.5,
     "blockShoveS": 0.375
   },
+  "lobby": {
+    "holdUntilKickoff": true,
+    "botCoversDropped": true,
+    "swapAskS": 12
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
     "liveplay": true,
     "downs": true,
     "intreturn": true,
-    "moves": true
+    "moves": true,
+    "lobby": false
   }
 }

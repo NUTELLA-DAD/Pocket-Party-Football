@@ -44,16 +44,17 @@
     };
     ws.onmessage = function (ev) {
       var msg; try { msg = JSON.parse(ev.data); } catch (e) { return; }
+      if (window.Lobby) window.Lobby.onMessage(msg);   // WS-07: the lobby screen (lobby.js) sees every message first
       if (msg.t === 'joined') onJoined(msg);
       else if (msg.t === 'lobby') { teams = msg.teams || teams; drawTeams(); }
       else if (msg.t === 'picked') onPicked(msg);
       else if (msg.t === 'ui') onUi(msg);
       else if (msg.t === 'me') onMe(msg);
+      else if (msg.t === 'err') onErr(msg.m);
       else {
         if (msg.t === 'status') onStatus(msg);
         if (window.Huddle) window.Huddle.onMessage(msg);   // huddle, thumbs, job, status (huddle.js)
       }
-      else if (msg.t === 'err') onErr(msg.m);
     };
     ws.onclose = function () {
       ws = null;
