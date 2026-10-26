@@ -4,7 +4,6 @@ namespace PocketFootball.Sim
     public sealed class Rng
     {
         uint state;
-        static readonly int CiProbe = 42;   // TEMPORARY: proves the GitHub hygiene check catches a Sim literal
 
         public Rng(int seed)
         {
