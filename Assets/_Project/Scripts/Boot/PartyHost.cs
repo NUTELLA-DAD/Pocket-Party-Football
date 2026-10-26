@@ -347,6 +347,8 @@ namespace PocketFootball.Boot
                     }
                     continue;
                 }
+                if (e.Kind == NetEventKind.Page) { Debug.Log("[net] a phone opened the page: " + e.Text); continue; }
+                if (e.Kind == NetEventKind.Open) { Debug.Log("[net] a phone connected (conn " + e.Conn + ")"); continue; }
                 if (e.Kind != NetEventKind.Message) continue;
                 var m = PhoneProtocol.Parse(e.Text);
                 if (m == null) continue;

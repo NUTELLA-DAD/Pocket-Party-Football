@@ -54,6 +54,14 @@ if (Test-Path $phone) {
     if ($js -and (($js -join "`n") -match "t:\s*'btn'|t:\s*`"btn`"") -and (($js -join "`n") -notmatch '\baid\b')) { $bad.Add("Phone page: btn messages without the aid guard") }
 }
 
+# 5b. Every phone script parses (a syntax error = a phone that cannot even join). Needs Node; skipped without it.
+if ((Test-Path $phone) -and (Get-Command node -ErrorAction SilentlyContinue)) {
+    foreach ($f in Get-ChildItem $phone -File -Filter *.js) {
+        $out = & node --check $f.FullName 2>&1
+        if ($LASTEXITCODE -ne 0) { $bad.Add("Phone script does not parse: $($f.Name): " + (($out | Select-Object -First 4) -join " ")) }
+    }
+}
+
 # 6. The reusable phone server stays engine-free (it is shared between games).
 $netAsm = Join-Path $PROJ 'Assets\_Project\Scripts\Net\PocketParty.Net.asmdef'
 if ((Get-Content $netAsm -Raw) -notmatch '"noEngineReferences":\s*true') { $bad.Add("PocketParty.Net must keep noEngineReferences: true") }

@@ -1,0 +1,85 @@
+/* The controller is played with the phone held SIDEWAYS (landscape first). The whole page fits the screen:
+   a thin top bar, the stick filling the left half, big buttons on the right; nothing is ever pushed off screen.
+   Join, team pick and the huddle may scroll if a screen is very short; the play screen never does. */
+html, body { height: 100%; overflow: hidden; }
+body { touch-action: manipulation; padding: 0; }
+.app {
+  height: 100vh; height: 100dvh; max-width: none; margin: 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 6px;
+  padding: max(6px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+}
+.view { flex: 1 1 auto; min-height: 0; }
+#joinView, #pickView, #huddleView { overflow-y: auto; touch-action: pan-y; }
+#playView { touch-action: none; overflow: hidden; }
+.tvstrip { margin: 0; flex: 0 0 auto; }
+.tvstrip .msg { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* the play screen (portrait too): a column whose pad takes all the space left */
+#playView { display: flex; flex-direction: column; gap: 6px; }
+#playView .pad { flex: 1 1 auto; min-height: 0; align-items: stretch; }
+#playView .btns { min-height: 0; align-content: stretch; }
+
+@media (orientation: landscape) {
+  h1 { font-size: 22px; }
+  .tvstrip { padding: 4px 10px; font-size: 12px; }
+
+  /* join: name and code on the left, a tall JOIN on the right */
+  #joinView { display: grid; grid-template-columns: 1fr minmax(140px, 34%); grid-template-areas: "title title" "name go" "code go" "msg msg"; gap: 8px 14px; align-content: start; }
+  #joinView h1 { grid-area: title; }
+  #joinView .field:nth-of-type(1) { grid-area: name; }
+  #joinView .field:nth-of-type(2) { grid-area: code; }
+  #joinView #joinBtn { grid-area: go; align-self: stretch; }
+  #joinView #joinMsg { grid-area: msg; }
+  input { font-size: 18px; padding: 8px 10px; }
+  .field { font-size: 13px; gap: 3px; }
+
+  /* team pick: side by side */
+  .team { min-height: 0; padding: 14px 10px; }
+
+  /* the huddle: header with the clock and LOCK IN, then a sideways row of play cards */
+  #huddleView { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto 1fr auto; grid-template-areas: "head go" "plays plays" "line line"; gap: 6px 10px; overflow: hidden; }
+  #huddleView .hud { grid-area: head; padding: 6px 12px; }
+  #huddleView .hud h2 { font-size: 18px; }
+  #huddleView .clock { font-size: 24px; }
+  #huddleView #hGo { grid-area: go; padding: 8px 20px; font-size: 22px; }
+  #huddleView #hLine { grid-area: line; font-size: 13px; margin: 0; }
+  #huddleView .plays { grid-area: plays; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(170px, 30%); grid-template-columns: none; overflow-x: auto; overflow-y: hidden; touch-action: pan-x; min-height: 0; }
+  #huddleView .play { min-height: 0; overflow: hidden; }
+  #huddleView .mini { max-height: calc(100% - 44px); object-fit: contain; }
+
+  /* the play screen: name + job on top, then stick | buttons filling the rest */
+  #playView { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); grid-template-rows: auto auto 1fr; grid-template-areas: "me job" "line stam" "pad pad"; gap: 4px 12px; }
+  #playView .me { grid-area: me; padding: 4px 10px; font-size: 16px; }
+  #playView .me .num { font-size: 18px; }
+  #playView #job { grid-area: job; padding: 4px 10px; display: flex; gap: 8px; align-items: baseline; overflow: hidden; }
+  #playView #job.hidden { display: none; }
+  #playView #job h3 { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #playView #job #jobField { display: none; }
+  #playView #line { grid-area: line; font-size: 13px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #playView .stam { grid-area: stam; align-self: center; }
+  #playView .pad { grid-area: pad; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; height: 100%; }
+  #playView .stick { height: 100%; width: auto; max-width: 48vw; max-height: 100%; aspect-ratio: 1; align-self: center; justify-self: center; }
+  #playView .btns { height: 100%; grid-auto-rows: 1fr; gap: 8px; }
+  #playView .btn { min-height: 0; padding: 4px; font-size: 18px; }
+  #playView .btn .k { font-size: 10px; }
+  #playView .btn.small { min-height: 0; }
+  #playView .btns.layout-qb { grid-template-columns: repeat(3, 1fr); }
+  #playView .layout-qb .btn[data-act="scramble"] { grid-column: auto; min-height: 0; }
+  #playView .btn.rcv { min-height: 0; font-size: 14px; }
+  #playView .btn.rcv .shape { font-size: 22px; margin: 0; }
+  #playView .kickpad { height: 100%; }
+}
+
+/* very short screens (an older small phone sideways): tighter still */
+@media (orientation: landscape) and (max-height: 340px) {
+  .tvstrip .tag { display: none; }
+  #playView .btn { font-size: 15px; }
+  #playView .btn .k { display: none; }
+  #huddleView .hud .sub { display: none; }
+}
+
+/* upright (portrait) stays usable: the buttons never push past the edge, LOCK IN stays in view */
+.btns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.btn { min-width: 0; overflow-wrap: anywhere; }
+@media (orientation: portrait) {
+  #huddleView #hGo { position: sticky; bottom: 0; z-index: 2; }
+}

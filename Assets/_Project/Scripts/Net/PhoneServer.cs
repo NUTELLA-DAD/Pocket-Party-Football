@@ -10,7 +10,7 @@ using System.Threading;
 
 namespace PocketParty.Net
 {
-    public enum NetEventKind { Open, Message, Close }
+    public enum NetEventKind { Open, Message, Close, Page }   // Page: a phone loaded the page (Text = its address), for the log
 
     public struct NetEvent
     {
@@ -134,7 +134,12 @@ namespace PocketParty.Net
                     events.Enqueue(new NetEvent { Kind = NetEventKind.Open, Conn = conn.Id });
                     FrameLoop(conn);
                 }
-                else ServeFile(stream, pathOnly);
+                else
+                {
+                    if (pathOnly == "/" || pathOnly.StartsWith("/join/", StringComparison.Ordinal))
+                        events.Enqueue(new NetEvent { Kind = NetEventKind.Page, Text = (client.Client.RemoteEndPoint as IPEndPoint)?.Address + " " + pathOnly });
+                    ServeFile(stream, pathOnly);
+                }
             }
             catch (Exception) { }
             finally
