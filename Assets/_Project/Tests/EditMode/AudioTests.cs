@@ -177,7 +177,8 @@ namespace PocketFootball.Tests.EditMode
             foreach (var s in AudioCues.All) Assert.AreEqual(0, d.Played(s), s.ToString());
 
             cfg.features["audio"] = true;
-            Assert.AreEqual(0, d.Observe(w).Count, "switched on: no backlog of old events");
+            // (the huddle clock's tick is about now, not an old event: switched on in a huddle's last seconds, it ticks)
+            CollectionAssert.IsSubsetOf(d.Observe(w), new[] { Sound.Tick }, "switched on: no backlog of old events");
         }
 
         // Listening only reads the World: a game with sound hashes the same, tick by tick, as one without.
