@@ -253,6 +253,19 @@
       "ahead":    { "prevent": 2, "cover2": 1 }
     }
   },
+  "events": {
+    "logKeep": 2048
+  },
+  "replay": {
+    "seconds": 2,
+    "afterS": 0.6,
+    "speed": 0.5,
+    "cardS": 3,
+    "tagFontPx": 34,
+    "cardTitlePx": 52,
+    "cardLinePx": 30,
+    "cardWidthPx": 640
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
@@ -261,6 +274,7 @@
     "intreturn": true,
     "moves": true,
     "botcoach": false,
-    "botsV2": false
+    "botsV2": false,
+    "replay": true
   }
 }

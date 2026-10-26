@@ -161,6 +161,7 @@ namespace PocketFootball.Boot
             foreach (var p in World.Players)
                 if (p.Human) marks.Beam(p.Slot, Players.FeetPosition(p.Slot), Colors.Hex(cfg.teams[p.Team].color), findUntil.TryGetValue(p.Slot, out float fu) && fu > now, now);
             if (Photo == null) FollowBall(Time.deltaTime);
+            Replay.Drive(gameObject, cfg, World, Players, rig, s => Roster[s]?.Name);   // WS-08: the instant replay and the result card
         }
 
         readonly List<KeyValuePair<int, Vector3>> humanFeet = new List<KeyValuePair<int, Vector3>>();

@@ -24,6 +24,8 @@ namespace PocketFootball.Sim
         public ViewConfig view = new ViewConfig();
         public AnimConfig anim = new AnimConfig();
         public CoachConfig coach = new CoachConfig();   // WS-06 (BotCoach.cs)
+        public EventsConfig events = new EventsConfig();   // WS-00 (Events.cs)
+        public ReplayConfig replay = new ReplayConfig();   // WS-08 (ReplayConfig.cs, View/Replay.cs)
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 
