@@ -4,129 +4,297 @@ using UnityEngine;
 
 namespace PocketFootball.View
 {
-    // The stadium round the field (concept 04): on the far side a sideline with each team's players, coaches, refs,
-    // tents, benches and coolers, a low wall with team banners, then stands full of a small team-coloured crowd; on the
-    // near side the backs of the bench players at the bottom of the picture. Orange down markers on both sidelines.
-    // Built once from code, seeded (the same crowd every run).
+    // The stadium round the field (concept 04, WS-10). Far side: each team's players, staff and refs on the sideline,
+    // small tents against the wall, benches, coolers and ice chests, the wall with team banners, then the stands full
+    // of a card crowd that waves. Near side: the home bench row seen from behind at the bottom of the picture (players
+    // with their numbers, staff in caps, a ref, coolers, tents behind). Chunky goal posts on both end lines.
+    // Orange down markers on both sidelines. Every number is in game.json "stadium". Built once from code, seeded (the
+    // same stadium every run).
+    //
+    // The crowd: every fan is a flat card (shirt, head, cap, arms, sometimes a sign). The stands are cut into slices;
+    // each slice is built in four looks (two idle looks, half up, standing with arms up) and only swaps its mesh on
+    // stadium.fps key frames, so the crowd moves in steps like the players' keys (no sine-of-time, no wobble). A wave
+    // of standing fans runs along the stands now and then; between waves the slices flip between their idle looks.
     public sealed class Stadium
     {
+        public const int IdleA = 0, IdleB = 1, Rising = 2, Up = 3, Poses = 4;
+
         readonly GameConfig cfg;
+        readonly StadiumConfig sc;
         readonly Material mat;
         readonly Transform root;
         readonly List<Transform> markers = new List<Transform>();
+        readonly List<CrowdSlice> slices = new List<CrowdSlice>();
+        int lastKey = int.MinValue;
         uint seed = 12345;
-        // people on the far sideline are drawn smaller than the players (concept 04: a dense row under the crowd)
-        const float SidelineScale = 0.6f;
+
+        sealed class CrowdSlice { public MeshFilter filter; public Mesh[] poses; public int pose; }
 
         float Rand() { seed ^= seed << 13; seed ^= seed >> 17; seed ^= seed << 5; return (seed & 0xffffff) / 16777216f; }
+        T Pick<T>(T[] a) => a[(int)(Rand() * a.Length) % a.Length];
 
         public Stadium(GameConfig cfg, Material baseMat)
         {
             this.cfg = cfg;
+            sc = cfg.stadium;
             mat = Looks.Toon(baseMat);
             root = new GameObject("Stadium").transform;
             float m = cfg.field.yardM;
             float side = (cfg.field.HalfWidth + cfg.field.sidelineBorderYd) * m;   // where the white border ends (m)
-            Stands(side);
-            Sidelines(side);
+            Stands(side + sc.wallBackM);
+            Crowd(side + sc.wallBackM);
+            FarSideline(side);
+            NearSideline(side);
+            GoalPosts();
             for (int i = 0; i < 4; i++) markers.Add(DownMarker());
+            root.gameObject.AddComponent<StadiumClock>().Tick = Tick;
         }
 
-        // ---- the stands: a wall with banners, then rising rows of seated fans ----
-        void Stands(float side)
+        // ---- the stands: a wall with banners, rising rows of seats, stair aisles, a roof edge ----
+        float RowY(int r) => sc.firstRowM + r * sc.rowRiseM;
+        float RowZ(float wallZ, int r) => wallZ + sc.rowBackM + r * sc.rowDepthM;
+        bool InAisle(float x) => sc.aisleEveryM > 0f && Mathf.Repeat(x + sc.halfLengthM, sc.aisleEveryM) < sc.aisleWidthM;
+
+        void Stands(float wallZ)
         {
-            float wallZ = side + 5.6f, x0 = -95f, x1 = 95f;
+            float hx = sc.halfLengthM;
             var b = new Blocks();
-            Color wall = Colors.Hex("#2f6b47"), concrete = Colors.Hex("#c9cec9"), seat = Colors.Hex("#aab3ae");
-            b.Box(new Vector3(0, 0.75f, wallZ), new Vector3((x1 - x0) * 0.5f, 0.75f, 0.25f), wall);
-            int rows = 26;
-            var crowd = new Blocks { Flag = Looks.Gloss };
-            Color[] shirts = { Colors.Hex(cfg.teams[1].color), Colors.Hex(cfg.teams[1].color), Colors.Hex("#2a7a45"), Colors.Hex("#1f6b3c"), Colors.Hex(cfg.teams[1].color), Colors.Hex("#f3f1ea"), Colors.Hex(cfg.teams[0].color) };
-            Color[] skins = { Colors.Hex("#f2c8a5"), Colors.Hex("#d6a07a"), Colors.Hex("#a8704a"), Colors.Hex("#7a4b2e") };
-            for (int r = 0; r < rows; r++)
+            Color concrete = Colors.Hex(sc.concreteColor), seat = Colors.Hex(sc.seatColor), aisle = Colors.Hex(sc.aisleColor);
+            b.Box(new Vector3(0, sc.wallHeightM * 0.5f, wallZ), new Vector3(hx, sc.wallHeightM * 0.5f, 0.25f), Colors.Hex(sc.wallColor));
+            for (int r = 0; r < sc.rows; r++)
             {
-                float z = wallZ + 1.2f + r * 1.15f, y = 1.6f + r * 0.95f;
-                b.Box(new Vector3(0, y * 0.5f, z), new Vector3((x1 - x0) * 0.5f, y * 0.5f, 0.6f), r % 2 == 0 ? concrete : seat);
-                for (float x = x0 + 0.3f + Rand() * 0.3f; x < x1; x += 0.5f + Rand() * 0.12f)
-                {
-                    if (Rand() < 0.06f) continue;   // an empty seat here and there
-                    Color shirt = shirts[(int)(Rand() * shirts.Length) % shirts.Length];
-                    float h = 0.62f + Rand() * 0.1f;
-                    crowd.Box(new Vector3(x, y + h * 0.45f, z - 0.15f), new Vector3(0.2f, h * 0.45f, 0.15f), shirt);
-                    crowd.Box(new Vector3(x, y + h * 0.9f + 0.12f, z - 0.15f), new Vector3(0.11f, 0.12f, 0.11f), skins[(int)(Rand() * skins.Length) % skins.Length]);
-                    if (Rand() < 0.18f) crowd.Box(new Vector3(x + 0.18f, y + h + 0.32f, z - 0.2f), new Vector3(0.05f, 0.28f, 0.05f), shirt);   // an arm up
-                }
+                float y = RowY(r), z = RowZ(wallZ, r);
+                b.Box(new Vector3(0, y * 0.5f, z), new Vector3(hx, y * 0.5f, sc.rowDepthM * 0.5f + 0.02f), r % 2 == 0 ? concrete : seat);
+                if (sc.aisleEveryM > 0f)
+                    for (float x = -hx + sc.aisleEveryM; x < hx; x += sc.aisleEveryM)   // the stairs, a touch proud of the seats
+                        b.Box(new Vector3(x + sc.aisleWidthM * 0.5f, y * 0.5f + 0.02f, z - 0.02f), new Vector3(sc.aisleWidthM * 0.5f, y * 0.5f, sc.rowDepthM * 0.5f + 0.03f), aisle);
             }
-            // a roof edge over the top rows
-            b.Box(new Vector3(0, 1.6f + rows * 0.95f + 2.5f, wallZ + rows * 1.15f - 2f), new Vector3((x1 - x0) * 0.5f, 0.6f, 4f), Colors.Hex("#d9ddd8"));
+            b.Box(new Vector3(0, RowY(sc.rows) + 2.5f, RowZ(wallZ, sc.rows) - 2f), new Vector3(hx, 0.6f, 4f), Colors.Hex(sc.roofColor));
             b.Build(root, "Stands", mat);
-            crowd.Build(root, "Crowd", mat, false);
 
             // banners on the wall: team colour panels with the team mark
-            for (int i = 0; i < 12; i++)
+            float gap = sc.banners > 0 ? hx * 2f / sc.banners : 0f;
+            for (int i = 0; i < sc.banners; i++)
             {
                 var team = cfg.teams[i % 2 == 0 ? 1 : 0];
-                float x = -80f + i * 14.5f;
+                float x = -hx + (i + 0.5f) * gap;
+                float y = sc.wallHeightM * 0.55f;
                 var panel = new Blocks();
-                panel.Box(new Vector3(x, 0.8f, wallZ - 0.3f), new Vector3(3.2f, 0.62f, 0.05f), Colors.Hex(team.color));
+                panel.Box(new Vector3(x, y, wallZ - 0.3f), new Vector3(3.2f, sc.wallHeightM * 0.41f, 0.05f), Colors.Hex(team.color));
                 panel.Build(root, "Banner", mat, false);
                 var mark = new Material(mat) { name = "Banner " + team.@short };
                 mark.SetTexture("_MainTex", TeamMarks.For(team));
                 mark.SetColor("_PlayerColor", Colors.Hex(team.color));
-                var q = Looks.Flat(root, "BannerMark", new Vector3(x, 0.8f, wallZ - 0.37f), new Vector2(1.1f, 1.1f), Color.white, mark);
+                var q = Looks.Flat(root, "BannerMark", new Vector3(x, y, wallZ - 0.37f), new Vector2(1.1f, 1.1f), Color.white, mark);
                 q.transform.localRotation = Quaternion.LookRotation(Vector3.up, Vector3.back);
             }
         }
 
-        // ---- the sidelines: teams, coaches, refs, tents, benches, coolers ----
-        void Sidelines(float side)
+        // ---- the card crowd ----
+        void Crowd(float wallZ)
+        {
+            float x0 = -sc.halfLengthM, x1 = sc.halfLengthM;
+            int count = Mathf.Max(1, Mathf.CeilToInt((x1 - x0) / Mathf.Max(0.1f, sc.sliceM)));
+            var normal = new Vector3(0f, sc.cardTiltUp, -1f).normalized;   // the cards face the camera, shaded as if leaning back
+            var cards = new Cards[count * Poses];
+            for (int i = 0; i < cards.Length; i++) cards[i] = new Cards { Normal = normal };
+
+            Color home = Colors.Hex(cfg.teams[1].color), away = Colors.Hex(cfg.teams[0].color);
+            Color[] homes = { home, home, Color.Lerp(home, Color.black, 0.25f), Colors.Hex(cfg.teams[1].color2) };
+            Color[] aways = { away, away, Colors.Hex(cfg.teams[0].color2) };
+            Color[] neutrals = Hexes(sc.neutralColors);
+            Color[] skins = { Colors.Hex("#f2c8a5"), Colors.Hex("#d6a07a"), Colors.Hex("#a8704a"), Colors.Hex("#7a4b2e") };
+            Color[] signs = { Color.white, Colors.Hex(cfg.teams[1].color2), home, away };
+            Color trousers = Colors.Hex("#2c2f36");
+
+            for (int r = 0; r < sc.rows; r++)
+            {
+                float y = RowY(r), z = RowZ(wallZ, r) - 0.15f;
+                for (float x = x0 + Rand() * sc.seatM; x < x1; x += sc.seatM + Rand() * sc.seatJitterM)
+                {
+                    if (InAisle(x) || Rand() < sc.emptyChance) continue;
+                    float u = Rand();
+                    Color shirt = u < sc.homeShare ? Pick(homes) : u < sc.homeShare + sc.awayShare ? Pick(aways) : Pick(neutrals);
+                    Color skin = Pick(skins);
+                    Color? cap = Rand() < sc.capChance ? (Color?)(Rand() < 0.5f ? shirt : Pick(homes)) : null;
+                    Color? sign = Rand() < sc.signChance ? (Color?)Pick(signs) : null;
+                    float h = sc.fanM * (0.9f + Rand() * 0.2f);
+                    int idleA = IdleArms(), idleB = IdleArms();
+                    if (sign.HasValue) idleA = idleB = 2;   // a sign stays up
+                    int slice = Mathf.Clamp((int)((x - x0) / sc.sliceM), 0, count - 1);
+                    var at = new Vector3(x, y, z);
+                    for (int p = 0; p < Poses; p++)
+                    {
+                        int arms = p == IdleA ? idleA : p == IdleB ? idleB : p == Rising ? 1 : 2;
+                        float stand = p == Up ? sc.standM : p == Rising ? sc.standM * 0.5f : 0f;
+                        Fan(cards[slice * Poses + p], at, h, stand, arms, shirt, skin, trousers, cap, sign);
+                    }
+                }
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                var go = new GameObject("Crowd" + i);
+                go.transform.SetParent(root, false);
+                var s = new CrowdSlice { poses = new Mesh[Poses], pose = IdleA };
+                for (int p = 0; p < Poses; p++) s.poses[p] = cards[i * Poses + p].Build("Crowd" + i + "." + p);
+                s.filter = go.AddComponent<MeshFilter>();
+                s.filter.sharedMesh = s.poses[IdleA];
+                var mr = go.AddComponent<MeshRenderer>();
+                mr.sharedMaterial = mat;
+                mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                slices.Add(s);
+            }
+        }
+
+        // Arms for an idle look: mostly down, now and then out or up.
+        int IdleArms() { float u = Rand(); return u < sc.idleArmsChance ? 2 : u < sc.idleArmsChance * 2f ? 1 : 0; }
+
+        // One fan as a flat card: legs when standing, shirt, head, cap, arms (0 down, 1 out, 2 up), a sign held up.
+        static void Fan(Cards c, Vector3 seat, float h, float stand, int arms, Color shirt, Color skin, Color trousers, Color? cap, Color? sign)
+        {
+            float hip = seat.y + stand, torso = h * 0.56f, headR = h * 0.14f;
+            if (stand > 0f) c.Rect(new Vector3(seat.x, seat.y + stand * 0.5f, seat.z + 0.01f), h * 0.13f, stand * 0.5f, trousers);
+            c.Rect(new Vector3(seat.x, hip + torso * 0.5f, seat.z), h * 0.19f, torso * 0.5f, shirt);
+            float headY = hip + torso + headR * 0.9f;
+            c.Rect(new Vector3(seat.x, headY, seat.z - 0.01f), headR * 0.85f, headR, skin);
+            if (cap.HasValue) c.Rect(new Vector3(seat.x, headY + headR * 0.75f, seat.z - 0.02f), headR * 0.95f, headR * 0.35f, cap.Value);
+            float armL = h * 0.36f, armW = h * 0.055f;
+            for (int s = -1; s <= 1; s += 2)
+            {
+                var dir = arms == 0 ? new Vector2(s * 0.12f, -1f) : arms == 1 ? new Vector2(s * 0.75f, 0.66f) : new Vector2(s * 0.22f, 1f);
+                dir.Normalize();
+                var shoulder = new Vector3(seat.x + s * h * 0.17f, hip + torso * 0.9f, seat.z - 0.02f);
+                var mid = shoulder + new Vector3(dir.x, dir.y, 0f) * armL * 0.5f;
+                c.Rect(mid, armW, armL * 0.5f, arms == 0 ? shirt : skin, Mathf.Atan2(-dir.x, dir.y));
+            }
+            if (sign.HasValue) c.Rect(new Vector3(seat.x, headY + headR + h * 0.2f, seat.z - 0.03f), h * 0.34f, h * 0.2f, sign.Value);
+        }
+
+        static Color[] Hexes(List<string> hex)
+        {
+            if (hex == null || hex.Count == 0) return new[] { Color.white };
+            var c = new Color[hex.Count];
+            for (int i = 0; i < c.Length; i++) c[i] = Colors.Hex(hex[i]);
+            return c;
+        }
+
+        // The key frame at this time (stepped at fps).
+        public static int CrowdKey(float seconds, float fps) => fps > 0f ? Mathf.FloorToInt(seconds * fps) : 0;
+
+        // Which look a crowd slice shows on a key frame: the wave (rising, up, sitting back down) when it passes,
+        // otherwise one of the two idle looks, flipped every idleKeys keys at a different key for each slice.
+        public static int SlicePose(StadiumConfig sc, int key, int slice)
+        {
+            if (sc.waveEveryS > 0f && sc.fps > 0f && sc.sliceM > 0f)
+            {
+                int period = Mathf.Max(1, Mathf.RoundToInt(sc.waveEveryS * sc.fps));
+                int k = ((key % period) + period) % period;
+                float step = sc.waveSpeedMS / sc.fps / sc.sliceM;   // slices the front moves per key
+                float d = k * step - slice, w = Mathf.Max(1f, sc.waveWidthM / sc.sliceM), r = Mathf.Max(1f, step);
+                if (d >= 0f && d < w + 2f * r) return d < r || d >= w + r ? Rising : Up;   // rise, stand, sit back down
+            }
+            uint h = Mix((uint)slice * 2654435761u ^ (uint)((key + slice * 7) / Mathf.Max(1, sc.idleKeys)));
+            return (h & 1u) == 0u ? IdleA : IdleB;
+        }
+
+        static uint Mix(uint h) { h ^= h >> 16; h *= 0x7feb352du; h ^= h >> 15; h *= 0x846ca68bu; h ^= h >> 16; return h; }
+
+        // Called every frame (StadiumClock); swaps slice meshes only when the key frame changes.
+        void Tick(float seconds)
+        {
+            int key = CrowdKey(seconds, sc.fps);
+            if (key == lastKey) return;
+            lastKey = key;
+            for (int i = 0; i < slices.Count; i++)
+            {
+                int p = SlicePose(sc, key, i);
+                if (p == slices[i].pose) continue;
+                slices[i].pose = p;
+                slices[i].filter.sharedMesh = slices[i].poses[p];
+            }
+        }
+
+        // ---- the far sideline: each team's players and staff, refs, tents, benches, coolers ----
+        void FarSideline(float side)
         {
             var props = new Blocks();
-            // far side: home team (index 1) on the left half, visitors on the right
+            float wallZ = side + sc.wallBackM, s = sc.farScale;
             for (int t = 0; t < cfg.teams.Count; t++)
             {
                 var team = cfg.teams[t];
-                float sx = t == 1 ? -1f : 1f;
-                // tents and a bench behind the players
-                Tent(props, new Vector3(sx * 44f, 0, side + 3.4f), Colors.Hex(team.color));
-                Tent(props, new Vector3(sx * 30f, 0, side + 4.2f), Colors.Hex(team.color));
-                props.Box(new Vector3(sx * 22f, 0.25f, side + 4.4f), new Vector3(9f, 0.25f, 0.35f), Colors.Hex("#4a4f55"));
-                Cooler(props, new Vector3(sx * 8f, 0, side + 4.2f));
-                Cooler(props, new Vector3(sx * 36f, 0, side + 4.2f));
-                // players standing along the far sideline
-                for (int i = 0; i < 20; i++)
+                float sx = t == 1 ? -1f : 1f;   // home (index 1) on the left half, visitors on the right
+                for (int i = 0; i < sc.tentsPerTeam; i++)
+                    Tent(props, new Vector3(sx * (sc.tentFirstXM + i * sc.tentGapM), 0, wallZ - sc.tentFromWallM), Colors.Hex(team.color), sc.tentScale);
+                float benchZ = side + sc.farRowM + sc.farDepthM + 0.4f;
+                props.Box(new Vector3(sx * sc.benchXM, 0.45f * s, benchZ), new Vector3(sc.benchHalfM, 0.45f * s, 0.35f * s), Colors.Hex("#4a4f55"));
+                for (int i = 0; i < sc.coolerXM.Count; i++)
                 {
-                    float x = sx * (5f + i * 2.1f + Rand() * 1.2f), z = side + 1.8f + Rand() * 2.4f;
-                    int number = 10 + (int)(Rand() * 80);
-                    var f = FootballFigure.Create(root, team, number, Rand() < 0.3f ? FootballFigure.Build.Big : FootballFigure.Build.Mid, (int)(Rand() * 999), cfg.view.playerHeightM * SidelineScale, mat, TeamMarks.For(team));
-                    f.transform.localPosition = new Vector3(x, 0, z);
-                    f.transform.localRotation = Quaternion.Euler(0, 90f + (Rand() - 0.5f) * 40f, 0);
-                    f.Pose(FootballFigure.PoseKind.Stand, 0);
+                    var at = new Vector3(sx * sc.coolerXM[i], 0, benchZ + 0.6f);
+                    if (i % 2 == 0) Cooler(props, at, s); else IceChest(props, at, s);
                 }
-                // coaches in team polos
-                for (int i = 0; i < 5; i++) Person(new Vector3(sx * (8f + i * 7f + Rand() * 2f), 0, side + 1.2f + Rand() * 0.8f), i % 2 == 0 ? Colors.Hex(team.color) : Colors.Hex("#f3f1ea"), Colors.Hex("#2c2f36"), false, 90f + (Rand() - 0.5f) * 40f);
-                // the near side: bench players' backs at the bottom of the picture
-                for (int i = 0; i < 16; i++)
-                {
-                    float x = sx * (2f + i * 2.6f + Rand() * 1.0f), z = -side - 6.5f - Rand() * 1.4f;
-                    var f = FootballFigure.Create(root, team, 10 + (int)(Rand() * 80), Rand() < 0.35f ? FootballFigure.Build.Big : FootballFigure.Build.Mid, (int)(Rand() * 999), cfg.view.playerHeightM * 1.15f, mat, TeamMarks.For(team));
-                    f.transform.localPosition = new Vector3(x, 0, z);
-                    f.transform.localRotation = Quaternion.Euler(0, -90f + (Rand() - 0.5f) * 50f, 0);
-                    f.Pose(FootballFigure.PoseKind.Stand, 0);
-                }
-                Cooler(props, new Vector3(sx * 30f, 0, -side - 2.5f));
+                props.Box(new Vector3(sx * (sc.benchXM + sc.benchHalfM + 1.2f), 0.45f * s, benchZ), new Vector3(0.25f * s, 0.45f * s, 0.25f * s), Colors.Hex("#c8372d"));   // a bin
+                // the team's players stand in a crowd near the 50, staff all along
+                int n = Mathf.Max(1, sc.farPlayersPerTeam);
+                for (int i = 0; i < sc.farPlayersPerTeam; i++)
+                    Player(team, sx * (sc.farFromCentreM + (i + Rand()) * sc.farSpreadM / n), side + sc.farRowM + Rand() * sc.farDepthM, s, 90f + (Rand() - 0.5f) * 40f);
+                int ns = Mathf.Max(1, sc.farStaffPerTeam);
+                for (int i = 0; i < sc.farStaffPerTeam; i++)
+                    Staff(team, new Vector3(sx * ((i + Rand()) * sc.staffSpreadM / ns), 0, side + sc.farRowM * 0.6f + Rand() * sc.farDepthM), 90f + (Rand() - 0.5f) * 40f, s);
             }
-            // referees on both sidelines
-            foreach (float x in new[] { -24f, 2f, 26f }) Person(new Vector3(x, 0, side + 0.8f), Color.white, Colors.Hex("#1e1e22"), true, 90f);
-            foreach (float x in new[] { -30f, 14f }) Person(new Vector3(x, 0, -side - 1.2f), Color.white, Colors.Hex("#1e1e22"), true, -90f);
-            props.Build(root, "Sideline", mat);
+            foreach (float x in sc.farRefsXM) Person(new Vector3(x, 0, side + 0.8f), Color.white, Colors.Hex("#1e1e22"), Color.white, true, 90f, s);
+            props.Build(root, "FarSideline", mat);
         }
 
-        void Tent(Blocks b, Vector3 at, Color skirt)
+        // ---- the near sideline: the home bench row from behind ----
+        void NearSideline(float side)
         {
-            float w = 2.6f, d = 2.2f, h = 2.3f, peak = 3.3f;
+            var props = new Blocks();
+            var home = cfg.teams[1];
+            float s = sc.nearScale, step = sc.nearHalfLengthM * 2f / Mathf.Max(1, sc.nearCount);
+            for (int i = 0; i < sc.nearCount; i++)
+            {
+                float x = -sc.nearHalfLengthM + (i + 0.2f + Rand() * 0.6f) * step;
+                float z = -side - sc.nearRowM - Rand() * sc.nearDepthM;
+                float yaw = -90f + (Rand() - 0.5f) * 50f;
+                float u = Rand();
+                if (u < sc.nearPropShare)
+                {
+                    if (Rand() < 0.5f) Cooler(props, new Vector3(x, 0, z + 0.6f), s); else IceChest(props, new Vector3(x, 0, z + 0.6f), s);
+                }
+                else if (u < sc.nearPropShare + sc.nearStaffShare) Staff(home, new Vector3(x, 0, z), yaw, s);
+                else Player(home, x, z, s, yaw);
+            }
+            foreach (float x in sc.nearRefsXM) Person(new Vector3(x, 0, -side - sc.nearRowM + 0.6f), Color.white, Colors.Hex("#1e1e22"), Color.white, true, -90f, s);
+            foreach (float x in sc.nearTentsXM)
+                Tent(props, new Vector3(x, 0, -side - sc.nearRowM - sc.nearDepthM - 1f), Colors.Hex(home.color), sc.nearTentScale);
+            props.Build(root, "NearSideline", mat);
+        }
+
+        void Player(TeamConfig team, float x, float z, float scale, float yaw)
+        {
+            var f = FootballFigure.Create(root, team, 10 + (int)(Rand() * 80), Rand() < 0.3f ? FootballFigure.Build.Big : FootballFigure.Build.Mid, (int)(Rand() * 999), cfg.view.playerHeightM * scale, mat, TeamMarks.For(team));
+            f.transform.localPosition = new Vector3(x, 0, z);
+            f.transform.localRotation = Quaternion.Euler(0, yaw, 0);
+            f.Pose(FootballFigure.PoseKind.Stand, 0);
+        }
+
+        // A coach or trainer: a team polo (or white), khaki or dark trousers, a team cap.
+        void Staff(TeamConfig team, Vector3 at, float yaw, float scale)
+        {
+            Color tc = Colors.Hex(team.color);
+            Color shirt = Rand() < 0.7f ? tc : Colors.Hex("#f3f1ea");
+            Color trousers = Rand() < 0.5f ? Colors.Hex("#c9b48a") : Colors.Hex("#2c2f36");
+            Color cap = Rand() < 0.75f ? tc : Colors.Hex("#2c2f36");
+            Person(at, shirt, trousers, cap, false, yaw, scale);
+        }
+
+        // A small tent: four poles, a peaked white canopy, a team-coloured valance. s scales it.
+        void Tent(Blocks b, Vector3 at, Color skirt, float s)
+        {
+            float w = 2.6f * s, d = 2.2f * s, h = 2.3f * s, peak = 3.3f * s;
             foreach (var c in new[] { new Vector3(-w, 0, -d), new Vector3(w, 0, -d), new Vector3(-w, 0, d), new Vector3(w, 0, d) })
-                b.Box(at + c + Vector3.up * h * 0.5f, new Vector3(0.05f, h * 0.5f, 0.05f), Colors.Hex("#c9ccd0"));
+                b.Box(at + c + Vector3.up * h * 0.5f, new Vector3(0.06f * s, h * 0.5f, 0.06f * s), Colors.Hex("#c9ccd0"));
             Color canvas = Colors.Hex("#f4f4f2");
             Vector3 top = at + Vector3.up * peak;
             Vector3 a = at + new Vector3(-w, h, -d), bb = at + new Vector3(w, h, -d), c2 = at + new Vector3(w, h, d), d2 = at + new Vector3(-w, h, d);
@@ -134,20 +302,31 @@ namespace PocketFootball.View
             b.Quad(bb, top, top, c2, canvas, Vector3.right + Vector3.up);
             b.Quad(c2, top, top, d2, canvas, Vector3.forward + Vector3.up);
             b.Quad(d2, top, top, a, canvas, Vector3.left + Vector3.up);
-            b.Box(at + new Vector3(0, h - 0.2f, -d), new Vector3(w, 0.2f, 0.03f), skirt);
+            foreach (float sd in new[] { -1f, 1f })
+                b.Box(at + new Vector3(0, h - 0.22f * s, sd * d), new Vector3(w, 0.22f * s, 0.03f), skirt);
         }
 
-        void Cooler(Blocks b, Vector3 at)
+        // A drinks table with two orange jugs. s scales it.
+        void Cooler(Blocks b, Vector3 at, float s)
         {
-            b.Box(at + new Vector3(0, 0.45f, 0), new Vector3(0.9f, 0.45f, 0.4f), Colors.Hex("#55595f"));          // table
-            b.Box(at + new Vector3(-0.4f, 1.15f, 0), new Vector3(0.3f, 0.25f, 0.3f), Colors.Hex("#f08a24"));       // jugs
-            b.Box(at + new Vector3(0.4f, 1.15f, 0), new Vector3(0.3f, 0.25f, 0.3f), Colors.Hex("#f08a24"));
-            b.Box(at + new Vector3(-0.4f, 1.43f, 0), new Vector3(0.31f, 0.04f, 0.31f), Colors.Hex("#f6f6f2"));
-            b.Box(at + new Vector3(0.4f, 1.43f, 0), new Vector3(0.31f, 0.04f, 0.31f), Colors.Hex("#f6f6f2"));
+            b.Box(at + new Vector3(0, 0.45f, 0) * s, new Vector3(0.9f, 0.45f, 0.4f) * s, Colors.Hex("#55595f"));
+            foreach (float sx in new[] { -0.4f, 0.4f })
+            {
+                b.Box(at + new Vector3(sx, 1.15f, 0) * s, new Vector3(0.3f, 0.25f, 0.3f) * s, Colors.Hex("#f08a24"));
+                b.Box(at + new Vector3(sx, 1.43f, 0) * s, new Vector3(0.31f, 0.04f, 0.31f) * s, Colors.Hex("#f6f6f2"));
+            }
         }
 
-        // A plain person (a coach or a ref): a cap, a head, a shirt (stripes for a ref), trousers. Static mesh.
-        void Person(Vector3 at, Color shirt, Color trousers, bool stripes, float yaw)
+        // A big orange ice chest on the grass with a white lid. s scales it.
+        void IceChest(Blocks b, Vector3 at, float s)
+        {
+            b.Box(at + new Vector3(0, 0.32f, 0) * s, new Vector3(0.6f, 0.32f, 0.36f) * s, Colors.Hex("#f07a1a"));
+            b.Box(at + new Vector3(0, 0.68f, 0) * s, new Vector3(0.62f, 0.05f, 0.38f) * s, Colors.Hex("#f6f6f2"));
+        }
+
+        // A plain person (a coach or a ref): a cap, a head, a shirt (stripes for a ref), trousers. Static mesh, scale
+        // a share of the players' height.
+        void Person(Vector3 at, Color shirt, Color trousers, Color cap, bool stripes, float yaw, float scale)
         {
             var k = new FigureKit();
             Color skin = Colors.Hex(Rand() < 0.5f ? "#e9b892" : "#a8704a");
@@ -160,21 +339,44 @@ namespace PocketFootball.View
             if (stripes)
                 for (int i = -3; i <= 3; i++)
                 {
-                    var s = FigureKit.OnLathe(body, i * 50f);
-                    k.Stroke(s, new[] { new Vector2(0, 80), new Vector2(0, 128) }, new[] { 4f, 4f }, 0.4f, Colors.Hex("#1e1e22"), 2);
+                    var st = FigureKit.OnLathe(body, i * 50f);
+                    k.Stroke(st, new[] { new Vector2(0, 80), new Vector2(0, 128) }, new[] { 4f, 4f }, 0.4f, Colors.Hex("#1e1e22"), 2);
                 }
-            foreach (float s in new[] { 1f, -1f })
+            foreach (float sd in new[] { 1f, -1f })
             {
-                k.Limb(new Vector3(0, 124, s * 20), new Vector3(4, 84, s * 23), 6.5f, 5.5f, shirt);
-                k.Ball(new Vector3(5, 80, s * 23), 5.5f, skin);
+                k.Limb(new Vector3(0, 124, sd * 20), new Vector3(4, 84, sd * 23), 6.5f, 5.5f, shirt);
+                k.Ball(new Vector3(5, 80, sd * 23), 5.5f, skin);
             }
             k.Ellipsoid(new Vector3(2, 150, 0), new Vector3(15, 17, 15), skin, 10, 16);
-            k.Ellipsoid(new Vector3(0, 160, 0), new Vector3(15.5f, 9f, 15.5f), stripes ? Color.white : shirt, 8, 16);   // cap
-            k.Ellipsoid(new Vector3(14, 157, 0), new Vector3(9, 1.6f, 11), stripes ? Color.white : shirt, 4, 12);       // brim
+            k.Ellipsoid(new Vector3(0, 160, 0), new Vector3(15.5f, 9f, 15.5f), cap, 8, 16);   // cap
+            k.Ellipsoid(new Vector3(14, 157, 0), new Vector3(9, 1.6f, 11), cap, 4, 12);       // brim
             var go = Looks.Static(root, stripes ? "Ref" : "Coach", k, mat);
             go.transform.localPosition = at;
             go.transform.localRotation = Quaternion.Euler(0, yaw, 0);
-            go.transform.localScale = Vector3.one * cfg.view.playerHeightM * (at.z > 0 ? SidelineScale : 0.95f) / 170f;
+            go.transform.localScale = Vector3.one * cfg.view.playerHeightM * scale / 170f;
+        }
+
+        // ---- the goal posts: chunky yellow, a padded base post behind the end line, a gooseneck, crossbar, uprights ----
+        void GoalPosts()
+        {
+            float endX = cfg.field.HalfLength * cfg.field.yardM;
+            Color yellow = Colors.Hex(sc.postColor), pad = Colors.Hex(sc.postPadColor), ribbon = Colors.Hex(sc.postRibbonColor);
+            float t = sc.postThickM * 0.5f, bar = sc.postCrossbarM, half = sc.postWidthM * 0.5f, up = sc.postUprightM;
+            var b = new Blocks();
+            foreach (float sx in new[] { -1f, 1f })
+            {
+                float baseX = sx * (endX + sc.postBackM);
+                b.Box(new Vector3(baseX, bar * 0.5f, 0), new Vector3(t * 1.3f, bar * 0.5f, t * 1.3f), yellow);                              // the base post
+                b.Box(new Vector3(baseX, sc.postPadM * 0.5f, 0), new Vector3(t * 2.2f, sc.postPadM * 0.5f, t * 2.2f), pad);                  // its pad
+                b.Box(new Vector3(sx * (endX + sc.postBackM * 0.5f), bar, 0), new Vector3(sc.postBackM * 0.5f + t, t, t), yellow);           // the gooseneck
+                b.Box(new Vector3(sx * endX, bar, 0), new Vector3(t, t, half + t), yellow);                                                  // the crossbar
+                foreach (float sz in new[] { -1f, 1f })
+                {
+                    b.Box(new Vector3(sx * endX, bar + up * 0.5f, sz * half), new Vector3(t * 0.8f, up * 0.5f, t * 0.8f), yellow);          // an upright
+                    b.Box(new Vector3(sx * endX, bar + up + sc.postRibbonM * 0.5f, sz * half), new Vector3(t * 0.5f, sc.postRibbonM * 0.5f, t * 0.5f), ribbon);
+                }
+            }
+            b.Build(root, "GoalPosts", mat);
         }
 
         // An orange down marker: a pole with a box on top.
@@ -200,5 +402,44 @@ namespace PocketFootball.View
             markers[2].localPosition = new Vector3(losX * m, 0, -z);
             markers[3].localPosition = new Vector3(firstX * m, 0, -z);
         }
+
+        // Flat upright cards with one shading normal, gathered into one mesh (one per crowd slice and look).
+        sealed class Cards
+        {
+            readonly List<Vector3> pos = new List<Vector3>(), nrm = new List<Vector3>();
+            readonly List<Color> col = new List<Color>();
+            readonly List<int> tris = new List<int>();
+            public Vector3 Normal;
+
+            // A rectangle standing in the x-y plane, facing the camera (-z), turned by angle (radians) round its centre.
+            public void Rect(Vector3 c, float hw, float hh, Color color, float angle = 0f)
+            {
+                var ax = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * hw;
+                var ay = new Vector3(-Mathf.Sin(angle), Mathf.Cos(angle), 0f) * hh;
+                int s = pos.Count;
+                var vc = Looks.VertexColor(color, Looks.Paint);
+                foreach (var p in new[] { c - ax - ay, c - ax + ay, c + ax + ay, c + ax - ay }) { pos.Add(p); nrm.Add(Normal); col.Add(vc); }
+                tris.Add(s); tris.Add(s + 1); tris.Add(s + 2); tris.Add(s); tris.Add(s + 2); tris.Add(s + 3);
+            }
+
+            public Mesh Build(string name)
+            {
+                var m = new Mesh { name = name };
+                if (pos.Count > 65000) m.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+                m.SetVertices(pos);
+                m.SetNormals(nrm);
+                m.SetColors(col);
+                m.SetTriangles(tris, 0);
+                m.RecalculateBounds();
+                return m;
+            }
+        }
+    }
+
+    // Drives the crowd's key frames from the TV's clock (unscaled, so a slow-motion replay does not slow the crowd).
+    public sealed class StadiumClock : MonoBehaviour
+    {
+        public System.Action<float> Tick;
+        void Update() { Tick?.Invoke(Time.unscaledTime); }
     }
 }

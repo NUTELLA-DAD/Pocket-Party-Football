@@ -26,6 +26,7 @@ namespace PocketFootball.Sim
         public EventsConfig events = new EventsConfig();   // WS-00 (Events.cs)
         public ReplayConfig replay = new ReplayConfig();   // WS-08 (ReplayConfig.cs, View/Replay.cs)
         public DefenseConfig defense = new DefenseConfig();   // WS-03 defender moves (DefenseMoves.cs)
+        public StadiumConfig stadium = new StadiumConfig();   // WS-10 the stadium and crowd (StadiumConfig.cs, View/Stadium.cs)
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 
