@@ -162,6 +162,9 @@ namespace PocketFootball.Sim
     public sealed class TeamConfig
     {
         public string name, @short, color, color2;
+        // a rigged Humanoid model under Resources worn instead of the figure built from code, and its colour map
+        // (FEATURES.modelPlayers; empty: the figure)
+        public string model, modelTexture;
     }
 
     public sealed class NetConfig

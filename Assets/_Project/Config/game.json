@@ -229,7 +229,9 @@
       "name": "CHIEFS",
       "short": "KC",
       "color": "#d7263d",
-      "color2": "#ffb612"
+      "color2": "#ffb612",
+      "model": "Models/Chiefs24/Chiefs24_Rigged",
+      "modelTexture": "Models/Chiefs24/Chiefs24_BaseColor"
     },
     {
       "name": "ROUGHRIDERS",
@@ -645,6 +647,7 @@
     "defmoves": true,
     "throwStick": true,
     "snap": true,
-    "botQuickCall": true
+    "botQuickCall": true,
+    "modelPlayers": true
   }
 }
