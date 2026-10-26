@@ -15,14 +15,15 @@ namespace PocketFootball.Sim
             float dt = w.Dt;
             var ball = LivePlay.Carrier(w);
             float bx = ball != null ? ball.X : w.Ball.X, bz = ball != null ? ball.Z : w.Ball.Z;
+            int blockers = ball != null ? ball.Team : w.Offense;
             foreach (var d in w.Players)
             {
-                if (d.Team == w.Offense || d == ball) continue;
+                if (d.Team == blockers || d == ball) continue;
                 if (d.FreeTicks > 0) { d.FreeTicks--; continue; }
                 bool held = false;
                 foreach (var o in w.Players)
                 {
-                    if (o.Team != w.Offense || !o.Blocking || o == ball) continue;
+                    if (o.Team != blockers || !o.Blocking || o == ball) continue;
                     float dx = d.X - o.X, dz = d.Z - o.Z;
                     if (dx * dx + dz * dz > b.blockReachYd * b.blockReachYd) continue;
                     // between: the blocker is on the ball's side of the defender

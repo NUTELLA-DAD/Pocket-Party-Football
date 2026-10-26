@@ -204,6 +204,7 @@
     "fieldStripes": true,
     "huddle": true,
     "liveplay": true,
-    "downs": true
+    "downs": true,
+    "intreturn": true
   }
 }

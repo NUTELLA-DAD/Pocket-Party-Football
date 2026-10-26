@@ -39,6 +39,9 @@ namespace PocketFootball.Sim
             var job = JobOfCalled(w, p);
             bool ballOut = w.Ball.State == BallState.Flying || w.Thrown || (carrier != null && carrier != qb);
 
+            // an interception return: his teammates block for him, the old offense chases him down
+            if (carrier != null && carrier.Team != w.Offense && carrier != p)
+                return p.Team == carrier.Team ? Block(w, p, carrier) : Pursue(w, p, carrier);
             if (carrier == p)
             {
                 if (p == qb && !ballOut && !HasRunner(w)) return QbMove(w, p, job);   // in the pocket
@@ -117,7 +120,7 @@ namespace PocketFootball.Sim
             Player best = null; float bd = float.MaxValue;
             foreach (var d in w.Players)
             {
-                if (d.Team == w.Offense) continue;
+                if (d.Team == p.Team) continue;
                 float toBall = (float)Math.Sqrt((d.X - bx) * (d.X - bx) + (d.Z - bz) * (d.Z - bz));
                 float score = LivePlay.Dist(p, d) + toBall * 0.5f;
                 if (score < bd) { bd = score; best = d; }
@@ -137,7 +140,7 @@ namespace PocketFootball.Sim
             float tx = qb.X, tz = qb.Z;
             foreach (var o in w.Players)
             {
-                if (o.Team != w.Offense || !o.Blocking) continue;
+                if (o.Team == p.Team || !o.Blocking) continue;
                 if (LivePlay.Dist(p, o) > w.Cfg.bots.blockReachYd * (1f + 0.5f)) continue;
                 tz += (p.Z >= o.Z ? 1f : -1f) * w.Cfg.bots.rushAroundYd;
                 break;

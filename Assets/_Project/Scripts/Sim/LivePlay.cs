@@ -38,6 +38,7 @@ namespace PocketFootball.Sim
             w.Phase = Phase.Live;
             w.PlayTicks = 0;
             w.Thrown = false;
+            w.Intercepted = false;
             w.Result = "";
             w.CatchTried.Clear();
             foreach (var p in w.Players) { p.RouteIndex = 0; p.TackleCooldown = 0; p.StumbleTicks = 0; p.JukeTicks = 0; p.JukeCooldown = 0; p.BlockedTicks = 0; p.FreeTicks = 0; }
@@ -45,12 +46,14 @@ namespace PocketFootball.Sim
 
         public static void Whistle(World w, string result, float spotX)
         {
+            // an interception return ends like any run, but it is still an interception (or a pick six)
+            if (w.Intercepted) result = result == "TOUCHDOWN" ? "PICK SIX" : "INTERCEPTED";
             var f = w.Cfg.field;
             float lim = f.GoalLineX - f.lineEveryYd * 0.5f;
             w.Phase = Phase.Whistle;
             w.PhaseTicks = Huddle.Ticks(w, w.Cfg.play.whistleS);
             w.Result = result;
-            w.NextLos = result == "TOUCHDOWN" ? w.Cfg.formation.lineOfScrimmageXYd : (spotX < -lim ? -lim : spotX > lim ? lim : spotX);
+            w.NextLos = result == "TOUCHDOWN" || result == "PICK SIX" ? w.Cfg.formation.lineOfScrimmageXYd : (spotX < -lim ? -lim : spotX > lim ? lim : spotX);
             // the numbers: yards gained this play (a touchdown counts to the goal line)
             float end = result == "TOUCHDOWN" ? f.GoalLineX * w.Dir : w.NextLos;
             w.PlaysRun++;
@@ -162,7 +165,12 @@ namespace PocketFootball.Sim
                     if (w.Rng.Value() < (offense ? c.catchChanceOffense : c.catchChanceDefense))
                     {
                         w.Ball.GiveTo(near, w.Cfg.ball);
-                        if (!offense) { Whistle(w, "INTERCEPTED", near.X); return; }
+                        if (!offense)
+                        {
+                            // FEATURES.intreturn: he runs it back until the whistle; off: the play ends at the catch
+                            if (!w.Cfg.Feature("intreturn")) { Whistle(w, "INTERCEPTED", near.X); return; }
+                            w.Intercepted = true;
+                        }
                     }
                 }
             }
@@ -172,6 +180,7 @@ namespace PocketFootball.Sim
             if (carrier != null)
             {
                 if (carrier.Team == w.Offense && carrier.X * dir > f.GoalLineX) { Whistle(w, "TOUCHDOWN", carrier.X); return; }
+                if (carrier.Team != w.Offense && carrier.X * -dir > f.GoalLineX) { Whistle(w, "TOUCHDOWN", carrier.X); return; }   // a pick six
                 if (carrier.OutOfBounds) { Whistle(w, "OUT OF BOUNDS", carrier.X); return; }
                 // bot defenders next to the carrier try a tackle
                 foreach (var p in w.Players)

@@ -24,6 +24,15 @@ namespace PocketFootball.Sim
                 return;
             }
             if (result == "INTERCEPTED") { TurnOver(w, w.NextLos); w.Note = "TURNOVER"; return; }
+            if (result == "PICK SIX")
+            {
+                // 6 to the defense; the team that threw it gets it back at its own 25, still going the same way
+                w.Score[w.Defense] += d.touchdownPoints;
+                w.NextLos = -dir * (goal - d.startOwnYd);
+                w.Down = 1;
+                w.FirstDownX = LineToGain(w, w.NextLos, dir);
+                return;
+            }
             float spot = w.NextLos;
             if ((spot - w.FirstDownX) * dir >= 0f)
             {

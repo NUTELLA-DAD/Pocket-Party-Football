@@ -291,7 +291,7 @@ namespace PocketFootball.Boot
             if (!Huddle.On(w)) return "";
             int secs = Messages.Secs(w);
             if (w.Phase == Phase.Set && LivePlay.On(w)) return "SET   (the QB hikes)";
-            if (w.Phase == Phase.Live) return "";
+            if (w.Phase == Phase.Live) return w.Intercepted ? "INTERCEPTED!" : "";
             if (w.Phase == Phase.Whistle) return w.Result + "!" + (w.Note.Length > 0 ? "   " + w.Note : "");
             if (w.Phase != Phase.Huddle) return "LINE UP   (next huddle in " + secs + ")";
             var parts = new List<string> { "HUDDLE 0:" + secs.ToString("00") };

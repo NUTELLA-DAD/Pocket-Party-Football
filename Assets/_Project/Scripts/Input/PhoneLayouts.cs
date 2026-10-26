@@ -25,6 +25,8 @@ namespace PocketFootball.Input
             bool qb = p == LivePlay.Qb(w);
             if (w.Phase == Phase.Set) return qb ? "qbpre" : Role(p);
             if (carrier == p) return qb && !w.Thrown ? "qb" : "carrier";
+            // an interception return: the team that threw it chases (TACKLE), the interceptor's team blocks
+            if (w.Intercepted && carrier != null) return p.Team == carrier.Team ? "block" : "lb";
             return Role(p);
         }
 

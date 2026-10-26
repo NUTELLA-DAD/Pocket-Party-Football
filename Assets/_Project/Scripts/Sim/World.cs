@@ -65,6 +65,7 @@ namespace PocketFootball.Sim
         public string Result = "";                     // why the whistle blew: TACKLED, SACKED, INCOMPLETE, TOUCHDOWN, ...
         public float NextLos;                          // where the next play starts (yards)
         public bool Thrown;                            // the ball has been thrown this play
+        public bool Intercepted;                       // a defender caught it and is running it back (FEATURES.intreturn)
         public readonly HashSet<int> CatchTried = new HashSet<int>();
         // play-by-play numbers, for the bots' balance check (M1-d) and later the stats
         public int PlaysRun, YardsGained;
@@ -235,7 +236,7 @@ namespace PocketFootball.Sim
             Mix(Offense);
             Mix((int)Phase); Mix(PhaseTicks); Mix(HuddleNumber);
             MixF(Dir); Mix(Down); MixF(FirstDownX); foreach (int sc in Score) Mix(sc); MixS(Note); Mix(PendingTurnover ? 1 : 0);
-            Mix(PlayTicks); MixS(Result); MixF(NextLos); MixF(LineOfScrimmageX); Mix(Thrown ? 1 : 0); Mix(PlaysRun); Mix(YardsGained);
+            Mix(PlayTicks); MixS(Result); MixF(NextLos); MixF(LineOfScrimmageX); Mix(Thrown ? 1 : 0); Mix(Intercepted ? 1 : 0); Mix(PlaysRun); Mix(YardsGained);
             foreach (var c in Calls) MixS(c);
             foreach (var kv in Suggestions) { Mix(kv.Key); MixS(kv.Value); }
             foreach (var p in Players)

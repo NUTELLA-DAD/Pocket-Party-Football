@@ -32,7 +32,7 @@ namespace PocketFootball.Tests.EditMode
                         case "carrier": Assert.AreEqual(Phase.Live, w.Phase); Assert.AreSame(carrier, p, "ball-carrier buttons only with the ball"); break;
                         default:
                             Assert.AreNotSame(carrier, p, l + " is not for the ball carrier in a live play");
-                            Assert.AreEqual(PhoneLayouts.Role(p), l);
+                            if (!w.Intercepted) Assert.AreEqual(PhoneLayouts.Role(p), l);
                             break;
                     }
                 }

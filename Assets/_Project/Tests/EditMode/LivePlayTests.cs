@@ -100,6 +100,75 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual("INTERCEPTED", w.Result);
         }
 
+        static void NoTackles(GameConfig c) { c.play.tackleBase = 0f; c.play.tackleSpeedBonus = 0f; c.play.tackleFromBehindBonus = 0f; }
+
+        // Interception returns (FEATURES.intreturn): the defender who catches it runs until the whistle.
+        static (World w, Player picker) PickedOff(System.Action<GameConfig> tune = null)
+        {
+            var w = AtTheLine(tune: c => { c.play.catchChanceOffense = 0f; c.play.catchChanceDefense = 1f; tune?.Invoke(c); });
+            w.Step(Press(new PlayerInput { Hike = true }));
+            var target = LivePlay.Receiver(w, 1);
+            target.X = w.LineOfScrimmageX + w.Dir * 12f; target.Z = -15f;
+            Player d = null;
+            foreach (var p in w.Players) if (p.Team == w.Defense && !p.Human) { d = p; break; }
+            w.Step(Press(new PlayerInput { Throw = 1 }));
+            for (int i = 0; i < w.Cfg.sim.tickHz * 4 && !w.Intercepted && w.Phase == Phase.Live; i++)
+            {
+                d.X = w.Ball.TargetX; d.Z = w.Ball.TargetZ; d.VX = d.VZ = 0f;
+                w.Step(null);
+            }
+            Assert.IsTrue(w.Intercepted, "picked off");
+            return (w, d);
+        }
+
+        [Test]
+        public void AnInterceptionIsReturnedNotWhistledAtTheCatch()
+        {
+            var (w, d) = PickedOff(NoTackles);
+            Assert.AreEqual(Phase.Live, w.Phase, "the play goes on: he runs it back");
+            Assert.AreEqual(d.Slot, w.Ball.Carrier);
+            float caughtAt = d.X;
+            Run(w, w.Cfg.sim.tickHz);
+            if (w.Phase == Phase.Live) Assert.Greater((caughtAt - d.X) * w.Dir, 1f, "he runs the other way, toward the end zone he defends against");
+        }
+
+        [Test]
+        public void AReturnTackledChangesHandsWhereHeWentDown()
+        {
+            var (w, d) = PickedOff(c => c.play.tackleBase = 1f);
+            int thrower = w.Offense;
+            for (int i = 0; i < w.Cfg.sim.tickHz * 20 && w.Phase == Phase.Live; i++) w.Step(null);
+            Assert.AreEqual(Phase.Whistle, w.Phase);
+            Assert.AreEqual("INTERCEPTED", w.Result, "it ends as an interception, whoever tackled him");
+            float spot = w.NextLos;
+            Run(w, (int)(w.Cfg.play.whistleS * w.Cfg.sim.tickHz) + 2);
+            Assert.AreEqual(1 - thrower, w.Offense, "the other team has it now");
+            Assert.AreEqual(spot, w.LineOfScrimmageX, 1e-3f, "where the return ended");
+        }
+
+        [Test]
+        public void APickSixScoresForTheDefense()
+        {
+            var (w, d) = PickedOff(NoTackles);
+            int thrower = w.Offense, picker = w.Defense;
+            float dir = w.Dir, goal = w.Cfg.field.GoalLineX;
+            d.X = -dir * (goal - 1f);   // a step from the end zone he is running at
+            Run(w, w.Cfg.sim.tickHz, null);
+            for (int i = 0; i < w.Cfg.sim.tickHz * 5 && w.Phase == Phase.Live; i++) w.Step(null);
+            Assert.AreEqual("PICK SIX", w.Result);
+            Assert.AreEqual(6, w.Score[picker]);
+            Run(w, (int)(w.Cfg.play.whistleS * w.Cfg.sim.tickHz) + 2);
+            Assert.AreEqual(thrower, w.Offense, "the team that threw it gets it back");
+            Assert.AreEqual(-dir * (goal - 25f), w.LineOfScrimmageX, 1e-3f, "at its own 25");
+        }
+
+        [Test]
+        public void NoIntReturnSwitchEndsThePlayAtTheCatch()
+        {
+            var cfg = ConfigTests.Load(new Dictionary<string, string> { { "NO_INTRETURN", "1" } });
+            Assert.IsFalse(cfg.Feature("intreturn"));
+        }
+
         [Test]
         public void ABotDefenderTacklesTheCarrier()
         {
