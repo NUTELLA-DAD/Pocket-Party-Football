@@ -168,6 +168,7 @@ namespace PocketFootball.Boot
             Replay.Drive(gameObject, cfg, World, Players, rig, s => Roster[s]?.Name);   // WS-08: the instant replay and the result card
             AudibleHost.Drive(this);   // WS-13: each team's audible / hot route screen, to that team's phones only
             PostGameHost.Drive(this);   // WS-12: the stats, score celebrations, the post-game screen and the phones' final card
+            GameLog.Drive(this);   // WS-15: the game log next to the build (tools/playtest-report.ps1 reads it)
         }
 
         readonly List<KeyValuePair<int, Vector3>> humanFeet = new List<KeyValuePair<int, Vector3>>();

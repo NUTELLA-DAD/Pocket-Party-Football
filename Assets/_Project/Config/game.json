@@ -529,6 +529,7 @@
     "botsV2": false,
     "grassShader": true,
     "audibles": false,
-    "stats": false
+    "stats": false,
+    "gamelog": true
   }
 }
