@@ -259,8 +259,8 @@
     "intreturn": true,
     "moves": true,
     "replay": true,
-    "receiving": false,
-    "clock": false,
+    "receiving": true,
+    "clock": true,
     "lobby": false
   }
 }

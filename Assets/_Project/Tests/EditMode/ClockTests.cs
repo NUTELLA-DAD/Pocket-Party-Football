@@ -45,15 +45,15 @@ namespace PocketFootball.Tests.EditMode
         public void TheClockShipsOffBehindItsOwnSwitch()
         {
             var cfg = ConfigTests.Load();
-            Assert.IsFalse(cfg.Feature("clock"), "FEATURES.clock ships off so the baseline does not change");
+            Assert.IsTrue(cfg.Feature("clock"), "FEATURES.clock is on in game.json (the merge captain turned it on, baseline re-pinned)");
             Assert.AreEqual("NO_CLOCK", ConfigLoader.EnvName("clock"));
             var on = Cfg();
             ConfigLoader.ApplyEnvOverrides(on, k => k == "NO_CLOCK" ? "1" : null);
             Assert.IsFalse(on.Feature("clock"), "NO_CLOCK=1 turns it off");
 
             // off: the game just keeps going, the clock never starts
-            var w = WorldTests.Full(cfg);
-            for (int i = 0; i < Ticks(cfg, 120f); i++) w.Step(null);
+            var w = WorldTests.Full(on);
+            for (int i = 0; i < Ticks(on, 120f); i++) w.Step(null);
             Assert.IsFalse(w.GameClock.Started);
             Assert.IsFalse(Clock.IsOver(w));
             Assert.Greater(w.PlaysRun, 0);

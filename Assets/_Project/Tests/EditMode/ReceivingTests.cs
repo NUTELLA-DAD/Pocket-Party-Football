@@ -50,7 +50,7 @@ namespace PocketFootball.Tests.EditMode
         [Test]
         public void TheSwitchShipsOffAndHasItsEnvOverride()
         {
-            Assert.IsFalse(ConfigTests.Load().Feature("receiving"), "FEATURES.receiving ships off (the merge captain turns it on)");
+            Assert.IsTrue(ConfigTests.Load().Feature("receiving"), "FEATURES.receiving is on in game.json (the merge captain turned it on)");
             Assert.AreEqual("NO_RECEIVING", ConfigLoader.EnvName("receiving"));
             var cfg = ConfigTests.Load();
             cfg.features["receiving"] = true;
