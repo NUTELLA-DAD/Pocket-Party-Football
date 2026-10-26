@@ -101,7 +101,7 @@ namespace PocketFootball.View
             if (!mats.TryGetValue(key, out var m))
             {
                 var tex = string.IsNullOrEmpty(team.modelTexture) ? null : Resources.Load<Texture2D>(team.modelTexture);
-                if (tex == null && smr.sharedMaterial != null) tex = smr.sharedMaterial.mainTexture as Texture2D;
+                if (tex == null) Debug.LogWarning("[model] no colour map at Resources/" + team.modelTexture + "; the model shows untextured");
                 mats[key] = m = new Material(kit) { name = "Toon (" + prefab.name + ")" };
                 if (tex != null) m.SetTexture("_MainTex", tex);
                 m.SetColor("_PlayerColor", Color.white);
