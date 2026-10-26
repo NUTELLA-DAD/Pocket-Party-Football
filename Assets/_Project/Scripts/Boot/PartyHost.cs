@@ -170,6 +170,7 @@ namespace PocketFootball.Boot
             AudibleHost.Drive(this);   // WS-13: each team's audible / hot route screen, to that team's phones only
             PostGameHost.Drive(this);   // WS-12: the stats, score celebrations, the post-game screen and the phones' final card
             GameLog.Drive(this);   // WS-15: the game log next to the build (tools/playtest-report.ps1 reads it)
+            Audio.Drive(gameObject, cfg, World);   // WS-09: whistle, hits, crowd, huddle tick, score sting
         }
 
         readonly List<KeyValuePair<int, Vector3>> humanFeet = new List<KeyValuePair<int, Vector3>>();

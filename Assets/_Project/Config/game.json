@@ -536,6 +536,24 @@
       "kick":    { "a": "kick" }
     }
   },
+  "audio": {
+    "master": 0.8,
+    "sampleRate": 22050,
+    "huddleTickFromS": 5,
+    "levels": {
+      "whistle": 0.7,
+      "hit": 0.8,
+      "bigHit": 1,
+      "crowd": 0.5,
+      "groan": 0.45,
+      "tick": 0.4,
+      "sting": 0.7,
+      "snap": 0.5,
+      "whoosh": 0.35,
+      "catch": 0.5,
+      "chime": 0.5
+    }
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
@@ -556,6 +574,7 @@
     "audibles": false,
     "stats": false,
     "gamelog": true,
-    "gamepad": false
+    "gamepad": false,
+    "audio": false
   }
 }
