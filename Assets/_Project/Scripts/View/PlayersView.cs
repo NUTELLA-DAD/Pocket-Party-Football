@@ -97,6 +97,7 @@ namespace PocketFootball.View
                 travelled[p.Slot] = (travelled.TryGetValue(p.Slot, out float d) ? d : 0f) + moved;
                 int frame = (int)(travelled[p.Slot] / StrideM) % 2;
                 bool carrier = w.Ball.State == BallState.Held && w.Ball.Carrier == p.Slot;
+                if (!down && DefenseMovesView.PoseFor(w, p, out var dk, out int df)) { fig.Pose(dk, df); continue; }   // WS-03 defender moves
                 if (PoseFor(move, frame, out var kind, out int f)) fig.Pose(kind, f);
                 else if (speed > 0.5f) fig.Pose(carrier ? FootballFigure.PoseKind.Carry : FootballFigure.PoseKind.Run, frame);
                 else fig.Pose(p.Pos == "OL" || p.Pos == "DL" ? FootballFigure.PoseKind.Stance : FootballFigure.PoseKind.Ready, 0);
