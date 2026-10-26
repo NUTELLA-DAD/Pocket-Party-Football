@@ -40,8 +40,6 @@ namespace PocketFootball.View
             pivot.SetParent(holder, false);
             var inst = Instantiate(prefab, pivot, false);
             inst.name = prefab.name;
-            var anim = inst.GetComponentInChildren<Animator>();
-            if (anim != null) anim.enabled = false;   // (the figure poses it, no controller)
             var smr = inst.GetComponentInChildren<SkinnedMeshRenderer>();
 
             string[] names =
