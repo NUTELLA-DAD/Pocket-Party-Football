@@ -33,3 +33,6 @@ sysinfo.txt
 /Assets/StreamingAssets/config/
 /Assets/StreamingAssets/config.meta
 
+
+# local node tools (Playwright for tools/phone/*.js)
+node_modules/
