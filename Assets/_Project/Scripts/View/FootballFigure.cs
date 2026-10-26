@@ -12,7 +12,12 @@ namespace PocketFootball.View
     public sealed class FootballFigure : MonoBehaviour
     {
         public enum Build { Slim, Mid, Big }
-        public enum PoseKind { Stand, Ready, Stance, Block, Throw, Run, Carry, Backpedal, Dive, Catch }
+        public enum PoseKind
+        {
+            Stand, Ready, Stance, Block, Throw, Run, Carry, Backpedal, Dive, Catch,
+            // the moves (Moves.cs): frame picks the key where a move has more than one
+            Release, Handoff, Reach, Secure, Bobble, Juke, Whiff, FallFront, FallBack, Prone, Supine, Kneel, Celebrate,
+        }
 
         public Transform Hips, Torso, Head, ArmL, ForeL, ArmR, ForeR, ThighL, ShinL, ThighR, ShinR, HandR, HandL;
         float hipY;
@@ -237,9 +242,20 @@ namespace PocketFootball.View
         static Color[] Cols(int n, Color c) { var a = new Color[n]; for (int i = 0; i < n; i++) a[i] = c; return a; }
 
         // ---- poses: bone angles in degrees. Z turns a limb forward (+) / back (-); X spreads it sideways. ----
+        // drop lowers the hips (cm; negative = a hop); tilt tips the whole body over at the hips (+ onto his front,
+        // - onto his back), for the falls and lying on the grass.
         struct P
         {
-            public float drop, lean, head, armL, armLx, foreL, armR, armRx, foreR, thighL, thighLx, shinL, thighR, thighRx, shinR;
+            public float drop, tilt, lean, head, armL, armLx, foreL, armR, armRx, foreR, thighL, thighLx, shinL, thighR, thighRx, shinR;
+        }
+
+        // running legs for the moves done on the run (reach, secure): the Run pose's, by stride frame
+        static P RunLegs(P p, int frame)
+        {
+            var r = Get(PoseKind.Run, frame);
+            p.thighL = r.thighL; p.thighLx = r.thighLx; p.shinL = r.shinL;
+            p.thighR = r.thighR; p.thighRx = r.thighRx; p.shinR = r.shinR;
+            return p;
         }
 
         static P Get(PoseKind k, int frame)
@@ -249,7 +265,9 @@ namespace PocketFootball.View
                 case PoseKind.Stand: return new P { armL = 4, armLx = 10, foreL = 12, armR = 4, armRx = 10, foreR = 12, thighLx = 3, thighRx = 3 };
                 case PoseKind.Ready: return new P { drop = 13, lean = 24, head = -14, armL = 25, armLx = 18, foreL = 45, armR = 25, armRx = 18, foreR = 45, thighL = 18, thighLx = 9, shinL = -30, thighR = 18, thighRx = 9, shinR = -30 };
                 case PoseKind.Stance: return new P { drop = 17, lean = 32, head = -22, armL = 62, armLx = 24, foreL = 22, armR = 62, armRx = 24, foreR = 22, thighL = 42, thighLx = 16, shinL = -62, thighR = 42, thighRx = 16, shinR = -62 };
-                case PoseKind.Block: return new P { drop = 20, lean = 42, head = -30, armL = 82, armLx = 10, foreL = 12, armR = 82, armRx = 10, foreR = 12, thighL = 48, thighLx = 10, shinL = -55, thighR = -12, thighRx = 10, shinR = -24 };
+                case PoseKind.Block: return frame % 2 == 0
+                        ? new P { drop = 20, lean = 42, head = -30, armL = 82, armLx = 10, foreL = 12, armR = 82, armRx = 10, foreR = 12, thighL = 48, thighLx = 10, shinL = -55, thighR = -12, thighRx = 10, shinR = -24 }
+                        : new P { drop = 18, lean = 46, head = -32, armL = 92, armLx = 10, foreL = 4, armR = 92, armRx = 10, foreR = 4, thighL = -12, thighLx = 10, shinL = -24, thighR = 48, thighRx = 10, shinR = -55 };   // the shove: arms out, legs driving
                 case PoseKind.Throw: return new P { drop = 4, lean = -6, head = 0, armL = 62, armLx = 20, foreL = 30, armR = -150, armRx = 22, foreR = 70, thighL = 24, thighLx = 6, shinL = -18, thighR = -18, thighRx = 8, shinR = -12 };
                 case PoseKind.Carry: return frame % 2 == 0
                         ? new P { drop = 6, lean = 20, head = -10, armL = 30, armLx = 8, foreL = 100, armR = -30, armRx = 12, foreR = 70, thighL = 48, thighLx = 4, shinL = -70, thighR = -28, thighRx = 4, shinR = -40 }
@@ -260,6 +278,44 @@ namespace PocketFootball.View
                 case PoseKind.Backpedal: return new P { drop = 15, lean = 24, head = -16, armL = 30, armLx = 22, foreL = 60, armR = 30, armRx = 22, foreR = 60, thighL = frame % 2 == 0 ? 30 : 6, thighLx = 12, shinL = -40, thighR = frame % 2 == 0 ? 6 : 30, thighRx = 12, shinR = -40 };
                 case PoseKind.Dive: return new P { drop = -8, lean = 70, head = -40, armL = 160, armLx = 14, foreL = 10, armR = 160, armRx = 14, foreR = 10, thighL = -30, thighLx = 6, shinL = -30, thighR = -45, thighRx = 6, shinR = -10 };
                 case PoseKind.Catch: return new P { drop = 2, lean = -10, head = 18, armL = 165, armLx = 12, foreL = 20, armR = 165, armRx = 12, foreR = 20, thighL = 30, thighLx = 6, shinL = -50, thighR = -10, thighRx = 6, shinR = -20 };
+                // the throw: 0 the arm comes over the top, 1 the follow-through across the body
+                case PoseKind.Release: return frame == 0
+                        ? new P { drop = 6, lean = 18, head = -8, armL = -30, armLx = 20, foreL = 40, armR = 150, armRx = 15, foreR = 20, thighL = 30, thighLx = 6, shinL = -20, thighR = -25, thighRx = 8, shinR = -15 }
+                        : new P { drop = 10, lean = 32, head = -14, armL = -40, armLx = 20, foreL = 60, armR = 50, armRx = 30, foreR = 30, thighL = 35, thighLx = 6, shinL = -30, thighR = -30, thighRx = 8, shinR = -40 };
+                case PoseKind.Handoff: return new P { drop = 10, lean = 22, head = -10, armL = 60, armLx = 25, foreL = 40, armR = 70, armRx = 25, foreR = 30, thighL = 24, thighLx = 9, shinL = -30, thighR = 10, thighRx = 9, shinR = -28 };
+                // hands up for a pass coming in, on the run
+                case PoseKind.Reach: return RunLegs(new P { drop = 4, lean = 4, head = -20, armL = 140, armLx = 14, foreL = 25, armR = 140, armRx = 14, foreR = 25 }, frame);
+                // caught: the ball pulled in to the chest with both arms
+                case PoseKind.Secure: return RunLegs(new P { drop = 8, lean = 20, head = -6, armL = 60, armLx = 6, foreL = 120, armR = 50, armRx = 8, foreR = 110 }, frame);
+                // a drop: 0 hands wide as it pops out, 1 head down
+                case PoseKind.Bobble: return frame == 0
+                        ? new P { drop = 4, lean = -8, head = -20, armL = 150, armLx = 45, foreL = 30, armR = 150, armRx = 45, foreR = 30, thighL = 20, thighLx = 6, shinL = -30, thighR = -6, thighRx = 6, shinR = -20 }
+                        : new P { drop = 6, lean = 30, head = 20, armL = -5, armLx = 8, foreL = 10, armR = -5, armRx = 8, foreR = 10, thighL = 8, thighLx = 4, shinL = -10, thighR = 8, thighRx = 4, shinR = -10 };
+                // a juke: 0 the plant, low and wide, the free arm out; 1 the push off the other way
+                case PoseKind.Juke: return frame == 0
+                        ? new P { drop = 18, lean = 22, head = -14, armL = 50, armLx = 55, foreL = 20, armR = -20, armRx = 12, foreR = 90, thighL = 30, thighLx = 30, shinL = -40, thighR = -10, thighRx = 25, shinR = -30 }
+                        : new P { drop = 10, lean = 28, head = -16, armL = 30, armLx = 40, foreL = 40, armR = -20, armRx = 12, foreR = 90, thighL = -20, thighLx = 10, shinL = -50, thighR = 50, thighRx = 5, shinR = -70 };
+                // a missed tackle: arms everywhere, stumbling steps
+                case PoseKind.Whiff: return frame % 2 == 0
+                        ? new P { drop = 10, tilt = 25, lean = 0, head = -20, armL = 120, armLx = 40, foreL = 30, armR = -40, armRx = 40, foreR = 50, thighL = 50, thighLx = 6, shinL = -40, thighR = -30, thighRx = 6, shinR = -60 }
+                        : new P { drop = 10, tilt = 20, lean = 0, head = -20, armL = -40, armLx = 40, foreL = 50, armR = 120, armRx = 40, foreR = 30, thighL = -30, thighLx = 6, shinL = -60, thighR = 50, thighRx = 6, shinR = -40 };
+                // going down: 0 the hit, 1 halfway to the grass
+                case PoseKind.FallFront: return frame == 0
+                        ? new P { drop = 6, tilt = 25, head = -20, armL = 120, armLx = 30, foreL = 30, armR = 100, armRx = 30, foreR = 40, thighL = 10, thighLx = 6, shinL = -30, thighR = -20, thighRx = 6, shinR = -50 }
+                        : new P { drop = 22, tilt = 50, head = -30, armL = 150, armLx = 18, foreL = 20, armR = 150, armRx = 18, foreR = 20, thighL = 0, thighLx = 6, shinL = -40, thighR = -10, thighRx = 6, shinR = -60 };
+                case PoseKind.FallBack: return frame == 0
+                        ? new P { drop = 6, tilt = -20, head = 20, armL = 70, armLx = 50, foreL = 40, armR = 70, armRx = 50, foreR = 40, thighL = 30, thighLx = 8, shinL = -20, thighR = 10, thighRx = 8, shinR = -10 }
+                        : new P { drop = 22, tilt = -45, head = 25, armL = 60, armLx = 65, foreL = 30, armR = 60, armRx = 65, foreR = 30, thighL = 40, thighLx = 10, shinL = -40, thighR = 20, thighRx = 10, shinR = -30 };
+                // on the grass: face down, arms stretched out ahead (the carrier still has the ball), feet kicked up
+                case PoseKind.Prone: return new P { drop = 42, tilt = 80, head = -40, armL = 170, armLx = 16, foreL = 10, armR = 170, armRx = 16, foreR = 10, thighL = -10, thighLx = 8, shinL = -50, thighR = -10, thighRx = 12, shinR = -30 };
+                // on the grass: flat on his back, arms flung wide, knees up
+                case PoseKind.Supine: return new P { drop = 44, tilt = -75, head = 30, armL = 60, armLx = 70, foreL = 20, armR = 60, armRx = 70, foreR = 20, thighL = 30, thighLx = 10, shinL = -60, thighR = 15, thighRx = 14, shinR = -40 };
+                // getting up: one knee down
+                case PoseKind.Kneel: return new P { drop = 30, tilt = 15, head = -10, armL = 60, armLx = 10, foreL = 40, armR = 30, armRx = 14, foreR = 60, thighL = 80, thighLx = 6, shinL = -90, thighR = -10, thighRx = 6, shinR = -100 };
+                // a touchdown: 0 a hop with both arms up, 1 the ball held high and a fist pump
+                case PoseKind.Celebrate: return frame % 2 == 0
+                        ? new P { drop = -6, lean = -6, head = -16, armL = 175, armLx = 20, foreL = 10, armR = 175, armRx = 20, foreR = 10, thighL = 30, thighLx = 6, shinL = -60, thighR = 10, thighRx = 6, shinR = -40 }
+                        : new P { drop = 0, lean = 0, head = -10, armL = 40, armLx = 40, foreL = 80, armR = 170, armRx = 15, foreR = 10, thighL = 4, thighLx = 4, shinL = -6, thighR = 4, thighRx = 4, shinR = -6 };
             }
             return default;
         }
@@ -273,6 +329,7 @@ namespace PocketFootball.View
             current = kind; currentFrame = frame;
             var p = Get(kind, frame);
             Hips.localPosition = new Vector3(0, hipY - p.drop, 0);
+            Hips.localRotation = Quaternion.Euler(0, 0, -p.tilt);
             Torso.localRotation = Quaternion.Euler(0, 0, -p.lean);
             Head.localRotation = Quaternion.Euler(0, 0, -p.head);
             ArmL.localRotation = Quaternion.Euler(-p.armLx, 0, p.armL);
@@ -284,6 +341,9 @@ namespace PocketFootball.View
             ShinL.localRotation = Quaternion.Euler(0, 0, p.shinL);
             ShinR.localRotation = Quaternion.Euler(0, 0, p.shinR);
         }
+
+        public PoseKind Current => current;
+        public int CurrentFrame => currentFrame;
 
         // A football: brown, pointed, white laces. Rig units (cm), long axis along +z.
         public static GameObject MakeBall(Transform parent, Material mat, float lengthM)

@@ -33,6 +33,7 @@ namespace PocketFootball.Boot
             switch (name)
             {
                 case "concept04": return Concept04(w, view, rig);
+                case "moves": return MovesLineup(w, view, rig);
             }
             Debug.LogWarning("[photo] unknown scene " + name);
             return null;
@@ -50,6 +51,21 @@ namespace PocketFootball.Boot
             if (p == null) return;
             p.X = x; p.Z = z; p.VX = vx; p.VZ = vz;
             view.PoseOverride[p.Slot] = pose;
+        }
+
+        // Every move pose side by side (View/Moves.cs), for checking the look: the front row the Chiefs, the back row
+        // the Roughriders, each facing his own way of play.
+        static PhotoState MovesLineup(World w, PlayersView view, CameraRig rig)
+        {
+            w.Offense = 0;
+            w.LineOfScrimmageX = 0f;
+            w.LineUp();
+            Pose[] front = { Pose.Throw, Pose.Release, Pose.Handoff, Pose.Reach, Pose.Secure, Pose.Bobble, Pose.Juke, Pose.Whiff, Pose.Dive, Pose.FallFront, Pose.Prone };
+            Pose[] back = { Pose.FallBack, Pose.Supine, Pose.Kneel, Pose.Celebrate, Pose.Block, Pose.Ready, Pose.Run, Pose.Carry, Pose.Catch, Pose.Stance, Pose.Stand };
+            for (int i = 0; i < front.Length; i++) Put(w, view, 0, i, -19f + i * 3.8f, -7f, front[i]);
+            for (int i = 0; i < back.Length; i++) Put(w, view, 1, i, -19f + i * 3.8f, 1f, back[i]);
+            rig.SetLookAtX(0f);
+            return new PhotoState { Name = "moves", Hud = false, FirstDownX = 10f };
         }
 
         // Concept 04, the in-game camera: the Roughriders' QB drops back to throw from their own 40 (offense going right),

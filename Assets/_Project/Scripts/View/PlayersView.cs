@@ -8,6 +8,8 @@ namespace PocketFootball.View
     // Positions are blended between the last two sim ticks so 30 Hz data moves smoothly at 60 fps. A figure faces the
     // way it runs (standing: its team's direction of play), turned a little toward the camera so faces and numbers
     // show; running steps between two run frames by distance covered (stepped, no time-based wobble).
+    // On top of that, the moves (Moves.cs): throws, catches, jukes, tackles... A man on the grass after a tackle stays
+    // where and how he fell until the next huddle, though the sim may already be walking him back.
     public sealed class PlayersView
     {
         const float TurnToCamera = 42f;     // degrees a figure turns toward the camera (faces and numbers show)
@@ -21,6 +23,11 @@ namespace PocketFootball.View
         readonly Dictionary<int, Vector2> prev = new Dictionary<int, Vector2>();
         readonly Dictionary<int, float> travelled = new Dictionary<int, float>();
         readonly List<int> gone = new List<int>();
+        public readonly Moves Moves = new Moves();
+        // a man on the grass: where he went down, his facing, which fall (slot -> start tick)
+        readonly Dictionary<int, Vector3> downAt = new Dictionary<int, Vector3>();
+        readonly Dictionary<int, float> downYaw = new Dictionary<int, float>();
+        readonly Dictionary<int, int> downStart = new Dictionary<int, int>();
         readonly Transform ball, ballShadow;
         Vector3 ballPrev;
 
@@ -44,6 +51,7 @@ namespace PocketFootball.View
         // Call just before World.Step: remembers where everyone was, for the blend.
         public void BeforeStep(World w)
         {
+            Moves.Observe(w);
             prev.Clear();
             foreach (var p in w.Players) prev[p.Slot] = new Vector2(p.X, p.Z);
             ballPrev = new Vector3(w.Ball.X, w.Ball.Y, w.Ball.Z);
@@ -53,16 +61,18 @@ namespace PocketFootball.View
         public void Render(World w, float alpha)
         {
             float yd = cfg.field.yardM;
+            Moves.Observe(w);
             foreach (var p in w.Players)
             {
                 var fig = Body(p);
+                var move = PoseOverride.ContainsKey(p.Slot) ? default : Moves.Of(w, p);
+                bool down = move.Kind == Move.Tackle || move.Kind == Move.Tackled;
                 Vector2 now = new Vector2(p.X, p.Z);
                 Vector2 was = prev.TryGetValue(p.Slot, out var v) ? v : now;
                 Vector2 at = Vector2.Lerp(was, now, alpha);
                 var t = fig.transform;
                 var pos = new Vector3(at.x * yd, 0f, at.y * yd);
                 float moved = (pos - t.localPosition).magnitude;
-                t.localPosition = pos;
 
                 // facing: the way it runs, else its team's direction of play; turned toward the camera
                 float speed = Mathf.Sqrt(p.VX * p.VX + p.VZ * p.VZ);
@@ -70,13 +80,25 @@ namespace PocketFootball.View
                 Vector2 face = speed > 0.5f ? new Vector2(p.VX, p.VZ).normalized : new Vector2(dir, 0f);
                 float yaw = Mathf.Atan2(-face.y, face.x) * Mathf.Rad2Deg;
                 yaw = TowardCamera(yaw);
+                if (down)
+                {
+                    // stays where and how he went down
+                    if (!downStart.TryGetValue(p.Slot, out int st) || st != move.StartTick)
+                    {
+                        downStart[p.Slot] = move.StartTick; downAt[p.Slot] = pos; downYaw[p.Slot] = yaw;
+                    }
+                    pos = downAt[p.Slot]; yaw = downYaw[p.Slot]; moved = 0f;
+                }
+                else downStart.Remove(p.Slot);
+                t.localPosition = pos;
                 t.localRotation = Quaternion.Euler(0f, yaw, 0f);
 
                 if (PoseOverride.TryGetValue(p.Slot, out var held)) { fig.Pose(held, 0); continue; }
                 travelled[p.Slot] = (travelled.TryGetValue(p.Slot, out float d) ? d : 0f) + moved;
                 int frame = (int)(travelled[p.Slot] / StrideM) % 2;
                 bool carrier = w.Ball.State == BallState.Held && w.Ball.Carrier == p.Slot;
-                if (speed > 0.5f) fig.Pose(carrier ? FootballFigure.PoseKind.Carry : FootballFigure.PoseKind.Run, frame);
+                if (PoseFor(move, frame, out var kind, out int f)) fig.Pose(kind, f);
+                else if (speed > 0.5f) fig.Pose(carrier ? FootballFigure.PoseKind.Carry : FootballFigure.PoseKind.Run, frame);
                 else fig.Pose(p.Pos == "OL" || p.Pos == "DL" ? FootballFigure.PoseKind.Stance : FootballFigure.PoseKind.Ready, 0);
             }
             // the ball: in the carrier's right hand, else where the sim has it, its long axis along its flight
@@ -100,7 +122,44 @@ namespace PocketFootball.View
             if (inAir) ballShadow.localPosition = new Vector3(bat.x * yd, 0.02f, bat.z * yd);
             gone.Clear();
             foreach (var kv in bodies) if (w.Find(kv.Key) == null) gone.Add(kv.Key);
-            foreach (int slot in gone) { Object.Destroy(bodies[slot].gameObject); bodies.Remove(slot); kitOf.Remove(slot); }
+            foreach (int slot in gone) { Object.Destroy(bodies[slot].gameObject); bodies.Remove(slot); kitOf.Remove(slot); downStart.Remove(slot); }
+        }
+
+        // The figure's pose for a move (false: none, run or stand as usual). stride: the run frame.
+        public static bool PoseFor(MoveNow m, int stride, out FootballFigure.PoseKind kind, out int frame)
+        {
+            frame = 0;
+            kind = FootballFigure.PoseKind.Ready;
+            switch (m.Kind)
+            {
+                case Move.Aim: kind = FootballFigure.PoseKind.Throw; return true;
+                case Move.Throw: kind = FootballFigure.PoseKind.Release; frame = Mathf.Min(1, m.Frame / 2); return true;
+                case Move.Handoff: kind = FootballFigure.PoseKind.Handoff; return true;
+                case Move.Reach: kind = FootballFigure.PoseKind.Reach; frame = stride; return true;
+                case Move.Secure: kind = FootballFigure.PoseKind.Secure; frame = stride; return true;
+                case Move.Bobble: kind = FootballFigure.PoseKind.Bobble; frame = Mathf.Min(1, m.Frame / 2); return true;
+                case Move.Juke: kind = FootballFigure.PoseKind.Juke; frame = Mathf.Min(1, m.Frame); return true;
+                case Move.Whiff:
+                    if (m.Frame == 0) kind = FootballFigure.PoseKind.Dive;
+                    else { kind = FootballFigure.PoseKind.Whiff; frame = m.Frame; }
+                    return true;
+                case Move.Tackle:
+                case Move.Tackled:
+                    if (m.GettingUp)
+                    {
+                        // one knee, then a crouch, then up
+                        kind = m.UpFrame < 2 ? FootballFigure.PoseKind.Kneel : m.UpFrame < 3 ? FootballFigure.PoseKind.Ready : FootballFigure.PoseKind.Stand;
+                        return true;
+                    }
+                    bool back = m.Kind == Move.Tackled && m.OnBack;
+                    if (m.Frame == 0 && m.Kind == Move.Tackle) kind = FootballFigure.PoseKind.Dive;   // the tackler launches
+                    else if (m.Frame < 2) { kind = back ? FootballFigure.PoseKind.FallBack : FootballFigure.PoseKind.FallFront; frame = m.Frame; }
+                    else kind = back ? FootballFigure.PoseKind.Supine : FootballFigure.PoseKind.Prone;
+                    return true;
+                case Move.Celebrate: kind = FootballFigure.PoseKind.Celebrate; frame = m.Frame; return true;
+                case Move.Block: kind = FootballFigure.PoseKind.Block; frame = m.Frame % 2; return true;
+            }
+            return false;
         }
 
         // Turn a facing (degrees, Unity yaw) a little toward the camera on the -z sideline.
