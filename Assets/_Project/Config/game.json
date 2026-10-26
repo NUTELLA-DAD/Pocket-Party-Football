@@ -66,7 +66,19 @@
       2.5
     ],
     "readDeadlineS": 3.2,
-    "idleTakeoverS": 5
+    "idleTakeoverS": 5,
+    "pressureYd": 2.2,
+    "escapeAfterS": 1.2,
+    "deadlineOpenYd": 3,
+    "missYd": 0.6,
+    "missPerYd": 0.08,
+    "pressureMissYd": 1.2,
+    "lobOverYd": 26,
+    "adjustS": 0.3,
+    "laneYd": 1.5,
+    "stepOutYd": 8,
+    "stepOutHitYd": 5,
+    "stepOutAheadFrac": 0.25
   },
   "formation": {
     "lineOfScrimmageXYd": -15,
@@ -158,6 +170,15 @@
     "touchdownPoints": 6,
     "startOwnYd": 25
   },
+  "receiving": {
+    "callPulseS": 1.5,
+    "callCooldownS": 2,
+    "catchWindowS": 0.35,
+    "catchForgetS": 1.5,
+    "catchWindowBonus": 0.08,
+    "catchEarlyPenalty": 0.3,
+    "catchChanceMax": 0.98
+  },
   "baseline": {
     "seconds": 60,
     "players": 22,
@@ -211,6 +232,40 @@
     "getUpS": 0.5,
     "blockShoveS": 0.375
   },
+  "coach": {
+    "shortYd": 2,
+    "longYd": 7,
+    "lateDown": 3,
+    "redZoneYd": 20,
+    "fieldGoalRangeYd": 36,
+    "backedUpYd": 10,
+    "behindByPts": 7,
+    "aheadByPts": 7,
+    "otherWeight": 0.25,
+    "offense": {
+      "short":    { "sneak": 4, "dive": 5, "toss": 2, "slants": 2, "screen": 1 },
+      "medium":   { "dive": 3, "toss": 3, "slants": 4, "screen": 2, "boot": 3, "verts": 1 },
+      "long":     { "slants": 3, "boot": 3, "verts": 3, "screen": 2, "toss": 1, "dive": 1 },
+      "goal":     { "sneak": 2, "dive": 2, "slants": 2, "fg": 200 },
+      "late":     { "verts": 1, "slants": 1 },
+      "fourth":   { "punt": 60 },
+      "fgrange":  { "fg": 120, "punt": -60 },
+      "redzone":  { "verts": -3, "toss": 1, "slants": 1 },
+      "backedup": { "verts": -2, "screen": -1, "dive": 2 },
+      "behind":   { "verts": 2, "boot": 1 },
+      "ahead":    { "dive": 2, "toss": 1 }
+    },
+    "defense": {
+      "short":    { "goalline": 5, "mblitz": 3, "zblitz": 2, "cover3": 1 },
+      "medium":   { "cover3": 3, "cover2": 3, "zblitz": 2, "mblitz": 2 },
+      "long":     { "cover2": 3, "cover3": 3, "prevent": 3, "zblitz": 1 },
+      "goal":     { "goalline": 4, "mblitz": 2 },
+      "late":     { "mblitz": 1 },
+      "redzone":  { "prevent": -5 },
+      "behind":   { "mblitz": 2, "zblitz": 1 },
+      "ahead":    { "prevent": 2, "cover2": 1 }
+    }
+  },
   "events": {
     "logKeep": 2048
   },
@@ -223,6 +278,103 @@
     "cardTitlePx": 52,
     "cardLinePx": 30,
     "cardWidthPx": 640
+  },
+  "clock": {
+    "quarters": 4,
+    "quarterS": 240,
+    "halftimeAfterQuarter": 2,
+    "halftimeS": 8,
+    "runsBetweenPlays": true,
+    "stopOn": [
+      "INCOMPLETE",
+      "OUT OF BOUNDS",
+      "TOUCHDOWN",
+      "PICK SIX",
+      "FIELD GOAL",
+      "EXTRA POINT",
+      "SAFETY",
+      "TOUCHBACK"
+    ]
+  },
+  "lobby": {
+    "holdUntilKickoff": true,
+    "botCoversDropped": true,
+    "swapAskS": 12
+  },
+  "carrier": {
+    "spinTicks": 12,
+    "spinTackleMul": 0.5,
+    "spinSpeedFrac": 0.7,
+    "stiffArmTicks": 15,
+    "stiffArmTackleMul": 0.6,
+    "diveRangeYd": 5,
+    "diveTicks": 12,
+    "diveLungeYd": 3,
+    "diveTackleMul": 0.7,
+    "cooldownTicks": 75,
+    "botMoveYd": 2.5,
+    "fumbleChance": 0.04,
+    "fumbleBlindsideBonus": 0.03,
+    "bigHitSpeedYdS": 6.5,
+    "fumblePopYdS": 4,
+    "downTicks": 24,
+    "recoverDelayTicks": 6,
+    "recoverReachYd": 1.2,
+    "recoverChance": 0.35,
+    "scrambleMaxS": 4
+  },
+  "kicking": {
+    "puntPlay": "punt",
+    "fgPlay": "fg",
+    "openingKickTeam": 1,
+    "minSpeedYdS": 12,
+    "maxSpeedYdS": 27,
+    "kickoffAngleDeg": 45,
+    "puntAngleDeg": 55,
+    "fieldGoalAngleDeg": 38,
+    "maxAimDeg": 15,
+    "kickHeightYd": 0.3,
+    "kickoffFromYd": 35,
+    "safetyKickFromYd": 20,
+    "kickoffSetS": 3,
+    "humanKickMaxS": 8,
+    "botKickoffDelayS": 0.6,
+    "botPuntDelayS": 1.2,
+    "botFieldGoalDelayS": 0.9,
+    "kickoffTouchbackYd": 25,
+    "puntTouchbackYd": 20,
+    "kickoffOutOfBoundsYd": 40,
+    "interceptionTouchbackYd": 20,
+    "tryFromYd": 3,
+    "tryKickPoints": 1,
+    "tryTouchdownPoints": 2,
+    "fieldGoalPoints": 3,
+    "safetyPoints": 2,
+    "crossbarYd": 3.33,
+    "postsHalfWidthYd": 3.08,
+    "puntBackYd": 13,
+    "fieldGoalBackYd": 7,
+    "returnerSpot": 0,
+    "puntReturner": [42, 0],
+    "catchChance": 0.95,
+    "pickupYd": 1.2,
+    "botKickoffPower": 0.95,
+    "botPuntPower": 0.85,
+    "botPowerNoise": 0.05,
+    "botAimNoiseDeg": 3,
+    "botFieldGoalClearYd": 1.5,
+    "botFieldGoalExtraPower": 0.05,
+    "botFieldGoalMaxYd": 50,
+    "botGoForItYd": 2,
+    "meterShowS": 2.5,
+    "kickoffKicking": [
+      [-5, 0], [-1, -22], [-1, 22], [-1, -17], [-1, 17], [-1, -12],
+      [-1, 12], [-1, -7], [-1, 7], [-1, -2.5], [-1, 2.5]
+    ],
+    "kickoffReceiving": [
+      [55, 0], [12, -16], [12, 16], [28, -14], [28, 14], [12, -8],
+      [12, 8], [12, 0], [28, -5], [28, 5], [45, -6]
+    ]
   },
   "stats": {
     "mvpPerYd": 0.1,
@@ -256,6 +408,14 @@
     "intreturn": true,
     "moves": true,
     "replay": true,
+    "receiving": true,
+    "clock": true,
+    "lobby": true,
+    "carriermoves": true,
+    "fumbles": true,
+    "kicking": true,
+    "botcoach": false,
+    "botsV2": false,
     "stats": false
   }
 }

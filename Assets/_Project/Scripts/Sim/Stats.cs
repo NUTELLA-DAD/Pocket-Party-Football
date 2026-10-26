@@ -9,10 +9,12 @@ namespace PocketFootball.Sim
     // card (phone/postgame.js) read it.
     // Yards are counted the way the sim counts them (LivePlay.Whistle): from the line of scrimmage at the hike to the
     // spot of the whistle, a touchdown to the goal line, so a team's yards add up to the World's YardsGained over its
-    // plays that were not intercepted. A completion's yards go to the receiver (and the passer's passing yards);
-    // anything else the offense carried (a handoff, a QB run, a sack) is a rush by the man who had it at the whistle.
-    // A touchdown's points go to the scorer. Points scored without a scorer in the events (kicks and safeties, until
-    // their workstreams push an event for them) go to the team's Extra, so the team totals always match the score.
+    // plays that were not turnovers (an interception, a lost fumble) or kicks. A completion's yards go to the receiver
+    // (and the passer's passing yards); anything else the offense carried (a handoff, a QB run, a sack, a fumble it
+    // kept) is a rush by the man it was handed to, or the QB.
+    // A touchdown's points go to the scorer: whatever his team's score went up by (6, or 2 on a try with
+    // FEATURES.kicking). Points with no scorer in the events (kicks and safeties: WS-01 pushes no event for them) go
+    // to the team's Extra, so the team totals always match the score.
     public sealed class PlayerLine
     {
         public int Slot, Team, Spot, Number;
@@ -48,12 +50,12 @@ namespace PocketFootball.Sim
         readonly SortedDictionary<int, PlayerLine> lines = new SortedDictionary<int, PlayerLine>();
         readonly List<GameEvent> fresh = new List<GameEvent>();
         int nextSeq;
-        int[] lastScore, credited;
+        int[] lastScore, scorer;
         int[] extra = new int[0];
         // the play under way
-        bool live, picked;
+        bool live, picked, kick;
         float los, dir;
-        int offense, passer = -1, receiver = -1;
+        int offense, holder = -1, passer = -1, receiver = -1;
 
         public static bool On(GameConfig cfg) => cfg.Feature("stats");
 
@@ -90,12 +92,11 @@ namespace PocketFootball.Sim
         {
             if (!On(w.Cfg)) return;
             int teams = w.Score.Length;
-            if (lastScore == null) { lastScore = new int[teams]; credited = new int[teams]; extra = new int[teams]; }
-            Array.Clear(credited, 0, teams);
+            if (lastScore == null) { lastScore = new int[teams]; scorer = new int[teams]; extra = new int[teams]; }
+            for (int t = 0; t < teams; t++) scorer[t] = -1;
             fresh.Clear();
             w.Events.Since(nextSeq, fresh);
             nextSeq = w.Events.Next;
-            int tdPoints = w.Cfg.downs.touchdownPoints;
             foreach (var e in fresh)
             {
                 PlayerLine l;
@@ -103,8 +104,12 @@ namespace PocketFootball.Sim
                 {
                     case EventKind.Hike:
                         // (the line and the way stay put until the next huddle, so reading them now is the hike's)
-                        live = true; picked = false; passer = -1; receiver = -1;
+                        live = true; picked = false; passer = -1; receiver = -1; holder = e.Slot;
                         los = w.LineOfScrimmageX; dir = w.Dir; offense = w.Offense;
+                        kick = Kicking.Mode(w) != KickKind.None;   // (kickoffs, punts and field goals count no yards)
+                        break;
+                    case EventKind.Handoff:
+                        holder = e.Slot;
                         break;
                     case EventKind.Throw:
                         passer = e.Slot;
@@ -138,11 +143,11 @@ namespace PocketFootball.Sim
                         if ((l = Line(w, e.Slot)) != null) { l.Tackles++; l.Sacks++; }
                         break;
                     case EventKind.Touchdown:
-                        if ((l = Line(w, e.Slot)) != null) { l.Tds++; l.Points += tdPoints; }
-                        if (e.Team >= 0 && e.Team < teams) credited[e.Team] += tdPoints;
+                        if ((l = Line(w, e.Slot)) != null) l.Tds++;
+                        if (e.Team >= 0 && e.Team < teams) scorer[e.Team] = e.Slot;
                         break;
                     case EventKind.Whistle:
-                        if (live && !picked) Yards(w, e);
+                        if (live && !picked && !kick && e.Text != "FUMBLE LOST") Yards(w, e);
                         live = false;
                         break;
                 }
@@ -150,7 +155,10 @@ namespace PocketFootball.Sim
             // whatever the score did that no touchdown explains
             for (int t = 0; t < teams; t++)
             {
-                extra[t] += w.Score[t] - lastScore[t] - credited[t];
+                int gained = w.Score[t] - lastScore[t];
+                var by = scorer[t] >= 0 ? Line(w, scorer[t]) : null;
+                if (by != null && gained > 0) by.Points += gained;
+                else extra[t] += gained;
                 lastScore[t] = w.Score[t];
             }
         }
@@ -172,7 +180,9 @@ namespace PocketFootball.Sim
                 if (p != null) p.PassYd += yards;
                 return;
             }
-            var c = Line(w, e.Slot);
+            // (no one has it and it is not a fumble: a pass in the air at the end of the play, no gain)
+            if (e.Slot < 0 && !result.StartsWith("FUMBLE", StringComparison.Ordinal)) return;
+            var c = Line(w, holder);
             if (c == null || c.Team != offense) return;
             c.Rushes++;
             c.RushYd += yards;

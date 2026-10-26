@@ -21,6 +21,7 @@ namespace PocketFootball.Input
                 case Phase.Huddle: return "huddle";
                 case Phase.Whistle: return "wait";
             }
+            if (Kicking.WaitingToKick(w, p)) return "kick";   // WS-01: the kick meter, for the kicker only
             var carrier = LivePlay.Carrier(w);
             bool qb = p == LivePlay.Qb(w);
             if (w.Phase == Phase.Set) return qb ? "qbpre" : Role(p);

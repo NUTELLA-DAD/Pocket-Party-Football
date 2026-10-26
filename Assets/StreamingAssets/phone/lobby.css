@@ -1,0 +1,32 @@
+/* The lobby (lobby.js, WS-07): both line-ups of your team, tap a spot to take it. Offline only; tokens from style.css. */
+.lobby { max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); overflow-y: auto; touch-action: pan-y; }
+.lobby button { touch-action: manipulation; }
+.lhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.lyou { display: grid; gap: 4px; font-family: var(--display); font-size: 18px; text-align: right; white-space: nowrap; }
+.lyou span { font-size: 11px; letter-spacing: .08em; color: var(--muted); }
+.lobby h3 { font-family: var(--display); font-weight: 400; font-size: 16px; margin: 0 0 6px; color: var(--muted); letter-spacing: .04em; }
+.lcols { display: grid; gap: 12px; }
+.lspots { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.lspot {
+  border: 3px solid transparent; border-radius: 12px; padding: 6px 4px; min-height: 52px; background: var(--ink); color: var(--chalk);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+}
+.lspot b { font-family: var(--display); font-weight: 400; font-size: 15px; white-space: nowrap; }
+.lspot i { font-style: normal; font-size: 11px; color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lspot.person { background: var(--turf-2); }
+.lspot.person i { color: var(--chalk); }
+.lspot.away { opacity: .6; }
+.lspot.me { background: var(--team); color: var(--team-ink); border-color: var(--team-2); }
+.lspot.me i { color: var(--team-ink); }
+.lask { display: grid; gap: 10px; border: 3px solid var(--warn); }
+.lask p { margin: 0; font-size: 17px; font-weight: 800; }
+.lrow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch; }
+.lrow .btn { min-height: 56px; }
+#lKick:disabled { opacity: .4; }
+@media (orientation: landscape) and (min-width: 600px) {
+  .lobby { gap: 8px; }
+  .lcols { grid-template-columns: 1fr 1fr; }
+  .lspot { min-height: 44px; padding: 3px; }
+  .lobby .lrow .big { padding: 10px; font-size: 22px; }
+}
+.lobby .line:empty { display: none; }

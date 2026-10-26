@@ -134,5 +134,8 @@ namespace PocketFootball.Boot
             }
             return a;
         }
+
+        // WS-05 SECRET: only for the offense QB's phone. call {shape, k, number, pos, ms}: this receiver is calling for it.
+        public static string Call(World w, Player r) { int k = Receiving.ShapeOf(w, r); return PhoneProtocol.Text(new JObject { ["t"] = "call", ["k"] = k, ["shape"] = k >= 1 && k <= w.Cfg.play.shapes.Count ? w.Cfg.play.shapes[k - 1] : "", ["number"] = r.Number, ["pos"] = r.Pos, ["ms"] = (int)(w.Cfg.receiving.callPulseS * 1000f) }); }
     }
 }

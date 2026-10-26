@@ -81,6 +81,9 @@ namespace PocketFootball.Boot
             }
             string photoName = PhotoScenes.Requested(args);
             if (photoName != null) h.Photo = PhotoScenes.Setup(photoName, h.World, h.Players, rig);
+            on.AddComponent<ReceivingHud>().Host = h;   // WS-05: CALL FOR IT pulse on the TV and the QB's phone
+            Lobby.Attach(h, cfg, args);   // WS-07: the lobby and two-way players (FEATURES.lobby)
+            KickPhones.Attach(h);   // WS-01: the kick meter on the kicker's phone and on the TV
             return h;
         }
 
@@ -150,6 +153,7 @@ namespace PocketFootball.Boot
             if (!phaseKnown || World.Phase != lastPhase || World.HuddleNumber != lastHuddle) OnPhaseChanged();
             RefreshLayouts();
             Players.Render(World, lockstep || Photo != null ? 1f : Mathf.Clamp01(accumulator / dt));
+            CarrierMovesView.Apply(World, Players);   // WS-04: spin, stiff arm, dive, fumbles on the TV
             float firstX = Photo != null ? Photo.FirstDownX : World.FirstDownX;
             if (Photo == null && !Downs.On(World)) firstX = World.LineOfScrimmageX + World.Dir * cfg.downs.firstDownYd;
             marks.SetLines(World.LineOfScrimmageX, firstX);
@@ -292,22 +296,12 @@ namespace PocketFootball.Boot
             if (lockIn) BroadcastStatus();
         }
 
-        // The TV's huddle line: whether each team has called, NEVER what.
-        public static string TvLine(World w, GameConfig cfg)
-        {
-            if (!Huddle.On(w)) return "";
-            int secs = Messages.Secs(w);
-            if (w.Phase == Phase.Set && LivePlay.On(w)) return "SET   (the QB hikes)";
-            if (w.Phase == Phase.Live) return w.Intercepted ? "INTERCEPTED!" : "";
-            if (w.Phase == Phase.Whistle) return w.Result + "!" + (w.Note.Length > 0 ? "   " + w.Note : "");
-            if (w.Phase != Phase.Huddle) return "LINE UP   (next huddle in " + secs + ")";
-            var parts = new List<string> { "HUDDLE 0:" + secs.ToString("00") };
-            for (int t = 0; t < cfg.teams.Count; t++) parts.Add(cfg.teams[t].name + (Huddle.IsLocked(w, t) ? " CALLED ✓" : " ..."));
-            return string.Join("     ", parts);
-        }
+        // The TV's huddle line: whether each team has called, NEVER what. (WS-02: it lives in View/Scoreboard.cs now)
+        public static string TvLine(World w, GameConfig cfg) => Scoreboard.TvLine(w);
 
         public void StepOnce()
         {
+            if (Lobby.Instance != null && Lobby.Instance.Holding) return;   // WS-07: the game waits on the lobby until kickoff
             float now = Time.unscaledTime;
             inputs.Clear();
             foreach (var kv in sources)
@@ -370,6 +364,8 @@ namespace PocketFootball.Boot
                     else if (t == "pick") OnPick(src, PhoneProtocol.Int(m, "team", -1));
                     else if (t == "suggest") OnCall(src, m, false);
                     else if (t == "lock") OnCall(src, m, true);
+                    else if (t == "kick") KickPhones.OnKick(this, src, m);   // WS-01
+                    else if (Lobby.Instance != null) Lobby.Instance.OnMessage(src.Seat, t, m);   // WS-07: spot, swap, kickoff, lobbyme
                 }
             }
         }
@@ -475,7 +471,7 @@ namespace PocketFootball.Boot
 
             // the scoreboard bar, top centre (real numbers come with M1-e)
             if (Photo != null) Hud.Scoreboard(cfg, Photo.Score, Photo.Quarter, Photo.Clock, Photo.Down, s);
-            else Hud.Scoreboard(cfg, World.Score, "1ST", "", Downs.On(World) ? Downs.DownText(World) : "", s);
+            else Scoreboard.Draw(World, s);   // WS-02
 
             // the people: a small team-coloured triangle over each person's player (no name, so it hides nothing);
             // shape badges over receivers (photo scenes for now)

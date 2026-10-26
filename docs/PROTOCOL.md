@@ -16,7 +16,7 @@ Code that speaks it:
 | Which layout a player sees | `Assets/_Project/Scripts/Input/PhoneLayouts.cs` |
 | Phone page | `Assets/StreamingAssets/phone/app.js`, `huddle.js`, `layouts.js` |
 | Final card (WS-12): built and sent | `Assets/_Project/Scripts/Boot/PostGameHost.cs`, shown by `phone/postgame.js` |
-| Secrecy proof | `Assets/_Project/Tests/PlayMode/PlaySecrecyTests.cs` |
+| Secrecy proof | `Assets/_Project/Tests/PlayMode/PlaySecrecyTests.cs`, `ReceivingSecrecyTests.cs` (WS-05) |
 
 ## 1. Transport
 
@@ -47,7 +47,7 @@ Every game-to-phone message has one of these audiences. A new message must say w
 | --- | --- | --- |
 | **this phone** | Only the socket that asked, or the seat it is about | `joined`, `err`, `pong`, `picked`, `ui`, `me` |
 | **public** | Every connected phone, and the TV may show it | `lobby`, `status`, `postgame` (all but its `mine`, which is this phone's own) |
-| **team only (SECRET)** | Only the phones of seats on that team, checked with `PartyHost.TeamPhones(team)` | `huddle`, `thumbs`, `job` |
+| **team only (SECRET)** | Only the phones of seats on that team, checked with `PartyHost.TeamPhones(team)` | `huddle`, `thumbs`, `job`; `call` (narrower still: only the offense QB's phone, from `Boot/ReceivingHud.cs`) |
 
 The secret-play rule: a play id, play name, play contents, a suggestion or a call never goes to the other team's phones, never into a **public** message, and never onto the TV. The TV and `status` say only whether each team has called (`called[]`, "CALLED ✓"). `PlaySecrecyTests.TheOtherTeamNeverGetsThePlay` proves it with two fake phones; any new team-only message must be added to that test (or a new one like it).
 
@@ -96,8 +96,10 @@ Actions the game acts on today (`PhoneSource.OnButton`):
 | `tackle`, `dive` | Tackle (dive is a tackle until WS-03) |
 | `throw` | Throws on **release** to `tgt` |
 | `scramble` | Accepted, does nothing (the QB runs with the stick) |
+| `call` | WS-05, `FEATURES.receiving`: a receiver's CALL FOR IT (see `call` below). Ignored for non-receivers and after the throw |
+| `catch` | WS-05, `FEATURES.receiving`: the CATCH timing tap (`Sim/Receiving.cs`) |
 
-Actions the page already sends but the game ignores (reserved for the workstream named): `stiff` (WS-04), `call`, `catch` (WS-05), `swim`, `bull`, `swat`, `jump` (WS-03).
+Actions the page already sends but the game ignores (reserved for the workstream named): `stiff` (WS-04), `swim`, `bull`, `swat`, `jump` (WS-03).
 
 ### `pick`
 `{team: int}`, an index into `teams`. The person takes a bot's spot on that team; the spot left behind goes back to a bot. Team full of people: `err`.
@@ -178,6 +180,9 @@ The final card, once the game clock ends the game (or F8 on the TV previews it).
 ### `job` (team only, SECRET)
 `{side, play, spots, opp, me}`. The called play and this player's spot, for the job diagram. Sent when the huddle ends, only if the team has a call.
 
+### `call` (the offense QB's phone only, SECRET; WS-05)
+`{k, shape, number, pos, ms}`. A receiver tapped CALL FOR IT: `k` is his shape number (1-based, `play.receivers` order), `shape` the same character as `ui.receivers[].shape`, `number` and `pos` like `21` and `RB`, `ms` how long to pulse his button. Sent once per call by `Boot/ReceivingHud.cs`, only to the seat of the QB, only if that seat is on the receiver's team. Never in `status`, never to the receiver's own phone. The TV draws the same pulse over his head (the room can see the TV, as the design says), but it is not in `TvLine`, so not in `status.tv`. Proved by `ReceivingSecrecyTests`.
+
 ## 6. Adding a message
 
 1. Use a new `t` value. Do not change the shape of an existing message; adding an optional field is fine if old pages ignore it.
@@ -191,13 +196,13 @@ Planned messages (not built yet; the owning workstream defines them here when it
 | Workstream | Likely messages | Audience |
 | --- | --- | --- |
 | WS-01 Kicking | `kick` handler (phone side exists), a kicker `ui` layout `kick` | this phone |
-| WS-05 Receiving | CALL FOR IT pulse to the QB | team only |
+| WS-05 Receiving | landed: `call` above, `btn` `call` / `catch` | the QB's phone only |
 | WS-07 Lobby | spot lists and swaps | public line-ups, own spot this phone |
 | WS-12 Stats | `postgame` (built, see section 5) | public totals, own line this phone |
 | WS-13 Audibles | audible and hot route | team only |
 
 ## 7. Known gaps on main (found while writing this)
 
-- `game.json` `play.shapes` holds `"???"` five times; the shape characters (△ ○ □ ◇ ☆) were lost in the M1-d commit, probably by a save in the wrong encoding. Every receiver button on the QB's phone then sends `tgt:"???"`, and `PhoneSource.OnButton` picks the last match, so a person's throw always goes to the fifth receiver.
+- (Fixed in WS-05: the shapes are back, written as `\u` escapes, and `ReceivingTests.EveryReceiverHasItsOwnShape` guards them.) `game.json` `play.shapes` held `"???"` five times; the shape characters (△ ○ □ ◇ ☆) were lost in the M1-d commit, probably by a save in the wrong encoding. Every receiver button on the QB's phone then sends `tgt:"???"`, and `PhoneSource.OnButton` picks the last match, so a person's throw always goes to the fifth receiver.
 - A team-full `err` after `pick` sends the person back to the join screen and closes the socket, because the page treats every `err` as a failed join. They have to tap JOIN again.
 - The phone never sends `ping`, so a half-dead socket is only noticed when a send fails.

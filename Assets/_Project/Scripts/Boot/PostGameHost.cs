@@ -1,5 +1,4 @@
 using System;
-using System.Reflection;
 using Newtonsoft.Json.Linq;
 using PocketFootball.Sim;
 using PocketFootball.View;
@@ -34,19 +33,7 @@ namespace PocketFootball.Boot
                 if (seat.Kind == SeatKind.Phone && seat.Connected && seat.Conn >= 0) h.Server.Send(seat.Conn, Card(w, g.Stats, seat.Slot, s => h.Roster[s]?.Name));
         }
 
-        // The clock's end of the game, found by name so this builds before WS-02 is merged (false until then).
-        // Once Clock.cs is on main this can simply be Clock.IsOver(w).
-        static Func<World, bool> over;
-
-        static bool GameOver(World w)
-        {
-            if (over == null)
-            {
-                var m = typeof(World).Assembly.GetType("PocketFootball.Sim.Clock")?.GetMethod("IsOver", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(World) }, null);
-                over = m != null && m.ReturnType == typeof(bool) ? (Func<World, bool>)Delegate.CreateDelegate(typeof(Func<World, bool>), m) : (_ => false);
-            }
-            return over(w);
-        }
+        static bool GameOver(World w) => Clock.IsOver(w);   // WS-02: after the last quarter
 
         // postgame (public totals, plus this phone's own line in `mine`): the final score, the winner, the player of
         // the game, each team's totals, and this person's numbers. Nothing secret: no play ids or calls.

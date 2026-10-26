@@ -39,7 +39,7 @@ namespace PocketFootball.Tests.EditMode
             var cfg = On();
             var w = WorldTests.Full(cfg, seed);
             var s = new Stats();
-            var yards = new int[cfg.teams.Count];   // the sim's own yards, by the team that had the ball, picks left out
+            var yards = new int[cfg.teams.Count];   // the sim's own yards, by the team that had the ball, turnovers left out
             int gained = 0;
             for (int i = 0; i < cfg.sim.tickHz * 60 * 15; i++)
             {
@@ -48,7 +48,7 @@ namespace PocketFootball.Tests.EditMode
                 s.Observe(w);
                 if (w.YardsGained != gained)
                 {
-                    if (w.Result != "INTERCEPTED" && w.Result != "PICK SIX") yards[offense] += w.YardsGained - gained;
+                    if (w.Result != "INTERCEPTED" && w.Result != "PICK SIX" && w.Result != "FUMBLE LOST") yards[offense] += w.YardsGained - gained;
                     gained = w.YardsGained;
                 }
             }
@@ -76,6 +76,30 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual(w.Events.Total(EventKind.Sack), allSacks, "sacks");
             Assert.AreEqual(w.Events.Total(EventKind.Interception), allPicks, "picks");
             Assert.AreEqual(w.Events.Total(EventKind.Touchdown), allTds, "touchdowns");
+        }
+
+        [TestCase(1)]
+        [TestCase(2)]
+        public void WithKickingTheScorersAndKicksStillMakeTheScore(int seed)
+        {
+            // the game as shipped: kickoffs, tries (a try run in is worth 2 to its scorer), field goals and safeties
+            var cfg = On(ConfigTests.AsShipped);
+            Assert.IsTrue(Kicking.On(new World(cfg, seed)), "kicking is on as shipped");
+            var w = WorldTests.Full(cfg, seed);
+            var s = new Stats();
+            for (int i = 0; i < cfg.sim.tickHz * 60 * 15; i++) { w.Step(null); s.Observe(w); }
+            string table = Table(w, s);
+            TestContext.WriteLine("seed " + seed + ", kicking on: " + table + " extra " + s.Extra(0) + "/" + s.Extra(1));
+            for (int t = 0; t < cfg.teams.Count; t++)
+            {
+                int points = 0;
+                foreach (var l in s.Lines) if (l.Team == t) points += l.Points;
+                Assert.GreaterOrEqual(s.Extra(t), 0, "kicks and safeties only add points\n" + table);
+                Assert.AreEqual(w.Score[t], points + s.Extra(t), "team " + t + ": scorers plus kicks are the score\n" + table);
+                Assert.AreEqual(w.Score[t], s.Team(t).Points);
+            }
+            foreach (var l in s.Lines)
+                Assert.GreaterOrEqual(l.Points, l.Tds * cfg.kicking.tryTouchdownPoints, "slot " + l.Slot + ": every touchdown scored at least a try's worth");
         }
 
         [Test]
