@@ -37,6 +37,7 @@ namespace PocketFootball.Tests.PlayMode
             for (int i = 0; i < 10; i++) yield return null;
             var host = PartyHost.Instance;
             var cfg = GameBootstrap.Instance.Config;
+            cfg.features["clock"] = false;   // a game that never ends, so the bots keep playing however long this takes
 
             // off (as game.json ships): nothing made, nothing playing
             Assert.IsFalse(cfg.Feature("audio"), "FEATURES.audio ships off");
