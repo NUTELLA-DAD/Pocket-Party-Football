@@ -1,0 +1,19 @@
+{
+  "id": "punt",
+  "name": "Punt",
+  "side": "offense",
+  "desc": "Kick it away (4th down only)",
+  "jobs": [
+    { "kind": "route", "pts": [[-13, 0]], "text": "Punter: take the long snap 13 yards back, then swipe up on your phone to kick" },
+    { "kind": "block", "pts": [[-6, 0]], "text": "Personal protector: block anyone who gets through, then cover" },
+    { "kind": "route", "pts": [[10, -20], [35, -16]], "text": "Gunner: race down the sideline and tackle the returner" },
+    { "kind": "route", "pts": [[10, 20], [35, 16]], "text": "Gunner: race down the sideline and tackle the returner" },
+    { "kind": "block", "pts": [[2, 10]], "text": "Block your man, then run down and cover the punt" },
+    { "kind": "block", "pts": [[1.5, -4.5]], "text": "Block the edge, then cover the punt" },
+    { "kind": "block", "pts": [[1, 0]], "text": "Long snapper: snap it back, block, then cover" },
+    { "kind": "block", "pts": [[1, -1.5]], "text": "Block, then run down and cover the punt" },
+    { "kind": "block", "pts": [[1, 1.5]], "text": "Block, then run down and cover the punt" },
+    { "kind": "block", "pts": [[1, -3]], "text": "Block, then run down and cover the punt" },
+    { "kind": "block", "pts": [[1, 3]], "text": "Block, then run down and cover the punt" }
+  ]
+}

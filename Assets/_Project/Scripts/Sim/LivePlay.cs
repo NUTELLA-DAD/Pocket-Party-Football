@@ -131,6 +131,7 @@ namespace PocketFootball.Sim
         public static void Step(World w)
         {
             if (!On(w) || w.Phase != Phase.Live) return;
+            if (Kicking.LiveStep(w)) return;   // WS-01: a kick in the air (the return runs below)
             var c = w.Cfg.play;
             var f = w.Cfg.field;
             float dir = w.Dir;

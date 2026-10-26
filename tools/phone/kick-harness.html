@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kick meter harness</title>
+<link rel="stylesheet" href="../../Assets/StreamingAssets/phone/style.css">
+<link rel="stylesheet" href="../../Assets/StreamingAssets/phone/kick.css">
+</head>
+<body>
+<div class="app"><p class="sub">The play screen would be here. Buttons below drive the kick meter like the game would.</p>
+<button onclick="ui('kick'); meter(true, 'FIELD GOAL', 42)">field goal</button>
+<button onclick="ui('kick'); meter(true, 'KICKOFF', 0)">kickoff</button>
+<button onclick="ui('kick'); meter(true, 'PUNT', 0)">punt</button>
+<button onclick="ui('walk'); meter(false)">done</button>
+</div>
+<script>
+  // what the game would send; window.sent collects what the phone sends back
+  window.sent = [];
+  var aid = 'a1', n = 1;
+  window.PP = { send: function (m) { window.sent.push(m); }, aid: function () { return aid; } };
+  function ui(layout) { aid = layout + (++n); PPKick.onMessage({ t: 'ui', layout: layout, aid: aid }); }
+  function meter(on, kind, yards) { PPKick.onMessage({ t: 'kickmeter', on: on, kind: kind, yards: yards }); }
+</script>
+<script src="../../Assets/StreamingAssets/phone/kick.js"></script>
+</body>
+</html>
