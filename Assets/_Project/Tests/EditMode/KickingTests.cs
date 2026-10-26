@@ -47,7 +47,7 @@ namespace PocketFootball.Tests.EditMode
         public void ShipsOffAndChangesNothingWhenOff()
         {
             var cfg = ConfigTests.Load();
-            Assert.IsFalse(cfg.Feature("kicking"), "kicking ships off; the merge captain turns it on and re-pins the baseline");
+            Assert.IsFalse(cfg.Feature("kicking"), "the tests of other rules run with kicking off (ConfigTests.Load)");
             var w = WorldTests.Full(cfg);
             w.Step(null);
             Assert.AreEqual(Phase.Huddle, w.Phase, "no kickoff with kicking off: the game opens with a huddle");
