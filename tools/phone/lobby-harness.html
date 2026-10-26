@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phone lobby harness</title>
+<link rel="stylesheet" href="../../Assets/StreamingAssets/phone/style.css">
+<link rel="stylesheet" href="../../Assets/StreamingAssets/phone/lobby.css">
+</head>
+<body>
+<!-- Dev only (WS-07): the lobby screen with made-up line-ups; tools/phone/lobby-test.js drives it headless. -->
+<div class="app">
+  <section id="pickView" class="view"><h2>Pick your side</h2></section>
+  <section id="playView" class="view hidden"><p>play</p></section>
+</div>
+<script>
+  window.sent = [];
+  window.PP = { send: function (m) { window.sent.push(m); }, aid: function () { return 'lobby3'; } };
+</script>
+<script src="../../Assets/StreamingAssets/phone/lobby.js"></script>
+<script>
+  var OFF = [['QB', 9], ['RB', 21], ['WR', 11], ['WR', 17], ['WR', 19], ['TE', 87], ['OL', 64], ['OL', 68], ['OL', 72], ['OL', 74], ['OL', 76]];
+  var DEF = [['LB', 54], ['CB', 24], ['CB', 26], ['S', 31], ['S', 33], ['LB', 50], ['LB', 58], ['DL', 90], ['DL', 93], ['DL', 97], ['DL', 99]];
+  function side(list, people) {
+    return list.map(function (s, i) {
+      var who = people[i];
+      return { pos: s[0], number: s[1], who: who ? who.n : 'BOT', person: !!who, me: !!(who && who.me), away: !!(who && who.away) };
+    });
+  }
+  function lineup(extra) {
+    var m = {
+      t: 'lineup', held: true, team: 0, teamName: 'CHIEFS', color: '#d7263d', color2: '#ffb612',
+      offense: side(OFF, { 0: { n: 'RAY' }, 3: { n: 'KENNY', me: true }, 5: { n: 'ZED', away: true } }),
+      defense: side(DEF, { 0: { n: 'RAY' }, 1: { n: 'KENNY', me: true }, 7: { n: 'ZED', away: true } }),
+      you: { o: 3, d: 1 }, people: 3, players: 11
+    };
+    for (var k in extra) m[k] = extra[k];
+    Lobby.onMessage(m);
+  }
+  Lobby.onMessage({ t: 'ui', layout: 'lobby', aid: 'lobby3' });
+  lineup({});
+</script>
+</body>
+</html>

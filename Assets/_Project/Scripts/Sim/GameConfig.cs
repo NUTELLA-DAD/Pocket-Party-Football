@@ -16,6 +16,7 @@ namespace PocketFootball.Sim
         public HuddleConfig huddle = new HuddleConfig();
         public LivePlayConfig play = new LivePlayConfig();
         public DownsConfig downs = new DownsConfig();
+        public ReceivingConfig receiving = new ReceivingConfig();   // WS-05 (Receiving.cs)
         // Loaded from Config/plays/*.json (not game.json) by ConfigLoader.AddPlays, sorted by id.
         [Newtonsoft.Json.JsonIgnore] public List<PlayConfig> plays = new List<PlayConfig>();
         public BaselineConfig baseline = new BaselineConfig();
@@ -23,8 +24,13 @@ namespace PocketFootball.Sim
         public NetConfig net = new NetConfig();
         public ViewConfig view = new ViewConfig();
         public AnimConfig anim = new AnimConfig();
+        public CoachConfig coach = new CoachConfig();   // WS-06 (BotCoach.cs)
         public EventsConfig events = new EventsConfig();   // WS-00 (Events.cs)
         public ReplayConfig replay = new ReplayConfig();   // WS-08 (ReplayConfig.cs, View/Replay.cs)
+        public ClockConfig clock = new ClockConfig();   // WS-02 (Clock.cs)
+        public LobbyConfig lobby = new LobbyConfig();   // WS-07
+        public CarrierConfig carrier = new CarrierConfig();   // WS-04 (CarrierMoves.cs)
+        public KickingConfig kicking = new KickingConfig();   // WS-01 (Kicking.cs)
         public AudiblesConfig audibles = new AudiblesConfig();   // WS-13 (Audibles.cs)
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
@@ -59,6 +65,15 @@ namespace PocketFootball.Sim
         // helps a person who has been idle idleTakeoverS during a live play
         public float blockReachYd, blockedSpeedFrac, shedAfterS, shedFreeS, rushAroundYd, openYd, readDeadlineS, idleTakeoverS;
         public List<float> readTimesS = new List<float>();
+        // bots v2 (WS-06, FEATURES.botsV2, Bots.cs): a rusher this close with no block on him is pressure (throw it
+        // or scramble); at the deadline or under pressure he throws only to a man with deadlineOpenYd of space; throws
+        // miss by up to missYd + missPerYd per yard (+ pressureMissYd when pressured); longer than lobOverYd: a lob;
+        // the man it is for sees where it will land only adjustS before it comes down; he won't throw it past a defender
+        // within laneYd of the back half of the throw; a carrier within stepOutYd of a sideline with a tackler within
+        // stepOutHitYd on his infield side heads out of bounds (stepOutAheadFrac: how much he still runs upfield)
+        // escapeAfterS: before this a QB under pressure can't escape it yet
+        public float escapeAfterS;
+        public float pressureYd, deadlineOpenYd, missYd, missPerYd, pressureMissYd, lobOverYd, adjustS, laneYd, stepOutYd, stepOutHitYd, stepOutAheadFrac;
     }
 
     // One spot in a formation: back = yards from the line of scrimmage onto the team's own side, z = across.
@@ -160,6 +175,15 @@ namespace PocketFootball.Sim
     public sealed class AnimConfig
     {
         public float fps, throwS, handoffS, secureS, bobbleS, reachYd, reachS, getUpS, blockShoveS;
+    }
+
+    // WS-07 the lobby (FEATURES.lobby): each person picks an offense spot and a defense spot before kickoff. The game
+    // waits on the lobby until a phone taps KICK OFF (holdUntilKickoff), a bot plays for a dropped phone until it comes
+    // back (botCoversDropped), and a swap request waits swapAskS seconds for the other person's answer.
+    public sealed class LobbyConfig
+    {
+        public bool holdUntilKickoff, botCoversDropped;
+        public float swapAskS;
     }
 
     // The field runs along X (goal line to goal line), across Z (sideline to sideline); the centre is (0, 0).
