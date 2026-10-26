@@ -85,15 +85,18 @@ namespace PocketFootball.Sim
         }
 
         // The bot coach's kick: the extra point on a try; on 4th down a field goal in range, else a punt unless it is
-        // short (botGoForItYd or less to go). Null: no kick, pick a play as usual.
+        // short (botGoForItYd or less to go). Inside botGoForItGoalYd of the goal line on 4th and short it goes for the
+        // touchdown instead of the field goal. Null: no kick, pick a play as usual.
         public static string BotCall(World w, int team)
         {
             if (!On(w) || team != w.Offense) return null;
             var c = w.Cfg.kicking;
             if (w.Kick.Try) return Has(w, c.fgPlay);
             if (w.Down < w.Cfg.downs.downsToGain) return null;
-            if (KickYardsFrom(w, w.LineOfScrimmageX) <= c.botFieldGoalMaxYd) return Has(w, c.fgPlay);
             float togo = (w.FirstDownX - w.LineOfScrimmageX) * w.Dir;
+            float toGoal = w.Cfg.field.GoalLineX - w.LineOfScrimmageX * w.Dir;
+            if (togo <= c.botGoForItYd && toGoal <= c.botGoForItGoalYd) return null;
+            if (KickYardsFrom(w, w.LineOfScrimmageX) <= c.botFieldGoalMaxYd) return Has(w, c.fgPlay);
             return togo > c.botGoForItYd ? Has(w, c.puntPlay) : null;
         }
 
@@ -561,7 +564,7 @@ namespace PocketFootball.Sim
         public float crossbarYd, postsHalfWidthYd, puntBackYd, fieldGoalBackYd;
         public float catchChance, pickupYd;
         public float botKickoffPower, botPuntPower, botPowerNoise, botAimNoiseDeg, botFieldGoalClearYd, botFieldGoalExtraPower;
-        public float botFieldGoalMaxYd, botGoForItYd, meterShowS;
+        public float botFieldGoalMaxYd, botGoForItYd, botGoForItGoalYd, meterShowS;
         public float[] puntReturner = new float[0];
         public List<float[]> kickoffKicking = new List<float[]>();
         public List<float[]> kickoffReceiving = new List<float[]>();
