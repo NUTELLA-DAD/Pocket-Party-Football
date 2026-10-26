@@ -89,14 +89,14 @@ namespace PocketFootball.Boot
                 Put(w, view, team, spot, cx + x, z, pose);
             }
             // shoulder to shoulder like the picture (the camera sees all six at its 2.5:1 frame)
-            Cast(away, 6, 68, "OL", -4.4f, Pose.Stance);
-            Cast(away, 0, 7, "QB", -2.6f, Pose.Throw);
-            Cast(away, 1, 24, "RB", -0.95f, Pose.Carry);
-            Cast(home, 0, 9, "QB", 0.95f, Pose.Throw);
-            Cast(home, 1, 21, "RB", 2.6f, Pose.Carry);
-            Cast(home, 7, 64, "DL", 4.4f, Pose.Stance);
+            Cast(away, 6, 68, "OL", -4.0f, Pose.Stance);
+            Cast(away, 0, 7, "QB", -2.35f, Pose.Throw);
+            Cast(away, 1, 24, "RB", -0.85f, Pose.Carry);
+            Cast(home, 0, 9, "QB", 0.85f, Pose.Throw);
+            Cast(home, 1, 21, "RB", 2.35f, Pose.Carry);
+            Cast(home, 7, 64, "DL", 4.0f, Pose.Stance);
             float m = w.Cfg.field.yardM;
-            rig.Hold(new Vector3(cx * m, 1.75f, z * m - 11f), new Vector3(cx * m, 1.45f, z * m), 22f);
+            rig.Hold(new Vector3(cx * m, 1.7f, z * m - 9.8f), new Vector3(cx * m, 1.4f, z * m), 22f);
             // the picture's plain cream card behind them, hiding the stadium
             var card = Looks.Flat(null, "Backdrop", new Vector3(cx * m, 6f, z * m + 7f), new Vector2(40f, 12f), Colors.Hex("#f1efe8"), Looks.Toon(null), Looks.Paint);
             card.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);

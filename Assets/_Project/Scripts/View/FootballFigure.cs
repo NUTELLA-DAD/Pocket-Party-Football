@@ -164,7 +164,12 @@ namespace PocketFootball.View
                 k.Limb(new Vector3(2, elbowY, z + s * 3 * W), new Vector3(6, wristY + 1, z + s * 3 * W), 8.4f * T, 7f * T, skin);   // forearm
                 if (build != Build.Big) k.Limb(new Vector3(5.2f, wristY + 5, z + s * 3 * W), new Vector3(6, wristY + 0.5f, z + s * 3 * W), 7.4f * T, 7.3f * T, white);   // wristband
                 else k.Limb(new Vector3(3, elbowY - 6, z + s * 3 * W), new Vector3(4.6f, elbowY - 12, z + s * 3 * W), 8.4f * T, 8f * T, black);
-                k.Ellipsoid(new Vector3(7.5f, handY + 0.5f, z + s * 3 * W), new Vector3(9.5f, 10f, 8.5f) * T, glove);           // glove
+                // the glove: a palm, three fat fingers curling forward and a thumb turned in (concept 01's mitts)
+                float gz = z + s * 3 * W;
+                k.Ellipsoid(new Vector3(7.5f, handY + 2f, gz), new Vector3(8.5f, 8.5f, 7.5f) * T, glove);
+                foreach (float f in new[] { -1f, 0f, 1f })
+                    k.Limb(new Vector3(9f, handY - 2f, gz + f * 2.9f * T), new Vector3(12.5f, handY - 9.5f, gz + f * 3.1f * T), 2.7f * T, 2.4f * T, glove, 8);
+                k.Limb(new Vector3(11f, handY + 3f, gz - s * 3f * T), new Vector3(15.5f, handY - 1f, gz - s * 5.5f * T), 2.8f * T, 2.4f * T, glove, 8);
             }
 
             // ---- the head: face, eyes, helmet, facemask ----
@@ -200,7 +205,7 @@ namespace PocketFootball.View
             if (st.HelmetStripe)
             {
                 var top = FigureKit.OnEllipsoid(helmetC, helmetR, Quaternion.identity, Vector3.up, 1f, Vector3.right);
-                k.Stroke(top, new[] { new Vector2(0, 22), new Vector2(0, 0), new Vector2(0, -26), new Vector2(0, -44) }, new[] { 7f, 7.5f, 7.5f, 7f }, 0.5f, white);
+                k.Stroke(top, new[] { new Vector2(0, 22), new Vector2(0, 0), new Vector2(0, -26), new Vector2(0, -44) }, new[] { 9.5f, 10f, 10f, 9.5f }, 0.5f, white);
             }
             // facemask: two cross bars low on the face (below the eyes, concept 01) and one upright down the middle
             float fm = 2.2f;
@@ -249,7 +254,7 @@ namespace PocketFootball.View
         static void HelmetMark(Transform head, Matrix4x4 toHead, Material decal, float side, bool flip)
         {
             const int N = 8;
-            const float Size = 36f, Radius = 31f, Lift = 0.9f;
+            const float Size = 42f, Radius = 31f, Lift = 0.9f;
             var c = new Vector3(0, 150, 0);
             Vector3 n = new Vector3(0.12f, 0.16f, side).normalized;   // (a little forward, where the 3/4 view shows it)
             Vector3 v = (Vector3.up - n * Vector3.Dot(Vector3.up, n)).normalized;
@@ -339,8 +344,8 @@ namespace PocketFootball.View
             {
                 case PoseKind.Stand: return new P { armL = 4, armLx = 10, foreL = 12, armR = 4, armRx = 10, foreR = 12, thighLx = 3, thighRx = 3 };
                 case PoseKind.Ready: return new P { drop = 13, lean = 24, head = -14, armL = 25, armLx = 18, foreL = 45, armR = 25, armRx = 18, foreR = 45, thighL = 18, thighLx = 9, shinL = -30, thighR = 18, thighRx = 9, shinR = -30 };
-                // a lineman's set (concept 01's 68 and 64): low and wide, chest forward, gloves out in front
-                case PoseKind.Stance: return new P { drop = 23, lean = 44, head = -32, armL = 42, armLx = 30, foreL = 48, armR = 42, armRx = 30, foreR = 48, thighL = 62, thighLx = 30, shinL = -80, thighR = 62, thighRx = 30, shinR = -80 };
+                // a lineman's set (concept 01's 68 and 64): hips low and knees wide, chest up so the number shows, gloves out wide
+                case PoseKind.Stance: return new P { drop = 23, lean = 26, head = -12, armL = 50, armLx = 48, foreL = 42, armR = 50, armRx = 48, foreR = 42, thighL = 62, thighLx = 30, shinL = -80, thighR = 62, thighRx = 30, shinR = -80 };
                 case PoseKind.Block: return frame % 2 == 0
                         ? new P { drop = 20, lean = 42, head = -30, armL = 82, armLx = 10, foreL = 12, armR = 82, armRx = 10, foreR = 12, thighL = 48, thighLx = 10, shinL = -55, thighR = -12, thighRx = 10, shinR = -24 }
                         : new P { drop = 18, lean = 46, head = -32, armL = 92, armLx = 10, foreL = 4, armR = 92, armRx = 10, foreR = 4, thighL = -12, thighLx = 10, shinL = -24, thighR = 48, thighRx = 10, shinR = -55 };   // the shove: arms out, legs driving
