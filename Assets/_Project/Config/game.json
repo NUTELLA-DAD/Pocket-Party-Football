@@ -30,7 +30,9 @@
     "pitchDeg": 19,
     "lookAtXYd": 0,
     "lookAtZYd": 0,
-    "sideline": -1
+    "sideline": -1,
+    "leadYd": 8,
+    "followRate": 3
   },
   "players": {
     "jogSpeedYdS": 6,
@@ -150,6 +152,12 @@
       "???"
     ]
   },
+  "downs": {
+    "firstDownYd": 10,
+    "downsToGain": 4,
+    "touchdownPoints": 6,
+    "startOwnYd": 25
+  },
   "baseline": {
     "seconds": 60,
     "players": 22,
@@ -195,6 +203,7 @@
   "features": {
     "fieldStripes": true,
     "huddle": true,
-    "liveplay": true
+    "liveplay": true,
+    "downs": true
   }
 }

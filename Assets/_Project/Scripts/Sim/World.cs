@@ -47,6 +47,13 @@ namespace PocketFootball.Sim
         public int Offense;                  // the team with the ball
         public float LineOfScrimmageX;
         public bool BotsWander;
+        public float Dir;                              // the way the offense attacks: +1 = toward +X (flips on a change of possession)
+        // downs and the score (Downs.cs)
+        public int Down = 1;
+        public float FirstDownX;
+        public readonly int[] Score;
+        public string Note = "";                       // after the whistle: FIRST DOWN, TURNOVER ON DOWNS, ...
+        public bool PendingTurnover;
         // the huddle (Huddle.cs): starts on the first tick
         public Phase Phase = Phase.Set;
         public int PhaseTicks;
@@ -70,6 +77,9 @@ namespace PocketFootball.Sim
             Offense = cfg.formation.offenseTeam;
             LineOfScrimmageX = cfg.formation.lineOfScrimmageXYd;
             BotsWander = cfg.bots.wander;
+            Dir = cfg.formation.attackDir;
+            FirstDownX = LineOfScrimmageX + Dir * cfg.downs.firstDownYd;
+            Score = new int[cfg.teams.Count];
             Calls = new string[cfg.teams.Count];
         }
 
@@ -224,6 +234,7 @@ namespace PocketFootball.Sim
             Mix((int)Rng.State);
             Mix(Offense);
             Mix((int)Phase); Mix(PhaseTicks); Mix(HuddleNumber);
+            MixF(Dir); Mix(Down); MixF(FirstDownX); foreach (int sc in Score) Mix(sc); MixS(Note); Mix(PendingTurnover ? 1 : 0);
             Mix(PlayTicks); MixS(Result); MixF(NextLos); MixF(LineOfScrimmageX); Mix(Thrown ? 1 : 0); Mix(PlaysRun); Mix(YardsGained);
             foreach (var c in Calls) MixS(c);
             foreach (var kv in Suggestions) { Mix(kv.Key); MixS(kv.Value); }

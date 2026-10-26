@@ -52,10 +52,11 @@ namespace PocketFootball.Sim
             w.Result = result;
             w.NextLos = result == "TOUCHDOWN" ? w.Cfg.formation.lineOfScrimmageXYd : (spotX < -lim ? -lim : spotX > lim ? lim : spotX);
             // the numbers: yards gained this play (a touchdown counts to the goal line)
-            float end = result == "TOUCHDOWN" ? f.GoalLineX * w.Cfg.formation.attackDir : w.NextLos;
+            float end = result == "TOUCHDOWN" ? f.GoalLineX * w.Dir : w.NextLos;
             w.PlaysRun++;
-            w.YardsGained += (int)Math.Round((end - w.LineOfScrimmageX) * w.Cfg.formation.attackDir);
+            w.YardsGained += (int)Math.Round((end - w.LineOfScrimmageX) * w.Dir);
             w.Results[result] = (w.Results.TryGetValue(result, out int n) ? n : 0) + 1;
+            Downs.Apply(w, result, spotX);
         }
 
         // One player's buttons this tick (after it moved).
@@ -113,7 +114,7 @@ namespace PocketFootball.Sim
             if ((carrier.X - tackler.X) * carrier.VX + (carrier.Z - tackler.Z) * carrier.VZ > 0f) odds += c.tackleFromBehindBonus;
             if (w.Rng.Value() < odds)
             {
-                bool sack = carrier == Qb(w) && !w.Thrown && (carrier.X - w.LineOfScrimmageX) * w.Cfg.formation.attackDir < 0f;
+                bool sack = carrier == Qb(w) && !w.Thrown && (carrier.X - w.LineOfScrimmageX) * w.Dir < 0f;
                 Whistle(w, sack ? "SACKED" : "TACKLED", carrier.X);
             }
             else tackler.StumbleTicks = c.stumbleTicks;
@@ -125,7 +126,7 @@ namespace PocketFootball.Sim
             if (!On(w) || w.Phase != Phase.Live) return;
             var c = w.Cfg.play;
             var f = w.Cfg.field;
-            float dir = w.Cfg.formation.attackDir;
+            float dir = w.Dir;
             w.PlayTicks++;
             var qb = Qb(w);
             var carrier = Carrier(w);

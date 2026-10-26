@@ -66,7 +66,7 @@ namespace PocketFootball.View
 
                 // facing: the way it runs, else its team's direction of play; turned toward the camera
                 float speed = Mathf.Sqrt(p.VX * p.VX + p.VZ * p.VZ);
-                float dir = cfg.formation.attackDir * (p.Team == w.Offense ? 1f : -1f);
+                float dir = w.Dir * (p.Team == w.Offense ? 1f : -1f);
                 Vector2 face = speed > 0.5f ? new Vector2(p.VX, p.VZ).normalized : new Vector2(dir, 0f);
                 float yaw = Mathf.Atan2(-face.y, face.x) * Mathf.Rad2Deg;
                 yaw = TowardCamera(yaw);

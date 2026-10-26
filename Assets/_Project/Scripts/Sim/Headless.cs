@@ -18,7 +18,7 @@ namespace PocketFootball.Sim
             var none = new Dictionary<int, PlayerInput>();
             for (int t = 1; t <= ticks; t++)
             {
-                if (t == throwAt) w.Throw(w.Ball.X + cfg.formation.attackDir * cfg.bots.wanderYd, w.Ball.Z, true);
+                if (t == throwAt) w.Throw(w.Ball.X + w.Dir * cfg.bots.wanderYd, w.Ball.Z, true);
                 w.Step(none);
                 if (t % cfg.sim.hashEveryTicks == 0) lines.Add(w.Tick + " " + w.Hash().ToString("x16"));
             }

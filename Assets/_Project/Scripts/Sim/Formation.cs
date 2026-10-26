@@ -8,7 +8,7 @@ namespace PocketFootball.Sim
             var spots = w.Spots(p.Team);
             if (p.Spot < 0 || p.Spot >= spots.Count) return;
             var s = spots[p.Spot];
-            float dir = w.Cfg.formation.attackDir;           // +1: the offense attacks +X
+            float dir = w.Dir;           // +1: the offense attacks +X
             float own = p.Team == w.Offense ? -dir : dir;     // which way is "back" for this team
             p.HomeX = w.LineOfScrimmageX + own * s.back;
             p.HomeZ = s.z;

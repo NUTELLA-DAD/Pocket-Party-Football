@@ -12,6 +12,7 @@ namespace PocketFootball.View
         readonly Transform los, first;
         readonly Material mat;
         readonly Dictionary<int, Transform> rings = new Dictionary<int, Transform>();
+        readonly Dictionary<int, Transform> beams = new Dictionary<int, Transform>();
         readonly Transform root;
 
         public static readonly Color Cyan = new Color(0.35f, 0.92f, 1f);
@@ -45,6 +46,23 @@ namespace PocketFootball.View
                 seen.Add(kv.Key);
             }
             foreach (var kv in rings) if (!seen.Contains(kv.Key)) kv.Value.gameObject.SetActive(false);
+        }
+
+        // FIND ME: a tall beam of the team colour over the player and the ring flashing (stepped at 8 a second).
+        public void Beam(int slot, Vector3 feet, Color color, bool on, float now)
+        {
+            if (!beams.TryGetValue(slot, out var b))
+            {
+                if (!on) return;
+                var bl = new Blocks { Flag = Looks.Gloss };
+                bl.Box(new Vector3(0, 6f, 0), new Vector3(0.22f, 6f, 0.22f), color);
+                b = bl.Build(root, "Beam", mat, false).transform;
+                beams[slot] = b;
+            }
+            b.gameObject.SetActive(on);
+            if (on) b.position = new Vector3(feet.x, 0, feet.z);
+            if (rings.TryGetValue(slot, out var r))
+                r.localScale = Vector3.one * (on && ((int)(now * 8f)) % 2 == 0 ? 1.4f : 1f);
         }
 
         Transform Ring()
@@ -133,6 +151,44 @@ namespace PocketFootball.View
             Box(new Rect(x, y + 3 * s, 2 * s, h - 6 * s), new Color(1f, 1f, 1f, 0.35f));
             Box(new Rect(x, y, downW, h), new Color(0.16f, 0.16f, 0.18f, 0.95f));
             Label(new Rect(x, y, downW, h), down, Mathf.RoundToInt(30 * s), Color.white);
+        }
+
+        // A person off the edge of the picture: a disc in their team colour with their number at the nearest edge and an
+        // arrow pointing their way. Returns false (and draws nothing) when they are on screen.
+        public static bool IsOffScreen(Camera cam, Vector3 world)
+        {
+            var v = cam.WorldToViewportPoint(world);
+            return !(v.z > 0f && v.x > 0.02f && v.x < 0.98f && v.y > 0.02f && v.y < 0.98f);
+        }
+
+        public static bool EdgePortrait(Camera cam, Vector3 world, Color team, int number, float s)
+        {
+            if (!IsOffScreen(cam, world)) return false;
+            Init();
+            var v = cam.WorldToViewportPoint(world);
+            if (v.z <= 0f) { v.x = 1f - v.x; v.y = 0f; }
+            float d = 58 * s, m = 12 * s;
+            float x = Mathf.Clamp(v.x * Screen.width, m + d * 0.5f, Screen.width - m - d * 0.5f);
+            float y = Mathf.Clamp((1f - v.y) * Screen.height, m + d * 0.5f, Screen.height - m - d * 0.5f);
+            var r = new Rect(x - d * 0.5f, y - d * 0.5f, d, d);
+            GUI.color = Markings.Cyan;
+            GUI.DrawTexture(new Rect(r.x - 4 * s, r.y - 4 * s, r.width + 8 * s, r.height + 8 * s), disc);
+            GUI.color = team;
+            GUI.DrawTexture(r, disc);
+            GUI.color = Color.white;
+            Label(r, number.ToString(), Mathf.RoundToInt(26 * s), Color.white);
+            // the arrow, outside the disc on the side they are
+            Vector2 dir = new Vector2(v.x - 0.5f, 0.5f - v.y).normalized;
+            float aw = 22 * s;
+            var c = new Vector2(x, y) + dir * (d * 0.5f + aw * 0.6f);
+            var pivot = c;
+            var m0 = GUI.matrix;
+            GUIUtility.RotateAroundPivot(Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg - 90f, pivot);
+            GUI.color = Markings.Cyan;
+            GUI.DrawTexture(new Rect(c.x - aw * 0.5f, c.y - aw * 0.5f, aw, aw), tri);
+            GUI.matrix = m0;
+            GUI.color = Color.white;
+            return true;
         }
 
         // A small cyan triangle pointing down at `screen` (GUI coordinates: y down).

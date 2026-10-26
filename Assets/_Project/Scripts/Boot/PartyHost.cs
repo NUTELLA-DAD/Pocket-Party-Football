@@ -66,7 +66,7 @@ namespace PocketFootball.Boot
             h.FillWithBots();
             if (args.Wander) h.World.BotsWander = true;
             if (!args.LookX.HasValue) rig.SetLookAtX(h.World.LineOfScrimmageX);
-            if (args.ThrowDemo.HasValue) h.World.Throw(h.World.Ball.X + cfg.formation.attackDir * args.ThrowDemo.Value, h.World.Ball.Z, true);
+            if (args.ThrowDemo.HasValue) h.World.Throw(h.World.Ball.X + h.World.Dir * args.ThrowDemo.Value, h.World.Ball.Z, true);
             for (int i = 0; i < args.WarmupTicks; i++) h.StepOnce();
             if (args.CalledDemo)
             {
@@ -128,7 +128,7 @@ namespace PocketFootball.Boot
                 if (kb.tKey.wasPressedThisFrame)
                 {
                     if (World.Ball.State != BallState.Held) World.LineUp();
-                    World.Throw(World.Ball.X + cfg.formation.attackDir * cfg.bots.wanderYd * 2f, World.Ball.Z, !kb.shiftKey.isPressed);
+                    World.Throw(World.Ball.X + World.Dir * cfg.bots.wanderYd * 2f, World.Ball.Z, !kb.shiftKey.isPressed);
                 }
             }
 
@@ -145,12 +145,17 @@ namespace PocketFootball.Boot
             if (!phaseKnown || World.Phase != lastPhase || World.HuddleNumber != lastHuddle) OnPhaseChanged();
             RefreshLayouts();
             Players.Render(World, lockstep || Photo != null ? 1f : Mathf.Clamp01(accumulator / dt));
-            float firstX = Photo != null ? Photo.FirstDownX : World.LineOfScrimmageX + cfg.formation.attackDir * cfg.field.lineEveryYd * 2f;
+            float firstX = Photo != null ? Photo.FirstDownX : World.FirstDownX;
+            if (Photo == null && !Downs.On(World)) firstX = World.LineOfScrimmageX + World.Dir * cfg.downs.firstDownYd;
             marks.SetLines(World.LineOfScrimmageX, firstX);
             stadium.SetMarkers(World.LineOfScrimmageX, firstX);
             humanFeet.Clear();
             foreach (var p in World.Players) if (p.Human) humanFeet.Add(new KeyValuePair<int, Vector3>(p.Slot, Players.FeetPosition(p.Slot)));
             marks.Rings(humanFeet);
+            float now = Time.unscaledTime;
+            foreach (var p in World.Players)
+                if (p.Human) marks.Beam(p.Slot, Players.FeetPosition(p.Slot), Colors.Hex(cfg.teams[p.Team].color), findUntil.TryGetValue(p.Slot, out float fu) && fu > now, now);
+            if (Photo == null) FollowBall(Time.deltaTime);
         }
 
         readonly List<KeyValuePair<int, Vector3>> humanFeet = new List<KeyValuePair<int, Vector3>>();
@@ -160,8 +165,30 @@ namespace PocketFootball.Boot
         Phase lastPhase;
         int lastHuddle;
 
+        // The broadcast camera slides along the field with the ball, a little ahead of it in the way the offense goes;
+        // on a pass it runs ahead to where the ball is coming down. It never tilts, rolls or spins.
+        float camX = float.NaN;
+        void FollowBall(float dt)
+        {
+            var b = World.Ball;
+            var carrier = LivePlay.Carrier(World);
+            float target;
+            if (b.State == BallState.Flying) target = b.TargetX;
+            else if (World.Phase == Phase.Live || World.Phase == Phase.Whistle) target = carrier != null ? carrier.X + World.Dir * cfg.camera.leadYd : b.X;
+            else target = World.LineOfScrimmageX + (World.PendingTurnover ? -World.Dir : World.Dir) * cfg.camera.leadYd;
+            if (World.Phase == Phase.Whistle && World.PendingTurnover) target = World.NextLos;
+            float lim = cfg.field.HalfLength + cfg.field.sidelineBorderYd - cfg.camera.visibleYards * 0.5f;
+            target = Mathf.Clamp(target, -lim, lim);
+            if (float.IsNaN(camX)) camX = target;
+            camX += (target - camX) * (1f - Mathf.Exp(-dt * cfg.camera.followRate));
+            rig.SetLookAtX(camX);
+        }
+
         void OnPhaseChanged()
         {
+            // FIND ME at every snap: each person's ring flashes and a beam goes up for a moment
+            if (World.Phase == Phase.Live && lastPhase != Phase.Live)
+                foreach (var p in World.Players) if (p.Human) findUntil[p.Slot] = Time.unscaledTime + cfg.view.findMeS;
             phaseKnown = true;
             lastPhase = World.Phase;
             lastHuddle = World.HuddleNumber;
@@ -291,7 +318,7 @@ namespace PocketFootball.Boot
             int secs = Messages.Secs(w);
             if (w.Phase == Phase.Set && LivePlay.On(w)) return "SET   (the QB hikes)";
             if (w.Phase == Phase.Live) return "";
-            if (w.Phase == Phase.Whistle) return w.Result + "!";
+            if (w.Phase == Phase.Whistle) return w.Result + "!" + (w.Note.Length > 0 ? "   " + w.Note : "");
             if (w.Phase != Phase.Huddle) return "LINE UP   (next huddle in " + secs + ")";
             var parts = new List<string> { "HUDDLE 0:" + secs.ToString("00") };
             for (int t = 0; t < cfg.teams.Count; t++) parts.Add(cfg.teams[t].name + (Huddle.IsLocked(w, t) ? " CALLED ✓" : " ..."));
@@ -465,7 +492,7 @@ namespace PocketFootball.Boot
 
             // the scoreboard bar, top centre (real numbers come with M1-e)
             if (Photo != null) Hud.Scoreboard(cfg, Photo.Score, Photo.Quarter, Photo.Clock, Photo.Down, s);
-            else Hud.Scoreboard(cfg, new[] { 0, 0 }, "1ST", "4:00", "1ST & 10", s);
+            else Hud.Scoreboard(cfg, World.Score, "1ST", "", Downs.On(World) ? Downs.DownText(World) : "", s);
 
             // the people: a cyan triangle over your player; shape badges over receivers (photo scenes for now)
             if (cam != null)
@@ -473,7 +500,8 @@ namespace PocketFootball.Boot
                 {
                     Vector3 sp = cam.WorldToScreenPoint(Players.HeadPosition(p.Slot) + Vector3.up * 0.55f);
                     if (sp.z <= 0) continue;
-                    if (p.Human) Hud.Pointer(new Vector2(sp.x, Screen.height - sp.y), s);
+                    if (p.Human && !Hud.EdgePortrait(cam, Players.HeadPosition(p.Slot), Colors.Hex(cfg.teams[p.Team].color), p.Number, s))
+                        Hud.Pointer(new Vector2(sp.x, Screen.height - sp.y), s);
                     if (Photo == null && LivePlay.On(World) && (World.Phase == Phase.Set || World.Phase == Phase.Live) && !World.Thrown && p.Team == World.Offense)
                     {
                         int k = cfg.play.receivers.IndexOf(p.Spot);

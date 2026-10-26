@@ -113,7 +113,11 @@ namespace PocketFootball.Sim
             else if (w.Phase == Phase.Set && LivePlay.On(w) && w.HuddleNumber > 0) LivePlay.Hike(w);   // (the very first tick opens the first huddle)
             else
             {
-                if (w.Phase == Phase.Whistle) w.LineOfScrimmageX = w.NextLos;
+                if (w.Phase == Phase.Whistle)
+                {
+                    if (w.PendingTurnover) { w.Offense = w.Defense; w.Dir = -w.Dir; w.PendingTurnover = false; }
+                    w.LineOfScrimmageX = w.NextLos;
+                }
                 Begin(w);
             }
         }

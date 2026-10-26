@@ -33,7 +33,7 @@ namespace PocketFootball.Sim
         static PlayerInput Live(World w, Player p)
         {
             var b = w.Cfg.bots;
-            float dir = w.Cfg.formation.attackDir;
+            float dir = w.Dir;
             var carrier = LivePlay.Carrier(w);
             var qb = LivePlay.Qb(w);
             var job = JobOfCalled(w, p);
@@ -97,7 +97,7 @@ namespace PocketFootball.Sim
         // With the ball: for the end zone, sliding away from the nearest defender in front.
         static PlayerInput RunWithBall(World w, Player p)
         {
-            float dir = p.Team == w.Offense ? w.Cfg.formation.attackDir : -w.Cfg.formation.attackDir;
+            float dir = p.Team == w.Offense ? w.Dir : -w.Dir;
             float side = 0f, nearest = float.MaxValue;
             foreach (var d in w.Players)
             {
@@ -195,7 +195,7 @@ namespace PocketFootball.Sim
         }
 
         // a play point [ahead, z] in field yards
-        static float[] Pt(World w, float[] pt) => new[] { w.LineOfScrimmageX + w.Cfg.formation.attackDir * pt[0], pt[1] };
+        static float[] Pt(World w, float[] pt) => new[] { w.LineOfScrimmageX + w.Dir * pt[0], pt[1] };
 
         static bool Near(Player p, float[] t, float r) { float dx = t[0] - p.X, dz = t[1] - p.Z; return dx * dx + dz * dz <= r * r; }
 

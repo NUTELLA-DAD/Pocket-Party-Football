@@ -15,6 +15,7 @@ namespace PocketFootball.Sim
         public BallConfig ball = new BallConfig();
         public HuddleConfig huddle = new HuddleConfig();
         public LivePlayConfig play = new LivePlayConfig();
+        public DownsConfig downs = new DownsConfig();
         // Loaded from Config/plays/*.json (not game.json) by ConfigLoader.AddPlays, sorted by id.
         [Newtonsoft.Json.JsonIgnore] public List<PlayConfig> plays = new List<PlayConfig>();
         public BaselineConfig baseline = new BaselineConfig();
@@ -106,6 +107,13 @@ namespace PocketFootball.Sim
         public List<string> shapes = new List<string>();
     }
 
+    // Downs (M1-e): 10 yards in 4 downs for a new set; a touchdown is 6 points, then the other team starts at its own 25.
+    public sealed class DownsConfig
+    {
+        public float firstDownYd, startOwnYd;
+        public int downsToGain, touchdownPoints;
+    }
+
     // One play (docs/PLAYS_FORMAT.md): 11 jobs in formation spot order. runner: the offense spot the QB hands off to
     // (run plays), -1 = the QB keeps it.
     public sealed class PlayConfig
@@ -158,5 +166,6 @@ namespace PocketFootball.Sim
     {
         public float visibleYards, fovDeg, pitchDeg, lookAtXYd, lookAtZYd;
         public float sideline;   // -1: the camera stands on the -Z sideline
+        public float leadYd, followRate;   // how far ahead of the ball it looks, how quickly it catches up (per second)
     }
 }
