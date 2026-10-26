@@ -214,12 +214,23 @@
   "events": {
     "logKeep": 2048
   },
+  "replay": {
+    "seconds": 2,
+    "afterS": 0.6,
+    "speed": 0.5,
+    "cardS": 3,
+    "tagFontPx": 34,
+    "cardTitlePx": 52,
+    "cardLinePx": 30,
+    "cardWidthPx": 640
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
     "liveplay": true,
     "downs": true,
     "intreturn": true,
-    "moves": true
+    "moves": true,
+    "replay": true
   }
 }
