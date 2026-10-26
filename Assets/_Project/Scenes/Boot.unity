@@ -119,7 +119,7 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &2069116663
+--- !u!1 &1841348637
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -127,8 +127,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2069116665}
-  - component: {fileID: 2069116664}
+  - component: {fileID: 1841348639}
+  - component: {fileID: 1841348638}
   m_Layer: 0
   m_Name: GameBootstrap
   m_TagString: Untagged
@@ -136,13 +136,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &2069116664
+--- !u!114 &1841348638
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2069116663}
+  m_GameObject: {fileID: 1841348637}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 498eba7b6a407d04fa9004e37f98a9ad, type: 3}
@@ -150,13 +150,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: PocketFootball.Boot::PocketFootball.Boot.GameBootstrap
   embeddedConfig: {fileID: 4900000, guid: 26bc6bee1a9448e42a1eef9c5cf9ae37, type: 3}
   baseMaterial: {fileID: 2100000, guid: 9fce1630edc759e42811d5e9ec78c9e7, type: 2}
---- !u!4 &2069116665
+--- !u!4 &1841348639
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2069116663}
+  m_GameObject: {fileID: 1841348637}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -169,4 +169,4 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 2069116665}
+  - {fileID: 1841348639}

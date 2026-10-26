@@ -83,7 +83,14 @@ namespace PocketFootball.Editor
             so.FindProperty("m_SoftShadowsSupported").boolValue = true;
             so.FindProperty("m_SoftShadowQuality").intValue = (int)SoftShadowQuality.High;
             so.ApplyModifiedPropertiesWithoutUndo();
+            urp.volumeProfile = LookVolume();
             EditorUtility.SetDirty(urp);
+            var rdata = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(RendererPath);
+            if (rdata != null)
+            {
+                rdata.postProcessData = AssetDatabase.LoadAssetAtPath<PostProcessData>("Packages/com.unity.render-pipelines.universal/Runtime/Data/PostProcessData.asset");
+                EditorUtility.SetDirty(rdata);
+            }
 
             GraphicsSettings.defaultRenderPipeline = urp;
             int current = QualitySettings.GetQualityLevel();
@@ -93,6 +100,41 @@ namespace PocketFootball.Editor
                 QualitySettings.renderPipeline = urp;
             }
             QualitySettings.SetQualityLevel(current, false);
+        }
+
+        // The colour grade (concept 04: warm late-afternoon light): a soft bloom on whites, a warm white balance,
+        // a little contrast and saturation, a light vignette. On the URP asset, so every camera gets it.
+        static VolumeProfile LookVolume()
+        {
+            string path = SettingsDir + "/LookVolume.asset";
+            var vp = AssetDatabase.LoadAssetAtPath<VolumeProfile>(path);
+            if (vp == null) { vp = ScriptableObject.CreateInstance<VolumeProfile>(); AssetDatabase.CreateAsset(vp, path); }
+            T Get<T>() where T : VolumeComponent
+            {
+                if (vp.TryGet<T>(out var c)) return c;
+                c = vp.Add<T>(true);
+                c.name = typeof(T).Name;
+                AssetDatabase.AddObjectToAsset(c, vp);
+                return c;
+            }
+            var bloom = Get<Bloom>();
+            bloom.active = true;
+            bloom.threshold.Override(0.9f); bloom.intensity.Override(0.35f); bloom.scatter.Override(0.7f);
+            bloom.tint.Override(new Color(1f, 0.95f, 0.86f));
+            var tone = Get<Tonemapping>();
+            tone.active = true; tone.mode.Override(TonemappingMode.None);
+            var grade = Get<ColorAdjustments>();
+            grade.active = true; grade.saturation.Override(6f); grade.contrast.Override(8f); grade.postExposure.Override(0.05f);
+            var wb = Get<WhiteBalance>();
+            wb.active = true; wb.temperature.Override(14f); wb.tint.Override(2f);
+            var split = Get<SplitToning>();
+            split.active = true;
+            split.highlights.Override(new Color(0.66f, 0.58f, 0.46f)); split.shadows.Override(new Color(0.46f, 0.5f, 0.6f)); split.balance.Override(-10f);
+            var vig = Get<Vignette>();
+            vig.active = true; vig.intensity.Override(0.22f); vig.smoothness.Override(0.5f); vig.color.Override(new Color(0.2f, 0.16f, 0.1f));
+            foreach (var c in vp.components) EditorUtility.SetDirty(c);
+            EditorUtility.SetDirty(vp);
+            return vp;
         }
 
         // Plain URP Lit; the view tints copies of it. The hand-written toon shader replaces it in M4.

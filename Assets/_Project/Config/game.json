@@ -17,11 +17,11 @@
     "hashFromSidelineYd": 19.5,
     "hashLengthYd": 0.67,
     "surroundYd": 14,
-    "grassColor": "#53a03a",
-    "grassAltColor": "#468f32",
+    "grassColor": "#62a03b",
+    "grassAltColor": "#569334",
     "lineColor": "#f6f6ef",
     "endZoneColor": "#46892f",
-    "surroundColor": "#40862f",
+    "surroundColor": "#4f8a30",
     "skyColor": "#8ec3ea"
   },
   "camera": {

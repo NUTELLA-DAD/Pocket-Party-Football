@@ -23,6 +23,9 @@ namespace PocketFootball.View
             rig.Cam.tag = "MainCamera";
             rig.Cam.clearFlags = CameraClearFlags.SolidColor;
             rig.Cam.backgroundColor = Colors.Hex(cfg.field.skyColor);
+            var extra = go.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+            extra.renderPostProcessing = true;   // the colour grade (ProjectSetup.LookVolume)
+            extra.antialiasing = UnityEngine.Rendering.Universal.AntialiasingMode.SubpixelMorphologicalAntiAliasing;
             rig.Apply();
             return rig;
         }

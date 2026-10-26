@@ -52,8 +52,9 @@ namespace PocketFootball.View
                     Color c;
                     if (Mathf.Abs(xd) > f.GoalLineX) c = ez;
                     else c = striped && Mathf.FloorToInt((xd + f.GoalLineX) / f.stripeYd) % 2 == 1 ? b : a;
-                    float n = (Hash(x, y) - 0.5f) * 0.05f + (Blotch(x / 40f, y / 40f) - 0.5f) * 0.06f;
-                    p.Px[y * w + x] = new Color(c.r * (1 + n), c.g * (1 + n), c.b * (1 + n), 1f);
+                    float n = (Hash(x, y) - 0.5f) * 0.08f + (Blotch(x / 6f, y / 6f) - 0.5f) * 0.07f + (Blotch(x / 40f, y / 40f) - 0.5f) * 0.09f;
+                    float olive = (Blotch(x / 90f + 7f, y / 90f) - 0.5f) * 0.12f;
+                    p.Px[y * w + x] = new Color(c.r * (1 + n + olive), c.g * (1 + n), c.b * (1 + n - olive * 0.5f), 1f);
                 }
 
             Color line = Colors.Hex(f.lineColor);
@@ -73,7 +74,8 @@ namespace PocketFootball.View
             }
 
             // the numbers: tops 9 yards in from each sideline, 2 yards tall, both rows upright to the camera
-            float numH = 2.6f * PxPerYd, stroke = 0.52f * PxPerYd, gap = 0.36f * PxPerYd;
+            float numH = 2.4f * PxPerYd, stroke = 0.48f * PxPerYd, gap = 0.36f * PxPerYd;
+            Color numCol = new Color(line.r, line.g, line.b, 0.88f);
             for (int yd = 10; yd <= 50; yd += 10)
                 foreach (float side in new[] { -1f, 1f })
                 {
@@ -88,8 +90,8 @@ namespace PocketFootball.View
                         var zero = Glyphs.Text("0", numH, 0f, out float zw);
                         Shift(tens, new Vector2(px(x) - gap - tw, bottom));
                         Shift(zero, new Vector2(px(x) + gap, bottom));
-                        p.Strokes(tens, stroke, line);
-                        p.Strokes(zero, stroke, line);
+                        p.Strokes(tens, stroke, numCol);
+                        p.Strokes(zero, stroke, numCol);
                         if (yd == 50) continue;
                         // the arrow points to the nearer goal, beside the number on that side
                         float dir = x < 0 ? -1f : 1f;

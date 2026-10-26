@@ -74,9 +74,10 @@ namespace PocketFootball.Boot
             var go = new GameObject("Sun");
             var sun = go.AddComponent<Light>();
             sun.type = LightType.Directional;
-            sun.intensity = 1.1f;
+            sun.intensity = 1.15f;
+            sun.color = new Color(1f, 0.93f, 0.8f);   // late-afternoon warmth (concept 04)
             sun.shadows = LightShadows.Hard;
-            go.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
+            go.transform.rotation = Quaternion.Euler(42f, 215f, 0f);   // from behind the far right: shadows fall toward the camera, to the left
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
             RenderSettings.ambientLight = new Color(0.55f, 0.58f, 0.62f);
         }

@@ -38,8 +38,8 @@ namespace PocketFootball.View
             holder.localScale = Vector3.one * heightM / RigHeight;
             var fig = holder.gameObject.AddComponent<FootballFigure>();
             var st = StyleOf(teamCfg);
-            float W = build == Build.Big ? 1.42f : build == Build.Slim ? 0.9f : 1.04f;
-            float T = build == Build.Big ? 1.4f : build == Build.Slim ? 0.88f : 1.05f;
+            float W = build == Build.Big ? 1.5f : build == Build.Slim ? 0.98f : 1.12f;
+            float T = build == Build.Big ? 1.5f : build == Build.Slim ? 0.98f : 1.18f;
             float hipY = 64f, kneeY = 35f, ankleY = 9f, neckY = 120f, shY = 111f;
             fig.hipY = hipY;
             float legZ = 9.5f * W, armZ = 23f * W;
@@ -227,6 +227,8 @@ namespace PocketFootball.View
                     r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 }
             }
+            // the chibi head: a size bigger than the body it was built on (skinned, so the helmet and face follow)
+            fig.Head.localScale = Vector3.one * 1.14f;
             fig.Pose(PoseKind.Ready, 0);
             return fig;
         }

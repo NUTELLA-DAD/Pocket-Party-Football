@@ -109,8 +109,10 @@ namespace PocketFootball.View
             float teamW = 240 * s, infoW = 168 * s, downW = 156 * s;
             float total = teamW * 2 + infoW + downW + 6 * s;
             float x = (Screen.width - total) * 0.5f;
-            GUI.color = new Color(0, 0, 0, 0.35f);
-            GUI.DrawTexture(new Rect(x - 4 * s, y - 4 * s, total + 8 * s, h + 8 * s), round);
+            GUI.color = new Color(0.06f, 0.06f, 0.08f, 0.95f);
+            GUI.DrawTexture(new Rect(x - 7 * s, y - 6 * s, total + 14 * s, h + 12 * s), round);
+            GUI.color = new Color(1f, 1f, 1f, 0.25f);
+            GUI.DrawTexture(new Rect(x - 3 * s, y - 2 * s, total + 6 * s, 2 * s), Texture2D.whiteTexture);
             GUI.color = Color.white;
             for (int t = 0; t < 2 && t < cfg.teams.Count; t++)
             {

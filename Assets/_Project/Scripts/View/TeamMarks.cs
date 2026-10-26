@@ -35,8 +35,31 @@ namespace PocketFootball.View
             return p.ToTexture("Mark " + t.@short);
         }
 
-        // A slanted, outlined first letter with three wheat-like chevrons.
+        // A slanted banner with a white edge, a bold italic first letter, wheat chevrons at both ends.
         static Texture2D Sweep(TeamConfig t)
+        {
+            var p0 = new Painter(Size, Size, new Color(1, 1, 1, 0));
+            Color tc = Colors.Hex(t.color), wh = Color.white, dark = tc * 0.72f + new Color(0, 0, 0, 0.28f);
+            var banner = new List<Vector2> { new Vector2(20, 150), new Vector2(400, 150), new Vector2(492, 362), new Vector2(112, 362) };
+            p0.Fill(Grow(banner, 14), wh);
+            p0.Fill(banner, tc);
+            var s0 = Glyphs.Text(t.@short.Substring(0, 1), 300, 0f, out float sw0);
+            Slant(s0, 0.32f);
+            Offset(s0, new Vector2(212 - sw0 * 0.5f, 92));
+            p0.Strokes(s0, 128, wh);
+            p0.Strokes(s0, 92, dark);
+            // wheat: chevron rows pointing out at both ends
+            for (int i = 0; i < 3; i++)
+            {
+                float y = 214 + i * 34;
+                float lx = 70 + i * 10, rx = 446 - (2 - i) * 10;
+                p0.Stroke(new[] { new Vector2(lx + 34, y + 16), new Vector2(lx, y), new Vector2(lx + 34, y - 16) }, 12, wh);
+                p0.Stroke(new[] { new Vector2(rx - 34, y + 16), new Vector2(rx, y), new Vector2(rx - 34, y - 16) }, 12, wh);
+            }
+            return p0.ToTexture("Mark " + t.@short);
+        }
+
+        static Texture2D SweepOld(TeamConfig t)
         {
             var p = new Painter(Size, Size, new Color(1, 1, 1, 0));
             Color team = Colors.Hex(t.color), white = Color.white;

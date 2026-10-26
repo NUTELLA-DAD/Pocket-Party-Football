@@ -47,7 +47,7 @@ namespace PocketFootball.View
             {
                 float z = wallZ + 1.2f + r * 1.15f, y = 1.6f + r * 0.95f;
                 b.Box(new Vector3(0, y * 0.5f, z), new Vector3((x1 - x0) * 0.5f, y * 0.5f, 0.6f), r % 2 == 0 ? concrete : seat);
-                for (float x = x0 + 0.4f + Rand() * 0.3f; x < x1; x += 0.72f + Rand() * 0.18f)
+                for (float x = x0 + 0.3f + Rand() * 0.3f; x < x1; x += 0.5f + Rand() * 0.12f)
                 {
                     if (Rand() < 0.06f) continue;   // an empty seat here and there
                     Color shirt = shirts[(int)(Rand() * shirts.Length) % shirts.Length];
@@ -89,6 +89,7 @@ namespace PocketFootball.View
                 float sx = t == 1 ? -1f : 1f;
                 // tents and a bench behind the players
                 Tent(props, new Vector3(sx * 44f, 0, side + 3.4f), Colors.Hex(team.color));
+                Tent(props, new Vector3(sx * 30f, 0, side + 4.2f), Colors.Hex(team.color));
                 props.Box(new Vector3(sx * 22f, 0.25f, side + 4.4f), new Vector3(9f, 0.25f, 0.35f), Colors.Hex("#4a4f55"));
                 Cooler(props, new Vector3(sx * 8f, 0, side + 4.2f));
                 Cooler(props, new Vector3(sx * 36f, 0, side + 4.2f));
@@ -105,10 +106,10 @@ namespace PocketFootball.View
                 // coaches in team polos
                 for (int i = 0; i < 5; i++) Person(new Vector3(sx * (8f + i * 7f + Rand() * 2f), 0, side + 1.2f + Rand() * 0.8f), i % 2 == 0 ? Colors.Hex(team.color) : Colors.Hex("#f3f1ea"), Colors.Hex("#2c2f36"), false, 90f + (Rand() - 0.5f) * 40f);
                 // the near side: bench players' backs at the bottom of the picture
-                for (int i = 0; i < 9; i++)
+                for (int i = 0; i < 16; i++)
                 {
-                    float x = sx * (4f + i * 4.2f + Rand() * 1.5f), z = -side - 3.6f - Rand() * 1.2f;
-                    var f = FootballFigure.Create(root, team, 10 + (int)(Rand() * 80), Rand() < 0.35f ? FootballFigure.Build.Big : FootballFigure.Build.Mid, (int)(Rand() * 999), cfg.view.playerHeightM, mat, TeamMarks.For(team));
+                    float x = sx * (2f + i * 2.6f + Rand() * 1.0f), z = -side - 3.2f - Rand() * 1.4f;
+                    var f = FootballFigure.Create(root, team, 10 + (int)(Rand() * 80), Rand() < 0.35f ? FootballFigure.Build.Big : FootballFigure.Build.Mid, (int)(Rand() * 999), cfg.view.playerHeightM * 0.78f, mat, TeamMarks.For(team));
                     f.transform.localPosition = new Vector3(x, 0, z);
                     f.transform.localRotation = Quaternion.Euler(0, -90f + (Rand() - 0.5f) * 50f, 0);
                     f.Pose(FootballFigure.PoseKind.Stand, 0);
@@ -181,9 +182,11 @@ namespace PocketFootball.View
         {
             var b = new Blocks();
             b.Box(new Vector3(0, 1.1f, 0), new Vector3(0.07f, 1.1f, 0.07f), Colors.Hex("#f07a1a"));
-            b.Box(new Vector3(0, 2.35f, 0), new Vector3(0.3f, 0.25f, 0.1f), Colors.Hex("#f07a1a"));
-            b.Box(new Vector3(0, 2.35f, -0.11f), new Vector3(0.17f, 0.16f, 0.01f), Colors.Hex("#1e1e22"));
             var go = b.Build(root, "DownMarker", mat);
+            var k = new FigureKit();
+            k.Ellipsoid(new Vector3(0, 2.4f, 0), new Vector3(0.36f, 0.36f, 0.1f), Quaternion.identity, Colors.Hex("#f07a1a"), 8, 16);
+            k.Ellipsoid(new Vector3(0, 2.4f, -0.05f), new Vector3(0.2f, 0.2f, 0.06f), Quaternion.identity, Colors.Hex("#1e1e22"), 6, 12);
+            Looks.Static(go.transform, "Flag", k, mat);
             return go.transform;
         }
 
