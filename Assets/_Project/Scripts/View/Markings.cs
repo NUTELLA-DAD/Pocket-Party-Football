@@ -104,7 +104,8 @@ namespace PocketFootball.View
         public static void Scoreboard(GameConfig cfg, int[] score, string quarter, string clock, string down, float s)
         {
             Init();
-            float h = 70 * s, y = 18 * s;
+            s *= 1.12f;
+            float h = 70 * s, y = 16 * s;
             float teamW = 240 * s, infoW = 168 * s, downW = 156 * s;
             float total = teamW * 2 + infoW + downW + 6 * s;
             float x = (Screen.width - total) * 0.5f;

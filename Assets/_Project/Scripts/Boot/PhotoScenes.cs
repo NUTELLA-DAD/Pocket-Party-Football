@@ -69,10 +69,10 @@ namespace PocketFootball.Boot
             Put(w, view, home, 4, los + 22f, 9f, Pose.Run, 5, 2);
             Put(w, view, home, 5, los + 18.5f, -2.5f, Pose.Run, 5, -1);
             float[] olZ = { 0f, -2.6f, 2.6f, -5.2f, 5.2f };
-            for (int i = 0; i < 5; i++) Put(w, view, home, 6 + i, los - 0.9f, olZ[i] * 1.1f - 1f, Pose.Block);
+            for (int i = 0; i < 5; i++) Put(w, view, home, 6 + i, los - 0.9f - (i % 2) * 1.1f + Mathf.Abs(olZ[i]) * 0.25f, olZ[i] * 1.7f - 1f, Pose.Block);
             // defence (Chiefs): the line engaged, linebackers and backs reading
             float[] dlZ = { -1.5f, 1.5f, -4.5f, 4.5f };
-            for (int i = 0; i < 4; i++) Put(w, view, away, 7 + i, los + 0.9f, dlZ[i] * 1.1f - 1f, Pose.Block);
+            for (int i = 0; i < 4; i++) Put(w, view, away, 7 + i, los + 0.9f + (i % 2) * 0.9f + Mathf.Abs(dlZ[i]) * 0.25f, dlZ[i] * 1.7f - 1f, Pose.Block);
             Put(w, view, away, 0, los + 24f, -2.5f, Pose.Ready);
             Put(w, view, away, 1, los + 23f, -13.5f, Pose.Backpedal, -2, 0);
             Put(w, view, away, 2, los + 19f, 20.5f, Pose.Backpedal, -2, 0);

@@ -40,19 +40,23 @@ namespace PocketFootball.View
         {
             var p = new Painter(Size, Size, new Color(1, 1, 1, 0));
             Color team = Colors.Hex(t.color), white = Color.white;
-            var letter = Glyphs.Text(t.@short.Substring(0, 1), 380, 0f, out float w);
+            var letter = Glyphs.Text(t.@short.Substring(0, 1), 340, 0f, out float w);
             Slant(letter, 0.25f);
-            Offset(letter, new Vector2(150 - w * 0.5f, 66));
+            Offset(letter, new Vector2(160 - w * 0.5f, 86));
+            // three wheat grains trailing off the top of the letter, short fat strokes leaning back
             var wheat = new List<Vector2[]>();
             for (int i = 0; i < 3; i++)
             {
-                float x = 300 + i * 52, y = 300 - i * 46;
-                wheat.Add(new[] { new Vector2(x, y + 40), new Vector2(x + 44, y), new Vector2(x + 88, y + 40) });
+                float x = 352 + i * 48, y = 404 - i * 30;
+                wheat.Add(new[] { new Vector2(x, y), new Vector2(x + 30, y + 24) });
+                // and the same, mirrored, trailing off the bottom left
+                float mx = 512 - x - 30, my = 512 - y - 24;
+                wheat.Add(new[] { new Vector2(mx, my), new Vector2(mx + 30, my + 24) });
             }
-            p.Strokes(letter, 104, white);
-            p.Strokes(wheat, 44, white);
-            p.Strokes(letter, 70, team);
-            p.Strokes(wheat, 18, team);
+            p.Strokes(letter, 150, white);
+            p.Strokes(wheat, 64, white);
+            p.Strokes(letter, 118, team);
+            p.Strokes(wheat, 38, team);
             return p.ToTexture("Mark " + t.@short);
         }
 

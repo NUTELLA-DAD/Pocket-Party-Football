@@ -15,6 +15,8 @@ namespace PocketFootball.View
         readonly Transform root;
         readonly List<Transform> markers = new List<Transform>();
         uint seed = 12345;
+        // people on the far sideline are drawn smaller than the players (concept 04: a dense row under the crowd)
+        const float SidelineScale = 0.6f;
 
         float Rand() { seed ^= seed << 13; seed ^= seed >> 17; seed ^= seed << 5; return (seed & 0xffffff) / 16777216f; }
 
@@ -33,13 +35,13 @@ namespace PocketFootball.View
         // ---- the stands: a wall with banners, then rising rows of seated fans ----
         void Stands(float side)
         {
-            float wallZ = side + 10.5f, x0 = -95f, x1 = 95f;
+            float wallZ = side + 5.6f, x0 = -95f, x1 = 95f;
             var b = new Blocks();
             Color wall = Colors.Hex("#1f4a33"), concrete = Colors.Hex("#9aa3a0"), seat = Colors.Hex("#4c5a58");
             b.Box(new Vector3(0, 0.75f, wallZ), new Vector3((x1 - x0) * 0.5f, 0.75f, 0.25f), wall);
             int rows = 26;
             var crowd = new Blocks { Flag = Looks.Gloss };
-            Color[] shirts = { Colors.Hex(cfg.teams[1].color), Colors.Hex(cfg.teams[1].color), Colors.Hex(cfg.teams[1].color2), Colors.Hex(cfg.teams[0].color), Colors.Hex("#f3f1ea"), Colors.Hex("#1f8a4c"), Colors.Hex("#ffd34d") };
+            Color[] shirts = { Colors.Hex(cfg.teams[1].color), Colors.Hex(cfg.teams[1].color), Colors.Hex("#2a7a45"), Colors.Hex("#1f6b3c"), Colors.Hex(cfg.teams[1].color), Colors.Hex("#f3f1ea"), Colors.Hex(cfg.teams[0].color) };
             Color[] skins = { Colors.Hex("#f2c8a5"), Colors.Hex("#d6a07a"), Colors.Hex("#a8704a"), Colors.Hex("#7a4b2e") };
             for (int r = 0; r < rows; r++)
             {
@@ -50,8 +52,8 @@ namespace PocketFootball.View
                     if (Rand() < 0.06f) continue;   // an empty seat here and there
                     Color shirt = shirts[(int)(Rand() * shirts.Length) % shirts.Length];
                     float h = 0.62f + Rand() * 0.1f;
-                    crowd.Box(new Vector3(x, y + h * 0.5f, z - 0.15f), new Vector3(0.24f, h * 0.5f, 0.17f), shirt);
-                    crowd.Box(new Vector3(x, y + h + 0.17f, z - 0.15f), new Vector3(0.15f, 0.17f, 0.15f), skins[(int)(Rand() * skins.Length) % skins.Length]);
+                    crowd.Box(new Vector3(x, y + h * 0.45f, z - 0.15f), new Vector3(0.2f, h * 0.45f, 0.15f), shirt);
+                    crowd.Box(new Vector3(x, y + h * 0.9f + 0.12f, z - 0.15f), new Vector3(0.11f, 0.12f, 0.11f), skins[(int)(Rand() * skins.Length) % skins.Length]);
                     if (Rand() < 0.18f) crowd.Box(new Vector3(x + 0.18f, y + h + 0.32f, z - 0.2f), new Vector3(0.05f, 0.28f, 0.05f), shirt);   // an arm up
                 }
             }
@@ -86,26 +88,26 @@ namespace PocketFootball.View
                 var team = cfg.teams[t];
                 float sx = t == 1 ? -1f : 1f;
                 // tents and a bench behind the players
-                for (int i = 0; i < 2; i++) Tent(props, new Vector3(sx * (14f + i * 26f), 0, side + 8.2f), Colors.Hex(team.color));
-                props.Box(new Vector3(sx * 22f, 0.25f, side + 6.2f), new Vector3(9f, 0.25f, 0.35f), Colors.Hex("#4a4f55"));
-                Cooler(props, new Vector3(sx * 8f, 0, side + 4.5f));
-                Cooler(props, new Vector3(sx * 36f, 0, side + 5f));
+                Tent(props, new Vector3(sx * 44f, 0, side + 3.4f), Colors.Hex(team.color));
+                props.Box(new Vector3(sx * 22f, 0.25f, side + 4.4f), new Vector3(9f, 0.25f, 0.35f), Colors.Hex("#4a4f55"));
+                Cooler(props, new Vector3(sx * 8f, 0, side + 4.2f));
+                Cooler(props, new Vector3(sx * 36f, 0, side + 4.2f));
                 // players standing along the far sideline
-                for (int i = 0; i < 11; i++)
+                for (int i = 0; i < 20; i++)
                 {
-                    float x = sx * (6f + i * 3.4f + Rand() * 1.4f), z = side + 2.2f + Rand() * 2.6f;
+                    float x = sx * (5f + i * 2.1f + Rand() * 1.2f), z = side + 1.8f + Rand() * 2.4f;
                     int number = 10 + (int)(Rand() * 80);
-                    var f = FootballFigure.Create(root, team, number, Rand() < 0.3f ? FootballFigure.Build.Big : FootballFigure.Build.Mid, (int)(Rand() * 999), cfg.view.playerHeightM * 0.92f, mat, TeamMarks.For(team));
+                    var f = FootballFigure.Create(root, team, number, Rand() < 0.3f ? FootballFigure.Build.Big : FootballFigure.Build.Mid, (int)(Rand() * 999), cfg.view.playerHeightM * SidelineScale, mat, TeamMarks.For(team));
                     f.transform.localPosition = new Vector3(x, 0, z);
                     f.transform.localRotation = Quaternion.Euler(0, 90f + (Rand() - 0.5f) * 40f, 0);
                     f.Pose(FootballFigure.PoseKind.Stand, 0);
                 }
                 // coaches in team polos
-                for (int i = 0; i < 3; i++) Person(new Vector3(sx * (10f + i * 9f), 0, side + 1.4f), Colors.Hex(team.color), Colors.Hex("#2c2f36"), false, 90f);
+                for (int i = 0; i < 5; i++) Person(new Vector3(sx * (8f + i * 7f + Rand() * 2f), 0, side + 1.2f + Rand() * 0.8f), i % 2 == 0 ? Colors.Hex(team.color) : Colors.Hex("#f3f1ea"), Colors.Hex("#2c2f36"), false, 90f + (Rand() - 0.5f) * 40f);
                 // the near side: bench players' backs at the bottom of the picture
                 for (int i = 0; i < 9; i++)
                 {
-                    float x = sx * (4f + i * 4.2f + Rand() * 1.5f), z = -side - 3.4f - Rand() * 1.6f;
+                    float x = sx * (4f + i * 4.2f + Rand() * 1.5f), z = -side - 3.6f - Rand() * 1.2f;
                     var f = FootballFigure.Create(root, team, 10 + (int)(Rand() * 80), Rand() < 0.35f ? FootballFigure.Build.Big : FootballFigure.Build.Mid, (int)(Rand() * 999), cfg.view.playerHeightM, mat, TeamMarks.For(team));
                     f.transform.localPosition = new Vector3(x, 0, z);
                     f.transform.localRotation = Quaternion.Euler(0, -90f + (Rand() - 0.5f) * 50f, 0);
@@ -171,7 +173,7 @@ namespace PocketFootball.View
             var go = Looks.Static(root, stripes ? "Ref" : "Coach", k, mat);
             go.transform.localPosition = at;
             go.transform.localRotation = Quaternion.Euler(0, yaw, 0);
-            go.transform.localScale = Vector3.one * cfg.view.playerHeightM * 0.95f / 170f;
+            go.transform.localScale = Vector3.one * cfg.view.playerHeightM * (at.z > 0 ? SidelineScale : 0.95f) / 170f;
         }
 
         // An orange down marker: a pole with a box on top.

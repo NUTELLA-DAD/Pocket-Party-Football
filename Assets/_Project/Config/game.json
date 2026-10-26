@@ -14,20 +14,20 @@
     "lineEveryYd": 5,
     "lineWidthYd": 0.25,
     "sidelineBorderYd": 2,
-    "hashFromSidelineYd": 23.58,
+    "hashFromSidelineYd": 19.5,
     "hashLengthYd": 0.67,
     "surroundYd": 14,
-    "grassColor": "#5ba63f",
-    "grassAltColor": "#4e9535",
+    "grassColor": "#53a03a",
+    "grassAltColor": "#468f32",
     "lineColor": "#f6f6ef",
     "endZoneColor": "#46892f",
-    "surroundColor": "#4a8f34",
+    "surroundColor": "#40862f",
     "skyColor": "#8ec3ea"
   },
   "camera": {
-    "visibleYards": 36,
+    "visibleYards": 46,
     "fovDeg": 7,
-    "pitchDeg": 16,
+    "pitchDeg": 19,
     "lookAtXYd": 0,
     "lookAtZYd": 0,
     "sideline": -1
@@ -132,13 +132,13 @@
     "stickStaleS": 0.5
   },
   "view": {
-    "playerHeightM": 2.3,
+    "playerHeightM": 2.9,
     "playerRadiusM": 0.45,
     "findMeS": 2,
     "plateFontPx": 22,
     "joinPanelQrPx": 260,
-    "ballLengthM": 0.8,
-    "ballWidthM": 0.5,
+    "ballLengthM": 0.5,
+    "ballWidthM": 0.32,
     "meSendHz": 5
   },
   "features": {

@@ -17,7 +17,7 @@ Shader "PocketParty/Toon"
         _LitColor ("Lit (warm tint)", Color) = (1.0, 0.96, 0.86, 1)
         _Threshold ("Light Threshold", Range(-1, 1)) = 0.08
         _Specular ("Specular (all vertices)", Range(0, 1)) = 0
-        _SpecSize ("Specular Dot Size", Range(0.001, 0.2)) = 0.035
+        _SpecSize ("Specular Dot Size", Range(0.001, 0.2)) = 0.016
         _Rim ("Rim Light (stepped)", Range(0, 1)) = 0.8
         _RimWidth ("Rim width (1 - N.V)", Range(0, 1)) = 0.15
         _BounceColor ("Cool bounce on shaded undersides", Color) = (0.30, 0.46, 0.78, 1)

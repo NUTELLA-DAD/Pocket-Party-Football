@@ -73,7 +73,7 @@ namespace PocketFootball.View
             }
 
             // the numbers: tops 9 yards in from each sideline, 2 yards tall, both rows upright to the camera
-            float numH = 2f * PxPerYd, numW = numH / Glyphs.Height, stroke = 0.38f * PxPerYd, gap = 0.3f * PxPerYd;
+            float numH = 2.6f * PxPerYd, stroke = 0.52f * PxPerYd, gap = 0.36f * PxPerYd;
             for (int yd = 10; yd <= 50; yd += 10)
                 foreach (float side in new[] { -1f, 1f })
                 {
@@ -82,7 +82,7 @@ namespace PocketFootball.View
                     if (side > 0) x = f.GoalLineX - yd;
                     foreach (float row in new[] { -1f, 1f })
                     {
-                        float zc = row * (f.HalfWidth - 9f - 1f);
+                        float zc = row * (f.HalfWidth - 9f - 1.3f);
                         float bottom = pz(zc) - numH * 0.5f;
                         var tens = Glyphs.Text((yd / 10).ToString(), numH, 0f, out float tw);
                         var zero = Glyphs.Text("0", numH, 0f, out float zw);
@@ -100,23 +100,23 @@ namespace PocketFootball.View
                 }
 
             // the home team's mark in the middle
-            if (cfg.teams.Count > 1) Stamp(p, TeamMarks.For(cfg.teams[1]), new Vector2(px(0), pz(0)), 9.5f * PxPerYd, 0.92f);
+            if (cfg.teams.Count > 1) Stamp(p, TeamMarks.For(cfg.teams[1]), new Vector2(px(0), pz(0)), 21f * PxPerYd, 11.5f * PxPerYd, 0.95f);
             return p.ToTexture("FieldPaint");
         }
 
         static void Shift(System.Collections.Generic.List<Vector2[]> s, Vector2 by) { foreach (var a in s) for (int i = 0; i < a.Length; i++) a[i] += by; }
 
-        // A texture laid onto the paint, centred at c, `size` pixels wide (square), at `alpha`.
-        static void Stamp(Painter p, Texture2D t, Vector2 c, float size, float alpha)
+        // A texture laid onto the paint, centred at c, w x h pixels, at `alpha`.
+        static void Stamp(Painter p, Texture2D t, Vector2 c, float w, float h, float alpha)
         {
             Color32[] src;
             try { src = t.GetPixels32(); }
             catch (UnityException) { return; }   // (a PNG replacement must be marked Read/Write to be painted in)
-            int x0 = (int)(c.x - size * 0.5f), y0 = (int)(c.y - size * 0.5f), n = (int)size;
-            for (int y = 0; y < n; y++)
-                for (int x = 0; x < n; x++)
+            int x0 = (int)(c.x - w * 0.5f), y0 = (int)(c.y - h * 0.5f), nw = (int)w, nh = (int)h;
+            for (int y = 0; y < nh; y++)
+                for (int x = 0; x < nw; x++)
                 {
-                    int sx = x * t.width / n, sy = y * t.height / n;
+                    int sx = x * t.width / nw, sy = y * t.height / nh;
                     Color s = src[sy * t.width + sx];
                     p.Blend(x0 + x, y0 + y, new Color(s.r, s.g, s.b, 1f), s.a * alpha);
                 }

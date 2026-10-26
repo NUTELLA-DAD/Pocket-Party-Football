@@ -43,7 +43,7 @@ Material:
     - _RimWidth: 0.15
     - _ShadeSaturation: 0.72
     - _ShadeUnify: 0.4
-    - _SpecSize: 0.035
+    - _SpecSize: 0.016
     - _Specular: 0
     - _Threshold: 0.08
     m_Colors:

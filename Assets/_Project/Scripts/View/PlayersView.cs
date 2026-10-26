@@ -10,7 +10,7 @@ namespace PocketFootball.View
     // show; running steps between two run frames by distance covered (stepped, no time-based wobble).
     public sealed class PlayersView
     {
-        const float TurnToCamera = 28f;     // degrees a figure turns toward the camera
+        const float TurnToCamera = 42f;     // degrees a figure turns toward the camera (faces and numbers show)
         const float StrideM = 0.9f;         // metres per run frame
 
         readonly GameConfig cfg;
