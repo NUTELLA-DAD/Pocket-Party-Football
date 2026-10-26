@@ -54,6 +54,14 @@ namespace PocketFootball.Sim
             TargetX = tx; TargetZ = tz;
         }
 
+        // In the air with this velocity, aimed at (tx, tz) (the throw stick's own flight, ThrowStick.Plan).
+        public void Fly(float vx, float vy, float vz, float tx, float tz)
+        {
+            State = BallState.Flying; Carrier = -1;
+            VX = vx; VY = vy; VZ = vz;
+            TargetX = tx; TargetZ = tz;
+        }
+
         public void Step(World w, float dt)
         {
             var c = w.Cfg.ball;

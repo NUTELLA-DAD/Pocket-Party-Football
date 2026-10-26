@@ -55,6 +55,8 @@ namespace PocketFootball.Sim
             if (p.Team == w.Offense)
             {
                 // WS-06: the man the pass is for keeps running and goes to meet it (v1 stopped and blocked, so led passes fell short)
+                // a throw-stick pass names a spot, not a man: whoever is nearest it runs there (v1 or v2), not off to block
+                if (w.StickThrow && w.Ball.State == BallState.Flying && p == Intended(w)) return To(p, w.Ball.TargetX, w.Ball.TargetZ, 1f, true);
                 if (V2(w) && w.Ball.State == BallState.Flying && p == Intended(w)) return MeetThePass(w, p);
                 if (ballOut || job == null || job.kind == "block") return Block(w, p, carrier);
                 if (job.kind == "route" && job.pts.Count > 0)

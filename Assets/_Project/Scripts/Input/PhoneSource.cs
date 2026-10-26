@@ -24,12 +24,38 @@ namespace PocketFootball.Input
         bool callPressed, catchPressed;   // WS-05
         CarrierMove movePressed;          // WS-04: SPIN / STIFF ARM / DIVE
         DefMove defPressed;               // WS-03
+        bool throwAt; float throwX, throwY, throwArc;   // the throw stick, let go (latched until the next tick)
+
+        // The throw stick while it is held (for the TV's arc only; the sim sees nothing until it is let go).
+        // AimX right, AimY DOWN, like the move stick; AimArc 0 = bullet .. 1 = lob.
+        public bool Aiming { get; private set; }
+        public float AimX { get; private set; }
+        public float AimY { get; private set; }
+        public float AimArc { get; private set; }
 
         public PhoneSource(Seat seat) { Seat = seat; }
 
         // Phone stick: x right, y DOWN (screen). The camera stands on the near sideline, so screen right is +X along
         // the field and screen up is +Z, away from the camera.
         public void OnStick(float x, float y, float now) { stickX = x; stickY = y; stickAt = now; }
+
+        // The throw stick: {t:'aim',x,y,arc,aid} streams while held, {t:'aim',cancel:1,aid} lets go in the middle,
+        // {t:'throw',x,y,arc,aid} lets go to throw. Same aid guard as the buttons.
+        public bool OnAim(float x, float y, float arc, bool cancel, string aid)
+        {
+            if (aid != Aid) return false;
+            Aiming = !cancel;
+            if (!cancel) { AimX = x; AimY = y; AimArc = arc; }
+            return true;
+        }
+
+        public bool OnThrowStick(float x, float y, float arc, string aid)
+        {
+            if (aid != Aid) return false;
+            Aiming = false;
+            throwAt = true; throwX = x; throwY = y; throwArc = arc;
+            return true;
+        }
 
         // Returns false when the press was ignored by the aid guard (or isn't a button this game knows).
         // tgt / lobHeld: a throw's receiver shape and whether it was held long enough to be a lob (sent on release).
@@ -74,7 +100,7 @@ namespace PocketFootball.Input
             return f;
         }
 
-        public void OnDisconnect() { stickX = stickY = 0; sprintHeld = false; blockHeld = false; }
+        public void OnDisconnect() { stickX = stickY = 0; sprintHeld = false; blockHeld = false; Aiming = false; }
 
         // A stick that has gone quiet (phone locked, Wi-Fi blip) stops.
         public void ExpireStick(float now, float staleSeconds)
@@ -91,7 +117,9 @@ namespace PocketFootball.Input
                 Call = callPressed, Catch = catchPressed,   // WS-05
                 Move = movePressed,                         // WS-04
                 Def = defPressed,                           // WS-03
+                ThrowAt = throwAt, AimX = throwX, AimZ = -throwY, Arc = throwArc,   // the throw stick (y down -> +Z away)
             };
+            throwAt = false;
             hikePressed = jukePressed = tacklePressed = false;
             callPressed = catchPressed = false;            // WS-05
             movePressed = CarrierMove.None;                // WS-04

@@ -127,6 +127,8 @@ namespace PocketFootball.Sim
         public float tackleReachYd, tackleBase, tackleSpeedBonus, tackleFromBehindBonus, stumbleSpeedFrac;
         public int tackleCooldownTicks, stumbleTicks, jukeTicks, jukeCooldownTicks;
         public float jukeBurstYdS, pursuitLeadS;
+        public float throwMaxYards;   // the throw stick pushed all the way: this far from the QB (ThrowStick.cs)
+        public float throwDeadZone;   // ...and let go nearer the middle than this (0..1): no throw
         public List<int> receivers = new List<int>();
         public List<string> shapes = new List<string>();
     }

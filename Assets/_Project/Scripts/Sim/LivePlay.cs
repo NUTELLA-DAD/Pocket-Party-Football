@@ -38,6 +38,7 @@ namespace PocketFootball.Sim
             w.Phase = Phase.Live;
             w.PlayTicks = 0;
             w.Thrown = false;
+            w.StickThrow = false;
             w.Intercepted = false;
             w.Result = "";
             w.CatchTried.Clear();
@@ -79,6 +80,7 @@ namespace PocketFootball.Sim
             var carrier = Carrier(w);
             // the QB's throw
             if (input.Throw > 0 && carrier == p && p == Qb(w) && !w.Thrown) ThrowTo(w, Receiver(w, input.Throw), input.Lob);
+            else if (input.ThrowAt && carrier == p && p == Qb(w) && !w.Thrown && ThrowStick.On(w)) ThrowStick.Throw(w, p, input.AimX, input.AimZ, input.Arc);
             // the ball carrier's juke: a burst to the side the stick points (or the far side)
             if (input.Juke && carrier == p && p.JukeCooldown == 0)
             {

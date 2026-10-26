@@ -106,6 +106,7 @@ namespace PocketFootball.Sim
             w.Note = "";
             w.Result = "";
             w.Thrown = false;
+            w.StickThrow = false;
             w.Intercepted = false;
             w.Suggestions.Clear();
             w.CatchTried.Clear();

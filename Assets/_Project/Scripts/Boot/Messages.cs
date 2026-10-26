@@ -38,11 +38,12 @@ namespace PocketFootball.Boot
             ["t"] = "me", ["st"] = (int)System.Math.Round(p.Stamina * 100f), ["tired"] = p.Tired, ["oob"] = p.OutOfBounds,
         });
 
-        public static string Ui(string layout, string aid, JArray receivers = null, string line = null)
+        public static string Ui(string layout, string aid, JArray receivers = null, string line = null, bool throwStick = false)
         {
             var o = new JObject { ["t"] = "ui", ["layout"] = layout, ["aid"] = aid };
             if (receivers != null) o["receivers"] = receivers;
             if (line != null) o["line"] = line;
+            if (throwStick) o["throwStick"] = true;   // the QB's aim-and-throw stick (FEATURES.throwStick)
             return PhoneProtocol.Text(o);
         }
 

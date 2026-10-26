@@ -47,6 +47,7 @@ namespace PocketFootball.Boot
         bool lockstep;               // screenshots: exactly one sim tick per frame, so pictures are repeatable
         float accumulator;
         readonly Dictionary<int, PhoneSource> sources = new Dictionary<int, PhoneSource>();   // by slot
+        public PhoneSource SourceOf(int slot) => sources.TryGetValue(slot, out var s) ? s : null;
         readonly Dictionary<int, PhoneSource> byConn = new Dictionary<int, PhoneSource>();
         readonly Dictionary<int, PlayerInput> inputs = new Dictionary<int, PlayerInput>();
         readonly Dictionary<int, float> findUntil = new Dictionary<int, float>();
@@ -85,6 +86,7 @@ namespace PocketFootball.Boot
             on.AddComponent<ReceivingHud>().Host = h;   // WS-05: CALL FOR IT pulse on the TV and the QB's phone
             Lobby.Attach(h, cfg, args);   // WS-07: the lobby and two-way players (FEATURES.lobby)
             KickPhones.Attach(h);   // WS-01: the kick meter on the kicker's phone and on the TV
+            ThrowAimView.Attach(h, baseMat);   // the throw stick's live arc and landing spot on the TV
             return h;
         }
 
@@ -368,6 +370,10 @@ namespace PocketFootball.Boot
                     else if (t == "pick") OnPick(src, PhoneProtocol.Int(m, "team", -1));
                     else if (t == "suggest") OnCall(src, m, false);
                     else if (t == "lock") OnCall(src, m, true);
+                    else if (t == "aim") src.OnAim(PhoneProtocol.Float(m, "x", -1f, 1f), PhoneProtocol.Float(m, "y", -1f, 1f), PhoneProtocol.Float(m, "arc", 0f, 1f),
+                                                   PhoneProtocol.Int(m, "cancel") == 1, PhoneProtocol.Str(m, "aid"));
+                    else if (t == "throw") src.OnThrowStick(PhoneProtocol.Float(m, "x", -1f, 1f), PhoneProtocol.Float(m, "y", -1f, 1f), PhoneProtocol.Float(m, "arc", 0f, 1f),
+                                                            PhoneProtocol.Str(m, "aid"));
                     else if (t == "kick") KickPhones.OnKick(this, src, m);   // WS-01
                     else if (t == "audible" || t == "hot") AudibleHost.OnMessage(this, src, m);   // WS-13
                     else if (Lobby.Instance != null) Lobby.Instance.OnMessage(src.Seat, t, m);   // WS-07: spot, swap, kickoff, lobbyme
@@ -436,7 +442,8 @@ namespace PocketFootball.Boot
         {
             src.Aid = layout + (++aidCounter);
             lastLayout[src.Seat.Slot] = layout;
-            if (src.Seat.Conn >= 0) Server.Send(src.Seat.Conn, Messages.Ui(layout, src.Aid, layout == "qb" ? Receivers() : null, layout == "wait" && World.Phase == Phase.Whistle ? WhistleLine() : null));
+            if (src.Seat.Conn >= 0) Server.Send(src.Seat.Conn, Messages.Ui(layout, src.Aid, layout == "qb" ? Receivers() : null, layout == "wait" && World.Phase == Phase.Whistle ? WhistleLine() : null,
+                                                                               layout == "qb" && ThrowStick.On(World)));
         }
 
         void BroadcastLobby()

@@ -15,6 +15,10 @@ namespace PocketFootball.Sim
         public bool Call, Catch; // WS-05: CALL FOR IT, CATCH (Receiving.cs)
         public CarrierMove Move; // WS-04: the ball carrier's SPIN / STIFF ARM / DIVE (CarrierMoves.cs)
         public DefMove Def;      // WS-03: a defender's SWIM / BULL RUSH / SWAT / JUMP / DIVE TACKLE (DefenseMoves.cs)
+        // The throw stick (ThrowStick.cs): throw to a spot. AimX, AimZ: the stick in the MoveX / MoveZ frame (-1..1),
+        // scaled by play.throwMaxYards from the QB. Arc: 0 = flat bullet .. 1 = high lob.
+        public bool ThrowAt;
+        public float AimX, AimZ, Arc;
     }
 
     public sealed class Player
@@ -69,6 +73,7 @@ namespace PocketFootball.Sim
         public string Result = "";                     // why the whistle blew: TACKLED, SACKED, INCOMPLETE, TOUCHDOWN, ...
         public float NextLos;                          // where the next play starts (yards)
         public bool Thrown;                            // the ball has been thrown this play
+        public bool StickThrow;                        // ...with the throw stick, to a spot (ThrowStick.cs)
         public bool Intercepted;                       // a defender caught it and is running it back (FEATURES.intreturn)
         public readonly HashSet<int> CatchTried = new HashSet<int>();
         public readonly ReceivingState Recv = new ReceivingState();   // WS-05: this play's calls and catch taps (Receiving.cs); not hashed
@@ -210,7 +215,7 @@ namespace PocketFootball.Sim
                 if (p.Human)
                 {
                     if (inputs != null) inputs.TryGetValue(p.Slot, out input);
-                    bool idle = input.MoveX == 0f && input.MoveZ == 0f && !input.Sprint && !input.Hike && !input.Juke && !input.Tackle && !input.Block && input.Throw == 0;
+                    bool idle = input.MoveX == 0f && input.MoveZ == 0f && !input.Sprint && !input.Hike && !input.Juke && !input.Tackle && !input.Block && input.Throw == 0 && !input.ThrowAt;
                     p.IdleTicks = idle ? p.IdleTicks + 1 : 0;
                     // a person who has put the phone down: a bot plays for them until they touch it again
                     if (Phase == Phase.Live && p.IdleTicks >= Cfg.bots.idleTakeoverS * Cfg.sim.tickHz) { input = Bots.Think(this, p); p.BotHelp = true; }

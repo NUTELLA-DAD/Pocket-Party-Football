@@ -182,6 +182,8 @@
     "jukeBurstYdS": 7,
     "jukeCooldownTicks": 45,
     "pursuitLeadS": 0.3,
+    "throwMaxYards": 40,
+    "throwDeadZone": 0.15,
     "receivers": [
       2,
       3,
@@ -622,6 +624,7 @@
     "gamelog": true,
     "gamepad": true,
     "audio": true,
-    "defmoves": true
+    "defmoves": true,
+    "throwStick": true
   }
 }
