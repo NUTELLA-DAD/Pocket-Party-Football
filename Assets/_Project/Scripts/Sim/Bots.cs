@@ -291,7 +291,7 @@ namespace PocketFootball.Sim
             float miss = b.missYd + d * b.missPerYd + (pressured ? b.pressureMissYd : 0f);
             float tx = r.X + r.VX * ft + w.Rng.Range(-miss, miss);
             float tz = r.Z + r.VZ * ft + w.Rng.Range(-miss, miss);
-            if (w.Throw(tx, tz, lob)) w.Thrown = true;
+            if (w.Throw(tx, tz, lob)) { w.Thrown = true; w.Events.Push(w, EventKind.Throw, qb, r); }
         }
 
         // With the ball: for the end zone, sliding away from the nearest defender in front.
