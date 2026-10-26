@@ -10,10 +10,16 @@ namespace PocketFootball.Tests.EditMode
         // For tests of other rules: the huddle off, so it never lines everyone up mid-test.
         public static Dictionary<string, string> NoHuddle => new Dictionary<string, string> { { "NO_HUDDLE", "1" } };
 
+        // Kicking (WS-01) is off unless a test asks for it: with it on the game opens with a kickoff, and the tests of
+        // other rules expect the first huddle. A test that wants the game exactly as game.json has it passes AsShipped.
+        public static Dictionary<string, string> AsShipped => new Dictionary<string, string> { { "NO_KICKING", "0" } };
+
         public static GameConfig Load(Dictionary<string, string> env = null)
         {
             string json = File.ReadAllText("Assets/_Project/Config/game.json");
-            var cfg = ConfigLoader.Parse(json, k => env != null && env.TryGetValue(k, out var v) ? v : null);
+            var e = env != null ? new Dictionary<string, string>(env) : new Dictionary<string, string>();
+            if (!e.ContainsKey("NO_KICKING")) e["NO_KICKING"] = "1";
+            var cfg = ConfigLoader.Parse(json, k => e.TryGetValue(k, out var v) ? v : null);
             var plays = new List<string>();
             foreach (var f in Directory.GetFiles("Assets/_Project/Config/plays", "*.json")) plays.Add(File.ReadAllText(f));
             ConfigLoader.AddPlays(cfg, plays);
