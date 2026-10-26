@@ -1,79 +1,141 @@
-/* Pocket Party Football phone controller. Offline only: system fonts, nothing loaded from the internet. */
+/* Pocket Party Football phone controller. Offline only: system fonts, nothing loaded from the internet.
+   One screen, never scrolls. Held sideways (landscape) is the main way to play: stick on the left, buttons on the right. */
 :root {
   --turf: #123b2c; --turf-2: #1a4d39; --chalk: #f6f1de; --ink: #0d2219; --muted: #a8c4b4;
-  --team: #d7263d; --team-2: #ffb612; --team-ink: #ffffff; --warn: #ffcf4a;
+  --team: #d7263d; --team-2: #ffb612; --team-ink: #ffffff; --warn: #ffcf4a; --good: #5fd38a;
   --display: "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif;
   --body: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --gap: 10px;
+  /* the stick: as big as the short side allows */
+  --stick: min(230px, 46vw);
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
-html, body { height: 100%; margin: 0; }
+html, body { height: 100%; margin: 0; overflow: hidden; }
 body {
   background: var(--turf); color: var(--chalk); font-family: var(--body); font-weight: 600;
   background-image: repeating-linear-gradient(90deg, transparent 0 46px, rgba(255,255,255,.035) 46px 92px);
-  padding: env(safe-area-inset-top, 0) max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px));
+  padding: env(safe-area-inset-top, 0px) max(12px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(12px, env(safe-area-inset-left, 0px));
   -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; overscroll-behavior: none;
   touch-action: none;
 }
-.app { max-width: 760px; margin: 0 auto; padding: 12px 0 20px; min-height: 100%; }
-.view { display: grid; gap: 14px; }
+.app { height: 100%; max-width: 1000px; margin: 0 auto; padding: 8px 0; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.view { flex: 1; min-height: 0; display: grid; gap: var(--gap); align-content: start; }
 .hidden { display: none !important; }
 h1, h2 { font-family: var(--display); font-weight: 400; margin: 0; letter-spacing: .02em; }
-h1 { font-size: 30px; }
-.sub { color: var(--muted); font-size: 14px; margin: 0; }
-.field { display: grid; gap: 6px; font-size: 15px; color: var(--muted); }
+h1 { font-size: 28px; }
+h2 { font-size: 20px; }
+.sub { color: var(--muted); font-size: 13px; margin: 0; }
+.field { display: grid; gap: 4px; font-size: 14px; color: var(--muted); min-width: 0; }
 input {
-  font: inherit; font-size: 24px; padding: 12px; border-radius: 12px; border: 2px solid var(--turf-2);
+  font: inherit; font-size: 22px; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--turf-2);
   background: var(--ink); color: var(--chalk); text-transform: uppercase; -webkit-user-select: text; user-select: text;
-  touch-action: manipulation;
+  touch-action: manipulation; width: 100%; min-width: 0;
 }
 button { font: inherit; color: inherit; cursor: pointer; touch-action: none; }
 button:focus-visible { outline: 3px solid var(--warn); outline-offset: 2px; }
 .big {
-  border: 0; border-radius: 16px; padding: 16px; font-family: var(--display); font-size: 26px;
+  border: 0; border-radius: 16px; padding: 12px 16px; font-family: var(--display); font-size: 24px;
   background: var(--team); color: var(--team-ink); box-shadow: 0 5px 0 rgba(0,0,0,.35);
 }
+.big:disabled { opacity: .4; }
+.big:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 rgba(0,0,0,.35); }
+
+/* ---- join and team pick ---- */
+#joinView { grid-template-columns: 1fr; }
 .pick { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .team {
-  border: 4px solid transparent; border-radius: 16px; padding: 22px 10px; font-family: var(--display); font-size: 22px;
-  color: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.35); min-height: 120px;
+  border: 4px solid transparent; border-radius: 16px; padding: 16px 10px; font-family: var(--display); font-size: 22px;
+  color: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.35); min-height: 96px;
 }
 .team .sub { color: rgba(255,255,255,.85); margin-top: 8px; }
 .team[aria-pressed="true"] { border-color: var(--chalk); }
-.me {
-  display: flex; justify-content: space-between; align-items: center; border-radius: 14px; padding: 10px 14px;
-  background: var(--team); color: var(--team-ink); font-family: var(--display); font-size: 24px;
+
+/* ---- the strip at the top: what the TV says ---- */
+.tvstrip { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; background: var(--ink); border-radius: 10px; padding: 5px 10px; font-size: 13px; min-width: 0; }
+.tvstrip .tag { font-family: var(--display); font-size: 10px; letter-spacing: .08em; color: var(--muted); white-space: nowrap; }
+.tvstrip .msg { flex: 1; min-width: 0; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tvstrip .score { font-family: var(--display); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* ---- the play screen: name plate, the line and stamina, the stick, the buttons ---- */
+#playView {
+  grid-template-columns: var(--stick) minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-areas: "me me" "info info" "stick btns";
+  align-content: stretch;
 }
-.num { font-size: 30px; }
-.line { font-size: 16px; font-weight: 800; min-height: 1.4em; margin: 0; }
-.stam { height: 12px; border-radius: 999px; background: var(--ink); overflow: hidden; }
-.stam i { display: block; height: 100%; width: 100%; background: #5fd38a; }
-.stam.tired i { background: var(--warn); }
+.me {
+  grid-area: me; display: flex; justify-content: space-between; align-items: center; gap: 8px; border-radius: 12px; padding: 6px 12px;
+  background: var(--team); color: var(--team-ink); font-family: var(--display); font-size: 18px; min-width: 0;
+}
+.me span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.num { font-size: 20px; white-space: nowrap; }
+.info { grid-area: info; display: grid; gap: 6px; align-content: start; min-height: 0; min-width: 0; overflow: hidden; }
+/* once the ball is live the job card goes: the TV is where to look. It stays before the snap and while a bot plays you */
+#playView:not([data-layout="qbpre"]):not([data-layout="wait"]):not([data-layout="none"]) .job { display: none; }
+.line { font-size: 15px; font-weight: 800; min-height: 1.3em; margin: 0; }
 .line.warn { color: var(--warn); }
-.pad { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: end; }
+.stam { height: 10px; border-radius: 999px; background: var(--ink); overflow: hidden; }
+.stam i { display: block; height: 100%; width: 100%; background: var(--good); }
+.stam.tired i { background: var(--warn); }
+.stickcol { grid-area: stick; display: flex; align-items: flex-end; justify-content: flex-start; min-height: 0; }
 .stick {
-  position: relative; aspect-ratio: 1; max-width: 240px; width: 100%; border-radius: 50%;
+  position: relative; width: var(--stick); height: var(--stick); flex: 0 0 auto; border-radius: 50%;
   background: radial-gradient(circle, var(--turf-2) 0 55%, var(--ink) 56%); touch-action: none;
 }
 .knob {
-  position: absolute; left: 50%; top: 50%; width: 40%; aspect-ratio: 1; margin: -20% 0 0 -20%; border-radius: 50%;
+  position: absolute; left: 50%; top: 50%; width: 40%; height: 40%; margin: -20% 0 0 -20%; border-radius: 50%;
   background: var(--chalk); box-shadow: 0 4px 0 rgba(0,0,0,.35); pointer-events: none;
 }
-.btns { display: grid; gap: 12px; }
+.btncol { grid-area: btns; display: flex; align-items: flex-end; min-height: 0; min-width: 0; }
+.btns { display: grid; gap: var(--gap); grid-template-columns: 1fr 1fr; width: 100%; max-height: 100%; }
+#walkBtns { grid-template-columns: 1fr; }
 .btn {
-  border: 0; border-radius: 18px; min-height: 96px; padding: 8px; font-family: var(--display); font-size: 22px; line-height: 1.05;
-  background: var(--chalk); color: var(--ink); box-shadow: 0 5px 0 rgba(0,0,0,.35);
+  border: 0; border-radius: 16px; min-height: 64px; padding: 6px; font-family: var(--display); font-size: 19px; line-height: 1.05;
+  background: var(--chalk); color: var(--ink); box-shadow: 0 5px 0 rgba(0,0,0,.35); min-width: 0; overflow: hidden;
 }
 .btn.main { background: var(--team); color: var(--team-ink); }
-.btn.small { min-height: 44px; font-size: 15px; background: var(--ink); color: var(--muted); }
+.btn.small { min-height: 40px; font-size: 14px; background: var(--ink); color: var(--muted); }
 .btn.on, .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 rgba(0,0,0,.35); filter: brightness(1.12); }
-.btn .k { display: block; font-family: var(--body); font-size: 11px; font-weight: 800; opacity: .75; margin-top: 4px; }
-.tvstrip { display: flex; align-items: center; gap: 10px; background: var(--ink); border-radius: 12px; padding: 8px 12px; font-size: 13px; margin-bottom: 12px; }
-.tvstrip .tag { font-family: var(--display); font-size: 11px; letter-spacing: .08em; color: var(--muted); }
-.tvstrip .msg { flex: 1; min-width: 0; font-weight: 800; }
-.tvstrip .score { font-family: var(--display); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.btn .k { display: block; font-family: var(--body); font-size: 11px; font-weight: 800; opacity: .75; margin-top: 3px; }
+#playView.no-stick { grid-template-columns: minmax(0, 1fr); grid-template-areas: "me" "info" "btns"; }
+#playView.no-stick .stickcol { display: none; }
+
+/* the job diagram: small, it is a reminder; the field is on the TV */
+.job { display: grid; gap: 4px; min-height: 0; }
+.job h3 { font-family: var(--display); font-weight: 400; font-size: 16px; margin: 0; }
+#jobField svg { display: block; width: 100%; height: auto; max-height: 22vh; border-radius: 8px; }
+
+/* ---- sideways: a game pad. Stick left, buttons right, a thin bar on top ---- */
+@media (orientation: landscape) {
+  :root { --stick: min(calc(100dvh - 92px), 30vw); }
+  .app { padding: 6px 0; gap: 6px; }
+  h1 { font-size: 24px; }
+  #joinView { grid-template-columns: 1fr 1fr; align-content: center; column-gap: 14px; }
+  #joinView h1, #joinView .big, #joinView #joinMsg { grid-column: 1 / -1; }
+  .team { min-height: 0; padding: 14px 10px; }
+  #playView {
+    grid-template-columns: var(--stick) minmax(0, 1fr) minmax(0, calc(var(--stick) * 1.35));
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas: "me me me" "stick info btns";
+    column-gap: 14px;
+  }
+  #playView.no-stick { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); grid-template-areas: "me me" "info btns"; }
+  .info { align-content: end; }
+  #jobField svg { max-height: calc(100dvh - 190px); }
+  .btns { grid-auto-rows: 1fr; height: var(--stick); }
+  .btn { min-height: 0; }
+  .btn .k { font-size: 10px; }
+  #walkBtns { grid-template-rows: 1fr 1fr auto; }
+}
+@media (orientation: landscape) and (max-height: 340px) {
+  .btn { font-size: 16px; }
+  .btn .k { display: none; }
+  .me { padding: 3px 10px; font-size: 16px; }
+}
+
 .overlay {
   position: fixed; inset: 0; display: grid; place-items: center; background: rgba(13,34,25,.85);
   font-family: var(--display); font-size: 28px;
 }
-@media (prefers-reduced-motion: reduce) { .btn.on, .btn:active { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .btn.on, .btn:active, .big:active:not(:disabled) { transform: none; } }

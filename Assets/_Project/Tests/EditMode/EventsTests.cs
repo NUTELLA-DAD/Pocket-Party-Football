@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using NUnit.Framework;
 using PocketFootball.Sim;
@@ -43,7 +44,11 @@ namespace PocketFootball.Tests.EditMode
             return k;
         }
 
-        // Bots don't juke yet (WS-04 and WS-06 give them moves), so a juke is proved by a person below.
+        // Kinds a bot game need not fire, each proved by a scripted test below: bots don't juke yet (WS-04 and WS-06
+        // give them moves), and since the bigger players (PR #2) the line holds every rush and nobody runs out of
+        // bounds, so sacks and out of bounds are left to the bot coach's tuning.
+        static readonly EventKind[] Scripted = { EventKind.Juke, EventKind.Sack, EventKind.OutOfBounds };
+
         [Test]
         public void TenMinuteBotGamesFireEveryKind()
         {
@@ -70,7 +75,7 @@ namespace PocketFootball.Tests.EditMode
             foreach (var kv in seen) sb.Append(kv.Key).Append(' ').Append(kv.Value).Append(", ");
             TestContext.WriteLine("three 10-minute bot games: " + sb);
             foreach (var kv in seen)
-                if (kv.Key != EventKind.Juke) Assert.Greater(kv.Value, 0, kv.Key + " never fired: " + sb);
+                if (!Scripted.Contains(kv.Key)) Assert.Greater(kv.Value, 0, kv.Key + " never fired: " + sb);
         }
 
         [Test]
@@ -189,6 +194,23 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual(EventKind.Whistle, tick[1].Kind);
             Assert.AreEqual("SACKED", tick[1].Text);
             Assert.AreEqual(Me, tick[1].Slot);
+        }
+
+        [Test]
+        public void RunningOffTheFieldIsOutOfBounds()
+        {
+            var w = AtTheLine();
+            ClearDefense(w);                                   // (to the +Z side; he runs for the -Z sideline)
+            w.Step(Press(new PlayerInput { Hike = true }));
+            var run = Press(new PlayerInput { MoveZ = -1f, Sprint = true });
+            for (int i = 0; i < w.Cfg.sim.tickHz * 10 && w.Phase == Phase.Live; i++) w.Step(run);
+            Assert.AreEqual("OUT OF BOUNDS", w.Result);
+            var tick = w.Events.ThisTick;
+            Assert.AreEqual(EventKind.OutOfBounds, tick[0].Kind);
+            Assert.AreEqual(Me, tick[0].Slot);
+            Assert.Less(tick[0].Z, -w.Cfg.field.HalfWidth, "past the sideline");
+            Assert.AreEqual(EventKind.Whistle, tick[1].Kind);
+            Assert.AreEqual("OUT OF BOUNDS", tick[1].Text);
         }
 
         [Test]

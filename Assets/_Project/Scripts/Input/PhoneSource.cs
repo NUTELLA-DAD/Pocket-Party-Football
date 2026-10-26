@@ -21,6 +21,7 @@ namespace PocketFootball.Input
         float stickX, stickY, stickAt;
         bool findPressed, sprintHeld, blockHeld, hikePressed, jukePressed, tacklePressed, lob;
         int throwTo;
+        bool callPressed, catchPressed;   // WS-05
 
         public PhoneSource(Seat seat) { Seat = seat; }
 
@@ -49,6 +50,8 @@ namespace PocketFootball.Input
                     throwTo = k + 1; lob = lobHeld;
                     break;
                 case "scramble": break;                        // (the QB just runs with the stick)
+                case "call": if (down) callPressed = true; break;     // WS-05: CALL FOR IT
+                case "catch": if (down) catchPressed = true; break;   // WS-05: CATCH
                 default: return false;
             }
             return true;
@@ -75,8 +78,10 @@ namespace PocketFootball.Input
             {
                 MoveX = stickX, MoveZ = -stickY, Sprint = sprintHeld, Block = blockHeld,
                 Hike = hikePressed, Juke = jukePressed, Tackle = tacklePressed, Throw = throwTo, Lob = lob,
+                Call = callPressed, Catch = catchPressed,   // WS-05
             };
             hikePressed = jukePressed = tacklePressed = false;
+            callPressed = catchPressed = false;            // WS-05
             throwTo = 0; lob = false;
             return i;
         }

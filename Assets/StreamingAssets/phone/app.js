@@ -44,9 +44,11 @@
     };
     ws.onmessage = function (ev) {
       var msg; try { msg = JSON.parse(ev.data); } catch (e) { return; }
+      if (window.Lobby) window.Lobby.onMessage(msg);   // WS-07: the lobby screen (lobby.js) sees every message first
       if (msg.t === 'joined') onJoined(msg);
       else if (msg.t === 'lobby') { teams = msg.teams || teams; drawTeams(); }
       else if (msg.t === 'picked') onPicked(msg);
+      else if (msg.t === 'call') { if (window.PPReceiving) window.PPReceiving.onCall(msg); }   // WS-05: CALL FOR IT (receiving.js)
       else if (msg.t === 'ui') onUi(msg);
       else if (msg.t === 'me') onMe(msg);
       else if (msg.t === 'err') onErr(msg.m);
@@ -122,12 +124,13 @@
   var baseLine = 'Run with the stick. Hold SPRINT to go faster.';
   if (window.PPLayouts) window.PPLayouts.mount($('btnBox'), send, function () { return aid; });
   function playLayout(msg) {
-    var r = window.PPLayouts ? window.PPLayouts.show(msg.layout, { receivers: msg.receivers || [], line: msg.line }) : null;
+    var r = window.PPLayouts ? window.PPLayouts.show(msg.layout, { receivers: msg.receivers || [], line: msg.line, throwStick: !!msg.throwStick }) : null;
     var play = !!r;
     $('btnBox').classList.toggle('hidden', !play);
     $('walkBtns').classList.toggle('hidden', play);
-    var pad = document.querySelector('#playView .pad');
-    if (pad) pad.classList.toggle('no-stick', play && r.stick === false);
+    $('playView').classList.toggle('no-stick', play && r.stick === false);
+    $('playView').setAttribute('data-layout', play ? r.layout : 'none');
+    document.querySelector('#playView .stam').classList.toggle('hidden', play && r.stam === false);
     baseLine = play ? r.line : 'Run with the stick. Hold SPRINT to go faster.';
     $('line').textContent = baseLine;
     show('playView');

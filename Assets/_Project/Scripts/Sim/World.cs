@@ -12,6 +12,7 @@ namespace PocketFootball.Sim
         public bool Hike, Juke, Tackle, Block;
         public int Throw;        // 0 = no throw; k = throw to receiver k (1-based, the order of play.receivers / shapes)
         public bool Lob;         // with Throw: high and soft, else a bullet
+        public bool Call, Catch; // WS-05: CALL FOR IT, CATCH (Receiving.cs)
     }
 
     public sealed class Player
@@ -30,6 +31,7 @@ namespace PocketFootball.Sim
         public int BlockedTicks, FreeTicks, IdleTicks;   // engaged by a blocker / shed the block / a person not touching the phone
         public bool BotHelp;                              // a bot is playing for an idle person this tick
         public bool Blocking;                             // this player is blocking this tick (a person holding BLOCK, or a bot)
+        public int OffenseSpot = -1, DefenseSpot = -1;    // WS-07: a person's two-way picks (Formation.cs, FEATURES.lobby; -1 = any free spot)
         // bot v0
         public float GoalX, GoalZ;
         public int NextThinkTick;
@@ -67,10 +69,12 @@ namespace PocketFootball.Sim
         public bool Thrown;                            // the ball has been thrown this play
         public bool Intercepted;                       // a defender caught it and is running it back (FEATURES.intreturn)
         public readonly HashSet<int> CatchTried = new HashSet<int>();
+        public readonly ReceivingState Recv = new ReceivingState();   // WS-05: this play's calls and catch taps (Receiving.cs); not hashed
         // play-by-play numbers, for the bots' balance check (M1-d) and later the stats
         public int PlaysRun, YardsGained;
         public readonly SortedDictionary<string, int> Results = new SortedDictionary<string, int>(StringComparer.Ordinal);
         public readonly EventLog Events = new EventLog();   // WS-00: what happened (Events.cs); not hashed, the sim never reads it
+        public readonly ClockState GameClock = new ClockState();   // WS-02: the game clock and quarters (Clock.cs)
 
         public World(GameConfig cfg, int seed)
         {
@@ -217,6 +221,8 @@ namespace PocketFootball.Sim
             Ball.Step(this, dt);
             LivePlay.Step(this);
             Huddle.Step(this);
+            Receiving.Step(this, inputs);   // WS-05
+            Clock.Step(this);   // WS-02
             Tick++;
         }
 

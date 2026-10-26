@@ -157,11 +157,11 @@
       1
     ],
     "shapes": [
-      "???",
-      "???",
-      "???",
-      "???",
-      "???"
+      "\u25b3",
+      "\u25cb",
+      "\u25a1",
+      "\u25c7",
+      "\u2606"
     ]
   },
   "downs": {
@@ -169,6 +169,15 @@
     "downsToGain": 4,
     "touchdownPoints": 6,
     "startOwnYd": 25
+  },
+  "receiving": {
+    "callPulseS": 1.5,
+    "callCooldownS": 2,
+    "catchWindowS": 0.35,
+    "catchForgetS": 1.5,
+    "catchWindowBonus": 0.08,
+    "catchEarlyPenalty": 0.3,
+    "catchChanceMax": 0.98
   },
   "baseline": {
     "seconds": 60,
@@ -270,6 +279,24 @@
     "cardLinePx": 30,
     "cardWidthPx": 640
   },
+  "clock": {
+    "quarters": 4,
+    "quarterS": 240,
+    "halftimeAfterQuarter": 2,
+    "halftimeS": 8,
+    "runsBetweenPlays": true,
+    "stopOn": [
+      "INCOMPLETE",
+      "OUT OF BOUNDS",
+      "TOUCHDOWN",
+      "PICK SIX"
+    ]
+  },
+  "lobby": {
+    "holdUntilKickoff": true,
+    "botCoversDropped": true,
+    "swapAskS": 12
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
@@ -277,8 +304,11 @@
     "downs": true,
     "intreturn": true,
     "moves": true,
+    "replay": true,
+    "receiving": true,
+    "clock": true,
+    "lobby": false,
     "botcoach": false,
-    "botsV2": false,
-    "replay": true
+    "botsV2": false
   }
 }

@@ -16,6 +16,7 @@ namespace PocketFootball.Sim
         public HuddleConfig huddle = new HuddleConfig();
         public LivePlayConfig play = new LivePlayConfig();
         public DownsConfig downs = new DownsConfig();
+        public ReceivingConfig receiving = new ReceivingConfig();   // WS-05 (Receiving.cs)
         // Loaded from Config/plays/*.json (not game.json) by ConfigLoader.AddPlays, sorted by id.
         [Newtonsoft.Json.JsonIgnore] public List<PlayConfig> plays = new List<PlayConfig>();
         public BaselineConfig baseline = new BaselineConfig();
@@ -26,6 +27,8 @@ namespace PocketFootball.Sim
         public CoachConfig coach = new CoachConfig();   // WS-06 (BotCoach.cs)
         public EventsConfig events = new EventsConfig();   // WS-00 (Events.cs)
         public ReplayConfig replay = new ReplayConfig();   // WS-08 (ReplayConfig.cs, View/Replay.cs)
+        public ClockConfig clock = new ClockConfig();   // WS-02 (Clock.cs)
+        public LobbyConfig lobby = new LobbyConfig();   // WS-07
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 
@@ -169,6 +172,15 @@ namespace PocketFootball.Sim
     public sealed class AnimConfig
     {
         public float fps, throwS, handoffS, secureS, bobbleS, reachYd, reachS, getUpS, blockShoveS;
+    }
+
+    // WS-07 the lobby (FEATURES.lobby): each person picks an offense spot and a defense spot before kickoff. The game
+    // waits on the lobby until a phone taps KICK OFF (holdUntilKickoff), a bot plays for a dropped phone until it comes
+    // back (botCoversDropped), and a swap request waits swapAskS seconds for the other person's answer.
+    public sealed class LobbyConfig
+    {
+        public bool holdUntilKickoff, botCoversDropped;
+        public float swapAskS;
     }
 
     // The field runs along X (goal line to goal line), across Z (sideline to sideline); the centre is (0, 0).

@@ -3,12 +3,12 @@
 .layout-wait, .layout-block { grid-template-columns: 1fr; }
 .layout-kick { grid-template-columns: 1fr; }
 .btn.alt { background: var(--team-2); color: var(--ink); }
-.btn.rcv { min-height: 84px; font-size: 18px; }
-.btn.rcv .shape { display: block; font-size: 30px; line-height: 1; margin-bottom: 4px; }
+.btn.rcv { font-size: 16px; }
+.btn.rcv .shape { display: block; font-size: 26px; line-height: 1; margin-bottom: 2px; }
 .btn.rcv.open { outline: 3px solid #5fd38a; outline-offset: -3px; }
-.layout-qb .btn[data-act="scramble"] { grid-column: 1 / -1; min-height: 56px; }
+.layout-qb .btn[data-act="scramble"] { grid-column: 1 / -1; min-height: 48px; }
 .kickpad {
-  position: relative; height: 240px; border-radius: 16px; overflow: hidden; touch-action: none;
+  position: relative; height: min(240px, 100%); min-height: 160px; border-radius: 16px; overflow: hidden; touch-action: none;
   background: linear-gradient(var(--ink), var(--turf-2));
 }
 .kickpad .posts {
@@ -25,5 +25,38 @@
 }
 .kickpad .khint { position: absolute; left: 0; right: 0; bottom: 52px; text-align: center; color: var(--muted); font-size: 14px; }
 .kickpad.done { opacity: .6; }
-.pad.no-stick { grid-template-columns: 1fr; }
-.pad.no-stick .stick { display: none; }
+
+/* the QB's two sticks: a narrow column of receiver shapes, then the throw stick */
+.btns.layout-qb.ts { grid-template-columns: auto minmax(0, 1fr); grid-auto-rows: auto; align-items: end; }
+.rcvs { display: grid; gap: 6px; align-content: end; }
+.rcvs .btn.rcv { min-height: 0; height: auto; width: 54px; padding: 4px 2px; font-size: 11px; border-radius: 12px; }
+.rcvs .btn.rcv .shape { font-size: 20px; margin: 0; }
+.tstick {
+  position: relative; justify-self: end; width: 100%; max-width: var(--stick); aspect-ratio: 1; border-radius: 50%;
+  background: radial-gradient(circle, #3a2a10 0 55%, var(--ink) 56%); touch-action: none;
+}
+.tstick .tring {
+  --arc: 0; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  background: conic-gradient(var(--team-2) calc(var(--arc) * 360deg), transparent 0);
+  -webkit-mask: radial-gradient(circle, transparent 0 62%, #000 63% 70%, transparent 71%);
+          mask: radial-gradient(circle, transparent 0 62%, #000 63% 70%, transparent 71%);
+}
+.tstick .tknob {
+  position: absolute; left: 50%; top: 50%; width: 40%; height: 40%; margin: -20% 0 0 -20%; border-radius: 50%;
+  background: var(--team-2); box-shadow: 0 4px 0 rgba(0,0,0,.35); pointer-events: none;
+}
+.tstick .ttag {
+  position: absolute; left: 0; right: 0; bottom: 8%; text-align: center; font-family: var(--display); font-size: 13px;
+  letter-spacing: .06em; color: var(--chalk); pointer-events: none;
+}
+.tstick.on .ttag { color: var(--team-2); }
+@media (orientation: landscape) {
+  .btns.layout-qb.ts { height: var(--stick); grid-template-rows: minmax(0, 1fr); }
+  .rcvs { grid-auto-rows: minmax(0, 1fr); height: 100%; min-height: 0; overflow: hidden; }
+  .rcvs .btn.rcv { padding: 1px 2px; font-size: 10px; box-shadow: 0 3px 0 rgba(0,0,0,.35); }
+  .layout-kick .kickpad { height: 100%; }
+}
+@media (orientation: landscape) and (max-height: 340px) {
+  .rcvs .btn.rcv { width: 46px; font-size: 0; }
+  .rcvs .btn.rcv .shape { font-size: 18px; }
+}
