@@ -162,7 +162,7 @@ namespace PocketFootball.Sim
                 {
                     w.CatchTried.Add(near.Slot);
                     bool offense = near.Team == w.Offense;
-                    if (w.Rng.Value() < (offense ? c.catchChanceOffense : c.catchChanceDefense))
+                    if (w.Rng.Value() < Receiving.Chance(w, near, offense ? c.catchChanceOffense : c.catchChanceDefense))   // WS-05: CATCH timing
                     {
                         w.Ball.GiveTo(near, w.Cfg.ball);
                         if (!offense)

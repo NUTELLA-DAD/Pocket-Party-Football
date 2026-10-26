@@ -47,6 +47,7 @@
       if (msg.t === 'joined') onJoined(msg);
       else if (msg.t === 'lobby') { teams = msg.teams || teams; drawTeams(); }
       else if (msg.t === 'picked') onPicked(msg);
+      else if (msg.t === 'call') { if (window.PPReceiving) window.PPReceiving.onCall(msg); }   // WS-05: CALL FOR IT (receiving.js)
       else if (msg.t === 'ui') onUi(msg);
       else if (msg.t === 'me') onMe(msg);
       else {

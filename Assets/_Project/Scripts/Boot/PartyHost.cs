@@ -76,6 +76,7 @@ namespace PocketFootball.Boot
             }
             string photoName = PhotoScenes.Requested(args);
             if (photoName != null) h.Photo = PhotoScenes.Setup(photoName, h.World, h.Players, rig);
+            on.AddComponent<ReceivingHud>().Host = h;   // WS-05: CALL FOR IT pulse on the TV and the QB's phone
             return h;
         }
 

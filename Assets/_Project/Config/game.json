@@ -145,11 +145,11 @@
       1
     ],
     "shapes": [
-      "???",
-      "???",
-      "???",
-      "???",
-      "???"
+      "\u25b3",
+      "\u25cb",
+      "\u25a1",
+      "\u25c7",
+      "\u2606"
     ]
   },
   "downs": {
@@ -211,12 +211,22 @@
     "getUpS": 0.5,
     "blockShoveS": 0.375
   },
+  "receiving": {
+    "callPulseS": 1.5,
+    "callCooldownS": 2,
+    "catchWindowS": 0.35,
+    "catchForgetS": 1.5,
+    "catchWindowBonus": 0.08,
+    "catchEarlyPenalty": 0.3,
+    "catchChanceMax": 0.98
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
     "liveplay": true,
     "downs": true,
     "intreturn": true,
-    "moves": true
+    "moves": true,
+    "receiving": false
   }
 }
