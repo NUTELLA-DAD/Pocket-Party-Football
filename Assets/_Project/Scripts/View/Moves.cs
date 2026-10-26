@@ -11,7 +11,7 @@ namespace PocketFootball.View
     // It only reads the World, once per sim tick, and spots the moments by what changed since the tick before (the ball
     // left the QB's hand, a pass ended up held, the whistle blew on a tackle). Frames count sim ticks at anim.fps, so
     // the moves step like the rest of the look and never depend on the frame rate. Pure C#: tests drive it with a World.
-    public enum Move { None, Aim, Throw, Handoff, Reach, Secure, Bobble, Juke, Whiff, Tackle, Tackled, Celebrate, Block }
+    public enum Move { None, Aim, Throw, Handoff, Reach, Secure, Bobble, Juke, Whiff, Tackle, Tackled, Celebrate, Block, Snap, TakeSnap }
 
     public struct MoveNow
     {
@@ -167,6 +167,8 @@ namespace PocketFootball.View
                 }
                 return m;
             }
+            var snap = Snap.For(w, p);   // the snap (Snap.cs): the center down in his stance, the QB's hands out for it
+            if (snap != Move.None) return new MoveNow { Kind = snap };
             if (reaching.Contains(p.Slot)) return new MoveNow { Kind = Move.Reach };
             if (w.Phase != Phase.Live) return default;
             // the QB with the ball in the pocket, not yet thrown: arm cocked

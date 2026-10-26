@@ -107,12 +107,14 @@ namespace PocketFootball.View
             Vector3 bnow = new Vector3(b.X, b.Y, b.Z);
             Vector3 bat = Vector3.Lerp(ballPrev, bnow, alpha);
             var holder = b.State == BallState.Held ? Figure(b.Carrier) : null;
-            if (holder != null)
+            // the snap (Snap.cs) places the ball itself before the hike and on its way back to the QB
+            bool snapping = SnapBall(w, alpha, holder);
+            if (!snapping && holder != null)
             {
                 ball.position = holder.HandR.position;
                 ball.rotation = holder.HandR.rotation * Quaternion.Euler(0, 90, 0);
             }
-            else
+            else if (!snapping)
             {
                 ball.localPosition = new Vector3(bat.x * yd, bat.y * yd + cfg.view.ballWidthM * 0.5f, bat.z * yd);
                 var bv = new Vector3(b.VX, b.State == BallState.Flying ? b.VY : 0f, b.VZ);
@@ -136,6 +138,8 @@ namespace PocketFootball.View
                 case Move.Aim: kind = FootballFigure.PoseKind.Throw; return true;
                 case Move.Throw: kind = FootballFigure.PoseKind.Release; frame = Mathf.Min(1, m.Frame / 2); return true;
                 case Move.Handoff: kind = FootballFigure.PoseKind.Handoff; return true;
+                case Move.Snap: kind = FootballFigure.PoseKind.Stance; return true;
+                case Move.TakeSnap: kind = FootballFigure.PoseKind.Handoff; return true;   // hands out in front for it
                 case Move.Reach: kind = FootballFigure.PoseKind.Reach; frame = stride; return true;
                 case Move.Secure: kind = FootballFigure.PoseKind.Secure; frame = stride; return true;
                 case Move.Bobble: kind = FootballFigure.PoseKind.Bobble; frame = Mathf.Min(1, m.Frame / 2); return true;
@@ -169,6 +173,27 @@ namespace PocketFootball.View
             // yaw 0 faces +x; +90 faces -z (the camera). Pull toward +90 by TurnToCamera.
             float delta = Mathf.DeltaAngle(yaw, 90f);
             return yaw + Mathf.Clamp(delta, -TurnToCamera, TurnToCamera);
+        }
+
+        // The snap (Snap.cs): before the hike the ball lies on the grass at the center's hands, along the field; at the
+        // hike it goes back into the hands of whoever has it (the QB), rising a little on the way. False: not a snap.
+        bool SnapBall(World w, float alpha, FootballFigure holder)
+        {
+            float yd = cfg.field.yardM, rest = cfg.view.ballWidthM * 0.5f;
+            if (Snap.Spotted(w, out float sx, out float sz))
+            {
+                ball.localPosition = new Vector3(sx * yd, rest, sz * yd);
+                ball.rotation = Quaternion.LookRotation(new Vector3(w.Dir, 0f, 0f), Vector3.up);
+                return true;
+            }
+            if (holder == null || !Snap.InFlight(w, alpha, out float t, out sx, out sz)) return false;
+            var from = new Vector3(sx * yd, rest, sz * yd);
+            var to = holder.HandR.position;
+            var at = Vector3.Lerp(from, to, t);
+            at.y += 4f * t * (1f - t) * cfg.anim.snapArcYd * yd;
+            ball.position = at;
+            if ((to - from).sqrMagnitude > 1e-4f) ball.rotation = Quaternion.LookRotation((to - from).normalized, Vector3.up);
+            return true;
         }
 
         public Vector3 BallPosition => ball.position;

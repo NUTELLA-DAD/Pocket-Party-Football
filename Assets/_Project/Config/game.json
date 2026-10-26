@@ -265,7 +265,12 @@
     "reachYd": 2.5,
     "reachS": 0.7,
     "getUpS": 0.5,
-    "blockShoveS": 0.375
+    "blockShoveS": 0.375,
+    "snapAheadYd": 0.7,
+    "snapSpeedYdS": 14,
+    "snapMinS": 0.22,
+    "snapArcYd": 0.25,
+    "snapSecureS": 0.25
   },
   "defense": {
     "swimEarlyS": 0.5,
@@ -625,6 +630,7 @@
     "gamepad": true,
     "audio": true,
     "defmoves": true,
-    "throwStick": true
+    "throwStick": true,
+    "snap": true
   }
 }

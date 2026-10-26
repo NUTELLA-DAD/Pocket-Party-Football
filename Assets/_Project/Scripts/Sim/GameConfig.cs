@@ -178,10 +178,12 @@ namespace PocketFootball.Sim
     // The players' moves on the TV (View/Moves.cs, FEATURES.moves): key frames per second (stepped, no wobble), how
     // long each one-off move lasts, when a receiver puts his hands up (within reachS he'll be within reachYd of the
     // ball coming down at catching height), when the men on the grass get up (the last getUpS of the whistle), and
-    // how often a blocker shoves.
+    // how often a blocker shoves. The snap (View/Snap.cs, FEATURES.snap): the ball spotted snapAheadYd in front of the
+    // center's feet, flying back at snapSpeedYdS (at least snapMinS) with a rise of snapArcYd, pulled in for snapSecureS.
     public sealed class AnimConfig
     {
         public float fps, throwS, handoffS, secureS, bobbleS, reachYd, reachS, getUpS, blockShoveS;
+        public float snapAheadYd, snapSpeedYdS, snapMinS, snapArcYd, snapSecureS;
     }
 
     // WS-07 the lobby (FEATURES.lobby): each person picks an offense spot and a defense spot before kickoff. The game
