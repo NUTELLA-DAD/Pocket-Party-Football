@@ -308,8 +308,8 @@ namespace PocketFootball.View
                         : new P { drop = 22, tilt = -45, head = 25, armL = 60, armLx = 65, foreL = 30, armR = 60, armRx = 65, foreR = 30, thighL = 40, thighLx = 10, shinL = -40, thighR = 20, thighRx = 10, shinR = -30 };
                 // on the grass: face down, arms stretched out ahead (the carrier still has the ball), feet kicked up
                 case PoseKind.Prone: return new P { drop = 42, tilt = 80, head = -40, armL = 170, armLx = 16, foreL = 10, armR = 170, armRx = 16, foreR = 10, thighL = -10, thighLx = 8, shinL = -50, thighR = -10, thighRx = 12, shinR = -30 };
-                // on the grass: flat on his back, arms flung wide, knees up
-                case PoseKind.Supine: return new P { drop = 44, tilt = -75, head = 30, armL = 60, armLx = 70, foreL = 20, armR = 60, armRx = 70, foreR = 20, thighL = 30, thighLx = 10, shinL = -60, thighR = 15, thighRx = 14, shinR = -40 };
+                // on the grass: flat on his back, arms flung out wide on the grass, knees up
+                case PoseKind.Supine: return new P { drop = 46, tilt = -88, head = 20, armL = -25, armLx = 75, foreL = 15, armR = -25, armRx = 75, foreR = 15, thighL = 40, thighLx = 10, shinL = -90, thighR = 30, thighRx = 14, shinR = -70 };
                 // getting up: one knee down
                 case PoseKind.Kneel: return new P { drop = 30, tilt = 15, head = -10, armL = 60, armLx = 10, foreL = 40, armR = 30, armRx = 14, foreR = 60, thighL = 80, thighLx = 6, shinL = -90, thighR = -10, thighRx = 6, shinR = -100 };
                 // a touchdown: 0 a hop with both arms up, 1 the ball held high and a fist pump
