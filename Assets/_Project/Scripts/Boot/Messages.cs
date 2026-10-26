@@ -57,6 +57,7 @@ namespace PocketFootball.Boot
             {
                 ["t"] = "status", ["phase"] = w.Phase == Phase.Huddle ? "huddle" : "set",
                 ["secs"] = Secs(w), ["called"] = called,
+                ["score"] = new JArray(w.Score), ["down"] = Downs.On(w) ? Downs.DownText(w) : "", ["tv"] = PartyHost.TvLine(w, w.Cfg),
             });
         }
 

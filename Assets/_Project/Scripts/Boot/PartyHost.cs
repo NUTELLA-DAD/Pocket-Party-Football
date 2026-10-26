@@ -218,33 +218,7 @@ namespace PocketFootball.Boot
         // ---- the phone's buttons for this moment (M1-c; the layouts are drawn by the phone's layouts.js) ----
         readonly Dictionary<int, string> lastLayout = new Dictionary<int, string>();
 
-        string LayoutFor(Player p)
-        {
-            if (!LivePlay.On(World)) return "walk";
-            switch (World.Phase)
-            {
-                case Phase.Huddle: return "huddle";
-                case Phase.Whistle: return "wait";
-            }
-            var carrier = LivePlay.Carrier(World);
-            bool qb = p == LivePlay.Qb(World);
-            if (World.Phase == Phase.Set) return qb ? "qbpre" : RoleLayout(p);
-            if (carrier == p) return qb && !World.Thrown ? "qb" : "carrier";
-            return RoleLayout(p);
-        }
-
-        static string RoleLayout(Player p)
-        {
-            switch (p.Pos)
-            {
-                case "OL": case "TE": return "block";
-                case "WR": case "RB": return "route";
-                case "DL": return "rush";
-                case "LB": return "lb";
-                case "CB": case "S": return "cover";
-            }
-            return "walk";
-        }
+        string LayoutFor(Player p) => PhoneLayouts.For(World, p);
 
         // Every frame: a phone whose moment changed (the ball was caught, the whistle blew) gets its new buttons.
         void RefreshLayouts()

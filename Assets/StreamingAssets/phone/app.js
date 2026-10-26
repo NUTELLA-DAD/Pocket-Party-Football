@@ -49,7 +49,10 @@
       else if (msg.t === 'picked') onPicked(msg);
       else if (msg.t === 'ui') onUi(msg);
       else if (msg.t === 'me') onMe(msg);
-      else if (window.Huddle) window.Huddle.onMessage(msg);   // huddle, thumbs, job, status (huddle.js)
+      else {
+        if (msg.t === 'status') onStatus(msg);
+        if (window.Huddle) window.Huddle.onMessage(msg);   // huddle, thumbs, job, status (huddle.js)
+      }
       else if (msg.t === 'err') onErr(msg.m);
     };
     ws.onclose = function () {
@@ -95,6 +98,16 @@
   }
 
   // stamina bar and the one-line status: out of bounds beats tired beats the normal hint
+  // the strip at the top: what the TV says, the score, the down (public: never a play)
+  function onStatus(msg) {
+    $('tvStrip').classList.remove('hidden');
+    $('tvMsg').textContent = msg.tv || '';
+    var s = msg.score || [];
+    var names = teams.map(function (t) { return t.short; });
+    $('tvScore').textContent = names.length >= 2 && s.length >= 2
+      ? names[0] + ' ' + s[0] + ' · ' + names[1] + ' ' + s[1] + (msg.down ? '  ' + msg.down : '') : '';
+  }
+
   function onMe(msg) {
     $('stam').style.width = Math.max(0, Math.min(100, msg.st)) + '%';
     $('stam').parentNode.classList.toggle('tired', !!msg.tired);

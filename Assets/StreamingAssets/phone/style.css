@@ -68,6 +68,10 @@ button:focus-visible { outline: 3px solid var(--warn); outline-offset: 2px; }
 .btn.small { min-height: 44px; font-size: 15px; background: var(--ink); color: var(--muted); }
 .btn.on, .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 rgba(0,0,0,.35); filter: brightness(1.12); }
 .btn .k { display: block; font-family: var(--body); font-size: 11px; font-weight: 800; opacity: .75; margin-top: 4px; }
+.tvstrip { display: flex; align-items: center; gap: 10px; background: var(--ink); border-radius: 12px; padding: 8px 12px; font-size: 13px; margin-bottom: 12px; }
+.tvstrip .tag { font-family: var(--display); font-size: 11px; letter-spacing: .08em; color: var(--muted); }
+.tvstrip .msg { flex: 1; min-width: 0; font-weight: 800; }
+.tvstrip .score { font-family: var(--display); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .overlay {
   position: fixed; inset: 0; display: grid; place-items: center; background: rgba(13,34,25,.85);
   font-family: var(--display); font-size: 28px;
