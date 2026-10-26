@@ -5,9 +5,14 @@
 //   PPLayouts.show('qb', { receivers: [{ shape: '△', label: 'WR #11' }] });
 // Presses go out as { t:'btn', b, d:1|0, aid } like every other button; a throw adds tgt and lob,
 // a kick sends { t:'kick', power, aim, aid }.
+// With throwStick the QB gets a second stick that aims the pass: while held it streams { t:'aim', x, y, arc, aid },
+// on release { t:'throw', x, y, arc, aid }, let go in the middle to cancel ({ t:'aim', cancel:1, aid }).
+// x, y are the raw stick (-1..1, same frame as the move stick). arc 0 = flat bullet, 1 = high lob: a quick flick is a
+// bullet, and the longer you hold the aim the higher the arc (full lob after LOB_FULL_MS).
 (function () {
   'use strict';
   var LOB_HOLD_MS = 350, KICK_AUTO_MS = 5000;
+  var AIM_HZ = 20, FLICK_MS = 150, LOB_FULL_MS = 800, AIM_DEAD = 0.25;
 
   // One row per layout: the line under the name plate, whether the stamina bar shows, and the buttons.
   // A button: [action, label, style, hint, hold]. style: 'main' = team colour, 'alt' = second colour, '' = chalk.
@@ -39,7 +44,7 @@
   };
 
   var box = null, sendFn = function () {}, aidFn = function () { return ''; };
-  var current = '', kickTimer = null;
+  var current = '', kickTimer = null, aimStop = null;
 
   function el(tag, cls, text) {
     var e = document.createElement(tag);
@@ -78,7 +83,7 @@
   }
 
   // A receiver button: tap = bullet, hold past LOB_HOLD_MS = lob. The shape matches the badge over him on the TV.
-  function addReceiver(r) {
+  function addReceiver(r, parent) {
     var b = el('button', 'btn rcv');
     b.setAttribute('data-act', 'throw');
     b.setAttribute('data-tgt', r.shape);
@@ -100,7 +105,64 @@
     }
     b.addEventListener('pointerup', up);
     b.addEventListener('pointercancel', up);
-    box.appendChild(b);
+    (parent || box).appendChild(b);
+  }
+
+  // The throw stick: drag to aim (the TV draws the arc and where it lands), let go to throw.
+  // The ring fills as you hold: empty = BULLET, full = LOB.
+  function addThrowStick(parent) {
+    var ts = el('div', 'tstick');
+    ts.setAttribute('role', 'button');
+    ts.setAttribute('aria-label', 'Throw stick: drag toward a receiver and let go to throw. Quick flick = bullet, hold longer = lob. Let go in the middle to cancel');
+    var ring = el('div', 'tring'); ts.appendChild(ring);
+    var knob = el('div', 'tknob'); ts.appendChild(knob);
+    var tag = el('div', 'ttag', 'THROW'); ts.appendChild(tag);
+    var id = null, t0 = 0, x = 0, y = 0, timer = null;
+    function arcNow() {
+      var held = performance.now() - t0;
+      return held < FLICK_MS ? 0 : Math.round(Math.min(1, held / LOB_FULL_MS) * 100) / 100;
+    }
+    function draw() {
+      var a = arcNow();
+      ring.style.setProperty('--arc', a);
+      tag.textContent = Math.sqrt(x * x + y * y) < AIM_DEAD ? 'THROW' : a < 0.34 ? 'BULLET' : a < 0.67 ? 'TOUCH' : 'LOB';
+    }
+    function aimMsg() { draw(); sendFn({ t: 'aim', x: x, y: y, arc: arcNow(), aid: aidFn() }); }
+    function measure(e) {
+      var b = ts.getBoundingClientRect(), r = b.width / 2;
+      var dx = (e.clientX - b.left - r) / r, dy = (e.clientY - b.top - r) / r;
+      var m = Math.sqrt(dx * dx + dy * dy);
+      if (m > 1) { dx /= m; dy /= m; }
+      x = Math.round(dx * 100) / 100; y = Math.round(dy * 100) / 100;
+      knob.style.transform = 'translate(' + (dx * r * 0.6) + 'px,' + (dy * r * 0.6) + 'px)';
+    }
+    function stop(throwIt) {
+      if (id === null) return;
+      id = null; clearInterval(timer); timer = null; aimStop = null;
+      var a = arcNow();
+      if (throwIt && Math.sqrt(x * x + y * y) >= AIM_DEAD) {
+        sendFn({ t: 'throw', x: x, y: y, arc: a, aid: aidFn() });
+        tag.textContent = 'THROWN!';
+      } else {
+        sendFn({ t: 'aim', cancel: 1, aid: aidFn() });
+        tag.textContent = 'THROW';
+      }
+      ts.classList.remove('on'); ring.style.setProperty('--arc', 0);
+      knob.style.transform = ''; x = 0; y = 0;
+    }
+    ts.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      if (id !== null) return;
+      try { ts.setPointerCapture(e.pointerId); } catch (err) {}
+      id = e.pointerId; t0 = performance.now(); ts.classList.add('on');
+      measure(e); aimMsg();
+      timer = setInterval(aimMsg, 1000 / AIM_HZ);
+      aimStop = function () { stop(false); };
+    });
+    ts.addEventListener('pointermove', function (e) { if (e.pointerId === id) { measure(e); draw(); } });
+    ts.addEventListener('pointerup', function (e) { if (e.pointerId === id) { measure(e); stop(true); } });
+    ts.addEventListener('pointercancel', function (e) { if (e.pointerId === id) stop(false); });
+    (parent || box).appendChild(ts);
   }
 
   // The kicking meter: drag up from the ball. Power = drag length over the pad height, aim = sideways offset.
@@ -167,7 +229,16 @@
       clearTimeout(kickTimer);
       box.innerHTML = '';
       box.className = 'btns layout-' + name;
-      if (L.receivers) (data.receivers || []).forEach(addReceiver);
+      if (L.receivers && data.throwStick) {
+        // two sticks: the receivers shrink to a column of shape buttons (tap still throws to that man)
+        box.className += ' ts';
+        var col = el('div', 'rcvs');
+        (data.receivers || []).forEach(function (r) { addReceiver(r, col); });
+        box.appendChild(col);
+        addThrowStick();
+        return { stam: L.stam, stick: true, line: data.line || 'Right stick: aim, let go to throw. Flick = bullet, hold = lob', layout: name };
+      }
+      if (L.receivers) (data.receivers || []).forEach(function (r) { addReceiver(r); });
       L.btns.forEach(addButton);
       if (L.kick) addKickPad();
       return { stam: L.stam, stick: !L.noStick, line: data.line || L.line, layout: name };
@@ -177,6 +248,7 @@
 
     // Let go of everything (screen lock, layout change mid-press): every held button sends its release.
     releaseAll: function () {
+      if (aimStop) aimStop();
       if (!box) return;
       var held = box.querySelectorAll('.on');
       for (var i = 0; i < held.length; i++) {
