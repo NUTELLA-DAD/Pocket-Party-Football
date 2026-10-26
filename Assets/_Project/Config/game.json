@@ -211,6 +211,9 @@
     "getUpS": 0.5,
     "blockShoveS": 0.375
   },
+  "events": {
+    "logKeep": 2048
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
