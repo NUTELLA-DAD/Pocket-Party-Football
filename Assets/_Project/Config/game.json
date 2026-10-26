@@ -74,7 +74,7 @@
     "missPerYd": 0.08,
     "pressureMissYd": 1.2,
     "lobOverYd": 26,
-    "adjustS": 0.26,
+    "adjustS": 0.3,
     "laneYd": 1.5,
     "stepOutYd": 8,
     "stepOutHitYd": 5,
