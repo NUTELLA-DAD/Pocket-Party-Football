@@ -1,0 +1,59 @@
+# Text-only checks that need no Unity: they run on GitHub for every pull request and every push to main.
+# 1. tools/hygiene.ps1 (sim purity, no literals in Sim, no wobble, no haptics, offline phone page, pinned Unity, ...)
+# 2. The phone page scripts parse (one syntax error and JOIN does nothing on every phone).
+# 3. The config files are valid JSON.
+# Unity tests and the build still run on Kenny's laptop (tools/gates.ps1). See docs/WORKSTREAMS.md.
+name: text-checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hygiene:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Hygiene (tools/hygiene.ps1)
+        shell: pwsh
+        run: ./tools/hygiene.ps1
+
+  phone:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Phone page syntax
+        run: |
+          if [ -f tools/phone/syntax-check.js ]; then
+            node tools/phone/syntax-check.js
+          else
+            bad=0
+            for f in Assets/StreamingAssets/phone/*.js; do
+              if node --check "$f"; then echo "ok   $(basename "$f")"; else echo "FAIL $(basename "$f")"; bad=1; fi
+            done
+            exit $bad
+          fi
+      - name: Config JSON parses
+        run: |
+          node -e '
+            const fs = require("fs"), path = require("path");
+            const dir = "Assets/_Project/Config";
+            const files = [path.join(dir, "game.json")].concat(
+              fs.readdirSync(path.join(dir, "plays")).filter(n => n.endsWith(".json")).map(n => path.join(dir, "plays", n)));
+            let bad = 0;
+            for (const f of files) {
+              try { JSON.parse(fs.readFileSync(f, "utf8").replace(/^﻿/, "")); console.log("ok   " + f); }
+              catch (e) { bad++; console.log("FAIL " + f + ": " + e.message); }
+            }
+            process.exit(bad ? 1 : 0);
+          '
