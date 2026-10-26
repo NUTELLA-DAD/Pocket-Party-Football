@@ -79,7 +79,7 @@ namespace PocketFootball.Boot
             w.LineOfScrimmageX = -45f;
             w.LineUp();
             foreach (var p in w.Players) { p.X = p.Team == away ? -90f : 90f; p.Z = 0f; p.VX = 0f; p.VZ = 0f; }
-            const float z = -14f;
+            const float z = -6f;   // (between the yard numbers and the hashes: plain grass under them)
             void Cast(int team, int spot, int number, string pos, float x, Pose pose)
             {
                 var p = Spot(w, team, spot);
@@ -95,10 +95,13 @@ namespace PocketFootball.Boot
             Cast(home, 1, 21, "RB", 2.6f, Pose.Carry);
             Cast(home, 7, 64, "DL", 4.4f, Pose.Stance);
             float m = w.Cfg.field.yardM;
-            rig.Hold(new Vector3(0f, 1.5f, z * m - 11f), new Vector3(0f, 1.2f, z * m), 22f);
+            rig.Hold(new Vector3(0f, 1.75f, z * m - 11f), new Vector3(0f, 1.45f, z * m), 22f);
             // the picture's plain cream card behind them, hiding the stadium
             var card = Looks.Flat(null, "Backdrop", new Vector3(0f, 6f, z * m + 7f), new Vector2(40f, 12f), Colors.Hex("#f4eedc"), Looks.Toon(null), Looks.Paint);
             card.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+            // (lit like the grass: its normals point up, so the toon shade never turns it lavender)
+            var cm = card.GetComponent<MeshFilter>().mesh;
+            cm.normals = new[] { Vector3.forward, Vector3.forward, Vector3.forward, Vector3.forward };
             return new PhotoState { Name = "concept01", Hud = false, FirstDownX = -35f };
         }
 

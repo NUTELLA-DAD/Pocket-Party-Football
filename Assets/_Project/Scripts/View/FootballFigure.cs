@@ -178,9 +178,9 @@ namespace PocketFootball.View
             {
                 var eye = FigureKit.OnEllipsoid(faceC, faceR, Quaternion.identity, new Vector3(1f, 0.05f, 0f), 1f);
                 float x = s * 8.2f, y = 1.5f;
-                k.Spot(eye, new Vector2(x, y), new Vector2(5.6f, 6.8f), 0, 0.3f, white, 16, FigureKit.Gloss);
-                k.Spot(eye, new Vector2(x + s * 0.5f, y - 0.5f), new Vector2(4.1f, 5.3f), 0, 0.55f, iris, 14, FigureKit.Paint);
-                k.Spot(eye, new Vector2(x + s * 0.5f, y - 0.7f), new Vector2(2.3f, 3.2f), 0, 0.7f, black, 12, FigureKit.Paint);
+                k.Spot(eye, new Vector2(x, y), new Vector2(6.2f, 7.6f), 0, 0.3f, white, 16, FigureKit.Gloss);
+                k.Spot(eye, new Vector2(x + s * 0.5f, y - 0.5f), new Vector2(4.7f, 6f), 0, 0.55f, iris, 14, FigureKit.Paint);
+                k.Spot(eye, new Vector2(x + s * 0.5f, y - 0.7f), new Vector2(2.7f, 3.7f), 0, 0.7f, black, 12, FigureKit.Paint);
                 k.Spot(eye, new Vector2(x - s * 1f, y + 1.8f), new Vector2(1.4f, 1.5f), 0, 0.85f, white, 10, FigureKit.Gloss);
                 // a determined brow
                 k.Stroke(eye, new[] { new Vector2(x - s * 5.5f, y + 6.4f), new Vector2(x + s * 4.6f, y + 8.8f) }, new[] { 2.8f, 1.9f }, 0.5f, Colors.Hex("#3b2a20"));
@@ -200,18 +200,13 @@ namespace PocketFootball.View
                 var top = FigureKit.OnEllipsoid(helmetC, helmetR, Quaternion.identity, Vector3.up, 1f, Vector3.right);
                 k.Stroke(top, new[] { new Vector2(0, 22), new Vector2(0, 0), new Vector2(0, -26), new Vector2(0, -44) }, new[] { 7f, 7.5f, 7.5f, 7f }, 0.5f, white);
             }
-            // facemask: two cross bars, three uprights, the bumper over the brow
-            float fm = 2.7f;   // (chunky bars that read at TV distance)
-            k.Tube(new[] { new Vector3(16, 140, -26), new Vector3(30, 138, -15), new Vector3(35, 137, 0), new Vector3(30, 138, 15), new Vector3(16, 140, 26) },
+            // facemask: two cross bars low on the face (below the eyes, concept 01) and one upright down the middle
+            float fm = 2.2f;
+            k.Tube(new[] { new Vector3(16, 136, -26), new Vector3(29, 133, -15), new Vector3(33, 132, 0), new Vector3(29, 133, 15), new Vector3(16, 136, 26) },
                    Rad(5, fm), Cols(5, white), 8);
-            k.Tube(new[] { new Vector3(14, 128, -21), new Vector3(26, 125.5f, -11), new Vector3(30, 124.5f, 0), new Vector3(26, 125.5f, 11), new Vector3(14, 128, 21) },
+            k.Tube(new[] { new Vector3(13, 126, -20), new Vector3(24, 122, -10), new Vector3(28, 121, 0), new Vector3(24, 122, 10), new Vector3(13, 126, 20) },
                    Rad(5, fm), Cols(5, white), 8);
-            foreach (float z in new[] { -12.5f, 0f, 12.5f })
-            {
-                float xf = z == 0 ? 35f : 31.5f, xb = z == 0 ? 30f : 27f;
-                k.Limb(new Vector3(xf, 138, z), new Vector3(xb, 125, z * 0.9f), fm, fm, white, 8);
-            }
-            k.Ellipsoid(new Vector3(29.5f, 157, 0), new Vector3(4.8f, 4.2f, 14f), white);
+            k.Limb(new Vector3(33, 132, 0), new Vector3(28, 121, 0), fm, fm, white, 8);
 
             var mesh = k.Build("Player_" + teamCfg.@short + "_" + number, bind);
             var smr = holder.gameObject.AddComponent<SkinnedMeshRenderer>();
@@ -231,10 +226,10 @@ namespace PocketFootball.View
                 decal.SetTexture("_MainTex", mark);
                 decal.SetColor("_PlayerColor", team);
                 decal.SetFloat("_Specular", 0.6f);
-                // (big, wrapped round the shell like the concept's; the Chiefs' arrowhead points forward on both sides)
+                // (big, wrapped round the shell like the concept's; read left to right on both sides, as in concept 01)
                 var toHead = fig.Head.worldToLocalMatrix * holder.localToWorldMatrix * HeadAt(neckY);
                 foreach (float s in new[] { 1f, -1f })
-                    HelmetMark(fig.Head, toHead, decal, s, teamCfg.@short == "KC" && s < 0);
+                    HelmetMark(fig.Head, toHead, decal, s, false);
             }
             fig.Pose(PoseKind.Ready, 0);
             return fig;
@@ -252,9 +247,9 @@ namespace PocketFootball.View
         static void HelmetMark(Transform head, Matrix4x4 toHead, Material decal, float side, bool flip)
         {
             const int N = 8;
-            const float Size = 30f, Radius = 31f, Lift = 0.9f;
+            const float Size = 36f, Radius = 31f, Lift = 0.9f;
             var c = new Vector3(0, 150, 0);
-            Vector3 n = new Vector3(-0.12f, 0.1f, side).normalized;
+            Vector3 n = new Vector3(0.12f, 0.16f, side).normalized;   // (a little forward, where the 3/4 view shows it)
             Vector3 v = (Vector3.up - n * Vector3.Dot(Vector3.up, n)).normalized;
             Vector3 u = Vector3.Cross(n, v).normalized;   // the viewer's right, seen from that side
             var verts = new Vector3[(N + 1) * (N + 1)];
@@ -342,7 +337,8 @@ namespace PocketFootball.View
             {
                 case PoseKind.Stand: return new P { armL = 4, armLx = 10, foreL = 12, armR = 4, armRx = 10, foreR = 12, thighLx = 3, thighRx = 3 };
                 case PoseKind.Ready: return new P { drop = 13, lean = 24, head = -14, armL = 25, armLx = 18, foreL = 45, armR = 25, armRx = 18, foreR = 45, thighL = 18, thighLx = 9, shinL = -30, thighR = 18, thighRx = 9, shinR = -30 };
-                case PoseKind.Stance: return new P { drop = 17, lean = 32, head = -22, armL = 62, armLx = 24, foreL = 22, armR = 62, armRx = 24, foreR = 22, thighL = 42, thighLx = 16, shinL = -62, thighR = 42, thighRx = 16, shinR = -62 };
+                // a lineman's set (concept 01's 68 and 64): low and wide, chest forward, gloves out in front
+                case PoseKind.Stance: return new P { drop = 19, lean = 36, head = -26, armL = 58, armLx = 36, foreL = 38, armR = 58, armRx = 36, foreR = 38, thighL = 52, thighLx = 24, shinL = -70, thighR = 52, thighRx = 24, shinR = -70 };
                 case PoseKind.Block: return frame % 2 == 0
                         ? new P { drop = 20, lean = 42, head = -30, armL = 82, armLx = 10, foreL = 12, armR = 82, armRx = 10, foreR = 12, thighL = 48, thighLx = 10, shinL = -55, thighR = -12, thighRx = 10, shinR = -24 }
                         : new P { drop = 18, lean = 46, head = -32, armL = 92, armLx = 10, foreL = 4, armR = 92, armRx = 10, foreR = 4, thighL = -12, thighLx = 10, shinL = -24, thighR = 48, thighRx = 10, shinR = -55 };   // the shove: arms out, legs driving

@@ -247,7 +247,7 @@
     "stickStaleS": 0.5
   },
   "view": {
-    "playerHeightM": 2.6,
+    "playerHeightM": 2.85,
     "playerRadiusM": 0.45,
     "findMeS": 2,
     "plateFontPx": 22,
