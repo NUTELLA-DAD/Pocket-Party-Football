@@ -389,7 +389,7 @@
     "lobby": true,
     "carriermoves": true,
     "fumbles": true,
-    "kicking": false,
+    "kicking": true,
     "botcoach": false,
     "botsV2": false
   }
