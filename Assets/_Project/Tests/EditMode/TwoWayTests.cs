@@ -30,7 +30,7 @@ namespace PocketFootball.Tests.EditMode
         [Test]
         public void ShipsOffAndHasAnEnvSwitch()
         {
-            Assert.IsFalse(ConfigTests.Load().Feature("lobby"), "FEATURES.lobby ships off; the merge captain turns it on");
+            Assert.IsTrue(ConfigTests.Load().Feature("lobby"), "FEATURES.lobby is on in game.json (the merge captain turned it on)");
             Assert.AreEqual("NO_LOBBY", ConfigLoader.EnvName("lobby"));
             var cfg = ConfigTests.Load();
             Assert.Greater(cfg.lobby.swapAskS, 0f);
@@ -105,10 +105,30 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreSame(w.Find(0), Formation.Holder(w, 0, true, 0));
         }
 
+        // The laptop's first run with the switch on: a person (a high slot) who took the QB bot's place was moved to the
+        // last free spot, so nobody hiked. Without picks nobody moves.
+        [Test]
+        public void APersonWhoTakesABotsPlaceKeepsItsSpot()
+        {
+            var w = WorldTests.Full(On());
+            w.Step(null);                           // the first huddle
+            var me = w.ReplaceBot(w.Offense, 500);
+            Assert.AreEqual(0, me.Spot, "the person is the QB");
+            w.LineUp();
+            Assert.AreEqual(0, me.Spot);
+            Assert.AreSame(me, LivePlay.Qb(w));
+            w.Offense = w.Defense;
+            w.LineUp();
+            Assert.AreEqual(0, me.Spot, "and the middle LB on defense, like with the switch off");
+            AssertEverySpotOnce(w, me.Team);
+        }
+
         [Test]
         public void OffItIsOneSpotForBothSides()
         {
-            var w = WorldTests.Full(ConfigTests.Load());
+            var off = ConfigTests.Load();
+            off.features["lobby"] = false;
+            var w = WorldTests.Full(off);
             var me = w.ReplaceBot(w.Offense, 900);
             int spot = me.Spot;
             me.OffenseSpot = 3; me.DefenseSpot = 1;

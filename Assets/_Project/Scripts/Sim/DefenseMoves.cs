@@ -36,7 +36,7 @@ namespace PocketFootball.Sim
             public DefMove Shown;         // the last move, for the TV (shownS long)
             public int ShownTicks;        // ticks since Shown began
             public bool ShownWon;
-            public bool BotLineTried, BotDiveTried;   // a bot's one try per block / play
+            public bool BotLineTried, BotDiveTried;   // a bot's one line move and one dive per play
         }
 
         public sealed class State
@@ -105,7 +105,6 @@ namespace PocketFootball.Sim
                     d.Pressed = DefMove.None;
                     continue;
                 }
-                if (p.BlockedTicks == 0) d.BotLineTried = false;
                 if (!p.Human || p.BotHelp) BotThink(w, p, d);
                 if (d.Move == DefMove.None && d.Pressed != DefMove.None && d.Cooldown == 0) Begin(w, p, d, d.Pressed);
                 d.Pressed = DefMove.None;
@@ -291,7 +290,7 @@ namespace PocketFootball.Sim
             else LivePlay.Whistle(w, "INTERCEPTED", p.X);
         }
 
-        // Bots: a line move once per block; a swat or jump once per pass, by the first bot defender the ball coming down is
+        // Bots: a line move at most once per play (botLineChance); a swat or jump once per pass, by the first bot defender the ball coming down is
         // about to reach (one roll per pass, not one per defender, or a crowd under every pass picks most of them off);
         // a dive once per play at a carrier coming at them just out of tackle reach.
         static void BotThink(World w, Player p, Defender d)
@@ -301,7 +300,7 @@ namespace PocketFootball.Sim
             if (p.BlockedTicks > 0 && !d.BotLineTried && p.BlockedTicks >= Huddle.Ticks(w, c.botLineMoveS))
             {
                 d.BotLineTried = true;
-                d.Pressed = w.Rng.Value() < c.botSwimFrac ? DefMove.Swim : DefMove.BullRush;
+                if (w.Rng.Value() < c.botLineChance) d.Pressed = w.Rng.Value() < c.botSwimFrac ? DefMove.Swim : DefMove.BullRush;
                 return;
             }
             var b = w.Ball;
@@ -379,6 +378,6 @@ namespace PocketFootball.Sim
         public float cooldownS, shownS;
         public SortedDictionary<string, float> lineSkill = new SortedDictionary<string, float>();
         public SortedDictionary<string, float> coverSkill = new SortedDictionary<string, float>();
-        public float botLineMoveS, botSwimFrac, botCoverLeadS, botCoverChance, botJumpFrac, botDiveFromYd, botDiveChance;
+        public float botLineMoveS, botLineChance, botSwimFrac, botCoverLeadS, botCoverChance, botJumpFrac, botDiveFromYd, botDiveChance;
     }
 }

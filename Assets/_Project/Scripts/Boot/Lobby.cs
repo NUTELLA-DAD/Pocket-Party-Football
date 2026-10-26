@@ -51,8 +51,12 @@ namespace PocketFootball.Boot
 
         public bool On => cfg != null && cfg.Feature("lobby");
 
-        // The sim waits while this is true (PartyHost.StepOnce). Never for screenshots or photo scenes.
-        public bool Holding => On && cfg.lobby.holdUntilKickoff && !KickedOff && !shots && host.Photo == null;
+        // The sim waits while this is true (PartyHost.StepOnce). Never for screenshots, photo scenes or batch runs.
+        public bool Holding => On && cfg.lobby.holdUntilKickoff && !KickedOff && !shots && host.Photo == null && (HoldOverride ?? !Application.isBatchMode);
+
+        // Tests: hold (true) or never hold (false) before kickoff. Unset: hold, except in batch mode (the test runs and
+        // tools), where nobody is there to tap KICK OFF.
+        public static bool? HoldOverride;
 
         World W => host.World;
         Roster R => host.Roster;

@@ -252,13 +252,15 @@ namespace PocketFootball.Sim
             if (w.Phase == Phase.Whistle && lastPhase == Phase.Live) Add("Whistle: " + w.Result);
         }
 
-        // The tackle odds LivePlay.TryTackle uses (kept the same: the base, the tackler's speed, from behind).
+        // The tackle odds LivePlay.TryTackle uses (kept the same: the base, the tackler's speed, from behind, the
+        // carrier's move).
         public static float TackleOdds(World w, Player tackler, Player carrier)
         {
             var c = w.Cfg.play;
             float speed = Len(tackler.VX, tackler.VZ);
             float odds = c.tackleBase + speed * c.tackleSpeedBonus;
             if ((carrier.X - tackler.X) * carrier.VX + (carrier.Z - tackler.Z) * carrier.VZ > 0f) odds += c.tackleFromBehindBonus;
+            odds = CarrierMoves.TackleOdds(w, tackler, carrier, odds);   // WS-04: spin, stiff arm, dive
             return odds < 0f ? 0f : odds > 1f ? 1f : odds;
         }
 
