@@ -1,0 +1,15 @@
+/* Audibles and hot routes (audible.js, WS-13): small buttons in the name plate before the snap, and the playbook
+   sheet the caller opens with AUDIBLE. */
+.audbar { display: flex; gap: 6px; align-items: center; min-width: 0; overflow: hidden; }
+.aud {
+  border: 2px solid var(--team-ink); border-radius: 999px; padding: 3px 10px; background: var(--ink); color: var(--chalk);
+  font-family: var(--display); font-size: 13px; white-space: nowrap; touch-action: none;
+}
+.aud.hot[aria-pressed="true"] { background: var(--team-2); color: var(--ink); border-color: var(--team-2); }
+.audnote { font-family: var(--body); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.audsheet {
+  position: fixed; inset: 0; z-index: 20; background: rgba(13, 34, 25, .96); padding: 12px max(12px, env(safe-area-inset-right, 0px)) 12px max(12px, env(safe-area-inset-left, 0px));
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 10px; touch-action: none;
+}
+.audplays { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-content: start; overflow-y: auto; touch-action: pan-y; min-height: 0; }
+.audsheet .play { background: var(--turf-2); border-color: var(--team-2); }

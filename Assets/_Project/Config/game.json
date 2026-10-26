@@ -480,6 +480,13 @@
     "postPadColor": "#1e3a5f",
     "postRibbonColor": "#e8462a"
   },
+  "audibles": {
+    "perDown": 1,
+    "hotRoutes": [
+      { "id": "hot_slant", "name": "Hot slant", "text": "Hot route: two steps, then slant inside fast", "pts": [[2, 0], [9, 7]] },
+      { "id": "hot_go", "name": "Hot go", "text": "Hot route: run straight deep", "pts": [[22, 0]] }
+    ]
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
@@ -496,6 +503,7 @@
     "kicking": true,
     "botcoach": false,
     "botsV2": false,
-    "grassShader": true
+    "grassShader": true,
+    "audibles": false
   }
 }

@@ -78,6 +78,7 @@ namespace PocketFootball.Sim
         public readonly ClockState GameClock = new ClockState();   // WS-02: the game clock and quarters (Clock.cs)
         public readonly CarrierState Carry = new CarrierState();   // WS-04: carrier moves and fumbles (CarrierMoves.cs, Fumbles.cs)
         public readonly KickState Kick = new KickState();   // WS-01: kickoffs, punts, field goals, tries (Kicking.cs)
+        public readonly AudibleState Audible = new AudibleState();   // WS-13: audibles and hot routes this down (Audibles.cs)
 
         public World(GameConfig cfg, int seed)
         {
