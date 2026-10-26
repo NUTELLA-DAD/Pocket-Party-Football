@@ -154,28 +154,46 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual(v, Audibles.VersionOf(w, w.Defense), "the other team's version never moves on our audible");
         }
 
-        // A bot playing for an idle person runs his hot route: the RB goes deep instead of staying in to block.
+        // A bot playing for an idle person runs his hot route: the RB heads up the field on the hot go instead of staying
+        // in to block. Checked on the bot's own decision every tick before the throw, so it holds whatever the other
+        // switches do to the rest of the play (defender moves, bots v2, the bot coach can all end it early).
         [Test]
         public void TheBotRunsTheHotRoute()
         {
-            float Ahead(bool hot)
+            int Run(bool hot)
             {
                 var w = AtTheLine();
-                w.Cfg.features["defmoves"] = false;   // WS-03: a swim or a swat can end the play before his route shows
                 if (hot) Assert.IsTrue(Audibles.PickHot(w, Rb, "hot_go"));
                 var rb = w.Find(Rb);
                 rb.IdleTicks = (int)(w.Cfg.bots.idleTakeoverS * w.Cfg.sim.tickHz);   // he put his phone down a while ago
-                float los = w.LineOfScrimmageX;
                 w.Step(Hike);
                 w.Step(null);
                 Assert.AreEqual(Phase.Live, w.Phase);
                 Assert.IsTrue(rb.BotHelp, "the RB isn't touching his phone, so a bot plays him");
-                int ticks = (int)(w.Cfg.bots.readDeadlineS * w.Cfg.sim.tickHz);
-                for (int i = 0; i < ticks && w.Phase == Phase.Live; i++) w.Step(null);
-                return (rb.X - los) * w.Dir;
+                var go = Audibles.HotJob(w, rb);
+                Assert.AreEqual(hot, go != null);
+                int checkedTicks = 0;
+                int ticks = (int)(w.Cfg.bots.readTimesS[0] * w.Cfg.sim.tickHz);
+                for (int i = 0; i < ticks && w.Phase == Phase.Live && !w.Thrown && w.Ball.Carrier == LivePlay.Qb(w).Slot; i++)
+                {
+                    var input = Bots.Think(w, rb);
+                    if (hot)
+                    {
+                        var pt = go.pts[go.pts.Count - 1];
+                        float tx = w.LineOfScrimmageX + w.Dir * pt[0] - rb.X, tz = pt[1] - rb.Z;
+                        float tl = (float)System.Math.Sqrt(tx * tx + tz * tz), il = (float)System.Math.Sqrt(input.MoveX * input.MoveX + input.MoveZ * input.MoveZ);
+                        Assert.IsFalse(input.Block, "on the hot go he runs, he doesn't block");
+                        Assert.Greater(il, 0f, "he is moving");
+                        Assert.Greater((input.MoveX * tx + input.MoveZ * tz) / (il * tl), 0.99f, "straight at the end of the hot go");
+                    }
+                    else Assert.IsTrue(input.Block, "in Slants the RB stays in to block");
+                    checkedTicks++;
+                    w.Step(null);
+                }
+                return checkedTicks;
             }
-            float called = Ahead(false), hotGo = Ahead(true);
-            Assert.Greater(hotGo, called + 1f, "with the hot go he ran downfield (" + hotGo + " vs " + called + " yards)");
+            Assert.Greater(Run(false), 0);
+            Assert.Greater(Run(true), 0);
         }
 
         [Test]
