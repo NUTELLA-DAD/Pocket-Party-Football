@@ -115,8 +115,10 @@ namespace PocketFootball.Sim
             float odds = c.tackleBase + speed * c.tackleSpeedBonus;
             // from behind: the carrier runs away from the tackler
             if ((carrier.X - tackler.X) * carrier.VX + (carrier.Z - tackler.Z) * carrier.VZ > 0f) odds += c.tackleFromBehindBonus;
+            odds = CarrierMoves.TackleOdds(w, tackler, carrier, odds);   // WS-04
             if (w.Rng.Value() < odds)
             {
+                if (Fumbles.OnHit(w, tackler, carrier)) return;   // WS-04: knocked loose, the play goes on
                 bool sack = carrier == Qb(w) && !w.Thrown && (carrier.X - w.LineOfScrimmageX) * w.Dir < 0f;
                 Whistle(w, sack ? "SACKED" : "TACKLED", carrier.X);
             }
@@ -174,6 +176,7 @@ namespace PocketFootball.Sim
                     }
                 }
             }
+            if (Fumbles.Step(w)) return;   // WS-04: a fumble on the grass is not an incompletion
             if (w.Ball.State == BallState.Loose) { Whistle(w, "INCOMPLETE", w.LineOfScrimmageX); return; }
 
             carrier = Carrier(w);

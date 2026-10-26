@@ -32,6 +32,7 @@ namespace PocketFootball.Sim
         // the QB everyone takes a pursuit angle on the carrier, or runs to where a pass is coming down.
         static PlayerInput Live(World w, Player p)
         {
+            if (Fumbles.Loose(w)) return Fumbles.Chase(w, p);   // WS-04: everyone scrambles for a fumble
             var b = w.Cfg.bots;
             float dir = w.Dir;
             var carrier = LivePlay.Carrier(w);

@@ -12,6 +12,7 @@ namespace PocketFootball.Sim
         public bool Hike, Juke, Tackle, Block;
         public int Throw;        // 0 = no throw; k = throw to receiver k (1-based, the order of play.receivers / shapes)
         public bool Lob;         // with Throw: high and soft, else a bullet
+        public CarrierMove Move; // WS-04: the ball carrier's SPIN / STIFF ARM / DIVE (CarrierMoves.cs)
     }
 
     public sealed class Player
@@ -70,6 +71,7 @@ namespace PocketFootball.Sim
         // play-by-play numbers, for the bots' balance check (M1-d) and later the stats
         public int PlaysRun, YardsGained;
         public readonly SortedDictionary<string, int> Results = new SortedDictionary<string, int>(StringComparer.Ordinal);
+        public readonly CarrierState Carry = new CarrierState();   // WS-04: carrier moves and fumbles (CarrierMoves.cs, Fumbles.cs)
 
         public World(GameConfig cfg, int seed)
         {
@@ -208,6 +210,7 @@ namespace PocketFootball.Sim
                 p.Blocking = input.Block;
                 Mover.Move(this, p, input, dt);
                 LivePlay.Act(this, p, input);
+                CarrierMoves.Act(this, p, input);   // WS-04
             }
             Mover.Bump(this);
             Blocking.Step(this);

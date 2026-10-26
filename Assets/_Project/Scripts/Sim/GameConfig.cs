@@ -23,6 +23,7 @@ namespace PocketFootball.Sim
         public NetConfig net = new NetConfig();
         public ViewConfig view = new ViewConfig();
         public AnimConfig anim = new AnimConfig();
+        public CarrierConfig carrier = new CarrierConfig();   // WS-04 (CarrierMoves.cs)
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 

@@ -145,6 +145,7 @@ namespace PocketFootball.Boot
             if (!phaseKnown || World.Phase != lastPhase || World.HuddleNumber != lastHuddle) OnPhaseChanged();
             RefreshLayouts();
             Players.Render(World, lockstep || Photo != null ? 1f : Mathf.Clamp01(accumulator / dt));
+            CarrierMovesView.Apply(World, Players);   // WS-04: spin, stiff arm, dive, fumbles on the TV
             float firstX = Photo != null ? Photo.FirstDownX : World.FirstDownX;
             if (Photo == null && !Downs.On(World)) firstX = World.LineOfScrimmageX + World.Dir * cfg.downs.firstDownYd;
             marks.SetLines(World.LineOfScrimmageX, firstX);

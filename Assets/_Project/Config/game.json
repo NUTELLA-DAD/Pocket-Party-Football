@@ -211,12 +211,36 @@
     "getUpS": 0.5,
     "blockShoveS": 0.375
   },
+  "carrier": {
+    "spinTicks": 12,
+    "spinTackleMul": 0.5,
+    "spinSpeedFrac": 0.7,
+    "stiffArmTicks": 15,
+    "stiffArmTackleMul": 0.6,
+    "diveRangeYd": 5,
+    "diveTicks": 12,
+    "diveLungeYd": 3,
+    "diveTackleMul": 0.7,
+    "cooldownTicks": 75,
+    "botMoveYd": 2.5,
+    "fumbleChance": 0.04,
+    "fumbleBlindsideBonus": 0.03,
+    "bigHitSpeedYdS": 6.5,
+    "fumblePopYdS": 4,
+    "downTicks": 24,
+    "recoverDelayTicks": 6,
+    "recoverReachYd": 1.2,
+    "recoverChance": 0.35,
+    "scrambleMaxS": 4
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
     "liveplay": true,
     "downs": true,
     "intreturn": true,
-    "moves": true
+    "moves": true,
+    "carriermoves": false,
+    "fumbles": false
   }
 }
