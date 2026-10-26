@@ -22,9 +22,11 @@ namespace PocketFootball.View
             this.cfg = cfg;
             mat = Looks.Toon(baseMat);
             root = new GameObject("Markings").transform;
-            float m = cfg.field.yardM, len = cfg.field.widthYd * m, w = 0.32f * m;
-            los = Looks.Flat(root, "LineOfScrimmage", Vector3.zero, new Vector2(w, len), Colors.Hex("#2f86e8"), mat, Looks.Gloss).transform;
-            first = Looks.Flat(root, "FirstDown", Vector3.zero, new Vector2(w, len), Colors.Hex("#f6d232"), mat, Looks.Gloss).transform;
+            // (a little wider than the painted yard lines, so they read as paint rather than tape; field.paint in game.json)
+            var pp = cfg.field.paint;
+            float m = cfg.field.yardM, len = cfg.field.widthYd * m, w = pp.scrimmageWidthYd * m;
+            los = Looks.Flat(root, "LineOfScrimmage", Vector3.zero, new Vector2(w, len), Colors.Hex(pp.scrimmageColor), mat, Looks.Gloss).transform;
+            first = Looks.Flat(root, "FirstDown", Vector3.zero, new Vector2(w, len), Colors.Hex(pp.firstDownColor), mat, Looks.Gloss).transform;
         }
 
         public void SetLines(float losX, float firstX)

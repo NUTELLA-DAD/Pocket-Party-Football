@@ -192,6 +192,7 @@ namespace PocketFootball.Sim
         public float stripeYd, lineEveryYd, lineWidthYd, sidelineBorderYd;
         public float hashFromSidelineYd, hashLengthYd, surroundYd;
         public string grassColor, grassAltColor, lineColor, endZoneColor, surroundColor, skyColor;
+        public FieldPaintConfig paint = new FieldPaintConfig();   // WS-11 (FieldPaintConfig.cs, View/FieldView.cs)
 
         public float HalfLength => lengthYd * 0.5f;
         public float HalfWidth => widthYd * 0.5f;
