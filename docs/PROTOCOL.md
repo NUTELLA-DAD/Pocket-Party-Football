@@ -46,7 +46,7 @@ Every game-to-phone message has one of these audiences. A new message must say w
 | --- | --- | --- |
 | **this phone** | Only the socket that asked, or the seat it is about | `joined`, `err`, `pong`, `picked`, `ui`, `me` |
 | **public** | Every connected phone, and the TV may show it | `lobby`, `status` |
-| **team only (SECRET)** | Only the phones of seats on that team, checked with `PartyHost.TeamPhones(team)` | `huddle`, `thumbs`, `job` |
+| **team only (SECRET)** | Only the phones of seats on that team, checked with `PartyHost.TeamPhones(team)` (WS-13: `AudibleHost.TeamSeats`) | `huddle`, `thumbs`, `job`, `audible` |
 
 The secret-play rule: a play id, play name, play contents, a suggestion or a call never goes to the other team's phones, never into a **public** message, and never onto the TV. The TV and `status` say only whether each team has called (`called[]`, "CALLED ✓"). `PlaySecrecyTests.TheOtherTeamNeverGetsThePlay` proves it with two fake phones; any new team-only message must be added to that test (or a new one like it).
 
@@ -103,6 +103,11 @@ Actions the page already sends but the game ignores (reserved for the workstream
 
 ### `suggest`, `lock`
 `{id: string, aid: string}`. A play id from this team's `huddle.plays`, with the huddle screen's aid. `suggest` adds a thumb from anyone on the team. `lock` calls the play and only works for the team's caller. Both are checked in `Huddle.Suggest` / `Huddle.Lock` (wrong side, unknown id, not the caller: ignored). Afterwards the team gets `thumbs`; after a lock everyone gets `status`.
+
+### `audible`, `hot` (WS-13, `FEATURES.audibles`)
+`{id: string, aid: string}`, at the line only (after the huddle, before the hike), with the aid of the screen on show.
+`audible` changes the team's call to another play from its own playbook; only the team's caller, `audibles.perDown` times a down (`Audibles.Call`). Afterwards the team gets `job` again (the new play) and `audible`.
+`hot` swaps this player's route for one of `audibles.hotRoutes` (`""` = back to the called route); only an offense person on a receiver spot (`play.receivers`) (`Audibles.PickHot`). Afterwards the team gets `audible`. Nothing goes to the other team or into `status`, and the TV shows nothing.
 
 ### `kick`
 `{power: 0..1, aim: -1..1, aid}`. Sent by the `kick` layout in `layouts.js`. **No handler in the game yet**: WS-01 (kicking) adds it.
@@ -167,6 +172,19 @@ Sent to every connected phone on each phase change and each lock, and to a phone
 ### `job` (team only, SECRET)
 `{side, play, spots, opp, me}`. The called play and this player's spot, for the job diagram. Sent when the huddle ends, only if the team has a call.
 
+### `audible` (team only, SECRET; WS-13, `FEATURES.audibles`)
+| Field | |
+| --- | --- |
+| `open` | At the line: audibles and hot routes can be used now |
+| `side` | `offense` or `defense` |
+| `caller`, `left` | This phone may audible; how many audibles are left this down |
+| `plays` | `caller` only: `[{id, name, desc}]`, this team's other plays |
+| `hot` | A receiver only: `[{id, name, text}]`, the hot routes it can pick |
+| `mine`, `mineText` | This phone's hot route id (`""` if none) and its line for the job card |
+| `routes` | This team's hot routes this down: `[{spot, number, pos, id, name}]` (so the QB knows) |
+
+Sent by `AudibleHost.Drive` to each phone of a team when its phase, down, spot or that team's audibles change (a version per team, so the other team's phones never hear that something changed), and after a rejoin.
+
 ## 6. Adding a message
 
 1. Use a new `t` value. Do not change the shape of an existing message; adding an optional field is fine if old pages ignore it.
@@ -183,7 +201,7 @@ Planned messages (not built yet; the owning workstream defines them here when it
 | WS-05 Receiving | CALL FOR IT pulse to the QB | team only |
 | WS-07 Lobby | spot lists and swaps | public line-ups, own spot this phone |
 | WS-12 Stats | post-game card | public totals, own line this phone |
-| WS-13 Audibles | audible and hot route | team only |
+| WS-13 Audibles | built: `audible`, `hot` (phone to game) and `audible` (game to phone), see above | team only |
 
 ## 7. Known gaps on main (found while writing this)
 

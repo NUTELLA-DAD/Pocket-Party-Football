@@ -71,6 +71,7 @@ namespace PocketFootball.Sim
         public int PlaysRun, YardsGained;
         public readonly SortedDictionary<string, int> Results = new SortedDictionary<string, int>(StringComparer.Ordinal);
         public readonly EventLog Events = new EventLog();   // WS-00: what happened (Events.cs); not hashed, the sim never reads it
+        public readonly AudibleState Audible = new AudibleState();   // WS-13: audibles and hot routes this down (Audibles.cs)
 
         public World(GameConfig cfg, int seed)
         {

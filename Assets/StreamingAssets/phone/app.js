@@ -53,6 +53,7 @@
       else {
         if (msg.t === 'status') onStatus(msg);
         if (window.Huddle) window.Huddle.onMessage(msg);   // huddle, thumbs, job, status (huddle.js)
+        if (window.Audible) window.Audible.onMessage(msg);   // WS-13: audible, huddle, job (audible.js)
       }
     };
     ws.onclose = function () {

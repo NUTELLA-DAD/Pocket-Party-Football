@@ -224,6 +224,13 @@
     "cardLinePx": 30,
     "cardWidthPx": 640
   },
+  "audibles": {
+    "perDown": 1,
+    "hotRoutes": [
+      { "id": "hot_slant", "name": "Hot slant", "text": "Hot route: two steps, then slant inside fast", "pts": [[2, 0], [9, 7]] },
+      { "id": "hot_go", "name": "Hot go", "text": "Hot route: run straight deep", "pts": [[22, 0]] }
+    ]
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
@@ -231,6 +238,7 @@
     "downs": true,
     "intreturn": true,
     "moves": true,
-    "replay": true
+    "replay": true,
+    "audibles": false
   }
 }
