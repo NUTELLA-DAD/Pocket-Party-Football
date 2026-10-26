@@ -35,6 +35,10 @@ namespace PocketFootball.Boot
 
         GameConfig cfg;
         CameraRig rig;
+        Stadium stadium;
+        Markings marks;
+        // a photo scene (the gauntlet loop): the moment is frozen, the TV shows the game HUD only
+        public PhotoState Photo { get; private set; }
         bool lockstep;               // screenshots: exactly one sim tick per frame, so pictures are repeatable
         float accumulator;
         readonly Dictionary<int, PhoneSource> sources = new Dictionary<int, PhoneSource>();   // by slot
@@ -56,6 +60,8 @@ namespace PocketFootball.Boot
             h.World = new World(cfg, args.Seed);
             h.Roster = new Roster(cfg.net.maxPlayers);
             h.Players = new PlayersView(cfg, baseMat);
+            h.stadium = new Stadium(cfg, baseMat);
+            h.marks = new Markings(cfg, baseMat);
             h.StartServer(args.Bind);
             h.FillWithBots();
             if (args.Wander) h.World.BotsWander = true;
@@ -68,6 +74,8 @@ namespace PocketFootball.Boot
                 var book = Huddle.Playbook(h.World, h.World.Offense);
                 if (book.Count > 0) h.World.Calls[h.World.Offense] = book[0].id;
             }
+            string photoName = PhotoScenes.Requested(args);
+            if (photoName != null) h.Photo = PhotoScenes.Setup(photoName, h.World, h.Players, rig);
             return h;
         }
 
@@ -126,7 +134,8 @@ namespace PocketFootball.Boot
 
             float dt = World.Dt;
             int ticks = 0;
-            if (lockstep) { StepOnce(); accumulator = 0f; }
+            if (Photo != null) accumulator = 0f;
+            else if (lockstep) { StepOnce(); accumulator = 0f; }
             else
             {
                 accumulator += Time.deltaTime;
@@ -134,8 +143,16 @@ namespace PocketFootball.Boot
                 if (ticks == cfg.sim.maxTicksPerFrame) accumulator = 0f;
             }
             if (!phaseKnown || World.Phase != lastPhase || World.HuddleNumber != lastHuddle) OnPhaseChanged();
-            Players.Render(World, lockstep ? 1f : Mathf.Clamp01(accumulator / dt));
+            Players.Render(World, lockstep || Photo != null ? 1f : Mathf.Clamp01(accumulator / dt));
+            float firstX = Photo != null ? Photo.FirstDownX : World.LineOfScrimmageX + cfg.formation.attackDir * cfg.field.lineEveryYd * 2f;
+            marks.SetLines(World.LineOfScrimmageX, firstX);
+            stadium.SetMarkers(World.LineOfScrimmageX, firstX);
+            humanFeet.Clear();
+            foreach (var p in World.Players) if (p.Human) humanFeet.Add(new KeyValuePair<int, Vector3>(p.Slot, Players.FeetPosition(p.Slot)));
+            marks.Rings(humanFeet);
         }
+
+        readonly List<KeyValuePair<int, Vector3>> humanFeet = new List<KeyValuePair<int, Vector3>>();
 
         // ---- the secret huddle: plays go ONLY to the team's own phones; everyone else gets check marks ----
         bool phaseKnown;
@@ -371,6 +388,22 @@ namespace PocketFootball.Boot
             panelText ??= new GUIStyle(GUI.skin.label) { richText = true, wordWrap = true };
             plate ??= new GUIStyle(GUI.skin.box) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold };
             panelText.fontSize = Mathf.RoundToInt(26 * s);
+            var cam = rig != null ? rig.Cam : Camera.main;
+
+            // the scoreboard bar, top centre (real numbers come with M1-e)
+            if (Photo != null) Hud.Scoreboard(cfg, Photo.Score, Photo.Quarter, Photo.Clock, Photo.Down, s);
+            else Hud.Scoreboard(cfg, new[] { 0, 0 }, "1ST", "4:00", "1ST & 10", s);
+
+            // the people: a cyan triangle over your player; shape badges over receivers (photo scenes for now)
+            if (cam != null)
+                foreach (var p in World.Players)
+                {
+                    Vector3 sp = cam.WorldToScreenPoint(Players.HeadPosition(p.Slot) + Vector3.up * 0.55f);
+                    if (sp.z <= 0) continue;
+                    if (p.Human) Hud.Pointer(new Vector2(sp.x, Screen.height - sp.y), s);
+                    if (Photo != null && Photo.Badges.TryGetValue(p.Slot, out var badge)) Hud.Badge(new Vector2(sp.x, Screen.height - sp.y - 4 * s), badge, p.Spot == 3 ? new Color(0.36f, 0.85f, 0.5f) : new Color(1f, 0.82f, 0.25f), s);
+                }
+            if (Photo != null) return;
 
             // join panel, top right
             float qr = cfg.view.joinPanelQrPx * s, pad = 16 * s, w = qr + 2 * pad, x = Screen.width - w - pad, y = pad;
@@ -391,21 +424,21 @@ namespace PocketFootball.Boot
                 banner ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold };
                 banner.fontSize = Mathf.RoundToInt(34 * s);
                 var bsize = banner.CalcSize(new GUIContent(tv));
-                var br = new Rect((Screen.width - bsize.x) * 0.5f - 20 * s, 12 * s, bsize.x + 40 * s, bsize.y + 12 * s);
+                var br = new Rect((Screen.width - bsize.x) * 0.5f - 20 * s, 104 * s, bsize.x + 40 * s, bsize.y + 12 * s);
                 GUI.color = new Color(0.05f, 0.13f, 0.1f, 0.85f);
                 GUI.DrawTexture(br, Texture2D.whiteTexture);
                 GUI.color = Color.white;
                 GUI.Label(br, tv, banner);
             }
 
-            // name plates over people, numbers over bots; FIND ME doubles the plate; OUT past the lines
-            var cam = rig != null ? rig.Cam : Camera.main;
+            // name plates over people (bots wear their numbers); FIND ME doubles the plate; OUT past the lines
             if (cam == null) return;
             float now = Time.unscaledTime;
             foreach (var p in World.Players)
             {
                 var seat = p.Human ? Roster[p.Slot] : null;
-                Vector3 sp = cam.WorldToScreenPoint(Players.HeadPosition(p.Slot) + Vector3.up * 0.4f);
+                if (seat == null && !p.OutOfBounds) continue;
+                Vector3 sp = cam.WorldToScreenPoint(Players.HeadPosition(p.Slot) + Vector3.up * 1.1f);
                 if (sp.z <= 0) continue;
                 bool find = findUntil.TryGetValue(p.Slot, out float until) && until > now;
                 string label = seat != null ? seat.Name + (seat.Connected ? "" : " ...") : p.Number.ToString();

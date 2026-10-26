@@ -16,6 +16,7 @@ namespace PocketFootball.Boot
         public float? LookX;
         public bool Wander;           // -wander: the bots wander from the start (B toggles it in the game)
         public float? ThrowDemo;      // -throw-demo <yards>: the QB lobs the ball this far downfield at once (screenshots)
+        public string Photo;          // -photo concept04: a frozen photo scene recreating a concept picture (also PP_SHOT=<name>)
         public bool CalledDemo;       // -called-demo: the offense has already called its play (screenshots of the TV banner)
         public int WarmupTicks;       // -warmup <ticks>: run the sim this many ticks before the first frame
 
@@ -32,6 +33,7 @@ namespace PocketFootball.Boot
                 else if (s == "-bind" && next != null) { a.Bind = next; i++; }
                 else if (s == "-wander") a.Wander = true;
                 else if (s == "-called-demo") a.CalledDemo = true;
+                else if (s == "-photo" && next != null) { a.Photo = next; i++; }
                 else if (s == "-warmup" && next != null && int.TryParse(next, out int wu)) { a.WarmupTicks = wu; i++; }
                 else if (s == "-throw-demo" && next != null && float.TryParse(next, NumberStyles.Float, CultureInfo.InvariantCulture, out float td)) { a.ThrowDemo = td; i++; }
                 else if (s == "-seed" && next != null && int.TryParse(next, out int seed)) { a.Seed = seed; i++; }

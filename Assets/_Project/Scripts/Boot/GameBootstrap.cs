@@ -90,6 +90,7 @@ namespace PocketFootball.Boot
         // Shows the version in a corner until the real HUD exists (M1-e).
         void OnGUI()
         {
+            if (Host != null && Host.Photo != null) return;
             GUI.Label(new Rect(12, 8, 600, 24), "Pocket Party Football - M0   (B adds a bot, Esc quits)");
         }
     }

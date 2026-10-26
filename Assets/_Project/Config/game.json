@@ -17,12 +17,12 @@
     "hashFromSidelineYd": 23.58,
     "hashLengthYd": 0.67,
     "surroundYd": 14,
-    "grassColor": "#73905f",
-    "grassAltColor": "#68845a",
-    "lineColor": "#f1f1e8",
-    "endZoneColor": "#5f7a52",
-    "surroundColor": "#55654d",
-    "skyColor": "#a9c8dc"
+    "grassColor": "#5ba63f",
+    "grassAltColor": "#4e9535",
+    "lineColor": "#f6f6ef",
+    "endZoneColor": "#46892f",
+    "surroundColor": "#4a8f34",
+    "skyColor": "#8ec3ea"
   },
   "camera": {
     "visibleYards": 36,
@@ -132,7 +132,7 @@
     "stickStaleS": 0.5
   },
   "view": {
-    "playerHeightM": 1.8,
+    "playerHeightM": 2.3,
     "playerRadiusM": 0.45,
     "findMeS": 2,
     "plateFontPx": 22,

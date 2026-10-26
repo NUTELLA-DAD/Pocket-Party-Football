@@ -1,76 +1,141 @@
-using System.Collections.Generic;
 using PocketFootball.Sim;
 using UnityEngine;
 
 namespace PocketFootball.View
 {
-    // Builds the flat field from game.json: surround, end zones, grass stripes, yard lines, sideline border, hash marks.
+    // The field (concept 04): one painted texture over the playing surface and its white border: mown stripes, yard
+    // lines, sidelines, hash marks, big yard numbers with arrows (upright to the camera, both rows), the home team's
+    // mark in the middle. Around it, the sideline grass. Shaded by the toon shader (cast shadows land on it).
     // World units are metres; the config is in yards.
     public static class FieldView
     {
-        const float LineLift = 0.01f, MarkLift = 0.015f, SurroundDrop = -0.01f;
+        const int PxPerYd = 32;
 
         public static GameObject Build(GameConfig cfg, Material baseMat, Transform parent = null)
         {
             var f = cfg.field;
+            float m = f.yardM;
             var root = new GameObject("Field");
             if (parent != null) root.transform.SetParent(parent, false);
-            var mats = new Dictionary<string, Material>();
-            Material Mat(string hex)
-            {
-                if (!mats.TryGetValue(hex, out var m))
-                {
-                    m = new Material(baseMat) { name = "Field " + hex };
-                    m.SetColor("_BaseColor", Colors.Hex(hex));
-                    m.SetFloat("_Smoothness", 0f);
-                    mats[hex] = m;
-                }
-                return m;
-            }
+            var toon = Looks.Toon(baseMat);
 
-            float y = f.yardM;
-            float border = f.sidelineBorderYd;
-            // the ground round the field
-            Quad(root, "Surround", 0, 0, f.lengthYd + 2 * f.surroundYd, f.widthYd + 2 * f.surroundYd, SurroundDrop, y, Mat(f.surroundColor));
-            // the white border just outside the sidelines and end lines
-            Quad(root, "Border", 0, 0, f.lengthYd + 2 * border, f.widthYd + 2 * border, SurroundDrop * 0.5f, y, Mat(f.lineColor));
-            // end zones
-            Quad(root, "EndZoneWest", -f.GoalLineX - f.endZoneYd * 0.5f, 0, f.endZoneYd, f.widthYd, 0, y, Mat(f.endZoneColor));
-            Quad(root, "EndZoneEast", f.GoalLineX + f.endZoneYd * 0.5f, 0, f.endZoneYd, f.widthYd, 0, y, Mat(f.endZoneColor));
-            // the grass between the goal lines
-            var stripes = FieldLayout.Stripes(f);
-            bool striped = cfg.Feature("fieldStripes");
-            for (int i = 0; i < stripes.Count; i++)
-            {
-                var s = stripes[i];
-                string col = striped && i % 2 == 1 ? f.grassAltColor : f.grassColor;
-                Quad(root, "Grass" + i, (s[0] + s[1]) * 0.5f, 0, s[1] - s[0], f.widthYd, 0, y, Mat(col));
-            }
-            // yard lines and end lines
-            foreach (float x in FieldLayout.YardLineXs(f))
-                Quad(root, "YardLine", x, 0, f.lineWidthYd, f.widthYd, LineLift, y, Mat(f.lineColor));
-            // sidelines
-            Quad(root, "SidelineNear", 0, -f.HalfWidth, f.lengthYd, f.lineWidthYd, LineLift, y, Mat(f.lineColor));
-            Quad(root, "SidelineFar", 0, f.HalfWidth, f.lengthYd, f.lineWidthYd, LineLift, y, Mat(f.lineColor));
-            // hash marks
-            foreach (var h in FieldLayout.HashMarks(f))
-                Quad(root, "Hash", h[0], h[1], f.lineWidthYd, f.hashLengthYd, MarkLift, y, Mat(f.lineColor));
+            // the sideline grass all round (darker than the field, unstriped)
+            float gx = (f.HalfLength + f.surroundYd) * m, gz = (f.HalfWidth + f.surroundYd) * m;
+            Looks.Flat(root.transform, "Surround", Vector3.down * 0.01f, new Vector2(gx * 2, gz * 2), Colors.Hex(f.surroundColor), toon);
+
+            // the painted field and its border
+            float hx = f.HalfLength + f.sidelineBorderYd, hz = f.HalfWidth + f.sidelineBorderYd;
+            var paint = new Material(toon) { name = "FieldPaint" };
+            paint.SetTexture("_MainTex", Paint(cfg, hx, hz));
+            var field = Looks.Flat(root.transform, "Paint", Vector3.zero, new Vector2(hx * 2 * m, hz * 2 * m), Color.white, paint);
+            field.name = "Paint";
             return root;
         }
 
-        // A flat quad centred at (xYd, zYd), sized in yards, facing up.
-        static void Quad(GameObject root, string name, float xYd, float zYd, float lenXYd, float lenZYd, float lift, float yardM, Material mat)
+        // The paint, x in [-hx, hx] and z in [-hz, hz] yards. Texture v = 0 at -z (the near side).
+        static Texture2D Paint(GameConfig cfg, float hx, float hz)
         {
-            var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            go.name = name;
-            Object.DestroyImmediate(go.GetComponent<Collider>());
-            go.transform.SetParent(root.transform, false);
-            go.transform.localPosition = new Vector3(xYd * yardM, lift, zYd * yardM);
-            go.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            go.transform.localScale = new Vector3(lenXYd * yardM, lenZYd * yardM, 1f);
-            var r = go.GetComponent<MeshRenderer>();
-            r.sharedMaterial = mat;
-            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            var f = cfg.field;
+            int w = Mathf.CeilToInt(hx * 2 * PxPerYd), h = Mathf.CeilToInt(hz * 2 * PxPerYd);
+            var p = new Painter(w, h, Colors.Hex(f.lineColor));
+            Color a = Colors.Hex(f.grassColor), b = Colors.Hex(f.grassAltColor), ez = Colors.Hex(f.endZoneColor);
+            bool striped = cfg.Feature("fieldStripes");
+            float px(float x) => (x + hx) * PxPerYd;
+            float pz(float z) => (z + hz) * PxPerYd;
+
+            // grass: stripes between the goal lines, the end zones, a little mown texture (seeded, so every run matches)
+            int x0 = (int)px(-f.HalfLength), x1 = (int)px(f.HalfLength), z0 = (int)pz(-f.HalfWidth), z1 = (int)pz(f.HalfWidth);
+            for (int y = z0; y < z1; y++)
+                for (int x = x0; x < x1; x++)
+                {
+                    float xd = x / (float)PxPerYd - hx;
+                    Color c;
+                    if (Mathf.Abs(xd) > f.GoalLineX) c = ez;
+                    else c = striped && Mathf.FloorToInt((xd + f.GoalLineX) / f.stripeYd) % 2 == 1 ? b : a;
+                    float n = (Hash(x, y) - 0.5f) * 0.05f + (Blotch(x / 40f, y / 40f) - 0.5f) * 0.06f;
+                    p.Px[y * w + x] = new Color(c.r * (1 + n), c.g * (1 + n), c.b * (1 + n), 1f);
+                }
+
+            Color line = Colors.Hex(f.lineColor);
+            float lw = f.lineWidthYd * PxPerYd;
+            // yard lines, goal lines, end lines
+            foreach (float x in FieldLayout.YardLineXs(f))
+                p.Stroke(new[] { new Vector2(px(x), pz(-f.HalfWidth)), new Vector2(px(x), pz(f.HalfWidth)) }, lw * (Mathf.Abs(Mathf.Abs(x) - f.GoalLineX) < 0.01f ? 1.6f : 1f), line);
+            // hash marks, plus the short ticks along both sidelines
+            foreach (var hm in FieldLayout.HashMarks(f))
+                p.Stroke(new[] { new Vector2(px(hm[0]), pz(hm[1] - f.hashLengthYd * 0.5f)), new Vector2(px(hm[0]), pz(hm[1] + f.hashLengthYd * 0.5f)) }, lw * 0.8f, line);
+            for (int i = 1; i < (int)(f.GoalLineX * 2); i++)
+            {
+                if (i % (int)f.lineEveryYd == 0) continue;
+                float x = -f.GoalLineX + i;
+                foreach (float s in new[] { -1f, 1f })
+                    p.Stroke(new[] { new Vector2(px(x), pz(s * (f.HalfWidth - 1f))), new Vector2(px(x), pz(s * (f.HalfWidth - 1f - f.hashLengthYd))) }, lw * 0.8f, line);
+            }
+
+            // the numbers: tops 9 yards in from each sideline, 2 yards tall, both rows upright to the camera
+            float numH = 2f * PxPerYd, numW = numH / Glyphs.Height, stroke = 0.38f * PxPerYd, gap = 0.3f * PxPerYd;
+            for (int yd = 10; yd <= 50; yd += 10)
+                foreach (float side in new[] { -1f, 1f })
+                {
+                    float x = -f.GoalLineX + yd;
+                    if (side > 0 && yd == 50) continue;
+                    if (side > 0) x = f.GoalLineX - yd;
+                    foreach (float row in new[] { -1f, 1f })
+                    {
+                        float zc = row * (f.HalfWidth - 9f - 1f);
+                        float bottom = pz(zc) - numH * 0.5f;
+                        var tens = Glyphs.Text((yd / 10).ToString(), numH, 0f, out float tw);
+                        var zero = Glyphs.Text("0", numH, 0f, out float zw);
+                        Shift(tens, new Vector2(px(x) - gap - tw, bottom));
+                        Shift(zero, new Vector2(px(x) + gap, bottom));
+                        p.Strokes(tens, stroke, line);
+                        p.Strokes(zero, stroke, line);
+                        if (yd == 50) continue;
+                        // the arrow points to the nearer goal, beside the number on that side
+                        float dir = x < 0 ? -1f : 1f;
+                        float ax = dir < 0 ? px(x) - gap - tw - 0.45f * PxPerYd : px(x) + gap + zw + 0.45f * PxPerYd;
+                        float ay = bottom + numH * 0.5f, s = 0.42f * PxPerYd;
+                        p.Fill(new[] { new Vector2(ax + dir * s, ay), new Vector2(ax - dir * s * 0.6f, ay + s * 0.8f), new Vector2(ax - dir * s * 0.6f, ay - s * 0.8f) }, line);
+                    }
+                }
+
+            // the home team's mark in the middle
+            if (cfg.teams.Count > 1) Stamp(p, TeamMarks.For(cfg.teams[1]), new Vector2(px(0), pz(0)), 9.5f * PxPerYd, 0.92f);
+            return p.ToTexture("FieldPaint");
+        }
+
+        static void Shift(System.Collections.Generic.List<Vector2[]> s, Vector2 by) { foreach (var a in s) for (int i = 0; i < a.Length; i++) a[i] += by; }
+
+        // A texture laid onto the paint, centred at c, `size` pixels wide (square), at `alpha`.
+        static void Stamp(Painter p, Texture2D t, Vector2 c, float size, float alpha)
+        {
+            Color32[] src;
+            try { src = t.GetPixels32(); }
+            catch (UnityException) { return; }   // (a PNG replacement must be marked Read/Write to be painted in)
+            int x0 = (int)(c.x - size * 0.5f), y0 = (int)(c.y - size * 0.5f), n = (int)size;
+            for (int y = 0; y < n; y++)
+                for (int x = 0; x < n; x++)
+                {
+                    int sx = x * t.width / n, sy = y * t.height / n;
+                    Color s = src[sy * t.width + sx];
+                    p.Blend(x0 + x, y0 + y, new Color(s.r, s.g, s.b, 1f), s.a * alpha);
+                }
+        }
+
+        // seeded value noise: the same grass every run
+        static float Hash(int x, int y)
+        {
+            uint h = (uint)(x * 374761393 + y * 668265263);
+            h = (h ^ (h >> 13)) * 1274126177u;
+            return (h ^ (h >> 16)) / (float)uint.MaxValue;
+        }
+
+        static float Blotch(float x, float y)
+        {
+            int ix = Mathf.FloorToInt(x), iy = Mathf.FloorToInt(y);
+            float fx = x - ix, fy = y - iy;
+            fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+            return Mathf.Lerp(Mathf.Lerp(Hash(ix, iy), Hash(ix + 1, iy), fx), Mathf.Lerp(Hash(ix, iy + 1), Hash(ix + 1, iy + 1), fx), fy);
         }
     }
 

@@ -1,0 +1,159 @@
+using System.Collections.Generic;
+using PocketFootball.Sim;
+using UnityEngine;
+
+namespace PocketFootball.View
+{
+    // On-field marks drawn over the paint (concept 04): the blue line of scrimmage, the yellow first-down line, and a
+    // cyan ring on the grass under each person's player.
+    public sealed class Markings
+    {
+        readonly GameConfig cfg;
+        readonly Transform los, first;
+        readonly Material mat;
+        readonly Dictionary<int, Transform> rings = new Dictionary<int, Transform>();
+        readonly Transform root;
+
+        public static readonly Color Cyan = new Color(0.35f, 0.92f, 1f);
+
+        public Markings(GameConfig cfg, Material baseMat)
+        {
+            this.cfg = cfg;
+            mat = Looks.Toon(baseMat);
+            root = new GameObject("Markings").transform;
+            float m = cfg.field.yardM, len = cfg.field.widthYd * m, w = 0.32f * m;
+            los = Looks.Flat(root, "LineOfScrimmage", Vector3.zero, new Vector2(w, len), Colors.Hex("#2f86e8"), mat, Looks.Gloss).transform;
+            first = Looks.Flat(root, "FirstDown", Vector3.zero, new Vector2(w, len), Colors.Hex("#f6d232"), mat, Looks.Gloss).transform;
+        }
+
+        public void SetLines(float losX, float firstX)
+        {
+            float m = cfg.field.yardM;
+            los.localPosition = new Vector3(losX * m, 0.025f, 0);
+            first.localPosition = new Vector3(firstX * m, 0.03f, 0);
+        }
+
+        // A ring under each slot in `who` (at the given world positions); others' rings are hidden.
+        public void Rings(IEnumerable<KeyValuePair<int, Vector3>> who)
+        {
+            var seen = new HashSet<int>();
+            foreach (var kv in who)
+            {
+                if (!rings.TryGetValue(kv.Key, out var r)) { r = Ring(); rings[kv.Key] = r; }
+                r.gameObject.SetActive(true);
+                r.position = new Vector3(kv.Value.x, 0.04f, kv.Value.z);
+                seen.Add(kv.Key);
+            }
+            foreach (var kv in rings) if (!seen.Contains(kv.Key)) kv.Value.gameObject.SetActive(false);
+        }
+
+        Transform Ring()
+        {
+            var b = new Blocks { Flag = Looks.Gloss };
+            const int n = 40;
+            float r0 = cfg.view.playerHeightM * 0.3f, r1 = r0 + 0.17f;
+            for (int i = 0; i < n; i++)
+            {
+                float a0 = i * Mathf.PI * 2 / n, a1 = (i + 1) * Mathf.PI * 2 / n;
+                Vector3 P(float r, float a) => new Vector3(Mathf.Cos(a) * r, 0, Mathf.Sin(a) * r * 0.85f);
+                b.Quad(P(r0, a0), P(r1, a0), P(r1, a1), P(r0, a1), Cyan, Vector3.up);
+            }
+            return b.Build(root, "Ring", mat, false).transform;
+        }
+    }
+
+    // The screen overlay (immediate-mode GUI, no assets): the scoreboard bar at the top centre, the triangle over your
+    // player, the shape badges over receivers. Pieces are painted once into small textures.
+    public static class Hud
+    {
+        static Texture2D round, disc, tri;
+        static GUIStyle text;
+
+        static void Init()
+        {
+            if (round != null) return;
+            round = Shape(64, 64, p => p.Fill(RoundRect(4, 4, 56, 56, 14), Color.white));
+            disc = Shape(64, 64, p => p.Disc(new Vector2(32, 32), 29, Color.white));
+            tri = Shape(64, 64, p => p.Fill(new[] { new Vector2(6, 58), new Vector2(58, 58), new Vector2(32, 10) }, Color.white));
+            text = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, richText = false };
+            text.normal.textColor = Color.white;
+        }
+
+        static Texture2D Shape(int w, int h, System.Action<Painter> draw)
+        {
+            var p = new Painter(w, h, new Color(1, 1, 1, 0));
+            draw(p);
+            return p.ToTexture("hud", false);
+        }
+
+        static List<Vector2> RoundRect(float x, float y, float w, float h, float r)
+        {
+            var pts = new List<Vector2>();
+            void Corner(float cx, float cy, float a0)
+            {
+                for (int i = 0; i <= 6; i++) { float a = (a0 + i * 15f) * Mathf.Deg2Rad; pts.Add(new Vector2(cx + Mathf.Cos(a) * r, cy + Mathf.Sin(a) * r)); }
+            }
+            Corner(x + w - r, y + r, -90); Corner(x + w - r, y + h - r, 0); Corner(x + r, y + h - r, 90); Corner(x + r, y + r, 180);
+            return pts;
+        }
+
+        static void Box(Rect r, Color c) { GUI.color = c; GUI.DrawTexture(r, Texture2D.whiteTexture); GUI.color = Color.white; }
+        static void Label(Rect r, string s, int size, Color c) { text.fontSize = size; text.normal.textColor = c; GUI.Label(r, s, text); }
+
+        // KC 14 | SSK 21 | 3RD 2:18 | 2ND & 10, at the top centre. s = screen scale (height / 1080).
+        public static void Scoreboard(GameConfig cfg, int[] score, string quarter, string clock, string down, float s)
+        {
+            Init();
+            float h = 70 * s, y = 18 * s;
+            float teamW = 240 * s, infoW = 168 * s, downW = 156 * s;
+            float total = teamW * 2 + infoW + downW + 6 * s;
+            float x = (Screen.width - total) * 0.5f;
+            GUI.color = new Color(0, 0, 0, 0.35f);
+            GUI.DrawTexture(new Rect(x - 4 * s, y - 4 * s, total + 8 * s, h + 8 * s), round);
+            GUI.color = Color.white;
+            for (int t = 0; t < 2 && t < cfg.teams.Count; t++)
+            {
+                var team = cfg.teams[t];
+                var r = new Rect(x, y, teamW, h);
+                Box(r, Colors.Hex(team.color) * 0.92f + new Color(0, 0, 0, 0.08f));
+                Box(new Rect(r.x + teamW * 0.62f, y, teamW * 0.38f, h), Colors.Hex(team.color) * 0.62f + new Color(0, 0, 0, 0.38f));
+                var mark = TeamMarks.For(team);
+                GUI.DrawTexture(new Rect(r.x + 8 * s, y + 6 * s, h - 12 * s, h - 12 * s), mark, ScaleMode.ScaleToFit);
+                Label(new Rect(r.x + h - 4 * s, y, teamW * 0.62f - h + 4 * s, h), team.@short, Mathf.RoundToInt(34 * s), Color.white);
+                Label(new Rect(r.x + teamW * 0.62f, y, teamW * 0.38f, h), score[t].ToString(), Mathf.RoundToInt(46 * s), Color.white);
+                x += teamW + 2 * s;
+            }
+            Box(new Rect(x, y, infoW, h), new Color(0.12f, 0.12f, 0.14f, 0.95f));
+            Label(new Rect(x, y, infoW, h), quarter + "  " + clock, Mathf.RoundToInt(30 * s), Color.white);
+            x += infoW + 2 * s;
+            Box(new Rect(x, y, downW, h), new Color(0.16f, 0.16f, 0.18f, 0.95f));
+            Label(new Rect(x, y, downW, h), down, Mathf.RoundToInt(30 * s), Color.white);
+        }
+
+        // A small cyan triangle pointing down at `screen` (GUI coordinates: y down).
+        public static void Pointer(Vector2 screen, float s)
+        {
+            Init();
+            float w = 26 * s;
+            GUI.color = new Color(0.1f, 0.25f, 0.3f, 0.9f);
+            GUI.DrawTexture(new Rect(screen.x - w * 0.5f - 2 * s, screen.y - w - 2 * s, w + 4 * s, w + 4 * s), tri);
+            GUI.color = Markings.Cyan;
+            GUI.DrawTexture(new Rect(screen.x - w * 0.5f, screen.y - w, w, w), tri);
+            GUI.color = Color.white;
+        }
+
+        // A round badge with a shape letter (△ ○ □ ◇ ☆ in the game; any short text).
+        public static void Badge(Vector2 screen, string label, Color fill, float s)
+        {
+            Init();
+            float d = 40 * s;
+            var r = new Rect(screen.x - d * 0.5f, screen.y - d, d, d);
+            GUI.color = new Color(0.08f, 0.08f, 0.1f, 1f);
+            GUI.DrawTexture(new Rect(r.x - 3 * s, r.y - 3 * s, r.width + 6 * s, r.height + 6 * s), disc);
+            GUI.color = fill;
+            GUI.DrawTexture(r, disc);
+            GUI.color = Color.white;
+            Label(r, label, Mathf.RoundToInt(24 * s), new Color(0.08f, 0.08f, 0.1f));
+        }
+    }
+}

@@ -29,6 +29,8 @@ namespace PocketFootball.Editor
             ApplyPlayerSettings();
             ApplyRenderPipeline();
             var mat = EnsureBaseMaterial();
+            ResourceMaterial("Toon", "Assets/_Project/Art/Shaders/Toon.shader");
+            ResourceMaterial("Sky", "Assets/_Project/Art/Shaders/Sky.shader");
             BuildBootScene(mat);
             AssetDatabase.SaveAssets();
             Debug.Log("[setup] ProjectSetup.Apply done");
@@ -73,6 +75,14 @@ namespace PocketFootball.Editor
             urp.msaaSampleCount = 4;
             urp.shadowDistance = 160f;
             urp.shadowCascadeCount = 1;
+            // the toon look (from Airship Crew): one sharp shadow map, filtered, then thresholded crisp by the shader
+            urp.mainLightShadowmapResolution = 4096;
+            urp.shadowDepthBias = 0.8f;
+            urp.shadowNormalBias = 0.5f;
+            var so = new SerializedObject(urp);
+            so.FindProperty("m_SoftShadowsSupported").boolValue = true;
+            so.FindProperty("m_SoftShadowQuality").intValue = (int)SoftShadowQuality.High;
+            so.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(urp);
 
             GraphicsSettings.defaultRenderPipeline = urp;
@@ -96,6 +106,31 @@ namespace PocketFootball.Editor
             mat.SetFloat("_Smoothness", 0f);
             EditorUtility.SetDirty(mat);
             return mat;
+        }
+
+        // A material in Resources (loaded at run time by name), on the given shader with its default values.
+        static void ResourceMaterial(string name, string shaderPath)
+        {
+            const string dir = "Assets/_Project/Resources";
+            Directory.CreateDirectory(dir);
+            string path = dir + "/" + name + ".mat";
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>(shaderPath);
+            if (shader == null) { Debug.LogError("[setup] shader missing at " + shaderPath); return; }
+            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m == null) { m = new Material(shader); AssetDatabase.CreateAsset(m, path); }
+            m.shader = shader;
+            for (int i = 0; i < shader.GetPropertyCount(); i++)
+            {
+                string n = shader.GetPropertyName(i);
+                switch (shader.GetPropertyType(i))
+                {
+                    case ShaderPropertyType.Color: m.SetColor(n, shader.GetPropertyDefaultVectorValue(i)); break;
+                    case ShaderPropertyType.Vector: m.SetVector(n, shader.GetPropertyDefaultVectorValue(i)); break;
+                    case ShaderPropertyType.Float:
+                    case ShaderPropertyType.Range: m.SetFloat(n, shader.GetPropertyDefaultFloatValue(i)); break;
+                }
+            }
+            EditorUtility.SetDirty(m);
         }
 
         static void BuildBootScene(Material baseMat)

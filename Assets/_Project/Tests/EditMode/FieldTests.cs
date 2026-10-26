@@ -65,9 +65,12 @@ namespace PocketFootball.Tests.EditMode
             try
             {
                 Assert.AreEqual("Field", go.name);
-                int lines = 0;
-                foreach (Transform t in go.transform) if (t.name == "YardLine") lines++;
-                Assert.AreEqual(23, lines);
+                var paint = go.transform.Find("Paint");
+                Assert.IsNotNull(paint, "the painted field");
+                var tex = paint.GetComponent<MeshRenderer>().sharedMaterial.GetTexture("_MainTex") as Texture2D;
+                Assert.IsNotNull(tex, "the field paint texture");
+                // 32 px per yard over the field and its border
+                Assert.AreEqual(Mathf.CeilToInt((cfg.field.lengthYd + 2 * cfg.field.sidelineBorderYd) * 32), tex.width);
                 Assert.IsNull(go.GetComponentInChildren<Collider>());
             }
             finally { Object.DestroyImmediate(go); }
