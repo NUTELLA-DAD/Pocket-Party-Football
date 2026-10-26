@@ -44,6 +44,9 @@ namespace PocketFootball.View
             kitMat = new Material(toon) { name = "Toon (players)" };
             kitMat.SetColor("_ShadeHue", Colors.Hex(v.playerShadeHue));
             kitMat.SetFloat("_ShadeUnify", v.playerShadeUnify);
+            if (v.playerOutlinePx > 0f) kitMat.SetFloat("_OutlineWidth", v.playerOutlinePx);
+            if (v.playerOutlineTint > 0f) kitMat.SetFloat("_OutlineTint", v.playerOutlineTint);
+            if (v.playerRim > 0f) kitMat.SetFloat("_Rim", v.playerRim);
             if (v.playerShadeSaturation > 0f) kitMat.SetFloat("_ShadeSaturation", v.playerShadeSaturation);
             if (!string.IsNullOrEmpty(v.playerShadeLift)) kitMat.SetColor("_ShadeLift", Colors.Hex(v.playerShadeLift));
             if (!string.IsNullOrEmpty(v.playerBounce)) kitMat.SetColor("_BounceColor", Colors.Hex(v.playerBounce));
@@ -60,8 +63,8 @@ namespace PocketFootball.View
             holder.localScale = Vector3.one * heightM / RigHeight;
             var fig = holder.gameObject.AddComponent<FootballFigure>();
             var st = StyleOf(teamCfg);
-            float W = build == Build.Big ? 1.55f : build == Build.Slim ? 0.98f : 1.12f;
-            float T = build == Build.Big ? 1.5f : build == Build.Slim ? 0.98f : 1.18f;
+            float W = build == Build.Big ? 1.7f : build == Build.Slim ? 0.98f : 1.12f;
+            float T = build == Build.Big ? 1.6f : build == Build.Slim ? 0.98f : 1.18f;
             // gauntlet 3 (concept 01): a stubby chibi build, short thick legs, a deep chest, pads wider than the big helmet
             float hipY = 60f, kneeY = 31f, ankleY = 8f, neckY = 115f, shY = 108f;
             fig.hipY = hipY;
@@ -109,9 +112,9 @@ namespace PocketFootball.View
                 On(s > 0 ? 7 : 9);    // thighs
                 k.Limb(new Vector3(0, hipY, z), new Vector3(1, kneeY + 1, z), 13.5f * T, 11f * T, white);                       // pants
                 k.Ellipsoid(new Vector3(6, kneeY + 4, z), new Vector3(7.5f, 7.5f, 8.5f) * T, white);                             // knee pad
-                k.Limb(new Vector3(0, hipY - 2, z + s * 12.8f * T), new Vector3(1, kneeY + 3, z + s * 10.6f * T), 2.2f, 2f, st.Stripe);   // stripes
+                k.Limb(new Vector3(0, hipY - 2, z + s * 12.8f * T), new Vector3(1, kneeY + 3, z + s * 10.6f * T), 2.8f, 2.5f, st.Stripe);   // stripes
                 if (st.Stripe2 != st.Stripe)
-                    k.Limb(new Vector3(-2.8f, hipY - 2, z + s * 12.5f * T), new Vector3(-1.8f, kneeY + 3, z + s * 10.3f * T), 1.6f, 1.5f, st.Stripe2);
+                    k.Limb(new Vector3(-2.8f, hipY - 2, z + s * 12.5f * T), new Vector3(-1.8f, kneeY + 3, z + s * 10.3f * T), 2.2f, 2f, st.Stripe2);
             }
 
             // ---- hips and torso ----
@@ -142,7 +145,7 @@ namespace PocketFootball.View
                 Number(k, top, num, 12.5f * Mathf.Lerp(1f, padW, 0.5f), 3.4f, 0f, 0f, st.NumberEdge, white);
             }
             // the numbers, chest and back: big, white with a team-trim edge (the back reads left to right from behind)
-            Number(k, FigureKit.OnLathe(body, 0f), num, 21f, 5.4f, 0f, 85.5f, st.NumberEdge, white);
+            Number(k, FigureKit.OnLathe(body, 0f), num, 18.5f, 5f, 0f, 85.5f, st.NumberEdge, white);   // (small enough not to wrap round the chest)
             Number(k, FigureKit.OnLathe(body, 180f), num, 23f, 5.6f, 0f, 87f, st.NumberEdge, white);
             k.Limb(new Vector3(0, neckY - 6, 0), new Vector3(1, neckY + 6, 0), 7f * T, 6.5f * T, skin);   // neck
 
@@ -193,7 +196,15 @@ namespace PocketFootball.View
                 k.Stroke(eye, new[] { new Vector2(x - s * 6f, y + 6f), new Vector2(x + s * 5.5f, y + 9.6f) }, new[] { 3.8f, 2.6f }, 0.5f, Colors.Hex("#2e2018"));
             }
             var mouth = FigureKit.OnEllipsoid(faceC, faceR, Quaternion.identity, new Vector3(1f, -0.35f, 0f), 1f);
-            k.Stroke(mouth, new[] { new Vector2(-3.5f, 0.8f), new Vector2(0, -0.4f), new Vector2(3.5f, 0.8f) }, new[] { 1.2f, 1.5f, 1.2f }, 0.4f, Colors.Hex("#5a2a20"));
+            if (build == Build.Slim)   // a QB's or kicker's confident smirk
+                k.Stroke(mouth, new[] { new Vector2(-3.5f, 0.2f), new Vector2(0.5f, -0.4f), new Vector2(4f, 1.4f) }, new[] { 1.3f, 1.6f, 1.3f }, 0.4f, Colors.Hex("#5a2a20"));
+            else
+            {
+                // gritted teeth (concept 01's linemen and backs): a dark mouth, white teeth, the line between them
+                k.Spot(mouth, new Vector2(0, 0.3f), new Vector2(4.6f, 2.3f), 0, 0.4f, Colors.Hex("#3a1a14"), 14);
+                k.Spot(mouth, new Vector2(0, 0.3f), new Vector2(3.8f, 1.6f), 0, 0.55f, white, 14);
+                k.Stroke(mouth, new[] { new Vector2(-3.6f, 0.3f), new Vector2(3.6f, 0.3f) }, new[] { 0.5f, 0.5f }, 0.7f, Colors.Hex("#3a1a14"), 2);
+            }
 
             // the helmet: a big shell open at the front (its pole points forward and a little down)
             var helmetC = new Vector3(0, 150, 0);
@@ -244,7 +255,7 @@ namespace PocketFootball.View
 
         // The head is modelled round a neck at 120 cm; this places it on the real neck at HeadScale (gauntlet 3: the
         // concept 01 chibi, a helmet about a third of the height, still narrower than the shoulder pads).
-        const float HeadScale = 1.08f;
+        const float HeadScale = 1.0f;
         static Matrix4x4 HeadAt(float neckY) =>
             Matrix4x4.Translate(new Vector3(0, neckY, 0)) * Matrix4x4.Scale(Vector3.one * HeadScale) * Matrix4x4.Translate(new Vector3(0, -120f, 0));
 

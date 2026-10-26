@@ -33,6 +33,9 @@ namespace PocketFootball.View
 
         // Photo scenes (and later the play view) can hold a pose for a player: slot -> pose.
         public readonly Dictionary<int, FootballFigure.PoseKind> PoseOverride = new Dictionary<int, FootballFigure.PoseKind>();
+        // ...and give a player an extra football to hold (slot -> true: right hand, false: left), the sim's ball aside
+        public readonly Dictionary<int, bool> PropBalls = new Dictionary<int, bool>();
+        readonly Dictionary<int, Transform> props = new Dictionary<int, Transform>();
 
         public PlayersView(GameConfig cfg, Material baseMat)
         {
@@ -117,6 +120,15 @@ namespace PocketFootball.View
                 ball.localPosition = new Vector3(bat.x * yd, bat.y * yd + cfg.view.ballWidthM * 0.5f, bat.z * yd);
                 var bv = new Vector3(b.VX, b.State == BallState.Flying ? b.VY : 0f, b.VZ);
                 if (bv.sqrMagnitude > 0.01f) ball.rotation = Quaternion.LookRotation(bv.normalized, Vector3.up);
+            }
+            foreach (var kv in PropBalls)
+            {
+                var f = Figure(kv.Key);
+                if (f == null) continue;
+                if (!props.TryGetValue(kv.Key, out var prop)) props[kv.Key] = prop = FootballFigure.MakeBall(null, mat, cfg.view.ballLengthM).transform;
+                var hand = kv.Value ? f.HandR : f.HandL;
+                prop.position = hand.position;
+                prop.rotation = hand.rotation * Quaternion.Euler(0, 90, 0);
             }
             bool inAir = b.State == BallState.Flying;
             ballShadow.gameObject.SetActive(inAir);

@@ -177,6 +177,8 @@ namespace PocketFootball.Sim
         // so a green jersey shades dark green, not teal (View/FootballFigure.KitMaterial)
         public string playerShadeHue, playerBounce, playerShadeLift;
         public float playerShadeUnify, playerShadeSaturation;
+        // and a bolder ink line than the stadium's (concept 01's outlines), a softer rim (less plastic)
+        public float playerOutlinePx, playerOutlineTint, playerRim;
     }
 
     // The players' moves on the TV (View/Moves.cs, FEATURES.moves): key frames per second (stepped, no wobble), how

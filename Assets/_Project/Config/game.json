@@ -259,7 +259,10 @@
     "playerShadeUnify": 0.18,
     "playerShadeSaturation": 0.85,
     "playerShadeLift": "#1a1719",
-    "playerBounce": "#6a7a70"
+    "playerBounce": "#6a7a70",
+    "playerOutlinePx": 4.5,
+    "playerOutlineTint": 0.45,
+    "playerRim": 0.35
   },
   "anim": {
     "fps": 8,
