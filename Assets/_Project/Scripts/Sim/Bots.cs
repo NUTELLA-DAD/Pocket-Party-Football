@@ -33,6 +33,7 @@ namespace PocketFootball.Sim
         static PlayerInput Live(World w, Player p)
         {
             if (Fumbles.Loose(w)) return Fumbles.Chase(w, p);   // WS-04: everyone scrambles for a fumble
+            var kick = Kicking.BotThink(w, p); if (kick.HasValue) return kick.Value;   // WS-01: kick coverage and returns
             var b = w.Cfg.bots;
             float dir = w.Dir;
             var carrier = LivePlay.Carrier(w);

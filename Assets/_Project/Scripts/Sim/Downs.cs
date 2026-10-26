@@ -12,6 +12,7 @@ namespace PocketFootball.Sim
         public static void Apply(World w, string result, float spotX)
         {
             if (!On(w)) return;
+            if (Kicking.Apply(w, result, spotX)) return;   // WS-01: scores, tries, kicks and safeties with FEATURES.kicking
             var d = w.Cfg.downs;
             float goal = w.Cfg.field.GoalLineX;
             float dir = w.Dir;

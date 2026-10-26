@@ -77,6 +77,7 @@ namespace PocketFootball.Sim
         public readonly EventLog Events = new EventLog();   // WS-00: what happened (Events.cs); not hashed, the sim never reads it
         public readonly ClockState GameClock = new ClockState();   // WS-02: the game clock and quarters (Clock.cs)
         public readonly CarrierState Carry = new CarrierState();   // WS-04: carrier moves and fumbles (CarrierMoves.cs, Fumbles.cs)
+        public readonly KickState Kick = new KickState();   // WS-01: kickoffs, punts, field goals, tries (Kicking.cs)
 
         public World(GameConfig cfg, int seed)
         {
@@ -227,6 +228,7 @@ namespace PocketFootball.Sim
             Huddle.Step(this);
             Receiving.Step(this, inputs);   // WS-05
             Clock.Step(this);   // WS-02
+            Kicking.Step(this);   // WS-01
             Tick++;
         }
 

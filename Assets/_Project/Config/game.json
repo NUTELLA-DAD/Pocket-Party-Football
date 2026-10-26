@@ -286,7 +286,11 @@
       "INCOMPLETE",
       "OUT OF BOUNDS",
       "TOUCHDOWN",
-      "PICK SIX"
+      "PICK SIX",
+      "FIELD GOAL",
+      "EXTRA POINT",
+      "SAFETY",
+      "TOUCHBACK"
     ]
   },
   "lobby": {
@@ -316,6 +320,59 @@
     "recoverChance": 0.35,
     "scrambleMaxS": 4
   },
+  "kicking": {
+    "puntPlay": "punt",
+    "fgPlay": "fg",
+    "openingKickTeam": 1,
+    "minSpeedYdS": 12,
+    "maxSpeedYdS": 27,
+    "kickoffAngleDeg": 45,
+    "puntAngleDeg": 55,
+    "fieldGoalAngleDeg": 38,
+    "maxAimDeg": 15,
+    "kickHeightYd": 0.3,
+    "kickoffFromYd": 35,
+    "safetyKickFromYd": 20,
+    "kickoffSetS": 3,
+    "humanKickMaxS": 8,
+    "botKickoffDelayS": 0.6,
+    "botPuntDelayS": 1.2,
+    "botFieldGoalDelayS": 0.9,
+    "kickoffTouchbackYd": 25,
+    "puntTouchbackYd": 20,
+    "kickoffOutOfBoundsYd": 40,
+    "interceptionTouchbackYd": 20,
+    "tryFromYd": 3,
+    "tryKickPoints": 1,
+    "tryTouchdownPoints": 2,
+    "fieldGoalPoints": 3,
+    "safetyPoints": 2,
+    "crossbarYd": 3.33,
+    "postsHalfWidthYd": 3.08,
+    "puntBackYd": 13,
+    "fieldGoalBackYd": 7,
+    "returnerSpot": 0,
+    "puntReturner": [42, 0],
+    "catchChance": 0.95,
+    "pickupYd": 1.2,
+    "botKickoffPower": 0.95,
+    "botPuntPower": 0.85,
+    "botPowerNoise": 0.05,
+    "botAimNoiseDeg": 3,
+    "botFieldGoalClearYd": 1.5,
+    "botFieldGoalExtraPower": 0.05,
+    "botFieldGoalMaxYd": 50,
+    "botGoForItYd": 2,
+    "meterShowS": 2.5,
+    "kickoffKicking": [
+      [-5, 0], [-1, -22], [-1, 22], [-1, -17], [-1, 17], [-1, -12],
+      [-1, 12], [-1, -7], [-1, 7], [-1, -2.5], [-1, 2.5]
+    ],
+    "kickoffReceiving": [
+      [55, 0], [12, -16], [12, 16], [28, -14], [28, 14], [12, -8],
+      [12, 8], [12, 0], [28, -5], [28, 5], [45, -6]
+    ]
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
@@ -329,6 +386,7 @@
     "lobby": false,
     "carriermoves": false,
     "fumbles": false,
-    "defmoves": false
+    "defmoves": false,
+    "kicking": false
   }
 }
