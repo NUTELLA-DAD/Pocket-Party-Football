@@ -17,6 +17,8 @@ namespace PocketFootball.Boot
         public float FirstDownX;
         public readonly Dictionary<int, string> Badges = new Dictionary<int, string>();
         public bool Hud = true;
+        // big team wordmarks across the top (text, colour, centre as a share of the screen width)
+        public readonly List<(string text, string color, float x)> Titles = new List<(string, string, float)>();
     }
 
     public static class PhotoScenes
@@ -92,9 +94,9 @@ namespace PocketFootball.Boot
             // evenly spaced, none hiding another (the round-5 review)
             Cast(away, 6, 68, "OL", -4.4f, Pose.Stance);
             Cast(away, 0, 7, "QB", -2.6f, Pose.Throw);
-            Cast(away, 1, 24, "RB", -0.9f, Pose.Carry);
-            Cast(home, 0, 9, "QB", 0.9f, Pose.Handoff);   // (ball held out in front, as concept 01's 9: the throw hides it)
-            Cast(home, 1, 21, "RB", 2.6f, Pose.Carry);
+            Cast(away, 1, 24, "RB", -1.0f, Pose.Carry);
+            Cast(home, 0, 9, "QB", 1.25f, Pose.Handoff);   // (ball held out in front, as concept 01's 9: the throw hides it)
+            Cast(home, 1, 21, "RB", 2.85f, Pose.Carry);
             Cast(home, 7, 64, "DL", 4.4f, Pose.Stance);
             // a football each for the QBs and backs (the Chiefs' QB already holds the game ball, right hand)
             foreach (var (team, spot, right) in new[] { (away, 1, false), (home, 0, true), (home, 1, false) })
@@ -105,12 +107,16 @@ namespace PocketFootball.Boot
             float m = w.Cfg.field.yardM;
             rig.Hold(new Vector3(cx * m, 1.7f, z * m - 10.6f), new Vector3(cx * m, 1.35f, z * m), 22f);
             // the picture's plain cream card behind them, hiding the stadium
-            var card = Looks.Flat(null, "Backdrop", new Vector3(cx * m, 6f, z * m + 7f), new Vector2(40f, 12f), Colors.Hex("#e2e4e4"), Looks.Toon(null), Looks.Paint);
+            var card = Looks.Flat(null, "Backdrop", new Vector3(cx * m, 6f, z * m + 7f), new Vector2(40f, 12f), Colors.Hex("#d9dee3"), Looks.Toon(null), Looks.Paint);
             card.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
             // (lit like the grass: its normals point up, so the toon shade never turns it lavender)
             var cm = card.GetComponent<MeshFilter>().mesh;
             cm.normals = new[] { Vector3.forward, Vector3.forward, Vector3.forward, Vector3.forward };
-            return new PhotoState { Name = "concept01", Hud = false, FirstDownX = -35f };
+            var st = new PhotoState { Name = "concept01", Hud = false, FirstDownX = -35f };
+            // the picture's wordmarks over each team's half
+            st.Titles.Add(("CHIEFS", w.Cfg.teams[away].color, 0.3f));
+            st.Titles.Add(("ROUGHRIDERS", w.Cfg.teams[home].color, 0.7f));
+            return st;
         }
 
         // Concept 04, the in-game camera: the Roughriders' QB drops back to throw from their own 40 (offense going right),

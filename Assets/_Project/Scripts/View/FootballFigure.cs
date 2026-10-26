@@ -63,8 +63,8 @@ namespace PocketFootball.View
             holder.localScale = Vector3.one * heightM / RigHeight;
             var fig = holder.gameObject.AddComponent<FootballFigure>();
             var st = StyleOf(teamCfg);
-            float W = build == Build.Big ? 1.7f : build == Build.Slim ? 0.98f : 1.12f;
-            float T = build == Build.Big ? 1.6f : build == Build.Slim ? 0.98f : 1.18f;
+            float W = build == Build.Big ? 1.85f : build == Build.Slim ? 0.98f : 1.12f;
+            float T = build == Build.Big ? 1.7f : build == Build.Slim ? 0.98f : 1.18f;
             // gauntlet 3 (concept 01): a stubby chibi build, short thick legs, a deep chest, pads wider than the big helmet
             float hipY = 60f, kneeY = 31f, ankleY = 8f, neckY = 115f, shY = 108f;
             fig.hipY = hipY;
@@ -106,7 +106,9 @@ namespace PocketFootball.View
             {
                 float z = s * legZ;
                 On(s > 0 ? 8 : 10);   // shins
-                k.Limb(new Vector3(0, kneeY + 2, z), new Vector3(2, ankleY + 4, z), 8.8f * T, 7.2f * T, team);                 // sock
+                // white pants down past the knee, then the team sock on the lower shin (concept 01)
+                k.Limb(new Vector3(0, kneeY + 2, z), new Vector3(1, kneeY - 8, z), 10.5f * T, 9.2f * T, white);
+                k.Limb(new Vector3(1, kneeY - 7, z), new Vector3(2, ankleY + 4, z), 8.6f * T, 7.2f * T, team);                 // sock
                 k.Ellipsoid(new Vector3(6, 6.5f, z), new Vector3(14.5f, 7.2f, 8.6f) * Mathf.Lerp(1f, T, 0.5f), team);            // cleat
                 k.Ellipsoid(new Vector3(6, 2.6f, z), new Vector3(15f, 3f, 9f) * Mathf.Lerp(1f, T, 0.5f), white);                // sole
                 On(s > 0 ? 7 : 9);    // thighs
