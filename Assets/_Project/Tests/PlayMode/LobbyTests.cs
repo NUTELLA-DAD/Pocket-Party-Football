@@ -15,8 +15,8 @@ namespace PocketFootball.Tests.PlayMode
     // same spots while a bot covers; 22 phones fill both teams both ways with no bots left.
     public sealed class LobbyTests
     {
-        [SetUp] public void Loopback() { PartyHost.BindOverride = IPAddress.Loopback; PartyHost.PortOverride = 0; }
-        [TearDown] public void Reset() { PartyHost.BindOverride = null; PartyHost.PortOverride = -1; }
+        [SetUp] public void Loopback() { PartyHost.BindOverride = IPAddress.Loopback; PartyHost.PortOverride = 0; Lobby.HoldOverride = true; }
+        [TearDown] public void Reset() { PartyHost.BindOverride = null; PartyHost.PortOverride = -1; Lobby.HoldOverride = null; }
 
         static IEnumerator Boot()
         {
