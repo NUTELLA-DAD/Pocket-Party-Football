@@ -39,6 +39,12 @@ namespace PocketFootball.Sim
         public int Offense;                  // the team with the ball
         public float LineOfScrimmageX;
         public bool BotsWander;
+        // the huddle (Huddle.cs): starts on the first tick
+        public Phase Phase = Phase.Set;
+        public int PhaseTicks;
+        public int HuddleNumber;                                                             // counts huddles (a new one can follow a huddle)
+        public readonly string[] Calls;                                                      // by team: the locked play id
+        public readonly SortedDictionary<int, string> Suggestions = new SortedDictionary<int, string>();   // slot -> play id
 
         public World(GameConfig cfg, int seed)
         {
@@ -47,6 +53,7 @@ namespace PocketFootball.Sim
             Offense = cfg.formation.offenseTeam;
             LineOfScrimmageX = cfg.formation.lineOfScrimmageXYd;
             BotsWander = cfg.bots.wander;
+            Calls = new string[cfg.teams.Count];
         }
 
         public float Dt => 1f / Cfg.sim.tickHz;
@@ -167,6 +174,7 @@ namespace PocketFootball.Sim
             Mover.Bump(this);
             Mover.Bounds(this);
             Ball.Step(this, dt);
+            Huddle.Step(this);
             Tick++;
         }
 
@@ -182,9 +190,13 @@ namespace PocketFootball.Sim
                 }
             }
             void MixF(float f) => Mix(BitConverter.SingleToInt32Bits(f));
+            void MixS(string str) { if (str == null) { Mix(-1); return; } Mix(str.Length); foreach (char ch in str) Mix(ch); }
             Mix(Tick);
             Mix((int)Rng.State);
             Mix(Offense);
+            Mix((int)Phase); Mix(PhaseTicks); Mix(HuddleNumber);
+            foreach (var c in Calls) MixS(c);
+            foreach (var kv in Suggestions) { Mix(kv.Key); MixS(kv.Value); }
             foreach (var p in Players)
             {
                 Mix(p.Slot); Mix(p.Team); Mix(p.Spot); Mix(p.Number); Mix(p.Human ? 1 : 0);

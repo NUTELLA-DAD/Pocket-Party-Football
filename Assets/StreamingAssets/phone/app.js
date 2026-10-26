@@ -49,6 +49,7 @@
       else if (msg.t === 'picked') onPicked(msg);
       else if (msg.t === 'ui') onUi(msg);
       else if (msg.t === 'me') onMe(msg);
+      else if (window.Huddle) window.Huddle.onMessage(msg);   // huddle, thumbs, job, status (huddle.js)
       else if (msg.t === 'err') onErr(msg.m);
     };
     ws.onclose = function () {
@@ -108,10 +109,11 @@
     aid = msg.aid;
     if (msg.layout === 'pick') show('pickView');
     else if (msg.layout === 'walk') show('playView');
+    else if (msg.layout === 'huddle') show('huddleView');
   }
 
   function show(id) {
-    ['joinView', 'pickView', 'playView'].forEach(function (v) { $(v).classList.toggle('hidden', v !== id); });
+    ['joinView', 'pickView', 'huddleView', 'playView'].forEach(function (v) { $(v).classList.toggle('hidden', v !== id); });
     if (id !== 'playView') releaseStick();
   }
 
@@ -179,6 +181,9 @@
     }
     b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up);
   });
+
+  // for huddle.js: send a message, and the aid of the screen on show (every press carries it)
+  window.PP = { send: send, aid: function () { return aid; } };
 
   // a saved token for this room: rejoin straight away (reload, or the browser killed the tab)
   if (code && store.get('tok:' + code) && store.get('name')) { wantJoin = true; connect(); }

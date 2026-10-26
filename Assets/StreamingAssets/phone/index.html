@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#123b2c">
 <title>Pocket Party Football</title>
 <link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/huddle.css">
 </head>
 <body>
 <div class="app">
@@ -23,8 +24,16 @@
     <p class="sub">Every spot nobody takes is played by a bot.</p>
   </section>
 
+  <section id="huddleView" class="view hidden">
+    <div class="card hud"><div><h2 id="hTitle">HUDDLE</h2><p class="sub" id="hSub">Only your team sees this</p></div><div class="clock" id="hClock">0:15</div></div>
+    <div class="plays" id="hPlays"></div>
+    <p class="line" id="hLine" aria-live="polite"></p>
+    <button class="big" id="hGo" disabled aria-label="Lock in the chosen play">LOCK IN</button>
+  </section>
+
   <section id="playView" class="view hidden">
     <header class="me" id="me"><span id="meName">YOU</span><span id="meNum" class="num">#1</span></header>
+    <div class="card job hidden" id="job"><p class="sub" id="jobPlay"></p><h3 id="jobText"></h3><div id="jobField"></div></div>
     <p class="line" id="line" aria-live="polite">Run with the stick. Hold SPRINT to go faster.</p>
     <div class="stam" aria-label="Stamina"><i id="stam"></i></div>
     <div class="pad">
@@ -39,5 +48,6 @@
 </div>
 <div id="reconnect" class="overlay hidden" role="status">Reconnecting...</div>
 <script src="/app.js"></script>
+<script src="/huddle.js"></script>
 </body>
 </html>

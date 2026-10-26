@@ -14,7 +14,8 @@ namespace PocketFootball.Boot
 {
     // Runs the game: the phone server, the roster, the 30 Hz sim and the players' view.
     // Both teams start full of bots on their formation spots; a phone that picks a team takes over a bot's spot.
-    // Dev keys: L lines everyone up again, T throws the ball downfield (lob; Shift = bullet), B makes the bots wander.
+    // Dev keys: L lines everyone up again, T throws the ball downfield (lob; Shift = bullet), B makes the bots wander,
+    // H starts a new huddle.
     public sealed class PartyHost : MonoBehaviour
     {
         const int BotSlotBase = 100;     // bots' slots in the sim (phones use the roster's slots 0..maxPlayers-1)
@@ -61,6 +62,12 @@ namespace PocketFootball.Boot
             if (!args.LookX.HasValue) rig.SetLookAtX(h.World.LineOfScrimmageX);
             if (args.ThrowDemo.HasValue) h.World.Throw(h.World.Ball.X + cfg.formation.attackDir * args.ThrowDemo.Value, h.World.Ball.Z, true);
             for (int i = 0; i < args.WarmupTicks; i++) h.StepOnce();
+            if (args.CalledDemo)
+            {
+                if (h.World.Phase != Phase.Huddle) Huddle.Begin(h.World);
+                var book = Huddle.Playbook(h.World, h.World.Offense);
+                if (book.Count > 0) h.World.Calls[h.World.Offense] = book[0].id;
+            }
             return h;
         }
 
@@ -109,6 +116,7 @@ namespace PocketFootball.Boot
             {
                 if (kb.bKey.wasPressedThisFrame) World.BotsWander = !World.BotsWander;
                 if (kb.lKey.wasPressedThisFrame) World.LineUp();
+                if (kb.hKey.wasPressedThisFrame && Huddle.On(World)) Huddle.Begin(World);
                 if (kb.tKey.wasPressedThisFrame)
                 {
                     if (World.Ball.State != BallState.Held) World.LineUp();
@@ -125,7 +133,81 @@ namespace PocketFootball.Boot
                 while (accumulator >= dt && ticks < cfg.sim.maxTicksPerFrame) { StepOnce(); accumulator -= dt; ticks++; }
                 if (ticks == cfg.sim.maxTicksPerFrame) accumulator = 0f;
             }
+            if (!phaseKnown || World.Phase != lastPhase || World.HuddleNumber != lastHuddle) OnPhaseChanged();
             Players.Render(World, lockstep ? 1f : Mathf.Clamp01(accumulator / dt));
+        }
+
+        // ---- the secret huddle: plays go ONLY to the team's own phones; everyone else gets check marks ----
+        bool phaseKnown;
+        Phase lastPhase;
+        int lastHuddle;
+
+        void OnPhaseChanged()
+        {
+            phaseKnown = true;
+            lastPhase = World.Phase;
+            lastHuddle = World.HuddleNumber;
+            foreach (var s in Roster.Seats) if (sources.TryGetValue(s.Slot, out var src)) SendPhaseTo(src);
+            BroadcastStatus();
+        }
+
+        // What this phone should show now: the team's huddle, or its job in the called play.
+        void SendPhaseTo(PhoneSource src)
+        {
+            var seat = src.Seat;
+            var p = World.Find(seat.Slot);
+            if (seat.Conn < 0 || p == null || seat.Team < 0) return;
+            if (World.Phase == Phase.Huddle && Huddle.On(World))
+            {
+                Server.Send(seat.Conn, Messages.HuddleFor(World, p.Team, p));
+                SendUi(src, "huddle");
+            }
+            else
+            {
+                string job = Messages.JobFor(World, p.Team, p);
+                if (job != null) Server.Send(seat.Conn, job);
+                SendUi(src, "walk");
+            }
+        }
+
+        IEnumerable<(PhoneSource src, Player p)> TeamPhones(int team)
+        {
+            foreach (var s in Roster.Seats)
+            {
+                if (s.Kind != SeatKind.Phone || !s.Connected || s.Conn < 0 || s.Team != team) continue;
+                var p = World.Find(s.Slot);
+                if (p != null && p.Team == team && sources.TryGetValue(s.Slot, out var src)) yield return (src, p);
+            }
+        }
+
+        void BroadcastStatus()
+        {
+            string msg = Messages.Status(World);
+            foreach (var s in Roster.Seats) if (s.Kind == SeatKind.Phone && s.Connected && s.Conn >= 0) Server.Send(s.Conn, msg);
+        }
+
+        // suggest / lock from a phone. The press must carry the huddle screen's aid.
+        void OnCall(PhoneSource src, JObject m, bool lockIn)
+        {
+            if (PhoneProtocol.Str(m, "aid") != src.Aid) return;
+            var p = World.Find(src.Seat.Slot);
+            if (p == null) return;
+            string id = PhoneProtocol.Str(m, "id");
+            bool ok = lockIn ? Huddle.Lock(World, p.Slot, id) : Huddle.Suggest(World, p.Slot, id);
+            if (!ok) return;
+            foreach (var (tsrc, tp) in TeamPhones(p.Team)) Server.Send(tsrc.Seat.Conn, Messages.ThumbsFor(World, p.Team, tp));
+            if (lockIn) BroadcastStatus();
+        }
+
+        // The TV's huddle line: whether each team has called, NEVER what.
+        public static string TvLine(World w, GameConfig cfg)
+        {
+            if (!Huddle.On(w)) return "";
+            int secs = Messages.Secs(w);
+            if (w.Phase != Phase.Huddle) return "LINE UP   (next huddle in " + secs + ")";
+            var parts = new List<string> { "HUDDLE 0:" + secs.ToString("00") };
+            for (int t = 0; t < cfg.teams.Count; t++) parts.Add(cfg.teams[t].name + (Huddle.IsLocked(w, t) ? " CALLED ✓" : " ..."));
+            return string.Join("     ", parts);
         }
 
         void StepOnce()
@@ -187,6 +269,8 @@ namespace PocketFootball.Boot
                     if (t == "stick") src.OnStick(PhoneProtocol.Float(m, "x", -1f, 1f), PhoneProtocol.Float(m, "y", -1f, 1f), Time.unscaledTime);
                     else if (t == "btn") src.OnButton(PhoneProtocol.Str(m, "b"), PhoneProtocol.Int(m, "d") == 1, PhoneProtocol.Str(m, "aid"));
                     else if (t == "pick") OnPick(src, PhoneProtocol.Int(m, "team", -1));
+                    else if (t == "suggest") OnCall(src, m, false);
+                    else if (t == "lock") OnCall(src, m, true);
                 }
             }
         }
@@ -202,10 +286,11 @@ namespace PocketFootball.Boot
             lastMe.Remove(seat.Slot);
             Server.Send(conn, Messages.Joined(seat, RoomCode, cfg, Roster));
             var mine = World.Find(seat.Slot);
+            Server.Send(conn, Messages.Status(World));
             if (seat.Team >= 0 && mine != null)
             {
                 Server.Send(conn, Messages.Picked(seat, mine, cfg));
-                SendUi(src, "walk");
+                SendPhaseTo(src);
             }
             else SendUi(src, "pick");
             Debug.Log("[net] " + (rejoined ? "rejoined " : "joined ") + seat.Name + " slot " + seat.Slot + " team " + seat.Team);
@@ -234,7 +319,8 @@ namespace PocketFootball.Boot
             }
             seat.Team = team;
             Server.Send(seat.Conn, Messages.Picked(seat, p, cfg));
-            SendUi(src, "walk");
+            // the whole team's huddle screens refresh (the caller may have changed); this phone gets its own too
+            foreach (var (tsrc, _) in TeamPhones(team)) SendPhaseTo(tsrc);
             Debug.Log("[net] " + seat.Name + " picked " + cfg.teams[team].name + " " + p.Pos + " #" + p.Number);
             BroadcastLobby();
         }
@@ -277,7 +363,7 @@ namespace PocketFootball.Boot
             return tex;
         }
 
-        GUIStyle panelText, plate;
+        GUIStyle panelText, plate, banner;
 
         void OnGUI()
         {
@@ -297,6 +383,20 @@ namespace PocketFootball.Boot
                 ? "<color=#ff8080>Phone server failed:\n" + ServerError + "</color>"
                 : "Scan to join, or open\n<b>" + Url.Replace("http://", "") + "</b>\nCode <b><size=" + Mathf.RoundToInt(44 * s) + ">" + RoomCode + "</size></b>\n" + TeamLine();
             GUI.Label(new Rect(x + pad, y + pad + qr + 8 * s, qr, textH), text, panelText);
+
+            // the huddle banner, top centre: check marks only
+            string tv = TvLine(World, cfg);
+            if (tv.Length > 0)
+            {
+                banner ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold };
+                banner.fontSize = Mathf.RoundToInt(34 * s);
+                var bsize = banner.CalcSize(new GUIContent(tv));
+                var br = new Rect((Screen.width - bsize.x) * 0.5f - 20 * s, 12 * s, bsize.x + 40 * s, bsize.y + 12 * s);
+                GUI.color = new Color(0.05f, 0.13f, 0.1f, 0.85f);
+                GUI.DrawTexture(br, Texture2D.whiteTexture);
+                GUI.color = Color.white;
+                GUI.Label(br, tv, banner);
+            }
 
             // name plates over people, numbers over bots; FIND ME doubles the plate; OUT past the lines
             var cam = rig != null ? rig.Cam : Camera.main;

@@ -25,6 +25,7 @@ namespace PocketFootball.Boot
             Instance = this;
             Args = CliArgs.FromEnvironment();
             Config = ConfigLoader.Parse(LoadConfigText(), Environment.GetEnvironmentVariable);
+            ConfigLoader.AddPlays(Config, LoadPlays());
             Application.targetFrameRate = 60;
 
             BuildLight();
@@ -43,12 +44,29 @@ namespace PocketFootball.Boot
             Debug.Log($"[boot] Pocket Party Football up: field {Config.field.lengthYd} x {Config.field.widthYd} yd, camera {Config.camera.visibleYards} yd wide");
         }
 
-        // A build reads StreamingAssets/config/game.json first (editable without rebuilding), else the embedded copy.
+        // The editor reads Assets/_Project/Config itself (never a stale copy). A build reads StreamingAssets/config
+        // (copied there by BuildScript, editable without rebuilding), else the embedded game.json.
+        static string ConfigDir =>
+#if UNITY_EDITOR
+            "Assets/_Project/Config";
+#else
+            Path.Combine(Application.streamingAssetsPath, "config");
+#endif
+
         string LoadConfigText()
         {
-            string path = Path.Combine(Application.streamingAssetsPath, "config", "game.json");
+            string path = Path.Combine(ConfigDir, "game.json");
             if (File.Exists(path)) return File.ReadAllText(path);
             return embeddedConfig != null ? embeddedConfig.text : "{}";
+        }
+
+        static System.Collections.Generic.List<string> LoadPlays()
+        {
+            var list = new System.Collections.Generic.List<string>();
+            string dir = Path.Combine(ConfigDir, "plays");
+            if (Directory.Exists(dir)) foreach (var f in Directory.GetFiles(dir, "*.json")) list.Add(File.ReadAllText(f));
+            if (list.Count == 0) Debug.LogWarning("[boot] no plays found in " + dir);
+            return list;
         }
 
         void BuildLight()

@@ -7,10 +7,17 @@ namespace PocketFootball.Tests.EditMode
 {
     public sealed class ConfigTests
     {
+        // For tests of other rules: the huddle off, so it never lines everyone up mid-test.
+        public static Dictionary<string, string> NoHuddle => new Dictionary<string, string> { { "NO_HUDDLE", "1" } };
+
         public static GameConfig Load(Dictionary<string, string> env = null)
         {
             string json = File.ReadAllText("Assets/_Project/Config/game.json");
-            return ConfigLoader.Parse(json, k => env != null && env.TryGetValue(k, out var v) ? v : null);
+            var cfg = ConfigLoader.Parse(json, k => env != null && env.TryGetValue(k, out var v) ? v : null);
+            var plays = new List<string>();
+            foreach (var f in Directory.GetFiles("Assets/_Project/Config/plays", "*.json")) plays.Add(File.ReadAllText(f));
+            ConfigLoader.AddPlays(cfg, plays);
+            return cfg;
         }
 
         [Test]

@@ -13,6 +13,9 @@ namespace PocketFootball.Sim
         public BotsConfig bots = new BotsConfig();
         public FormationConfig formation = new FormationConfig();
         public BallConfig ball = new BallConfig();
+        public HuddleConfig huddle = new HuddleConfig();
+        // Loaded from Config/plays/*.json (not game.json) by ConfigLoader.AddPlays, sorted by id.
+        [Newtonsoft.Json.JsonIgnore] public List<PlayConfig> plays = new List<PlayConfig>();
         public BaselineConfig baseline = new BaselineConfig();
         public List<TeamConfig> teams = new List<TeamConfig>();
         public NetConfig net = new NetConfig();
@@ -75,6 +78,28 @@ namespace PocketFootball.Sim
     {
         public int seconds, players;
         public List<int> seeds = new List<int>();
+    }
+
+    // The secret huddle: seconds to call a play, then seconds lined up before the next huddle (until M1-c's hike).
+    public sealed class HuddleConfig
+    {
+        public float seconds, setSeconds;
+    }
+
+    // One play (docs/PLAYS_FORMAT.md): 11 jobs in formation spot order.
+    public sealed class PlayConfig
+    {
+        public string id, name, side, desc;
+        public List<JobConfig> jobs = new List<JobConfig>();
+    }
+
+    // route | block | zone | man | rush. Points are [ahead, z] yards from the ball (ahead = the offense's direction).
+    public sealed class JobConfig
+    {
+        public string kind, text;
+        public List<float[]> pts = new List<float[]>();
+        public float radius;
+        public int target = -1;
     }
 
     public sealed class TeamConfig

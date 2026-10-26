@@ -1,0 +1,21 @@
+/* The secret huddle and the job diagram (huddle.js). */
+.card { background: var(--turf-2); border-radius: 16px; padding: 12px 14px; }
+.hud { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.clock { font-family: var(--display); font-size: 32px; font-variant-numeric: tabular-nums; color: var(--warn); }
+.plays { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.play {
+  position: relative; text-align: left; border: 3px solid transparent; border-radius: 14px; background: var(--ink);
+  padding: 10px; display: flex; flex-direction: column; gap: 6px; touch-action: manipulation;
+}
+.play[aria-pressed="true"] { border-color: var(--team-2); }
+.play:disabled { opacity: .55; }
+.play b { font-family: var(--display); font-weight: 400; font-size: 18px; }
+.play small { color: var(--muted); font-size: 12px; }
+.thumbs {
+  position: absolute; top: 8px; right: 8px; background: var(--team); color: var(--team-ink);
+  border-radius: 999px; padding: 1px 8px; font-size: 12px; font-weight: 800;
+}
+.mini { width: 100%; height: auto; display: block; border-radius: 8px; }
+#hGo:disabled { opacity: .4; }
+.job { display: grid; gap: 6px; }
+.job h3 { font-family: var(--display); font-weight: 400; font-size: 20px; margin: 0; }

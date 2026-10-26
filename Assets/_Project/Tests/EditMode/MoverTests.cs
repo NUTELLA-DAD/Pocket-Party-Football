@@ -9,7 +9,7 @@ namespace PocketFootball.Tests.EditMode
     {
         static (World w, Player p, GameConfig cfg) One()
         {
-            var cfg = ConfigTests.Load();
+            var cfg = ConfigTests.Load(ConfigTests.NoHuddle);
             var w = new World(cfg, 1);
             var p = w.AddPlayer(0, 0, true);
             p.X = 0; p.Z = 0;
@@ -82,7 +82,7 @@ namespace PocketFootball.Tests.EditMode
         [Test]
         public void PlayersBumpAndNeverOverlap()
         {
-            var cfg = ConfigTests.Load();
+            var cfg = ConfigTests.Load(ConfigTests.NoHuddle);
             var w = new World(cfg, 1);
             var a = w.AddPlayer(0, 0, true);
             var b = w.AddPlayer(1, 1, true);

@@ -9,7 +9,7 @@ namespace PocketFootball.Tests.EditMode
     {
         static (World w, GameConfig cfg) Ready()
         {
-            var cfg = ConfigTests.Load();
+            var cfg = ConfigTests.Load(ConfigTests.NoHuddle);
             var w = WorldTests.Full(cfg);
             return (w, cfg);
         }

@@ -16,6 +16,9 @@ namespace PocketFootball.Editor
         public static void SnapshotBaseline()
         {
             var cfg = ConfigLoader.Parse(File.ReadAllText(ConfigPath));
+            var plays = new System.Collections.Generic.List<string>();
+            foreach (var f in Directory.GetFiles("Assets/_Project/Config/plays", "*.json")) plays.Add(File.ReadAllText(f));
+            ConfigLoader.AddPlays(cfg, plays);
             Directory.CreateDirectory(Dir);
             foreach (int seed in cfg.baseline.seeds)
             {

@@ -15,6 +15,17 @@ namespace PocketFootball.Sim
             return cfg;
         }
 
+        // The plays, one JSON text per play file. Sorted by id so the order never depends on the file system.
+        public static void AddPlays(GameConfig cfg, IEnumerable<string> jsons)
+        {
+            foreach (var j in jsons)
+            {
+                var p = JsonConvert.DeserializeObject<PlayConfig>(j);
+                if (p != null && !string.IsNullOrEmpty(p.id)) cfg.plays.Add(p);
+            }
+            cfg.plays.Sort((a, b) => string.CompareOrdinal(a.id, b.id));
+        }
+
         // FEATURES.fieldStripes is switched off by NO_FIELD_STRIPES=1.
         public static void ApplyEnvOverrides(GameConfig cfg, Func<string, string> env)
         {

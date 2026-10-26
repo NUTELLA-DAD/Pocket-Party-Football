@@ -95,6 +95,10 @@
     "rollDecelYdS2": 8,
     "restSpeedYdS": 0.3
   },
+  "huddle": {
+    "seconds": 15,
+    "setSeconds": 6
+  },
   "baseline": {
     "seconds": 60,
     "players": 22,
@@ -138,6 +142,7 @@
     "meSendHz": 5
   },
   "features": {
-    "fieldStripes": true
+    "fieldStripes": true,
+    "huddle": true
   }
 }
