@@ -23,6 +23,7 @@ namespace PocketFootball.Input
         int throwTo;
         bool callPressed, catchPressed;   // WS-05
         CarrierMove movePressed;          // WS-04: SPIN / STIFF ARM / DIVE
+        DefMove defPressed;               // WS-03
 
         public PhoneSource(Seat seat) { Seat = seat; }
 
@@ -42,7 +43,7 @@ namespace PocketFootball.Input
                 case "block": blockHeld = down; break;
                 case "hike": if (down) hikePressed = true; break;
                 case "juke": if (down) jukePressed = true; break;
-                case "tackle": case "dive": if (down) tacklePressed = true; break;
+                case "tackle": if (down) tacklePressed = true; break;
                 case "throw":
                     if (down) return true;                     // (the throw goes on release: tap = bullet, hold = lob)
                     int k = -1;
@@ -56,6 +57,11 @@ namespace PocketFootball.Input
                 case "spin": if (down) movePressed = CarrierMove.Spin; break;           // WS-04
                 case "stiff": if (down) movePressed = CarrierMove.StiffArm; break;      // WS-04
                 case "divein": if (down) movePressed = CarrierMove.Dive; break;         // WS-04 (the carrier's dive; "dive" is DIVE TACKLE)
+                case "dive": if (down) { tacklePressed = true; defPressed = DefMove.Dive; } break;   // WS-03 (a plain tackle with NO_DEFMOVES=1)
+                case "swim": if (down) defPressed = DefMove.Swim; break;      // WS-03
+                case "bull": if (down) defPressed = DefMove.BullRush; break;  // WS-03
+                case "swat": if (down) defPressed = DefMove.Swat; break;      // WS-03
+                case "jump": if (down) defPressed = DefMove.Jump; break;      // WS-03
                 default: return false;
             }
             return true;
@@ -84,10 +90,12 @@ namespace PocketFootball.Input
                 Hike = hikePressed, Juke = jukePressed, Tackle = tacklePressed, Throw = throwTo, Lob = lob,
                 Call = callPressed, Catch = catchPressed,   // WS-05
                 Move = movePressed,                         // WS-04
+                Def = defPressed,                           // WS-03
             };
             hikePressed = jukePressed = tacklePressed = false;
             callPressed = catchPressed = false;            // WS-05
             movePressed = CarrierMove.None;                // WS-04
+            defPressed = DefMove.None;                     // WS-03
             throwTo = 0; lob = false;
             return i;
         }

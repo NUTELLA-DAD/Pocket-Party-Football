@@ -20,8 +20,7 @@ namespace PocketFootball.Sim
     //    diveReachYd tackles him at diveChance, less diveStretchPenalty at full stretch, plus diveFromBehindBonus. A
     //    juke, a miss or a dive that lands short (too late, he's gone): the diver is down on the grass for diveDownS.
     // Odds by position: lineSkill (swim, bull rush) and coverSkill (swat, jump) add to the chance for that position.
-    // Bots use them too (the bot* numbers). People press them through Press() (the phone buttons come with the
-    // landscape layout). Runs after the ball moves and before LivePlay.Step, so a swat beats the catch on the same tick.
+    // Bots use them too (the bot* numbers). People press the phone buttons (PlayerInput.Def, through Act). Runs after the ball moves and before LivePlay.Step, so a swat beats the catch on the same tick.
     public static class DefenseMoves
     {
         public sealed class Defender
@@ -71,6 +70,15 @@ namespace PocketFootball.Sim
             if (!On(w) || move == DefMove.None) return false;
             Get(w, slot).Pressed = move;
             return true;
+        }
+
+        // A person's move button this tick (PlayerInput.Def). With the moves on, DIVE TACKLE is the dive, not also a
+        // plain tackle (the phone sends both, so the button still tackles with NO_DEFMOVES=1).
+        public static void Act(World w, Player p, ref PlayerInput input)
+        {
+            if (!On(w) || input.Def == DefMove.None) return;
+            if (input.Def == DefMove.Dive) input.Tackle = false;
+            Press(w, p.Slot, input.Def);
         }
 
         public static bool IsDown(World w, Player p) => On(w) && Of(w).BySlot.TryGetValue(p.Slot, out var d) && d.DownTicks > 0;

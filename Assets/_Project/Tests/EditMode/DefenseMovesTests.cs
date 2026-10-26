@@ -222,6 +222,49 @@ namespace PocketFootball.Tests.EditMode
             Assert.IsTrue(DefenseMoves.IsDown(w, d));
         }
 
+        // ---- the phone buttons ----
+
+        [Test]
+        public void ThePhoneButtonsBecomeMoves()
+        {
+            var src = new PocketFootball.Input.PhoneSource(new PocketParty.Net.Seat { Slot = 0 }) { Aid = "rush1" };
+            foreach (var kv in new Dictionary<string, DefMove> { { "swim", DefMove.Swim }, { "bull", DefMove.BullRush }, { "swat", DefMove.Swat }, { "jump", DefMove.Jump } })
+            {
+                Assert.IsTrue(src.OnButton(kv.Key, true, "rush1"), kv.Key);
+                Assert.AreEqual(kv.Value, src.Poll().Def, kv.Key);
+                Assert.AreEqual(DefMove.None, src.Poll().Def, kv.Key + " is pressed once");
+            }
+            Assert.IsTrue(src.OnButton("dive", true, "rush1"));
+            var i = src.Poll();
+            Assert.AreEqual(DefMove.Dive, i.Def);
+            Assert.IsTrue(i.Tackle, "DIVE TACKLE is still a tackle when the moves are off");
+        }
+
+        [Test]
+        public void WithTheMovesOffDiveTackleIsAPlainTackle()
+        {
+            var cfg = ConfigTests.Load();
+            cfg.features["defmoves"] = false;
+            var w = WorldTests.Full(cfg);
+            var input = new PlayerInput { Def = DefMove.Dive, Tackle = true };
+            DefenseMoves.Act(w, w.Players[0], ref input);
+            Assert.IsTrue(input.Tackle);
+        }
+
+        [Test]
+        public void TheDiveButtonDivesInAGame()
+        {
+            var w = Live();
+            var (qb, d) = Chase(w, 4.5f, 1f);
+            w.Step(new Dictionary<int, PlayerInput>
+            {
+                { Qb, new PlayerInput { MoveZ = 1f, Sprint = true } },
+                { Def, new PlayerInput { Def = DefMove.Dive, Tackle = true } },
+            });
+            Assert.AreEqual(DefMove.Dive, DefenseMoves.Get(w, Def).Move, "in the air");
+            Assert.AreEqual(0, d.StumbleTicks, "and no plain tackle try as well");
+        }
+
         // ---- the line ----
 
         // Until a bot defender is held by a block for more than `ticks` ticks; null if none is.

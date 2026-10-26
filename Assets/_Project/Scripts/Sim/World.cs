@@ -14,6 +14,7 @@ namespace PocketFootball.Sim
         public bool Lob;         // with Throw: high and soft, else a bullet
         public bool Call, Catch; // WS-05: CALL FOR IT, CATCH (Receiving.cs)
         public CarrierMove Move; // WS-04: the ball carrier's SPIN / STIFF ARM / DIVE (CarrierMoves.cs)
+        public DefMove Def;      // WS-03: a defender's SWIM / BULL RUSH / SWAT / JUMP / DIVE TACKLE (DefenseMoves.cs)
     }
 
     public sealed class Player
@@ -217,6 +218,7 @@ namespace PocketFootball.Sim
                 else input = Bots.Think(this, p);
                 p.Blocking = input.Block;
                 Mover.Move(this, p, input, dt);
+                DefenseMoves.Act(this, p, ref input);   // WS-03: before LivePlay.Act, so a DIVE TACKLE isn't also a plain tackle
                 LivePlay.Act(this, p, input);
                 CarrierMoves.Act(this, p, input);   // WS-04
             }
