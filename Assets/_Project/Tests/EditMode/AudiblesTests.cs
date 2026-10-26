@@ -161,6 +161,7 @@ namespace PocketFootball.Tests.EditMode
             float Ahead(bool hot)
             {
                 var w = AtTheLine();
+                w.Cfg.features["defmoves"] = false;   // WS-03: a swim or a swat can end the play before his route shows
                 if (hot) Assert.IsTrue(Audibles.PickHot(w, Rb, "hot_go"));
                 var rb = w.Find(Rb);
                 rb.IdleTicks = (int)(w.Cfg.bots.idleTakeoverS * w.Cfg.sim.tickHz);   // he put his phone down a while ago

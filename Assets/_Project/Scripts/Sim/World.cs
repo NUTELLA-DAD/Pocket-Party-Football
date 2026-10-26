@@ -224,6 +224,7 @@ namespace PocketFootball.Sim
             Blocking.Step(this);
             Mover.Bounds(this);
             Ball.Step(this, dt);
+            DefenseMoves.Step(this);   // WS-03 defender moves (FEATURES.defmoves): before LivePlay.Step, so a swat beats the catch
             LivePlay.Step(this);
             Huddle.Step(this);
             Receiving.Step(this, inputs);   // WS-05

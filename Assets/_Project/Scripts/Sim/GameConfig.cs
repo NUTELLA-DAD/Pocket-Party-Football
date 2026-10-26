@@ -30,6 +30,7 @@ namespace PocketFootball.Sim
         public ClockConfig clock = new ClockConfig();   // WS-02 (Clock.cs)
         public LobbyConfig lobby = new LobbyConfig();   // WS-07
         public CarrierConfig carrier = new CarrierConfig();   // WS-04 (CarrierMoves.cs)
+        public DefenseConfig defense = new DefenseConfig();   // WS-03 defender moves (DefenseMoves.cs)
         public KickingConfig kicking = new KickingConfig();   // WS-01 (Kicking.cs)
         public StadiumConfig stadium = new StadiumConfig();   // WS-10 the stadium and crowd (StadiumConfig.cs, View/Stadium.cs)
         public AudiblesConfig audibles = new AudiblesConfig();   // WS-13 (Audibles.cs)
