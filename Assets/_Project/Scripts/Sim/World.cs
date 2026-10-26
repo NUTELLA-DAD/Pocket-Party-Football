@@ -68,10 +68,10 @@ namespace PocketFootball.Sim
         public bool Thrown;                            // the ball has been thrown this play
         public bool Intercepted;                       // a defender caught it and is running it back (FEATURES.intreturn)
         public readonly HashSet<int> CatchTried = new HashSet<int>();
+        public readonly ReceivingState Recv = new ReceivingState();   // WS-05: this play's calls and catch taps (Receiving.cs); not hashed
         // play-by-play numbers, for the bots' balance check (M1-d) and later the stats
         public int PlaysRun, YardsGained;
         public readonly SortedDictionary<string, int> Results = new SortedDictionary<string, int>(StringComparer.Ordinal);
-        public readonly ReceivingState Recv = new ReceivingState();   // WS-05: this play's calls and catch taps (Receiving.cs); not hashed
 
         public World(GameConfig cfg, int seed)
         {

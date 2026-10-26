@@ -16,6 +16,7 @@ namespace PocketFootball.Sim
         public HuddleConfig huddle = new HuddleConfig();
         public LivePlayConfig play = new LivePlayConfig();
         public DownsConfig downs = new DownsConfig();
+        public ReceivingConfig receiving = new ReceivingConfig();   // WS-05 (Receiving.cs)
         // Loaded from Config/plays/*.json (not game.json) by ConfigLoader.AddPlays, sorted by id.
         [Newtonsoft.Json.JsonIgnore] public List<PlayConfig> plays = new List<PlayConfig>();
         public BaselineConfig baseline = new BaselineConfig();
@@ -23,7 +24,6 @@ namespace PocketFootball.Sim
         public NetConfig net = new NetConfig();
         public ViewConfig view = new ViewConfig();
         public AnimConfig anim = new AnimConfig();
-        public ReceivingConfig receiving = new ReceivingConfig();   // WS-05 (Receiving.cs)
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 
