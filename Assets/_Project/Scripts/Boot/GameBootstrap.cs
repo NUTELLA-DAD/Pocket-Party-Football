@@ -19,6 +19,7 @@ namespace PocketFootball.Boot
         public GameObject Field { get; private set; }
         public CliArgs Args { get; private set; }
         public PartyHost Host { get; private set; }
+        public LabMode Lab { get; private set; }     // the practice lab (-lab, Lab.bat), else null
 
         void Awake()
         {
@@ -33,6 +34,7 @@ namespace PocketFootball.Boot
             Rig = CameraRig.Create(Config);
             if (Args.LookX.HasValue) Rig.SetLookAtX(Args.LookX.Value);
             Host = PartyHost.Create(gameObject, Config, baseMaterial, Rig, Args);
+            if (LabMode.Requested()) Lab = LabMode.Create(gameObject, Config, baseMaterial, Host, ConfigDir);
 
             if (!string.IsNullOrEmpty(Args.ShotsDir))
             {
@@ -92,6 +94,7 @@ namespace PocketFootball.Boot
         void OnGUI()
         {
             if (Host != null && Host.Photo != null) return;
+            if (Lab != null) return;     // the lab draws its own panel
             GUI.Label(new Rect(12, 8, 600, 24), "Pocket Party Football - M0   (B adds a bot, Esc quits)");
         }
     }

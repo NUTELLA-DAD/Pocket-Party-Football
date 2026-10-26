@@ -1,0 +1,78 @@
+{
+  "keyboardSlot": 90,
+  "botSlotBase": 200,
+  "offenseTeam": 0,
+  "attackDir": 1,
+  "lineOfScrimmageXYd": -15,
+  "idleTakeoverS": 100000,
+  "endAfterCatchS": 0.6,
+  "logLines": 8,
+  "speeds": [1, 0.5, 0.25, 0.1],
+  "drills": [
+    {
+      "id": "throw",
+      "name": "QB throwing",
+      "help": "You are the QB. SPACE hikes. Then 1 to 4 throws to that receiver: tap for a bullet, hold CTRL for a lob. Nobody covers them.",
+      "offensePlay": "slants", "defensePlay": "cover3",
+      "you": "offense", "youSpot": 0, "carrier": 0,
+      "offense": [0, 2, 3, 4, 5], "defense": [],
+      "live": false, "endOnCatch": true, "maxS": 8
+    },
+    {
+      "id": "coverage",
+      "name": "Throwing into coverage",
+      "help": "Same as QB throwing, but corners, safeties and a linebacker cover the receivers. Wait for one to get open. No pass rush.",
+      "offensePlay": "slants", "defensePlay": "cover3",
+      "you": "offense", "youSpot": 0, "carrier": 0,
+      "offense": [0, 2, 3, 4, 5], "defense": [0, 1, 2, 3, 4],
+      "live": false, "endOnCatch": false, "maxS": 10
+    },
+    {
+      "id": "catch",
+      "name": "Catching",
+      "help": "You are a receiver. The QB throws to you after a moment, a bullet then a lob, over and over. Run under it (WASD) and watch the yellow catch circle.",
+      "note": "The offense 'calls' a run play so the bot QB never throws by himself; the lab throws for him at throwAtS.",
+      "offensePlay": "dive", "defensePlay": "cover3",
+      "you": "offense", "youSpot": 2, "carrier": 0,
+      "offense": [0, 2], "defense": [],
+      "live": true, "endOnCatch": true, "maxS": 6,
+      "throwAtS": 1.2, "throwTo": 1, "throwKinds": ["bullet", "lob"]
+    },
+    {
+      "id": "tackle",
+      "name": "Tackling",
+      "help": "A runner comes at you with the ball. Get close (inside the red circle) and press F to tackle. Running hard and hitting him from behind both help.",
+      "offensePlay": "dive", "defensePlay": "cover3",
+      "you": "defense", "youSpot": 0, "carrier": 1,
+      "offense": [1], "defense": [0],
+      "live": true, "endOnCatch": false, "maxS": 7
+    },
+    {
+      "id": "juke",
+      "name": "Running and juking",
+      "help": "You have the ball and three defenders chase you. Run for the end zone (SHIFT sprints). E jukes to the side you steer: tackles miss while it lasts.",
+      "offensePlay": "dive", "defensePlay": "cover3",
+      "you": "offense", "youSpot": 1, "carrier": 1,
+      "offense": [1], "defense": [0, 5, 6],
+      "live": true, "endOnCatch": false, "maxS": 10
+    },
+    {
+      "id": "scrimmage",
+      "name": "Full scrimmage",
+      "help": "All 22 players, Slants against Cover 3, you at QB. A normal play from the snap to the whistle, then it starts again.",
+      "offensePlay": "slants", "defensePlay": "cover3",
+      "you": "offense", "youSpot": 0, "carrier": 0,
+      "offense": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "defense": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "live": false, "endOnCatch": false, "maxS": 0
+    },
+    {
+      "id": "watch",
+      "name": "Watch the bots",
+      "help": "A full play with bots only. Turn on the hitboxes (V) and slow it down ([ and ]) to see who reaches whom.",
+      "offensePlay": "slants", "defensePlay": "cover3",
+      "you": "none", "youSpot": 0, "carrier": 0,
+      "offense": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "defense": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "live": false, "endOnCatch": false, "maxS": 0
+    }
+  ]
+}

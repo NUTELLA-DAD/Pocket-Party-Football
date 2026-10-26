@@ -32,6 +32,11 @@ namespace PocketFootball.Boot
         public string Url { get; private set; }
         public string ServerError { get; private set; }
         public PlayersView Players { get; private set; }
+        // The practice lab (LabMode) plugs in here: its own keys instead of the dev keys, the keyboard player's input
+        // before each tick, and the drill's bookkeeping after it.
+        public bool DevKeys = true;
+        public System.Action<Dictionary<int, PlayerInput>> BeforeTick;
+        public System.Action AfterTick;
 
         GameConfig cfg;
         CameraRig rig;
@@ -120,7 +125,7 @@ namespace PocketFootball.Boot
         {
             PumpNet();
             var kb = Keyboard.current;
-            if (kb != null)
+            if (kb != null && DevKeys)
             {
                 if (kb.bKey.wasPressedThisFrame) World.BotsWander = !World.BotsWander;
                 if (kb.lKey.wasPressedThisFrame) World.LineUp();
@@ -299,7 +304,7 @@ namespace PocketFootball.Boot
             return string.Join("     ", parts);
         }
 
-        void StepOnce()
+        public void StepOnce()
         {
             float now = Time.unscaledTime;
             inputs.Clear();
@@ -310,8 +315,10 @@ namespace PocketFootball.Boot
                 inputs[kv.Key] = src.Poll();
                 if (src.TakeFind()) findUntil[kv.Key] = now + cfg.view.findMeS;
             }
+            BeforeTick?.Invoke(inputs);
             Players.BeforeStep(World);
             World.Step(inputs);
+            AfterTick?.Invoke();
             SendMe(now);
         }
 
