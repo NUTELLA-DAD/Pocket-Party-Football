@@ -15,6 +15,7 @@ Code that speaks it:
 | Button presses into sim input | `Assets/_Project/Scripts/Input/PhoneSource.cs` |
 | Which layout a player sees | `Assets/_Project/Scripts/Input/PhoneLayouts.cs` |
 | Phone page | `Assets/StreamingAssets/phone/app.js`, `huddle.js`, `layouts.js` |
+| Final card (WS-12): built and sent | `Assets/_Project/Scripts/Boot/PostGameHost.cs`, shown by `phone/postgame.js` |
 | Secrecy proof | `Assets/_Project/Tests/PlayMode/PlaySecrecyTests.cs` |
 
 ## 1. Transport
@@ -45,7 +46,7 @@ Every game-to-phone message has one of these audiences. A new message must say w
 | Audience | Meaning | Messages |
 | --- | --- | --- |
 | **this phone** | Only the socket that asked, or the seat it is about | `joined`, `err`, `pong`, `picked`, `ui`, `me` |
-| **public** | Every connected phone, and the TV may show it | `lobby`, `status` |
+| **public** | Every connected phone, and the TV may show it | `lobby`, `status`, `postgame` (all but its `mine`, which is this phone's own) |
 | **team only (SECRET)** | Only the phones of seats on that team, checked with `PartyHost.TeamPhones(team)` | `huddle`, `thumbs`, `job` |
 
 The secret-play rule: a play id, play name, play contents, a suggestion or a call never goes to the other team's phones, never into a **public** message, and never onto the TV. The TV and `status` say only whether each team has called (`called[]`, "CALLED ✓"). `PlaySecrecyTests.TheOtherTeamNeverGetsThePlay` proves it with two fake phones; any new team-only message must be added to that test (or a new one like it).
@@ -149,6 +150,16 @@ Which screen to show.
 
 Sent to every connected phone on each phase change and each lock, and to a phone when it joins.
 
+### `postgame` (public, plus this phone's own line) (WS-12, `FEATURES.stats`)
+The final card, once the game clock ends the game (or F8 on the TV previews it). Sent to every connected phone every `stats.phoneResendS` seconds while the post-game screen is up, so a phone back from a screen lock gets it too. The page shows it until HIDE, and again only when the numbers change; a `huddle` clears it. Nothing team-private: no play ids or calls.
+
+| Field | |
+| --- | --- |
+| `teams` | `[{name, short, color, score, yds, tds, tackles, picks}]`, the totals of everyone who played for that team |
+| `winner` | Team index, or -1 for a tie |
+| `mvp` | `"Player of the game: KENNY (#87 WR) · 1 TD · 112 YDS · 3 REC"`, or `""` |
+| `mine` | This phone's player only: `{team, number, pos, yds, rushYd, recYd, catches, tackles, sacks, picks, tds, points, line}` (`line` like `1 TD · 112 YDS · 3 REC`). Missing when the phone has no player. |
+
 ### `huddle` (team only, SECRET)
 | Field | |
 | --- | --- |
@@ -182,7 +193,7 @@ Planned messages (not built yet; the owning workstream defines them here when it
 | WS-01 Kicking | `kick` handler (phone side exists), a kicker `ui` layout `kick` | this phone |
 | WS-05 Receiving | CALL FOR IT pulse to the QB | team only |
 | WS-07 Lobby | spot lists and swaps | public line-ups, own spot this phone |
-| WS-12 Stats | post-game card | public totals, own line this phone |
+| WS-12 Stats | `postgame` (built, see section 5) | public totals, own line this phone |
 | WS-13 Audibles | audible and hot route | team only |
 
 ## 7. Known gaps on main (found while writing this)
