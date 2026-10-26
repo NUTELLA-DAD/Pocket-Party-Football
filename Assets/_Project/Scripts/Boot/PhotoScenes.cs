@@ -17,6 +17,8 @@ namespace PocketFootball.Boot
         public float FirstDownX;
         public readonly Dictionary<int, string> Badges = new Dictionary<int, string>();
         public bool Hud = true;
+        // big team wordmarks across the top (text, colour, centre as a share of the screen width)
+        public readonly List<(string text, string color, float x)> Titles = new List<(string, string, float)>();
     }
 
     public static class PhotoScenes
@@ -32,6 +34,7 @@ namespace PocketFootball.Boot
         {
             switch (name)
             {
+                case "concept01": return Concept01(w, view, rig);
                 case "concept04": return Concept04(w, view, rig);
                 case "moves": return MovesLineup(w, view, rig);
             }
@@ -68,6 +71,54 @@ namespace PocketFootball.Boot
             return new PhotoState { Name = "moves", Hud = false, FirstDownX = 10f };
         }
 
+        // Concept 01, the team lineup: three Chiefs (68 in his stance, QB 7 throwing, RB 24 carrying) facing three
+        // Roughriders (QB 9, RB 21, 64), close up on the grass, no HUD. Everyone else stands far off, out of the shot.
+        static PhotoState Concept01(World w, PlayersView view, CameraRig rig)
+        {
+            const int home = 1, away = 0;
+            w.Offense = away;
+            w.Dir = 1f;   // the Chiefs face right, the Roughriders left (each turned toward the camera)
+            w.LineOfScrimmageX = -45f;
+            w.LineUp();
+            foreach (var p in w.Players) { p.X = p.Team == away ? -90f : 90f; p.Z = 0f; p.VX = 0f; p.VZ = 0f; }
+            const float z = -6f;   // (between the yard numbers and the hashes: plain grass under them)
+            const float cx = 22.5f;   // (between the 20 and 25 lines: a few plain lines, away from the centre logo)
+            void Cast(int team, int spot, int number, string pos, float x, Pose pose)
+            {
+                var p = Spot(w, team, spot);
+                if (p == null) return;
+                p.Number = number; p.Pos = pos;
+                Put(w, view, team, spot, cx + x, z, pose);
+            }
+            // shoulder to shoulder like the picture (the camera sees all six at its 2.5:1 frame)
+            // evenly spaced, none hiding another (the round-5 review)
+            Cast(away, 6, 68, "OL", -4.4f, Pose.Stance);
+            Cast(away, 0, 7, "QB", -2.6f, Pose.Throw);
+            Cast(away, 1, 24, "RB", -1.15f, Pose.Carry);
+            Cast(home, 0, 9, "QB", 1.45f, Pose.Handoff);   // (ball held out in front, as concept 01's 9: the throw hides it)
+            Cast(home, 1, 21, "RB", 2.85f, Pose.Carry);
+            Cast(home, 7, 64, "DL", 4.4f, Pose.Stance);
+            // a football each for the QBs and backs (the Chiefs' QB already holds the game ball, right hand)
+            foreach (var (team, spot, right) in new[] { (away, 1, false), (home, 0, true), (home, 1, false) })
+            {
+                var p = Spot(w, team, spot);
+                if (p != null) view.PropBalls[p.Slot] = right;
+            }
+            float m = w.Cfg.field.yardM;
+            rig.Hold(new Vector3(cx * m, 1.7f, z * m - 10.6f), new Vector3(cx * m, 1.35f, z * m), 22f);
+            // the picture's plain cream card behind them, hiding the stadium
+            var card = Looks.Flat(null, "Backdrop", new Vector3(cx * m, 6f, z * m + 7f), new Vector2(40f, 12f), Colors.Hex("#fbfaf6"), Looks.Toon(null), Looks.Paint);
+            card.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+            // (lit like the grass: its normals point up, so the toon shade never turns it lavender)
+            var cm = card.GetComponent<MeshFilter>().mesh;
+            cm.normals = new[] { Vector3.forward, Vector3.forward, Vector3.forward, Vector3.forward };
+            var st = new PhotoState { Name = "concept01", Hud = false, FirstDownX = -35f };
+            // the picture's wordmarks over each team's half
+            st.Titles.Add(("CHIEFS", w.Cfg.teams[away].color, 0.3f));
+            st.Titles.Add(("ROUGHRIDERS", w.Cfg.teams[home].color, 0.7f));
+            return st;
+        }
+
         // Concept 04, the in-game camera: the Roughriders' QB drops back to throw from their own 40 (offense going right),
         // the lines engaged, receivers A and B out in their routes, the defence reading; 3RD 2:18, 2ND & 10.
         static PhotoState Concept04(World w, PlayersView view, CameraRig rig)
@@ -95,7 +146,7 @@ namespace PocketFootball.Boot
             Put(w, view, away, 3, los + 30f, 1.5f, Pose.Ready);
             Put(w, view, away, 4, los + 31f, 19.5f, Pose.Ready);
             Put(w, view, away, 5, los + 25f, 9f, Pose.Ready);              // on the slot
-            Put(w, view, away, 6, los + 9f, -7f, Pose.Ready);
+            Put(w, view, away, 6, los + 4.5f, 3.5f, Pose.Ready);            // a linebacker over the line (not alone on the logo)
             var qb = Spot(w, home, 0);
             if (qb != null) qb.Human = true;
             rig.SetLookAtX(0f);

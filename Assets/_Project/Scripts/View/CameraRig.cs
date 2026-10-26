@@ -32,6 +32,13 @@ namespace PocketFootball.View
 
         public void SetLookAtX(float xYd) { lookAtXYd = xYd; Apply(); }
 
+        // A photo scene's own close-up (the gauntlet's concept 01 lineup): the camera stands still at `pos` looking at
+        // `lookAt` (metres) with its own field of view, instead of the broadcast framing.
+        bool held;
+        Vector3 heldPos, heldLook;
+        float heldFov;
+        public void Hold(Vector3 pos, Vector3 lookAt, float fovDeg) { held = true; heldPos = pos; heldLook = lookAt; heldFov = fovDeg; Apply(); }
+
         void LateUpdate()
         {
             if (!Mathf.Approximately(Cam.aspect, lastAspect)) Apply();
@@ -40,6 +47,14 @@ namespace PocketFootball.View
         void Apply()
         {
             lastAspect = Cam.aspect;
+            if (held)
+            {
+                transform.SetPositionAndRotation(heldPos, Quaternion.LookRotation(heldLook - heldPos, Vector3.up));
+                Cam.fieldOfView = heldFov;
+                Cam.nearClipPlane = 0.3f;
+                Cam.farClipPlane = 600f;
+                return;
+            }
             var p = Pose(cfg, Cam.aspect, lookAtXYd);
             transform.SetPositionAndRotation(p.position, p.rotation);
             Cam.fieldOfView = cfg.camera.fovDeg;

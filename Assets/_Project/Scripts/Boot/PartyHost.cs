@@ -471,7 +471,7 @@ namespace PocketFootball.Boot
             return tex;
         }
 
-        GUIStyle panelText, plate, banner;
+        GUIStyle panelText, plate, banner, titleStyle;
 
         void OnGUI()
         {
@@ -482,8 +482,22 @@ namespace PocketFootball.Boot
             var cam = rig != null ? rig.Cam : Camera.main;
 
             // the scoreboard bar, top centre (real numbers come with M1-e)
-            if (Photo != null) Hud.Scoreboard(cfg, Photo.Score, Photo.Quarter, Photo.Clock, Photo.Down, s);
+            if (Photo != null) { if (Photo.Hud) Hud.Scoreboard(cfg, Photo.Score, Photo.Quarter, Photo.Clock, Photo.Down, s); }
             else Scoreboard.Draw(World, s);   // WS-02
+            if (Photo != null && Photo.Titles.Count > 0)
+            {
+                titleStyle ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.BoldAndItalic };
+                titleStyle.fontSize = Mathf.RoundToInt(Screen.height * 0.11f);
+                foreach (var t in Photo.Titles)
+                {
+                    titleStyle.normal.textColor = Colors.Hex(t.color);
+                    var r = new Rect(Screen.width * t.x - Screen.width * 0.25f, Screen.height * 0.03f, Screen.width * 0.5f, Screen.height * 0.16f);
+                    // (stamped a few times a hair apart: chunky poster letters, not a thin italic)
+                    float d = Mathf.Max(1f, Screen.height * 0.003f);
+                    for (int i = -2; i <= 2; i++)
+                        for (int j = -1; j <= 1; j++) GUI.Label(new Rect(r.x + i * d, r.y + j * d, r.width, r.height), t.text, titleStyle);
+                }
+            }
 
             // the people: a small team-coloured triangle over each person's player (no name, so it hides nothing);
             // shape badges over receivers (photo scenes for now)

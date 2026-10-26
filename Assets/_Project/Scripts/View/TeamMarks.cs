@@ -21,6 +21,26 @@ namespace PocketFootball.View
             return tex;
         }
 
+        // The mark on the helmet: the same one texture when a PNG replaces it; the code-drawn Roughriders mark, whose
+        // team-colour banner vanishes on a green shell, becomes a solid white S with a dark edge there
+        // (concept 01's helmet).
+        static readonly Dictionary<string, Texture2D> helmetCache = new Dictionary<string, Texture2D>();
+        public static Texture2D HelmetFor(TeamConfig t)
+        {
+            if (t.@short == "KC" || Resources.Load<Texture2D>("Logos/" + t.@short) != null) return For(t);
+            if (helmetCache.TryGetValue(t.@short, out var tex) && tex != null) return tex;
+            var p = new Painter(Size, Size, new Color(1, 1, 1, 0));
+            Color dark = Colors.Hex(t.color) * 0.6f + new Color(0, 0, 0, 0.4f), wh = Color.white;
+            var s0 = Glyphs.Text(t.@short.Substring(0, 1), 340, 0f, out float sw0);
+            Slant(s0, 0.3f);
+            Offset(s0, new Vector2(230 - sw0 * 0.5f, 80));
+            p.Strokes(s0, 124, dark);
+            p.Strokes(s0, 92, wh);
+            tex = p.ToTexture("Helmet mark " + t.@short);
+            helmetCache[t.@short] = tex;
+            return tex;
+        }
+
         // A white arrowhead pointing left, a team-colour rim, the team's letters inside.
         static Texture2D Arrowhead(TeamConfig t)
         {

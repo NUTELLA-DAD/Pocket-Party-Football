@@ -46,7 +46,7 @@ namespace PocketFootball.View
             FarSideline(side);
             NearSideline(side);
             GoalPosts();
-            for (int i = 0; i < 4; i++) markers.Add(DownMarker());
+            for (int i = 0; i < 4; i++) markers.Add(DownMarker(i < 2 ? 1f : -1f));
             root.gameObject.AddComponent<StadiumClock>().Tick = Tick;
         }
 
@@ -273,7 +273,7 @@ namespace PocketFootball.View
 
         void Player(TeamConfig team, float x, float z, float scale, float yaw)
         {
-            var f = FootballFigure.Create(root, team, 10 + (int)(Rand() * 80), Rand() < 0.3f ? FootballFigure.Build.Big : FootballFigure.Build.Mid, (int)(Rand() * 999), cfg.view.playerHeightM * scale, mat, TeamMarks.For(team));
+            var f = FootballFigure.Create(root, team, 10 + (int)(Rand() * 80), Rand() < 0.3f ? FootballFigure.Build.Big : FootballFigure.Build.Mid, (int)(Rand() * 999), cfg.view.playerHeightM * scale, FootballFigure.KitMaterial(mat, cfg.view), TeamMarks.HelmetFor(team));
             f.transform.localPosition = new Vector3(x, 0, z);
             f.transform.localRotation = Quaternion.Euler(0, yaw, 0);
             f.Pose(FootballFigure.PoseKind.Stand, 0);
@@ -324,36 +324,60 @@ namespace PocketFootball.View
             b.Box(at + new Vector3(0, 0.68f, 0) * s, new Vector3(0.62f, 0.05f, 0.38f) * s, Colors.Hex("#f6f6f2"));
         }
 
-        // A plain person (a coach or a ref): a cap, a head, a shirt (stripes for a ref), trousers. Static mesh, scale
-        // a share of the players' height.
-        void Person(Vector3 at, Color shirt, Color trousers, Color cap, bool stripes, float yaw, float scale)
+        // A person on the sideline (a coach, a trainer, a ref, the chain crew), chibi like the players (concept 04):
+        // a big round head about a third of the height, a cap, a shirt (black and white stripes for a ref), trousers,
+        // shoes. holding: both hands forward at chest height (on a down marker's pole). Static mesh, scale a share of
+        // the players' height.
+        GameObject Person(Vector3 at, Color shirt, Color trousers, Color cap, bool stripes, float yaw, float scale, bool holding = false)
         {
             var k = new FigureKit();
             Color skin = Colors.Hex(Rand() < 0.5f ? "#e9b892" : "#a8704a");
-            k.Limb(new Vector3(0, 8, 9), new Vector3(0, 80, 9), 8f, 9f, trousers);
-            k.Limb(new Vector3(0, 8, -9), new Vector3(0, 80, -9), 8f, 9f, trousers);
-            k.Ellipsoid(new Vector3(3, 4, 9), new Vector3(11, 5, 6.5f), Colors.Hex("#1e1e22"));
-            k.Ellipsoid(new Vector3(3, 4, -9), new Vector3(11, 5, 6.5f), Colors.Hex("#1e1e22"));
-            var body = new FigureKit.Profile(Vector3.zero, new[] { 78f, 15f, 19f, 100f, 16f, 21f, 122f, 15f, 20f, 132f, 6f, 6f });
+            Color shoe = Colors.Hex("#1e1e22");
+            foreach (float z in new[] { 9f, -9f })
+            {
+                k.Limb(new Vector3(0, 8, z), new Vector3(0, 60, z * 1.1f), 9f, 10.5f, trousers);
+                k.Ellipsoid(new Vector3(4, 5, z), new Vector3(12, 5.5f, 7.5f), shoe);
+            }
+            var body = new FigureKit.Profile(Vector3.zero, new[] { 56f, 17f, 21f, 76f, 18f, 23f, 98f, 18f, 24f, 108f, 13f, 17f, 114f, 6f, 6f });
             k.Lathe(body, shirt, 22);
             if (stripes)
                 for (int i = -3; i <= 3; i++)
                 {
                     var st = FigureKit.OnLathe(body, i * 50f);
-                    k.Stroke(st, new[] { new Vector2(0, 80), new Vector2(0, 128) }, new[] { 4f, 4f }, 0.4f, Colors.Hex("#1e1e22"), 2);
+                    k.Stroke(st, new[] { new Vector2(0, 58), new Vector2(0, 106) }, new[] { 4.6f, 4.6f }, 0.4f, Colors.Hex("#1e1e22"), 2);
                 }
             foreach (float sd in new[] { 1f, -1f })
             {
-                k.Limb(new Vector3(0, 124, sd * 20), new Vector3(4, 84, sd * 23), 6.5f, 5.5f, shirt);
-                k.Ball(new Vector3(5, 80, sd * 23), 5.5f, skin);
+                if (holding)
+                {
+                    k.Limb(new Vector3(2, 102, sd * 21), new Vector3(16, 92, sd * 14), 7.5f, 6.5f, shirt);
+                    k.Limb(new Vector3(16, 92, sd * 14), new Vector3(26, 98, sd * 6), 6f, 5.5f, skin);
+                    k.Ball(new Vector3(28, 99, sd * 5), 6f, skin);
+                }
+                else
+                {
+                    k.Limb(new Vector3(0, 104, sd * 22), new Vector3(3, 72, sd * 25), 7.5f, 6.5f, shirt);
+                    k.Limb(new Vector3(3, 74, sd * 25), new Vector3(5, 60, sd * 25), 5.8f, 5.2f, skin);
+                    k.Ball(new Vector3(5, 56, sd * 25), 6f, skin);
+                }
             }
-            k.Ellipsoid(new Vector3(2, 150, 0), new Vector3(15, 17, 15), skin, 10, 16);
-            k.Ellipsoid(new Vector3(0, 160, 0), new Vector3(15.5f, 9f, 15.5f), cap, 8, 16);   // cap
-            k.Ellipsoid(new Vector3(14, 157, 0), new Vector3(9, 1.6f, 11), cap, 4, 12);       // brim
+            k.Limb(new Vector3(0, 108, 0), new Vector3(0, 118, 0), 7f, 7f, skin);   // neck
+            var headC = new Vector3(3, 136, 0);
+            var headR = new Vector3(21, 23, 21);
+            k.Ellipsoid(headC, headR, skin, 12, 18);
+            // a face that reads at a distance: two dark eyes under the cap
+            foreach (float sd in new[] { 1f, -1f })
+            {
+                var face = FigureKit.OnEllipsoid(headC, headR, Quaternion.identity, new Vector3(1f, -0.05f, 0f), 1f);
+                k.Spot(face, new Vector2(sd * 7f, 0f), new Vector2(2.6f, 3.6f), 0, 0.4f, Colors.Hex("#2a1c14"), 10);
+            }
+            k.Ellipsoid(new Vector3(1, 146, 0), new Vector3(22.5f, 14f, 22.5f), cap, 8, 18);   // cap
+            k.Ellipsoid(new Vector3(20, 145, 0), new Vector3(12, 2f, 15), cap, 4, 12);       // brim
             var go = Looks.Static(root, stripes ? "Ref" : "Coach", k, mat);
             go.transform.localPosition = at;
             go.transform.localRotation = Quaternion.Euler(0, yaw, 0);
             go.transform.localScale = Vector3.one * cfg.view.playerHeightM * scale / 170f;
+            return go;
         }
 
         // ---- the goal posts: chunky yellow, a padded base post behind the end line, a gooseneck, crossbar, uprights ----
@@ -379,8 +403,9 @@ namespace PocketFootball.View
             b.Build(root, "GoalPosts", mat);
         }
 
-        // An orange down marker: a pole with a box on top.
-        Transform DownMarker()
+        // An orange down marker: a pole with a box on top, held by one of the chain crew standing just off the field
+        // (side +1: the far sideline, -1: the near one).
+        Transform DownMarker(float side)
         {
             var b = new Blocks();
             b.Box(new Vector3(0, 1.1f, 0), new Vector3(0.07f, 1.1f, 0.07f), Colors.Hex("#f07a1a"));
@@ -389,6 +414,9 @@ namespace PocketFootball.View
             k.Ellipsoid(new Vector3(0, 2.4f, 0), new Vector3(0.36f, 0.36f, 0.1f), Quaternion.identity, Colors.Hex("#f07a1a"), 8, 16);
             k.Ellipsoid(new Vector3(0, 2.4f, -0.05f), new Vector3(0.2f, 0.2f, 0.06f), Quaternion.identity, Colors.Hex("#1e1e22"), 6, 12);
             Looks.Static(go.transform, "Flag", k, mat);
+            float crewS = side > 0 ? sc.crewScale : sc.nearScale * sc.crewScale;
+            var crew = Person(new Vector3(0, 0, side * sc.crewBackM), Color.white, Colors.Hex("#1e1e22"), Colors.Hex(sc.crewCapColor), true, side > 0 ? 90f : -90f, crewS, true);
+            crew.transform.SetParent(go.transform, false);
             return go.transform;
         }
 
