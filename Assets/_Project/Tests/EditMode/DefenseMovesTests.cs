@@ -243,7 +243,9 @@ namespace PocketFootball.Tests.EditMode
         [Test]
         public void WithTheMovesOffDiveTackleIsAPlainTackle()
         {
-            var w = WorldTests.Full(ConfigTests.Load());
+            var cfg = ConfigTests.Load();
+            cfg.features["defmoves"] = false;
+            var w = WorldTests.Full(cfg);
             var input = new PlayerInput { Def = DefMove.Dive, Tackle = true };
             DefenseMoves.Act(w, w.Players[0], ref input);
             Assert.IsTrue(input.Tackle);
