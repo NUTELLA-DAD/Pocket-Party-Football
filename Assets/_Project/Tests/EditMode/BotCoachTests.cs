@@ -71,7 +71,7 @@ namespace PocketFootball.Tests.EditMode
         {
             var cfg = On();
             var w = At(cfg, 3, 1, 8);
-            CollectionAssert.AreEquivalent(new[] { "short", "goal", "late", "redzone", "fgrange" }, BotCoach.Tags(w, w.Offense));
+            CollectionAssert.AreEquivalent(new[] { "short", "late", "redzone", "fgrange" }, BotCoach.Tags(w, w.Offense));
             w = At(cfg, 1, 10, 95);
             CollectionAssert.AreEquivalent(new[] { "long", "backedup" }, BotCoach.Tags(w, w.Offense));
             w = At(cfg, 2, 5, 50);

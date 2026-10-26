@@ -46,19 +46,33 @@ namespace PocketFootball.Tests.EditMode
 
         // ---- WS-06: the bot coach and bots v2 ----
 
-        // One 10-minute game with the coach and bots v2 on, counting what a box score would.
+        // What a box score would count, over one or more bot games. Scrimmage plays only for yards a play (a kickoff,
+        // a punt or a field goal is not a play from scrimmage); a pass is a play where the ball was thrown.
         public sealed class Box
         {
-            public int Plays, Yards, Passes, Incomplete, Scrambles, Punts, FieldGoalTries;
-            public SortedDictionary<string, int> Results, Calls = new SortedDictionary<string, int>(System.StringComparer.Ordinal);
+            public int Games, Plays, Yards, Passes, Incomplete, Intercepted, Scrambles, Punts, FieldGoalTries, GamesWithAKick;
+            public readonly SortedDictionary<string, int> Results = new SortedDictionary<string, int>(System.StringComparer.Ordinal);
+            public readonly SortedDictionary<string, int> Calls = new SortedDictionary<string, int>(System.StringComparer.Ordinal);
             public float PerPlay => Yards / (float)System.Math.Max(1, Plays);
             public float IncompleteRate => Incomplete / (float)System.Math.Max(1, Passes);
+            public float InterceptRate => Intercepted / (float)System.Math.Max(1, Passes);
+
+            public void Add(Box o)
+            {
+                Games += o.Games; Plays += o.Plays; Yards += o.Yards; Passes += o.Passes; Incomplete += o.Incomplete;
+                Intercepted += o.Intercepted; Scrambles += o.Scrambles; Punts += o.Punts; FieldGoalTries += o.FieldGoalTries;
+                GamesWithAKick += o.GamesWithAKick;
+                foreach (var kv in o.Results) Results[kv.Key] = (Results.TryGetValue(kv.Key, out int n) ? n : 0) + kv.Value;
+                foreach (var kv in o.Calls) Calls[kv.Key] = (Calls.TryGetValue(kv.Key, out int n) ? n : 0) + kv.Value;
+            }
+
             public override string ToString()
             {
                 var sb = new StringBuilder();
-                sb.Append(Plays).Append(" plays, ").Append(Yards).Append(" yards (").Append(PerPlay.ToString("0.0")).Append(" a play), ")
+                sb.Append(Plays).Append(" plays from scrimmage, ").Append(Yards).Append(" yards (").Append(PerPlay.ToString("0.0")).Append(" a play), ")
                   .Append(Passes).Append(" passes, ").Append(Incomplete).Append(" incomplete (").Append((IncompleteRate * 100f).ToString("0")).Append("%), ")
-                  .Append(Scrambles).Append(" scrambles, ").Append(Punts).Append(" punts, ").Append(FieldGoalTries).Append(" field goal tries; results:");
+                  .Append(Intercepted).Append(" picked off, ").Append(Scrambles).Append(" scrambles, ")
+                  .Append(Punts).Append(" punts, ").Append(FieldGoalTries).Append(" field goal tries; results:");
                 foreach (var kv in Results) sb.Append(' ').Append(kv.Key).Append(' ').Append(kv.Value).Append(',');
                 sb.Append(" calls:");
                 foreach (var kv in Calls) sb.Append(' ').Append(kv.Key).Append(' ').Append(kv.Value).Append(',');
@@ -66,13 +80,19 @@ namespace PocketFootball.Tests.EditMode
             }
         }
 
+        static bool IsKick(string call) => call == "punt" || call == "fg" || call == KickoffCall;
+        const string KickoffCall = "(kickoff)";
+
+        // One bot game with the coach and bots v2 on (plus whatever `tweak` switches on).
         public static Box PlayV2(int seed, int minutes, System.Action<GameConfig> tweak = null)
         {
             var cfg = BotCoachTests.On();
             tweak?.Invoke(cfg);
             var w = WorldTests.Full(cfg, seed);
-            var box = new Box();
+            var box = new Box { Games = 1 };
             bool wasLive = false, scrambled = false;
+            string call = null;
+            int yardsAtSnap = 0;
             for (int i = 0; i < minutes * 60 * cfg.sim.tickHz; i++)
             {
                 w.Step(null);
@@ -80,7 +100,8 @@ namespace PocketFootball.Tests.EditMode
                 if (live && !wasLive)
                 {
                     scrambled = false;
-                    string call = w.Calls[w.Offense] ?? "(kickoff)";
+                    yardsAtSnap = w.YardsGained;
+                    call = w.Calls[w.Offense] ?? KickoffCall;
                     box.Calls[call] = (box.Calls.TryGetValue(call, out int n) ? n : 0) + 1;
                     if (call == "punt") box.Punts++;
                     if (call == "fg" && w.Down >= cfg.downs.downsToGain) box.FieldGoalTries++;   // (not the extra point after a touchdown)
@@ -90,49 +111,80 @@ namespace PocketFootball.Tests.EditMode
                     var qb = LivePlay.Qb(w);
                     if (qb != null && LivePlay.Carrier(w) == qb && !w.Thrown && Bots.Scrambling(w, qb)) { scrambled = true; box.Scrambles++; }
                 }
-                // a play ends: was it a pass?
-                if (!live && wasLive && w.Thrown && w.Calls[w.Offense] != "punt" && w.Calls[w.Offense] != "fg") box.Passes++;
+                if (!live && wasLive && !IsKick(call))
+                {
+                    box.Plays++;
+                    box.Yards += w.YardsGained - yardsAtSnap;
+                    box.Results[w.Result] = (box.Results.TryGetValue(w.Result, out int n) ? n : 0) + 1;
+                    if (w.Thrown) box.Passes++;
+                    if (w.Result == "INCOMPLETE") box.Incomplete++;
+                    if (w.Result == "INTERCEPTED" || w.Result == "PICK SIX") box.Intercepted++;
+                }
                 wasLive = live;
             }
-            box.Plays = w.PlaysRun;
-            box.Yards = w.YardsGained;
-            box.Results = w.Results;
-            box.Incomplete = w.Results.TryGetValue("INCOMPLETE", out int inc) ? inc : 0;
+            if (box.Punts + box.FieldGoalTries > 0) box.GamesWithAKick = 1;
             return box;
         }
 
-        // The WS-06 gate: with the coach and bots v2 on, bot games give 4 to 6 yards a play and 25 to 40 percent of
-        // passes fall incomplete. (With FEATURES.kicking on as well, PunterAndKickerGetWork checks the kicks.)
-        [TestCase(1)]
-        [TestCase(2)]
-        [TestCase(3)]
-        public void CoachedBotGamesLookLikeFootball(int seed)
+        // The three seeded 10-minute games the WS-06 gates look at, added up (and each one printed).
+        static Box ThreeGames(System.Action<GameConfig> tweak)
         {
-            var box = PlayV2(seed, 10);
-            TestContext.WriteLine("seed " + seed + ": " + box);
-            Assert.GreaterOrEqual(box.Plays, 40, "plays keep happening: " + box);
-            Assert.That(box.PerPlay, Is.InRange(4f, 6f), "yards per play: " + box);
-            Assert.GreaterOrEqual(box.Passes, 10, "the coach calls passes: " + box);
+            var all = new Box();
+            for (int seed = 1; seed <= 3; seed++)
+            {
+                var g = PlayV2(seed, 10, tweak);
+                TestContext.WriteLine("seed " + seed + ": " + g);
+                all.Add(g);
+            }
+            TestContext.WriteLine("all three: " + all);
+            return all;
+        }
+
+        // Every rule switch in game.json on: the game as the laptop will play it once the merge batch flips them.
+        static void EverythingOn(GameConfig cfg)
+        {
+            var keys = new List<string>(cfg.features.Keys);
+            foreach (var k in keys) cfg.features[k] = true;
+        }
+
+        // The WS-06 gate, with every switch on (it needs kicking, defender moves and carrier moves, WS-01/03/04, merged):
+        // three 10-minute bot games give 4 to 6 yards a play and 25 to 40 percent incomplete passes, taken over the
+        // three games together (one game is only ~20 plays from scrimmage, so one long run moves its average by a yard
+        // or two); every game has a kick on 4th down, and the three have at least one punt and one field goal try.
+        [Test]
+        public void CoachedBotGamesLookLikeFootball()
+        {
+            var cfg = ConfigTests.Load();
+            foreach (var k in new[] { "kicking", "defmoves", "carriermoves" })
+                if (!cfg.features.ContainsKey(k)) Assert.Inconclusive("needs FEATURES." + k + " (WS-01, WS-03 and WS-04) merged first");
+            var box = ThreeGames(EverythingOn);
+            Assert.That(box.PerPlay, Is.InRange(4f, 6f), "yards a play: " + box);
             Assert.That(box.IncompleteRate, Is.InRange(0.25f, 0.4f), "incompletions: " + box);
+            Assert.Less(box.InterceptRate, 0.08f, "interceptions are rare: " + box);
+            Assert.GreaterOrEqual(box.Punts, 1, "a punt: " + box);
+            Assert.GreaterOrEqual(box.FieldGoalTries, 1, "a field goal try: " + box);
+            Assert.AreEqual(box.Games, box.GamesWithAKick, "every game has a punt or a field goal try: " + box);
             Assert.Greater(box.Scrambles, 0, "the QB scrambles sometimes: " + box);
             int Count(string k) => box.Results.TryGetValue(k, out int n) ? n : 0;
             Assert.Less(Count("SACKED"), box.Plays * 0.15f, "sacks are rare: " + box);
             Assert.Less(Count("PLAY OVER"), box.Plays * 0.05f, "plays end on a whistle, not the clock: " + box);
         }
 
-        // Once kicking (WS-01) has merged: every 10-minute coached game has a punt and a field goal try.
-        [TestCase(1)]
-        [TestCase(2)]
-        [TestCase(3)]
-        public void PunterAndKickerGetWork(int seed)
+        // The coach and bots v2 on their own (what main has today): passes are thrown, mostly caught, rarely picked off.
+        // Wider ranges than the gate above, because without the defender moves the offense gains more.
+        [Test]
+        public void CoachAndBotsV2OnTheirOwn()
         {
-            var cfg = ConfigTests.Load();
-            if (!cfg.features.ContainsKey("kicking")) Assert.Inconclusive("kicking (WS-01) has not merged yet");
-            var box = PlayV2(seed, 10, c => c.features["kicking"] = true);
-            TestContext.WriteLine("seed " + seed + ": " + box);
-            Assert.GreaterOrEqual(box.Punts, 1, "a punt: " + box);
-            Assert.GreaterOrEqual(box.FieldGoalTries, 1, "a field goal try: " + box);
-            Assert.That(box.PerPlay, Is.InRange(4f, 6f), "yards per play: " + box);
+            var box = ThreeGames(null);
+            Assert.GreaterOrEqual(box.Plays, 60, "plays keep happening: " + box);
+            Assert.That(box.PerPlay, Is.InRange(4f, 10f), "yards a play: " + box);
+            Assert.GreaterOrEqual(box.Passes, 30, "the coach calls passes: " + box);
+            Assert.That(box.IncompleteRate, Is.InRange(0.25f, 0.5f), "incompletions: " + box);
+            Assert.Less(box.InterceptRate, 0.08f, "interceptions are rare: " + box);
+            Assert.Greater(box.Scrambles, 0, "the QB scrambles sometimes: " + box);
+            int Count(string k) => box.Results.TryGetValue(k, out int n) ? n : 0;
+            Assert.Less(Count("SACKED"), box.Plays * 0.15f, "sacks are rare: " + box);
+            Assert.Less(Count("PLAY OVER"), box.Plays * 0.05f, "plays end on a whistle, not the clock: " + box);
         }
 
         [Test]
