@@ -491,7 +491,11 @@ namespace PocketFootball.Boot
                 foreach (var t in Photo.Titles)
                 {
                     titleStyle.normal.textColor = Colors.Hex(t.color);
-                    GUI.Label(new Rect(Screen.width * t.x - Screen.width * 0.25f, Screen.height * 0.03f, Screen.width * 0.5f, Screen.height * 0.16f), t.text, titleStyle);
+                    var r = new Rect(Screen.width * t.x - Screen.width * 0.25f, Screen.height * 0.03f, Screen.width * 0.5f, Screen.height * 0.16f);
+                    // (stamped a few times a hair apart: chunky poster letters, not a thin italic)
+                    float d = Mathf.Max(1f, Screen.height * 0.003f);
+                    for (int i = -2; i <= 2; i++)
+                        for (int j = -1; j <= 1; j++) GUI.Label(new Rect(r.x + i * d, r.y + j * d, r.width, r.height), t.text, titleStyle);
                 }
             }
 
