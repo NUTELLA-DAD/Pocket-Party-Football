@@ -196,7 +196,7 @@ namespace PocketFootball.View
             if (bodies.TryGetValue(p.Slot, out var fig) && kitOf.TryGetValue(p.Slot, out var was) && was == kit) return fig;
             if (fig != null) Object.Destroy(fig.gameObject);
             var team = cfg.teams[Mathf.Clamp(p.Team, 0, cfg.teams.Count - 1)];
-            fig = FootballFigure.Create(root, team, p.Number, FootballFigure.BuildOf(p.Pos), p.Slot * 7 + p.Number, cfg.view.playerHeightM, mat, TeamMarks.For(team));
+            fig = FootballFigure.Create(root, team, p.Number, FootballFigure.BuildOf(p.Pos), p.Slot * 7 + p.Number, cfg.view.playerHeightM, mat, TeamMarks.HelmetFor(team));
             fig.name = "Player " + p.Slot;
             bodies[p.Slot] = fig;
             kitOf[p.Slot] = kit;

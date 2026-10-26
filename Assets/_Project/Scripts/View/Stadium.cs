@@ -273,7 +273,7 @@ namespace PocketFootball.View
 
         void Player(TeamConfig team, float x, float z, float scale, float yaw)
         {
-            var f = FootballFigure.Create(root, team, 10 + (int)(Rand() * 80), Rand() < 0.3f ? FootballFigure.Build.Big : FootballFigure.Build.Mid, (int)(Rand() * 999), cfg.view.playerHeightM * scale, FootballFigure.KitMaterial(mat, cfg.view), TeamMarks.For(team));
+            var f = FootballFigure.Create(root, team, 10 + (int)(Rand() * 80), Rand() < 0.3f ? FootballFigure.Build.Big : FootballFigure.Build.Mid, (int)(Rand() * 999), cfg.view.playerHeightM * scale, FootballFigure.KitMaterial(mat, cfg.view), TeamMarks.HelmetFor(team));
             f.transform.localPosition = new Vector3(x, 0, z);
             f.transform.localRotation = Quaternion.Euler(0, yaw, 0);
             f.Pose(FootballFigure.PoseKind.Stand, 0);

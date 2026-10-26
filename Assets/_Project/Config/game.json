@@ -260,8 +260,8 @@
     "playerShadeSaturation": 0.85,
     "playerShadeLift": "#1a1719",
     "playerBounce": "#6a7a70",
-    "playerOutlinePx": 4.5,
-    "playerOutlineTint": 0.45,
+    "playerOutlinePx": 6,
+    "playerOutlineTint": 0.3,
     "playerRim": 0.35
   },
   "anim": {

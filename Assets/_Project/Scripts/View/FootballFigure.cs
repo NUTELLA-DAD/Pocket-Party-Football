@@ -154,14 +154,14 @@ namespace PocketFootball.View
             {
                 float z = s * armZ;
                 On(s > 0 ? 3 : 5);
-                k.Limb(new Vector3(0, shY, z), new Vector3(1, shY - 12, z + s * 1.5f * W), 11f * T, 10f * T, team);              // sleeve
+                k.Limb(new Vector3(0, shY, z), new Vector3(1, shY - 18, z + s * 2f * W), 11f * T, 9.8f * T, team);               // sleeve (below the pad)
                 if (st.SleeveStripes)
                 {
                     // two bands round the sleeve's cuff (Chiefs red-gold-white, Roughriders white)
-                    k.Limb(new Vector3(0.8f, shY - 7.5f, z + s * 1.1f * W), new Vector3(0.9f, shY - 9f, z + s * 1.2f * W), 10.6f * T, 10.55f * T, st.Stripe2 != st.Stripe ? st.Stripe2 : white, 12, false, false);
-                    k.Limb(new Vector3(0.9f, shY - 10f, z + s * 1.3f * W), new Vector3(1f, shY - 11.4f, z + s * 1.45f * W), 10.4f * T, 10.35f * T, white, 12, false, false);
+                    k.Limb(new Vector3(0.75f, shY - 12.5f, z + s * 1.4f * W), new Vector3(0.8f, shY - 14f, z + s * 1.55f * W), 10.5f * T, 10.45f * T, st.Stripe2 != st.Stripe ? st.Stripe2 : white, 12, false, false);
+                    k.Limb(new Vector3(0.85f, shY - 15f, z + s * 1.65f * W), new Vector3(0.9f, shY - 16.4f, z + s * 1.8f * W), 10.3f * T, 10.25f * T, white, 12, false, false);
                 }
-                k.Limb(new Vector3(1, shY - 10, z + s * 1.5f * W), new Vector3(2, elbowY, z + s * 3 * W), 9.6f * T, 8.6f * T, skin);   // upper arm
+                k.Limb(new Vector3(1, shY - 16, z + s * 2f * W), new Vector3(2, elbowY, z + s * 3 * W), 9.4f * T, 8.6f * T, skin);   // upper arm
                 if (build == Build.Big) k.Limb(new Vector3(1.6f, elbowY + 5, z + s * 2.3f * W), new Vector3(2, elbowY + 0.5f, z + s * 3 * W), 9.2f * T, 8.9f * T, black);
                 On(s > 0 ? 4 : 6);
                 k.Limb(new Vector3(2, elbowY, z + s * 3 * W), new Vector3(6, wristY + 1, z + s * 3 * W), 8.4f * T, 7f * T, skin);   // forearm
@@ -215,7 +215,8 @@ namespace PocketFootball.View
             k.Flag = FigureKit.Matte;
             if (st.HelmetStripe)
             {
-                var top = FigureKit.OnEllipsoid(helmetC, helmetR, Quaternion.identity, Vector3.up, 1f, Vector3.right);
+                // (on the shell as it is turned, q: straight up over the crown, front to back)
+                var top = FigureKit.OnEllipsoid(helmetC, helmetR, q, Quaternion.Inverse(q) * Vector3.up, 1f, Vector3.right);
                 k.Stroke(top, new[] { new Vector2(0, 22), new Vector2(0, 0), new Vector2(0, -26), new Vector2(0, -44) }, new[] { 9.5f, 10f, 10f, 9.5f }, 0.5f, white);
             }
             // facemask: two cross bars low on the face (below the eyes, concept 01) and one upright down the middle
