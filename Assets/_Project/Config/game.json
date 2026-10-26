@@ -387,7 +387,7 @@
     "receiving": true,
     "clock": true,
     "lobby": true,
-    "carriermoves": false,
+    "carriermoves": true,
     "fumbles": true,
     "kicking": false,
     "botcoach": false,

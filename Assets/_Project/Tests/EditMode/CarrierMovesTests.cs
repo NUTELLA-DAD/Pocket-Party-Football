@@ -69,7 +69,7 @@ namespace PocketFootball.Tests.EditMode
             var cfg = ConfigTests.Load();
             Assert.IsTrue(cfg.features.ContainsKey("carriermoves"), "FEATURES.carriermoves is in game.json");
             Assert.IsTrue(cfg.features.ContainsKey("fumbles"), "FEATURES.fumbles is in game.json");
-            Assert.IsFalse(cfg.Feature("carriermoves"), "off until the laptop turns it on and re-pins");
+            Assert.IsTrue(cfg.Feature("carriermoves"), "on in game.json (the merge captain turned it on)");
             Assert.IsTrue(cfg.Feature("fumbles"), "on in game.json (the merge captain turned it on and re-pinned)");
             Assert.AreEqual("NO_CARRIERMOVES", ConfigLoader.EnvName("carriermoves"));
             Assert.AreEqual("NO_FUMBLES", ConfigLoader.EnvName("fumbles"));
