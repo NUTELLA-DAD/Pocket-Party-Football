@@ -496,7 +496,6 @@
     "kicking": true,
     "botcoach": false,
     "botsV2": false,
-    "defmoves": false,
     "grassShader": true
   }
 }
