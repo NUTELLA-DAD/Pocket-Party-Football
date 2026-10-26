@@ -26,7 +26,7 @@ namespace PocketFootball.Tests.EditMode
         {
             var pp = ConfigTests.Load().field.paint;
             foreach (float v in new[] { pp.lineAlpha, pp.numberHeightYd, pp.numberStrokeYd, pp.numberAlpha, pp.arrowYd, pp.logoWidthYd, pp.logoHeightYd,
-                         pp.logoAlpha, pp.logoSplit, pp.logoLightMix, pp.logoDarkMix, pp.logoDarkValue, pp.brushDabsPerSqYd, pp.brushLenYd, pp.brushWidthYd,
+                         pp.logoAlpha, pp.logoSplit, pp.logoLightMix, pp.logoDarkMix, pp.logoDarkValue, pp.brushDabsPerSqYd, pp.patchYd, pp.patchStrength, pp.brushLenYd, pp.brushWidthYd,
                          pp.detailM, pp.detailFadePx, pp.gradeSaturation, pp.scrimmageWidthYd })
                 Assert.Greater(v, 0f);
             Assert.AreEqual(3, pp.gradeGain.Length);
