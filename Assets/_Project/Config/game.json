@@ -73,7 +73,8 @@
     "missPerYd": 0.08,
     "pressureMissYd": 1.2,
     "lobOverYd": 26,
-    "adjustS": 0.28
+    "adjustS": 0.28,
+    "laneYd": 1.5
   },
   "formation": {
     "lineOfScrimmageXYd": -15,

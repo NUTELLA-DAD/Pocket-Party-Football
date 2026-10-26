@@ -60,8 +60,9 @@ namespace PocketFootball.Sim
         // bots v2 (WS-06, FEATURES.botsV2, Bots.cs): a rusher this close with no block on him is pressure (throw it
         // or scramble); at the deadline or under pressure he throws only to a man with deadlineOpenYd of space; throws
         // miss by up to missYd + missPerYd per yard (+ pressureMissYd when pressured); longer than lobOverYd: a lob;
-        // the man it is for sees where it will land only adjustS before it comes down
-        public float pressureYd, deadlineOpenYd, missYd, missPerYd, pressureMissYd, lobOverYd, adjustS;
+        // the man it is for sees where it will land only adjustS before it comes down; he won't throw it past a defender
+        // within laneYd of the back half of the throw
+        public float pressureYd, deadlineOpenYd, missYd, missPerYd, pressureMissYd, lobOverYd, adjustS, laneYd;
     }
 
     // One spot in a formation: back = yards from the line of scrimmage onto the team's own side, z = across.

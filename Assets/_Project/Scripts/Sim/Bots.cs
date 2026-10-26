@@ -164,15 +164,17 @@ namespace PocketFootball.Sim
             return new PlayerInput { MoveX = p.VX / sp, MoveZ = p.VZ / sp, Sprint = true };
         }
 
-        // A defender with a pass in the air: if he can get to where it comes down in time, he goes for the ball;
-        // the rest close on the man it is for, to make the tackle (v1 sent everyone to the ball, so passes drew a crowd
-        // and many more interceptions).
+        // A defender with a pass in the air reads it like the receiver does: only in the last adjustS can he tell where
+        // it comes down, and then he goes for it if he can get there in time. Until then, and if he can't, he closes on
+        // the man it is for, to make the tackle (v1 sent everyone to the landing spot from the throw, so passes drew a
+        // crowd that beat the receiver there and picked off one throw in six).
         static PlayerInput DefendThePass(World w, Player p)
         {
             var bl = w.Ball;
-            float reach = Landing(w) * w.Cfg.players.sprintSpeedYdS + w.Cfg.play.catchRadiusYd;
+            float land = Landing(w);
+            float reach = land * w.Cfg.players.sprintSpeedYdS + w.Cfg.play.catchRadiusYd;
             float dx = bl.TargetX - p.X, dz = bl.TargetZ - p.Z;
-            if (dx * dx + dz * dz <= reach * reach) return To(p, bl.TargetX, bl.TargetZ, 1f, true);
+            if (land <= w.Cfg.bots.adjustS && dx * dx + dz * dz <= reach * reach) return To(p, bl.TargetX, bl.TargetZ, 1f, true);
             var r = Intended(w);
             return r != null ? Pursue(w, p, r) : To(p, bl.TargetX, bl.TargetZ, 1f, true);
         }
@@ -224,7 +226,7 @@ namespace PocketFootball.Sim
                     var r = LivePlay.Receiver(w, k);
                     var job = r != null ? JobOfCalled(w, r) : null;
                     if (r == null || job == null || job.kind != "route") continue;
-                    if (t >= b.readTimesS[read] && Openness(w, r) >= b.openYd) target = r;
+                    if (t >= b.readTimesS[read] && Openness(w, r) >= b.openYd && LaneClear(w, qb, r)) target = r;
                     read++;
                 }
                 if (target == null && pressured && b.readTimesS.Count > 0 && t >= b.readTimesS[0])
@@ -249,11 +251,28 @@ namespace PocketFootball.Sim
             for (int k = 1; k <= w.Cfg.play.receivers.Count; k++)
             {
                 var r = LivePlay.Receiver(w, k);
-                if (r == null || r == LivePlay.Qb(w)) continue;
+                if (r == null || r == LivePlay.Qb(w) || !LaneClear(w, LivePlay.Qb(w), r)) continue;
                 float o = Openness(w, r);
                 if (o > open) { open = o; best = r; }
             }
             return best;
+        }
+
+        // No defender within laneYd of the back half of the throw (where a bullet is low enough to be picked off).
+        static bool LaneClear(World w, Player qb, Player r)
+        {
+            float ax = (qb.X + r.X) * 0.5f, az = (qb.Z + r.Z) * 0.5f;
+            float sx = r.X - ax, sz = r.Z - az, len2 = sx * sx + sz * sz;
+            float lane = w.Cfg.bots.laneYd;
+            foreach (var d in w.Players)
+            {
+                if (d.Team == qb.Team) continue;
+                float u = len2 > 0f ? ((d.X - ax) * sx + (d.Z - az) * sz) / len2 : 0f;
+                if (u < 0f || u > 1f) continue;
+                float px = ax + sx * u - d.X, pz = az + sz * u - d.Z;
+                if (px * px + pz * pz < lane * lane) return false;
+            }
+            return true;
         }
 
         // Lead him by the flight time, then miss by a seeded amount.
