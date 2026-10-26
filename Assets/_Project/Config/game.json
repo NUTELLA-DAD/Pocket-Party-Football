@@ -511,6 +511,31 @@
     "nameChars": 12,
     "phoneResendS": 2
   },
+  "gamepad": {
+    "deadzone": 0.2,
+    "lobHoldS": 0.35,
+    "kickFullS": 1,
+    "hintFontPx": 24,
+    "join": "start",
+    "name": "PAD",
+    "holds": ["sprint", "block"],
+    "any": { "start": "kickoff", "back": "find" },
+    "layouts": {
+      "pick":    { "lb": "team:0", "rb": "team:1" },
+      "huddle":  { "a": "agree" },
+      "qbpre":   { "a": "hike", "y": "find" },
+      "qb":      { "a": "throw:1", "b": "throw:2", "x": "throw:3", "y": "throw:4", "rb": "throw:5", "lb": "scramble" },
+      "carrier": { "rt": "sprint", "a": "juke", "b": "spin", "x": "stiff" },
+      "route":   { "rt": "sprint", "a": "call", "b": "catch" },
+      "block":   { "a": "block", "rt": "sprint" },
+      "rush":    { "a": "swim", "b": "bull", "x": "tackle", "y": "swat", "rt": "sprint" },
+      "lb":      { "rt": "sprint", "x": "tackle", "a": "dive", "y": "swat" },
+      "cover":   { "rt": "sprint", "x": "tackle", "a": "jump", "b": "dive" },
+      "wait":    { "a": "find" },
+      "walk":    { "rt": "sprint" },
+      "kick":    { "a": "kick" }
+    }
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
@@ -530,6 +555,7 @@
     "grassShader": true,
     "audibles": false,
     "stats": false,
-    "gamelog": true
+    "gamelog": true,
+    "gamepad": false
   }
 }
