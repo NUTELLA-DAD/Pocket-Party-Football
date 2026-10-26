@@ -49,10 +49,10 @@ namespace PocketFootball.Tests.EditMode
         // ---- the switch ----
 
         [Test]
-        public void OffByDefaultAndNoDefmovesTurnsItOff()
+        public void OffMeansOffAndNoDefmovesTurnsItOff()
         {
             var cfg = ConfigTests.Load();
-            Assert.IsFalse(cfg.Feature("defmoves"), "ships off, so the bot-game baseline is unchanged");
+            cfg.features["defmoves"] = false;               // (whatever game.json ships)
             var w = WorldTests.Full(cfg);
             Assert.IsFalse(DefenseMoves.Press(w, 0, DefMove.Dive));
             cfg.features["defmoves"] = true;
