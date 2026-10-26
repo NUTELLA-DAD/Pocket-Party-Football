@@ -134,7 +134,7 @@ namespace PocketFootball.View
                 var home = cfg.teams[1];
                 Color grass = a;
                 Color light = Color.Lerp(grass, line, pp.logoLightMix), dark = Color.Lerp(grass, Colors.Hex(home.color), pp.logoDarkMix) * pp.logoDarkValue;
-                CentreMark(p, TeamMarks.For(home), Colors.Hex(home.color), new Vector2(px(0), pz(0)), pp.logoWidthYd * PxPerYd, pp.logoHeightYd * PxPerYd, light, dark, pp.logoSplit, pp.logoAlpha);
+                CentreMark(p, TeamMarks.For(home), new Vector2(px(0), pz(0)), pp.logoWidthYd * PxPerYd, pp.logoHeightYd * PxPerYd, light, dark, pp.logoSplit, pp.logoAlpha);
             }
             return p.ToTexture("FieldPaint");
         }
@@ -184,10 +184,10 @@ namespace PocketFootball.View
         }
 
         // A team's mark painted onto the grass in two tones: centred at c, fitted inside w x h pixels (its shape kept,
-        // its empty margins trimmed), the parts in the team's colour in `dark`, everything else (white, trim, a darker
-        // letter) in `light`, at `alpha`: a light emblem on a dark field, as in concept 04. The mark is the team's ONE
+        // its empty margins trimmed), its white parts (trim, outlines, wheat) in `light`, everything else in `dark`, at
+        // `alpha`: a green emblem with pale trim on the grass, as in concept 04. The mark is the team's ONE
         // texture (TeamMarks: Resources/Logos/<SHORT>.png when there is one), so swapping that file swaps this too.
-        static void CentreMark(Painter p, Texture2D t, Color team, Vector2 c, float w, float h, Color light, Color dark, float split, float alpha)
+        static void CentreMark(Painter p, Texture2D t, Vector2 c, float w, float h, Color light, Color dark, float split, float alpha)
         {
             var src = Pixels(t);
             if (src == null) return;
@@ -207,9 +207,9 @@ namespace PocketFootball.View
                 {
                     var s = Bilinear(src, tw, th, bx0 + (x + 0.5f) / scale - 0.5f, by0 + (y + 0.5f) / scale - 0.5f);
                     if (s.a <= 0.003f) continue;
-                    // how far this pixel's colour is from the team colour (0 = the same, about 1.7 = opposite)
-                    float far = Mathf.Sqrt((s.r - team.r) * (s.r - team.r) + (s.g - team.g) * (s.g - team.g) + (s.b - team.b) * (s.b - team.b));
-                    float tone = Mathf.Clamp01((far - split) / 0.12f + 0.5f);
+                    // (only the near-white parts go light: filling the letter with the light tone too made one pale blob)
+                    float l = 0.2126f * s.r + 0.7152f * s.g + 0.0722f * s.b;
+                    float tone = Mathf.Clamp01((l - split) / 0.12f + 0.5f);
                     var col = Color.Lerp(dark, light, tone);
                     col.a = 1f;
                     p.Blend(ox + x, oy + y, col, s.a * alpha);
