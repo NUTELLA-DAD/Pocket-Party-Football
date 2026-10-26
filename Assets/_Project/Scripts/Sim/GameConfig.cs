@@ -29,6 +29,8 @@ namespace PocketFootball.Sim
         public ReplayConfig replay = new ReplayConfig();   // WS-08 (ReplayConfig.cs, View/Replay.cs)
         public ClockConfig clock = new ClockConfig();   // WS-02 (Clock.cs)
         public LobbyConfig lobby = new LobbyConfig();   // WS-07
+        public CarrierConfig carrier = new CarrierConfig();   // WS-04 (CarrierMoves.cs)
+        public KickingConfig kicking = new KickingConfig();   // WS-01 (Kicking.cs)
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 

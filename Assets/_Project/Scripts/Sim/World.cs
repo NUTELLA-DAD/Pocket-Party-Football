@@ -13,6 +13,7 @@ namespace PocketFootball.Sim
         public int Throw;        // 0 = no throw; k = throw to receiver k (1-based, the order of play.receivers / shapes)
         public bool Lob;         // with Throw: high and soft, else a bullet
         public bool Call, Catch; // WS-05: CALL FOR IT, CATCH (Receiving.cs)
+        public CarrierMove Move; // WS-04: the ball carrier's SPIN / STIFF ARM / DIVE (CarrierMoves.cs)
     }
 
     public sealed class Player
@@ -75,6 +76,8 @@ namespace PocketFootball.Sim
         public readonly SortedDictionary<string, int> Results = new SortedDictionary<string, int>(StringComparer.Ordinal);
         public readonly EventLog Events = new EventLog();   // WS-00: what happened (Events.cs); not hashed, the sim never reads it
         public readonly ClockState GameClock = new ClockState();   // WS-02: the game clock and quarters (Clock.cs)
+        public readonly CarrierState Carry = new CarrierState();   // WS-04: carrier moves and fumbles (CarrierMoves.cs, Fumbles.cs)
+        public readonly KickState Kick = new KickState();   // WS-01: kickoffs, punts, field goals, tries (Kicking.cs)
 
         public World(GameConfig cfg, int seed)
         {
@@ -214,6 +217,7 @@ namespace PocketFootball.Sim
                 p.Blocking = input.Block;
                 Mover.Move(this, p, input, dt);
                 LivePlay.Act(this, p, input);
+                CarrierMoves.Act(this, p, input);   // WS-04
             }
             Mover.Bump(this);
             Blocking.Step(this);
@@ -223,6 +227,7 @@ namespace PocketFootball.Sim
             Huddle.Step(this);
             Receiving.Step(this, inputs);   // WS-05
             Clock.Step(this);   // WS-02
+            Kicking.Step(this);   // WS-01
             Tick++;
         }
 

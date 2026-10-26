@@ -45,6 +45,7 @@
     ws.onmessage = function (ev) {
       var msg; try { msg = JSON.parse(ev.data); } catch (e) { return; }
       if (window.Lobby) window.Lobby.onMessage(msg);   // WS-07: the lobby screen (lobby.js) sees every message first
+      if (window.PPKick) window.PPKick.onMessage(msg);   // WS-01: the kick meter (kick.js), kicker's phone only
       if (msg.t === 'joined') onJoined(msg);
       else if (msg.t === 'lobby') { teams = msg.teams || teams; drawTeams(); }
       else if (msg.t === 'picked') onPicked(msg);

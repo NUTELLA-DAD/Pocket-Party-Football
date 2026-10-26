@@ -34,7 +34,7 @@ namespace PocketFootball.Sim
         {
             var list = new List<PlayConfig>();
             string side = SideOf(w, team);
-            foreach (var p in w.Cfg.plays) if (p.side == side) list.Add(p);
+            foreach (var p in w.Cfg.plays) if (p.side == side && Kicking.InBook(w, p)) list.Add(p);   // WS-01: PUNT and FIELD GOAL only on 4th down / a try
             return list;
         }
 
@@ -139,6 +139,7 @@ namespace PocketFootball.Sim
             foreach (var kv in Thumbs(w, team)) if (kv.Value > most) { best = kv.Key; most = kv.Value; }
             if (best != null) return best;
             string coach = global::PocketFootball.Sim.BotCoach.Call(w, team); if (coach != null) return coach;   // WS-06: the situational coach (FEATURES.botcoach)
+            string kick = Kicking.BotCall(w, team); if (kick != null) return kick;   // WS-01: the bot kicker's call
             var book = Playbook(w, team);
             return book.Count > 0 ? book[w.Rng.Below(book.Count)].id : "";
         }

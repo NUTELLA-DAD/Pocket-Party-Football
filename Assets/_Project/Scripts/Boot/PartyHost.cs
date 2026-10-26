@@ -83,6 +83,7 @@ namespace PocketFootball.Boot
             if (photoName != null) h.Photo = PhotoScenes.Setup(photoName, h.World, h.Players, rig);
             on.AddComponent<ReceivingHud>().Host = h;   // WS-05: CALL FOR IT pulse on the TV and the QB's phone
             Lobby.Attach(h, cfg, args);   // WS-07: the lobby and two-way players (FEATURES.lobby)
+            KickPhones.Attach(h);   // WS-01: the kick meter on the kicker's phone and on the TV
             return h;
         }
 
@@ -152,6 +153,7 @@ namespace PocketFootball.Boot
             if (!phaseKnown || World.Phase != lastPhase || World.HuddleNumber != lastHuddle) OnPhaseChanged();
             RefreshLayouts();
             Players.Render(World, lockstep || Photo != null ? 1f : Mathf.Clamp01(accumulator / dt));
+            CarrierMovesView.Apply(World, Players);   // WS-04: spin, stiff arm, dive, fumbles on the TV
             float firstX = Photo != null ? Photo.FirstDownX : World.FirstDownX;
             if (Photo == null && !Downs.On(World)) firstX = World.LineOfScrimmageX + World.Dir * cfg.downs.firstDownYd;
             marks.SetLines(World.LineOfScrimmageX, firstX);
@@ -361,6 +363,7 @@ namespace PocketFootball.Boot
                     else if (t == "pick") OnPick(src, PhoneProtocol.Int(m, "team", -1));
                     else if (t == "suggest") OnCall(src, m, false);
                     else if (t == "lock") OnCall(src, m, true);
+                    else if (t == "kick") KickPhones.OnKick(this, src, m);   // WS-01
                     else if (Lobby.Instance != null) Lobby.Instance.OnMessage(src.Seat, t, m);   // WS-07: spot, swap, kickoff, lobbyme
                 }
             }
