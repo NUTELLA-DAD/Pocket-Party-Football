@@ -76,7 +76,9 @@ namespace PocketFootball.Tests.PlayMode
             {
                 Assert.AreEqual((i + 1).ToString(), Get(plays[i], "n"), "plays numbered in order");
                 Assert.IsNotEmpty(Get(plays[i], "result"));
-                Assert.IsNotEmpty(Get(plays[i], "call"), "the offense's call is in the log");
+                string kind = Get(plays[i], "kind");
+                Assert.IsNotEmpty(kind, "every play says what kind it is");
+                if (kind != "KICKOFF") Assert.IsNotEmpty(Get(plays[i], "call"), "the offense's call is in the log (only a kickoff has none): play " + (i + 1));
                 yards += int.Parse(Get(plays[i], "yards"));
             }
             Assert.AreEqual(w.YardsGained, yards, "the plays' yards add up to the sim's own");
@@ -115,8 +117,8 @@ namespace PocketFootball.Tests.PlayMode
             StringAssert.Contains("DANA", md, "who got a bot");
         }
 
-        [SetUp] public void Loopback() { PartyHost.BindOverride = System.Net.IPAddress.Loopback; PartyHost.PortOverride = 0; }
-        [TearDown] public void Reset() { PartyHost.BindOverride = null; PartyHost.PortOverride = -1; Time.timeScale = 1f; }
+        [SetUp] public void Loopback() { PartyHost.BindOverride = System.Net.IPAddress.Loopback; PartyHost.PortOverride = 0; Lobby.HoldOverride = false; }
+        [TearDown] public void Reset() { PartyHost.BindOverride = null; PartyHost.PortOverride = -1; Lobby.HoldOverride = null; Time.timeScale = 1f; }
 
         // The real game writes the file: a phone joins, the bots play to a whistle, both are in the log.
         [UnityTest]

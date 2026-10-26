@@ -96,7 +96,8 @@ namespace PocketFootball.Boot
     //   <tick> TAB <seconds since the log began> TAB <WHAT> TAB key=value TAB key=value ...
     // WHAT is every Sim/Events.cs kind (HIKE, THROW, CATCH, SACK, WHISTLE, ...), plus
     //   JOIN / TEAM / LEAVE / BACK / GONE   a phone joined, picked a team, lost its connection, came back, was removed
-    //   PLAY      one per whistle: the play's number, the calls, the result and the yards (the sim's own numbers)
+    //   PLAY      one per whistle: the play's number, its kind (PLAY, KICKOFF, PUNT, ...), the calls (none on a kickoff),
+    //             the result and the yards (the sim's own numbers)
     //   BOT       a bot took over for a person who put the phone down (once per person per play)
     //   ERROR     an error or exception in the game's own log
     //   LOST      the event log moved on before we read it (should never happen)
@@ -113,6 +114,7 @@ namespace PocketFootball.Boot
         readonly List<GameEvent> batch = new List<GameEvent>();
         readonly StringBuilder sb = new StringBuilder();
         int nextSeq, lastYards, lastTick, playsLogged;
+        string playKind = "";                     // KICKOFF, PUNT, FIELD GOAL, EXTRA POINT, TRY or PLAY, seen before the snap
         float lastSeconds;
 
         sealed class SeatSeen { public string Name; public int Team; public bool Connected; }
@@ -153,6 +155,8 @@ namespace PocketFootball.Boot
                 if (e.Kind == EventKind.Whistle) Play(w, e, seconds);
             }
 
+            // what kind of play this is, read while it is lined up or live (the kicking flags are cleared at its whistle)
+            if (w.Phase == Phase.Set || w.Phase == Phase.Live) playKind = Kind(w);
             if (w.Phase != Phase.Live) return;
             foreach (var p in w.Players)
             {
@@ -224,12 +228,15 @@ namespace PocketFootball.Boot
             int yards = w.YardsGained - lastYards;
             lastYards = w.YardsGained;
             playsLogged++;
+            string kind = playKind;
+            playKind = "";
             int off = w.Offense, def = w.Defense;     // (a turnover swaps them after the whistle, not at it)
             int people = 0;
             foreach (var p in w.Players) if (p.Human) people++;
             Line(whistle.Tick, seconds, "PLAY",
                 "n=" + w.PlaysRun,
                 "offense=" + TeamName(off),
+                "kind=" + (kind.Length > 0 ? kind : "PLAY"),
                 "call=" + Call(w, off),
                 "defense_call=" + Call(w, def),
                 "result=" + Clean(whistle.Text),
@@ -238,6 +245,15 @@ namespace PocketFootball.Boot
                 "people=" + people,
                 "note=" + Clean(w.Note),
                 "score=" + string.Join("-", Array.ConvertAll(w.Score, s => s.ToString(CultureInfo.InvariantCulture))));
+        }
+
+        // A kickoff has no call (nobody huddles for it); a try may be kicked or run in.
+        static string Kind(World w)
+        {
+            if (w.Kick.Kickoff && Kicking.On(w)) return "KICKOFF";
+            string kick = Kicking.Name(w);
+            if (kick.Length > 0) return kick;
+            return w.Kick.Try && Kicking.On(w) ? "TRY" : "PLAY";
         }
 
         static string Call(World w, int team) => team >= 0 && team < w.Calls.Length && w.Calls[team] != null ? w.Calls[team] : "";

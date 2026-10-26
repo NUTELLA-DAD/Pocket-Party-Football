@@ -118,11 +118,11 @@ $o.Add('The rest of the sheet (could people read the TV, did tackles feel fair, 
 $o.Add('')
 $o.Add('## Every play')
 $o.Add('')
-$o.Add('| # | time | offense | call | defense call | result | yards | by | note |')
-$o.Add('| ---: | ---: | --- | --- | --- | --- | ---: | --- | --- |')
+$o.Add('| # | time | kind | offense | call | defense call | result | yards | by | note |')
+$o.Add('| ---: | ---: | --- | --- | --- | --- | --- | ---: | --- | --- |')
 foreach ($p in $plays) {
     $k = $p.Kv
-    $o.Add("| $($k['n']) | $(Clock $p.Sec) | $($k['offense']) | $($k['call']) | $($k['defense_call']) | $($k['result']) | $($k['yards']) | $($k['by']) | $($k['note']) |")
+    $o.Add("| $($k['n']) | $(Clock $p.Sec) | $($k['kind']) | $($k['offense']) | $($k['call']) | $($k['defense_call']) | $($k['result']) | $($k['yards']) | $($k['by']) | $($k['note']) |")
 }
 
 [IO.File]::WriteAllLines($Out, $o, (New-Object Text.UTF8Encoding($false)))
