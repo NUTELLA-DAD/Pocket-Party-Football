@@ -35,6 +35,13 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual(Phase.Live, w.Phase);
         }
 
+        // The snap takes the first moments of the play (Snap.cs): step past it.
+        static void PastTheSnap(World w, Moves m)
+        {
+            int n = Snap.FlightTicks(w) + (int)Math.Round(w.Cfg.anim.snapSecureS * w.Cfg.sim.tickHz);
+            for (int i = 0; i < n; i++) Step(w, m);
+        }
+
         static void ClearDefense(World w)
         {
             foreach (var p in w.Players) if (p.Team == w.Defense) { p.X = w.LineOfScrimmageX + w.Cfg.formation.attackDir * 40f; p.Z = 25f; p.HomeX = p.X; p.HomeZ = p.Z; }
@@ -56,6 +63,7 @@ namespace PocketFootball.Tests.EditMode
             var m = new Moves();
             Hike(w, m);
             var qb = LivePlay.Qb(w);
+            PastTheSnap(w, m);
             Assert.AreEqual(Move.Aim, m.Of(w, qb).Kind, "ball in hand, standing in the pocket");
             Step(w, m, Press(new PlayerInput { Throw = 1 }));
             Assert.AreEqual(BallState.Flying, w.Ball.State);
