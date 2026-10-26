@@ -12,6 +12,7 @@ namespace PocketFootball.Sim
         public bool Hike, Juke, Tackle, Block;
         public int Throw;        // 0 = no throw; k = throw to receiver k (1-based, the order of play.receivers / shapes)
         public bool Lob;         // with Throw: high and soft, else a bullet
+        public bool Call, Catch; // WS-05: CALL FOR IT, CATCH (Receiving.cs)
     }
 
     public sealed class Player
@@ -67,6 +68,7 @@ namespace PocketFootball.Sim
         public bool Thrown;                            // the ball has been thrown this play
         public bool Intercepted;                       // a defender caught it and is running it back (FEATURES.intreturn)
         public readonly HashSet<int> CatchTried = new HashSet<int>();
+        public readonly ReceivingState Recv = new ReceivingState();   // WS-05: this play's calls and catch taps (Receiving.cs); not hashed
         // play-by-play numbers, for the bots' balance check (M1-d) and later the stats
         public int PlaysRun, YardsGained;
         public readonly SortedDictionary<string, int> Results = new SortedDictionary<string, int>(StringComparer.Ordinal);
@@ -217,6 +219,7 @@ namespace PocketFootball.Sim
             Ball.Step(this, dt);
             LivePlay.Step(this);
             Huddle.Step(this);
+            Receiving.Step(this, inputs);   // WS-05
             Tick++;
         }
 

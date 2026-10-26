@@ -16,6 +16,7 @@ namespace PocketFootball.Sim
         public HuddleConfig huddle = new HuddleConfig();
         public LivePlayConfig play = new LivePlayConfig();
         public DownsConfig downs = new DownsConfig();
+        public ReceivingConfig receiving = new ReceivingConfig();   // WS-05 (Receiving.cs)
         // Loaded from Config/plays/*.json (not game.json) by ConfigLoader.AddPlays, sorted by id.
         [Newtonsoft.Json.JsonIgnore] public List<PlayConfig> plays = new List<PlayConfig>();
         public BaselineConfig baseline = new BaselineConfig();

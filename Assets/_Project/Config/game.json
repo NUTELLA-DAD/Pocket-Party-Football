@@ -158,6 +158,15 @@
     "touchdownPoints": 6,
     "startOwnYd": 25
   },
+  "receiving": {
+    "callPulseS": 1.5,
+    "callCooldownS": 2,
+    "catchWindowS": 0.35,
+    "catchForgetS": 1.5,
+    "catchWindowBonus": 0.08,
+    "catchEarlyPenalty": 0.3,
+    "catchChanceMax": 0.98
+  },
   "baseline": {
     "seconds": 60,
     "players": 22,
@@ -231,6 +240,7 @@
     "downs": true,
     "intreturn": true,
     "moves": true,
-    "replay": true
+    "replay": true,
+    "receiving": false
   }
 }
