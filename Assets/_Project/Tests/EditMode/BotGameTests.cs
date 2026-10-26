@@ -171,7 +171,9 @@ namespace PocketFootball.Tests.EditMode
             Assert.GreaterOrEqual(box.GamesWithAKick, box.Games * 3 / 4, "games with a punt or a field goal try: " + box);
             Assert.Greater(box.Scrambles, 0, "the QB scrambles sometimes: " + box);
             int Count(string k) => box.Results.TryGetValue(k, out int n) ? n : 0;
-            Assert.Less(Count("SACKED"), box.Plays * 0.15f, "sacks are rare: " + box);
+            // the pass rush wins sometimes (with the swim and bull rush), but not most of the time
+            Assert.That(Count("SACKED") / (float)box.Plays, Is.InRange(0.02f, 0.12f), "sacks: " + box);
+            Assert.GreaterOrEqual(Count("OUT OF BOUNDS"), 1, "a carrier goes out of bounds now and then: " + box);
             Assert.Less(Count("PLAY OVER"), box.Plays * 0.05f, "plays end on a whistle, not the clock: " + box);
         }
 
@@ -188,7 +190,9 @@ namespace PocketFootball.Tests.EditMode
             Assert.Less(box.InterceptRate, 0.08f, "interceptions are rare: " + box);
             Assert.Greater(box.Scrambles, 0, "the QB scrambles sometimes: " + box);
             int Count(string k) => box.Results.TryGetValue(k, out int n) ? n : 0;
+            Assert.Greater(Count("SACKED"), 0, "the pass rush gets home sometimes: " + box);
             Assert.Less(Count("SACKED"), box.Plays * 0.15f, "sacks are rare: " + box);
+            Assert.GreaterOrEqual(Count("OUT OF BOUNDS"), 1, "a carrier near the sideline steps out now and then: " + box);
             Assert.Less(Count("PLAY OVER"), box.Plays * 0.05f, "plays end on a whistle, not the clock: " + box);
         }
 

@@ -68,13 +68,17 @@
     "readDeadlineS": 3.2,
     "idleTakeoverS": 5,
     "pressureYd": 2.2,
+    "escapeAfterS": 1.2,
     "deadlineOpenYd": 3,
     "missYd": 0.6,
     "missPerYd": 0.08,
     "pressureMissYd": 1.2,
     "lobOverYd": 26,
     "adjustS": 0.26,
-    "laneYd": 1.5
+    "laneYd": 1.5,
+    "stepOutYd": 8,
+    "stepOutHitYd": 5,
+    "stepOutAheadFrac": 0.25
   },
   "formation": {
     "lineOfScrimmageXYd": -15,

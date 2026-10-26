@@ -63,8 +63,11 @@ namespace PocketFootball.Sim
         // or scramble); at the deadline or under pressure he throws only to a man with deadlineOpenYd of space; throws
         // miss by up to missYd + missPerYd per yard (+ pressureMissYd when pressured); longer than lobOverYd: a lob;
         // the man it is for sees where it will land only adjustS before it comes down; he won't throw it past a defender
-        // within laneYd of the back half of the throw
-        public float pressureYd, deadlineOpenYd, missYd, missPerYd, pressureMissYd, lobOverYd, adjustS, laneYd;
+        // within laneYd of the back half of the throw; a carrier within stepOutYd of a sideline with a tackler within
+        // stepOutHitYd on his infield side heads out of bounds (stepOutAheadFrac: how much he still runs upfield)
+        // escapeAfterS: before this a QB under pressure can't escape it yet
+        public float escapeAfterS;
+        public float pressureYd, deadlineOpenYd, missYd, missPerYd, pressureMissYd, lobOverYd, adjustS, laneYd, stepOutYd, stepOutHitYd, stepOutAheadFrac;
     }
 
     // One spot in a formation: back = yards from the line of scrimmage onto the team's own side, z = across.

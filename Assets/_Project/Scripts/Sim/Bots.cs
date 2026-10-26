@@ -104,8 +104,9 @@ namespace PocketFootball.Sim
 
         // ---- bots v2 (WS-06), behind FEATURES.botsV2 (NO_BOTS_V2=1: the v1 QB and receivers) ----
         // The QB runs his whole route (a drop, a bootleg roll-out; a route ending past the line is a designed run, the
-        // sneak), reads as in v1, and scrambles: once his read deadline passes, or a free rusher gets within pressureYd,
-        // he tucks it and runs (RunWithBall), still throwing to anyone who comes open while he is behind the line.
+        // sneak), reads as in v1, and scrambles: once his read deadline passes, or a free rusher gets within pressureYd
+        // after escapeAfterS (before that he is still setting his feet: a quick shed is a sack), he tucks it and runs
+        // (RunWithBall), still throwing to anyone who comes open while he is behind the line.
         // At the deadline or under pressure he throws to the most open man only if that man has deadlineOpenYd of space.
         // His throws miss by up to missYd + missPerYd per yard of throw (+ pressureMissYd under pressure), seeded, and
         // a throw longer than lobOverYd is a lob. The man a pass is for runs to where it is coming down.
@@ -142,7 +143,7 @@ namespace PocketFootball.Sim
 
         static float Seconds(World w) => w.PlayTicks / (float)w.Cfg.sim.tickHz;
 
-        public static bool Scrambling(World w, Player qb) => V2(w) && (Seconds(w) >= w.Cfg.bots.readDeadlineS || Pressured(w, qb));
+        public static bool Scrambling(World w, Player qb) => V2(w) && (Seconds(w) >= w.Cfg.bots.readDeadlineS || (Seconds(w) >= w.Cfg.bots.escapeAfterS && Pressured(w, qb)));
 
         // A defender in on the QB with no blocker on him.
         public static bool Pressured(World w, Player qb)
@@ -304,7 +305,20 @@ namespace PocketFootball.Sim
                 if (dist < nearest) { nearest = dist; side = p.Z >= d.Z ? 1f : -1f; }
             }
             float slide = nearest < w.Cfg.bots.wanderYd ? side * (1f - nearest / w.Cfg.bots.wanderYd) : 0f;
+            if (V2(w) && SteppingOut(w, p)) return Norm(dir * w.Cfg.bots.stepOutAheadFrac, p.Z >= 0f ? 1f : -1f, true);   // WS-06
             return Norm(dir, slide, true);
+        }
+
+        // Bots v2: a carrier within stepOutYd of a sideline with a tackler closing from the infield side (within
+        // stepOutHitYd) steps out of bounds rather than take the hit.
+        static bool SteppingOut(World w, Player p)
+        {
+            var b = w.Cfg.bots;
+            float az = Math.Abs(p.Z);
+            if (az < w.Cfg.field.HalfWidth - b.stepOutYd) return false;
+            foreach (var d in w.Players)
+                if (d.Team != p.Team && Math.Abs(d.Z) < az && LivePlay.Dist(p, d) <= b.stepOutHitYd) return true;
+            return false;
         }
 
         // A blocker: the defender nearest the ball; stand between them, a step off him.
