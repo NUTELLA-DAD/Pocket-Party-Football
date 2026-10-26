@@ -251,7 +251,8 @@ namespace PocketFootball.Tests.EditMode
                 if (i == 0) dir0 = Clock.AttackDir(w, 0);
                 // each team attacks one end all half, the other end all second half
                 Assert.AreEqual(c.SecondHalf ? -dir0 : dir0, Clock.AttackDir(w, 0), "team 0's end, tick " + w.Tick);
-                if (last == Phase.Live && w.Phase == Phase.Whistle && c.Quarter == quarterBefore)
+                // (the game's last whistle stops the clock for good, whatever the result)
+                if (last == Phase.Live && w.Phase == Phase.Whistle && c.Quarter == quarterBefore && !c.Over)
                 {
                     quarterAtPlay.Add(c.Quarter);
                     bool shouldStop = cfg.clock.stopOn.Contains(w.Result);
