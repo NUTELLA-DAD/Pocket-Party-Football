@@ -39,14 +39,8 @@ namespace PocketFootball.Tests.PlayMode
             var cfg = GameBootstrap.Instance.Config;
             cfg.features["clock"] = false;   // a game that never ends, so the bots keep playing however long this takes
 
-            // off (as game.json ships): nothing made, nothing playing
-            Assert.IsFalse(cfg.Feature("audio"), "FEATURES.audio ships off");
-            for (int i = 0; i < 30; i++) yield return null;
-            Assert.IsNull(host.GetComponent<Audio>(), "no sound with the switch off");
-            Assert.IsNull(host.GetComponent<AudioSource>(), "no sound with the switch off");
-
-            // on: the bots play (sped up) until every sound has been started
-            cfg.features["audio"] = true;
+            // on (as game.json has it): the bots play (sped up) until every sound has been started
+            Assert.IsTrue(cfg.Feature("audio"), "FEATURES.audio is on in game.json");
             yield return null;
             var audio = host.GetComponent<Audio>();
             Assert.IsNotNull(audio, "PartyHost drives the sound");

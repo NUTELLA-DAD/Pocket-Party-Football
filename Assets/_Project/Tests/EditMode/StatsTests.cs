@@ -149,7 +149,7 @@ namespace PocketFootball.Tests.EditMode
         [Test]
         public void StatsShipOffAndNoStatsTurnsThemOff()
         {
-            Assert.IsFalse(Stats.On(ConfigTests.Load()), "FEATURES.stats ships off");
+            Assert.IsTrue(Stats.On(ConfigTests.Load()), "FEATURES.stats is on in game.json (the merge captain turned it on)");
             var cfg = ConfigTests.Load();
             cfg.features["stats"] = true;
             ConfigLoader.ApplyEnvOverrides(cfg, k => k == "NO_STATS" ? "1" : null);
@@ -239,7 +239,8 @@ namespace PocketFootball.Tests.EditMode
         [Test]
         public void NoCelebrationWithTheSwitchOff()
         {
-            var cfg = ConfigTests.Load();   // stats off
+            var cfg = ConfigTests.Load();
+            cfg.features["stats"] = false;
             var (w, c, _) = RunItIn(cfg);
             var cheers = new Celebrations();
             cheers.Observe(w);

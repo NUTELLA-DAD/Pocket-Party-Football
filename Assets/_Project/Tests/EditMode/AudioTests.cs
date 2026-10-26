@@ -23,7 +23,7 @@ namespace PocketFootball.Tests.EditMode
         {
             var cfg = ConfigTests.Load();
             Assert.IsTrue(cfg.features.ContainsKey("audio"), "FEATURES.audio is in game.json");
-            Assert.IsFalse(cfg.Feature("audio"), "FEATURES.audio ships off");
+            Assert.IsTrue(cfg.Feature("audio"), "FEATURES.audio is on in game.json (the merge captain turned it on)");
             var on = On();
             ConfigLoader.ApplyEnvOverrides(on, k => k == "NO_AUDIO" ? "1" : null);
             Assert.IsFalse(on.Feature("audio"), "NO_AUDIO=1 turns it off");
@@ -164,6 +164,7 @@ namespace PocketFootball.Tests.EditMode
         public void NothingPlaysWithTheSwitchOff()
         {
             var cfg = ConfigTests.Load();
+            cfg.features["audio"] = false;
             Assert.IsFalse(AudioDirector.On(cfg));
             var w = WorldTests.Full(cfg, 2);
             var d = new AudioDirector(cfg);

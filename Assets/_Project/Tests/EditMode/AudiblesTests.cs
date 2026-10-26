@@ -14,7 +14,7 @@ namespace PocketFootball.Tests.EditMode
         static World AtTheLine(bool on = true, Dictionary<string, string> env = null)
         {
             var cfg = ConfigTests.Load();
-            if (on) cfg.features["audibles"] = true;
+            cfg.features["audibles"] = on;
             if (env != null) ConfigLoader.ApplyEnvOverrides(cfg, k => env.TryGetValue(k, out var v) ? v : null);
             var w = WorldTests.Full(cfg);
             w.Step(null);                                  // the first huddle
@@ -33,7 +33,7 @@ namespace PocketFootball.Tests.EditMode
         [Test]
         public void ShipsOffAndNoAudiblesTurnsItOff()
         {
-            Assert.IsFalse(ConfigTests.Load().Feature("audibles"), "a new rule ships switched off");
+            Assert.IsTrue(ConfigTests.Load().Feature("audibles"), "on in game.json (the merge captain turned it on)");
             var off = AtTheLine(on: false);
             Assert.IsFalse(Audibles.Call(off, Qb, "verts"));
             Assert.IsFalse(Audibles.PickHot(off, Rb, "hot_go"));

@@ -76,7 +76,7 @@ namespace PocketFootball.Tests.EditMode
         public void ShipsOffAndNoGamepadTurnsItOff()
         {
             var cfg = ConfigTests.Load();
-            Assert.IsFalse(cfg.Feature("gamepad"), "FEATURES.gamepad ships off");
+            Assert.IsTrue(cfg.Feature("gamepad"), "FEATURES.gamepad is on in game.json (the merge captain turned it on)");
             cfg.features["gamepad"] = true;
             ConfigLoader.ApplyEnvOverrides(cfg, k => k == "NO_GAMEPAD" ? "1" : null);
             Assert.IsFalse(cfg.Feature("gamepad"));

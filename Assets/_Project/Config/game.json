@@ -571,10 +571,10 @@
     "botcoach": false,
     "botsV2": false,
     "grassShader": true,
-    "audibles": false,
-    "stats": false,
+    "audibles": true,
+    "stats": true,
     "gamelog": true,
-    "gamepad": false,
-    "audio": false
+    "gamepad": true,
+    "audio": true
   }
 }
