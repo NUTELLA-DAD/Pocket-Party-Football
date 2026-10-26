@@ -524,6 +524,37 @@
     "postPadColor": "#1e3a5f",
     "postRibbonColor": "#e8462a"
   },
+  "audibles": {
+    "perDown": 1,
+    "hotRoutes": [
+      { "id": "hot_slant", "name": "Hot slant", "text": "Hot route: two steps, then slant inside fast", "pts": [[2, 0], [9, 7]] },
+      { "id": "hot_go", "name": "Hot go", "text": "Hot route: run straight deep", "pts": [[22, 0]] }
+    ]
+  },
+  "stats": {
+    "mvpPerYd": 0.1,
+    "mvpPerCatch": 1,
+    "mvpPerTackle": 1,
+    "mvpPerSack": 2,
+    "mvpPerPick": 4,
+    "mvpPerTd": 6,
+    "celebrate": true,
+    "celebrateS": 1.5,
+    "spikeS": 0.5,
+    "cheerYd": 8,
+    "maxCheer": 3,
+    "showAfterS": 2,
+    "titlePx": 64,
+    "scorePx": 52,
+    "linePx": 30,
+    "headPx": 24,
+    "rowPx": 26,
+    "minRowPx": 18,
+    "marginPx": 36,
+    "gapPx": 32,
+    "nameChars": 12,
+    "phoneResendS": 2
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
@@ -541,6 +572,8 @@
     "botcoach": false,
     "botsV2": false,
     "grassShader": true,
+    "audibles": false,
+    "stats": false,
     "defmoves": false
   }
 }

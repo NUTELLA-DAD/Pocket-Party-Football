@@ -404,6 +404,7 @@ namespace PocketFootball.Sim
 
         static JobConfig JobOfCalled(World w, Player p)
         {
+            var hot = Audibles.HotJob(w, p); if (hot != null) return hot;   // WS-13: a hot route replaces the called job
             var play = LivePlay.Called(w, p.Team);
             return play != null && p.Spot >= 0 && p.Spot < play.jobs.Count ? play.jobs[p.Spot] : null;
         }

@@ -56,6 +56,8 @@
       else {
         if (msg.t === 'status') onStatus(msg);
         if (window.Huddle) window.Huddle.onMessage(msg);   // huddle, thumbs, job, status (huddle.js)
+        if (window.Audible) window.Audible.onMessage(msg);   // WS-13: audible, huddle, job (audible.js)
+        if (window.PostGame) window.PostGame.onMessage(msg);   // WS-12: the final card (postgame.js)
       }
     };
     ws.onclose = function () {

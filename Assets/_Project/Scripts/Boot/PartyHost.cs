@@ -166,6 +166,8 @@ namespace PocketFootball.Boot
                 if (p.Human) marks.Beam(p.Slot, Players.FeetPosition(p.Slot), Colors.Hex(cfg.teams[p.Team].color), findUntil.TryGetValue(p.Slot, out float fu) && fu > now, now);
             if (Photo == null) FollowBall(Time.deltaTime);
             Replay.Drive(gameObject, cfg, World, Players, rig, s => Roster[s]?.Name);   // WS-08: the instant replay and the result card
+            AudibleHost.Drive(this);   // WS-13: each team's audible / hot route screen, to that team's phones only
+            PostGameHost.Drive(this);   // WS-12: the stats, score celebrations, the post-game screen and the phones' final card
         }
 
         readonly List<KeyValuePair<int, Vector3>> humanFeet = new List<KeyValuePair<int, Vector3>>();
@@ -364,6 +366,7 @@ namespace PocketFootball.Boot
                     else if (t == "suggest") OnCall(src, m, false);
                     else if (t == "lock") OnCall(src, m, true);
                     else if (t == "kick") KickPhones.OnKick(this, src, m);   // WS-01
+                    else if (t == "audible" || t == "hot") AudibleHost.OnMessage(this, src, m);   // WS-13
                     else if (Lobby.Instance != null) Lobby.Instance.OnMessage(src.Seat, t, m);   // WS-07: spot, swap, kickoff, lobbyme
                 }
             }

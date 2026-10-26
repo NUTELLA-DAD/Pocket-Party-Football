@@ -290,14 +290,19 @@ namespace PocketFootball.Sim
             else LivePlay.Whistle(w, "INTERCEPTED", p.X);
         }
 
-        // Bots: a line move at most once per play (botLineChance); a swat or jump once per pass, by the first bot defender the ball coming down is
-        // about to reach (one roll per pass, not one per defender, or a crowd under every pass picks most of them off);
-        // a dive once per play at a carrier coming at them just out of tackle reach.
+        // Bots: a pass-rush line move at most once per play (botLineChance); a swat or jump once per pass, by the first
+        // bot defender the ball coming down is about to reach (one roll per pass, not one per defender, or a crowd under
+        // every pass picks most of them off); a dive once per play at a carrier past the line coming at them just out
+        // of tackle reach.
         static void BotThink(World w, Player p, Defender d)
         {
             var c = w.Cfg.defense;
             if (d.Move != DefMove.None || d.Cooldown > 0) return;
-            if (p.BlockedTicks > 0 && !d.BotLineTried && p.BlockedTicks >= Huddle.Ticks(w, c.botLineMoveS))
+            var carrier = LivePlay.Carrier(w);
+            // pass-rush moves: only while the QB still holds it (on a run the RB has it by now, and a lineman slipping
+            // the block into the backfield would stuff every run)
+            bool qbHolds = carrier != null && carrier == LivePlay.Qb(w) && !w.Thrown;
+            if (qbHolds && p.BlockedTicks > 0 && !d.BotLineTried && p.BlockedTicks >= Huddle.Ticks(w, c.botLineMoveS))
             {
                 d.BotLineTried = true;
                 if (w.Rng.Value() < c.botLineChance) d.Pressed = w.Rng.Value() < c.botSwimFrac ? DefMove.Swim : DefMove.BullRush;
@@ -317,8 +322,8 @@ namespace PocketFootball.Sim
                 }
                 return;
             }
-            var carrier = LivePlay.Carrier(w);
-            if (carrier != null && carrier.Team != p.Team && !d.BotDiveTried)
+            // a dive only in the open field (past the line), where a carrier would otherwise get away
+            if (carrier != null && carrier.Team != p.Team && !d.BotDiveTried && (carrier.X - w.LineOfScrimmageX) * w.Dir > 0f)
             {
                 float dist = LivePlay.Dist(p, carrier);
                 bool closing = (carrier.X - p.X) * (carrier.VX - p.VX) + (carrier.Z - p.Z) * (carrier.VZ - p.VZ) < 0f;

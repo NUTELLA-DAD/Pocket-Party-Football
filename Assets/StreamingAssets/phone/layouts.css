@@ -7,6 +7,7 @@
 .btn.rcv .shape { display: block; font-size: 26px; line-height: 1; margin-bottom: 2px; }
 .btn.rcv.open { outline: 3px solid #5fd38a; outline-offset: -3px; }
 .layout-qb .btn[data-act="scramble"] { grid-column: 1 / -1; min-height: 48px; }
+.layout-carrier .btn[data-act="divein"] { grid-column: 1 / -1; }   /* WS-04: the fifth carrier button spans the row */
 .kickpad {
   position: relative; height: min(240px, 100%); min-height: 160px; border-radius: 16px; overflow: hidden; touch-action: none;
   background: linear-gradient(var(--ink), var(--turf-2));
