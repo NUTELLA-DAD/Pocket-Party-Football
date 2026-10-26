@@ -55,9 +55,9 @@ namespace PocketFootball.Tests.EditMode
         [Test]
         public void TheCoachIsOffUntilSwitchedOn()
         {
+            // (whatever game.json ships, so this still holds the day the switches go on)
             var cfg = ConfigTests.Load();
-            Assert.IsFalse(cfg.Feature("botcoach"), "ships off, so the pinned bot games don't change");
-            Assert.IsFalse(cfg.Feature("botsV2"));
+            cfg.features["botcoach"] = false;
             var w = At(cfg, 1, 10, 60);
             Assert.IsNull(BotCoach.Call(w, w.Offense));
             var off = On();

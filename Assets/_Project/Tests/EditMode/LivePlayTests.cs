@@ -92,7 +92,8 @@ namespace PocketFootball.Tests.EditMode
             foreach (var p in w.Players) if (p.Team == w.Defense) { d = p; break; }
             target.X = w.LineOfScrimmageX + 12f; target.Z = -15f; target.HomeX = target.X; target.HomeZ = target.Z;
             w.Step(Press(new PlayerInput { Throw = 1 }));
-            for (int i = 0; i < w.Cfg.sim.tickHz * 4 && w.Phase == Phase.Live; i++)
+            // (to the end of the play: with a return the man who picked it runs until he is caught; WS-06)
+            for (int i = 0; i < w.Cfg.sim.tickHz * (w.Cfg.play.maxPlayS + 1) && w.Phase == Phase.Live; i++)
             {
                 d.X = w.Ball.TargetX; d.Z = w.Ball.TargetZ; d.VX = d.VZ = 0f;
                 w.Step(null);

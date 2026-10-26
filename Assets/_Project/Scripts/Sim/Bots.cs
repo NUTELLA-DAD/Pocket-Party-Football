@@ -163,7 +163,12 @@ namespace PocketFootball.Sim
             var bl = w.Ball;
             if (Landing(w) <= w.Cfg.bots.adjustS) return To(p, bl.TargetX, bl.TargetZ, 1f, true);
             float sp = (float)Math.Sqrt(p.VX * p.VX + p.VZ * p.VZ);
-            if (sp <= 0f) return default;
+            if (sp <= 0f) return To(p, bl.TargetX, bl.TargetZ, 1f, true);
+            // a person's throw goes at him, not out in front (no lead): if it comes down short of where his run takes him,
+            // he waits on it (a bot's throw is led, so he can't tell and runs on)
+            var qb = LivePlay.Qb(w);
+            float along = ((bl.TargetX - p.X) * p.VX + (bl.TargetZ - p.Z) * p.VZ) / sp;
+            if (qb != null && qb.Human && !qb.BotHelp && along < sp * Landing(w) - w.Cfg.play.catchRadiusYd) return To(p, bl.TargetX, bl.TargetZ, 1f, true);
             return new PlayerInput { MoveX = p.VX / sp, MoveZ = p.VZ / sp, Sprint = true };
         }
 

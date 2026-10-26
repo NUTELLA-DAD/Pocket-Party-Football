@@ -98,7 +98,7 @@
     ],
     "readDeadlineS": 3.2,
     "idleTakeoverS": 5,
-    "pressureYd": 2.2,
+    "pressureYd": 1.2,
     "escapeAfterS": 1.2,
     "deadlineOpenYd": 3,
     "missYd": 0.6,
