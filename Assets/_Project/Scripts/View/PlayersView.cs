@@ -37,7 +37,7 @@ namespace PocketFootball.View
         public PlayersView(GameConfig cfg, Material baseMat)
         {
             this.cfg = cfg;
-            mat = Looks.Toon(baseMat);
+            mat = FootballFigure.KitMaterial(Looks.Toon(baseMat), cfg.view);
             root = new GameObject("Players").transform;
             ball = FootballFigure.MakeBall(null, mat, cfg.view.ballLengthM).transform;
             // a dark spot on the grass under a ball in the air: shows how high it is and where it's going

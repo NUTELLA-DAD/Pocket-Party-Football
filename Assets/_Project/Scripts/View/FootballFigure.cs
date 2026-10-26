@@ -33,6 +33,23 @@ namespace PocketFootball.View
 
         static readonly string[] Skins = { "#f2c8a5", "#e0a77f", "#c0855a", "#9a6240", "#74462b" };
 
+        // The players' material: the shared toon look with a warmer, same-hue shade (view.playerShade*), one instance.
+        static Material kitMat;
+        static Material kitFrom;
+        public static Material KitMaterial(Material toon, ViewConfig v)
+        {
+            if (toon == null || string.IsNullOrEmpty(v.playerShadeHue)) return toon;
+            if (kitMat != null && kitFrom == toon) return kitMat;
+            kitFrom = toon;
+            kitMat = new Material(toon) { name = "Toon (players)" };
+            kitMat.SetColor("_ShadeHue", Colors.Hex(v.playerShadeHue));
+            kitMat.SetFloat("_ShadeUnify", v.playerShadeUnify);
+            if (v.playerShadeSaturation > 0f) kitMat.SetFloat("_ShadeSaturation", v.playerShadeSaturation);
+            if (!string.IsNullOrEmpty(v.playerShadeLift)) kitMat.SetColor("_ShadeLift", Colors.Hex(v.playerShadeLift));
+            if (!string.IsNullOrEmpty(v.playerBounce)) kitMat.SetColor("_BounceColor", Colors.Hex(v.playerBounce));
+            return kitMat;
+        }
+
         public static Build BuildOf(string pos) => pos == "OL" || pos == "DL" ? Build.Big : pos == "QB" || pos == "K" ? Build.Slim : Build.Mid;
 
         public static FootballFigure Create(Transform parent, TeamConfig teamCfg, int number, Build build, int seed, float heightM, Material mat, Texture2D mark)
@@ -43,11 +60,13 @@ namespace PocketFootball.View
             holder.localScale = Vector3.one * heightM / RigHeight;
             var fig = holder.gameObject.AddComponent<FootballFigure>();
             var st = StyleOf(teamCfg);
-            float W = build == Build.Big ? 1.5f : build == Build.Slim ? 0.98f : 1.12f;
+            float W = build == Build.Big ? 1.55f : build == Build.Slim ? 0.98f : 1.12f;
             float T = build == Build.Big ? 1.5f : build == Build.Slim ? 0.98f : 1.18f;
-            float hipY = 64f, kneeY = 35f, ankleY = 9f, neckY = 120f, shY = 111f;
+            // gauntlet 3: longer legs and a taller chest under a slightly smaller helmet (about 3 heads tall, concept 01)
+            float hipY = 70f, kneeY = 38f, ankleY = 9f, neckY = 126f, shY = 117f;
             fig.hipY = hipY;
-            float legZ = 9.5f * W, armZ = 23f * W;
+            float legZ = 10f * W, armZ = 24.5f * W;
+            float elbowY = shY - 24f, wristY = shY - 43f, handY = shY - 50f;
 
             Transform Bone(string n, Transform p, Vector3 worldAt)
             {
@@ -60,15 +79,15 @@ namespace PocketFootball.View
             fig.Torso = Bone("Torso", fig.Hips, new Vector3(0, hipY + 6, 0));
             fig.Head = Bone("Head", fig.Torso, new Vector3(0, neckY, 0));
             fig.ArmL = Bone("ArmL", fig.Torso, new Vector3(0, shY, armZ));
-            fig.ForeL = Bone("ForeL", fig.ArmL, new Vector3(2, 88, armZ + 3 * W));
+            fig.ForeL = Bone("ForeL", fig.ArmL, new Vector3(2, elbowY, armZ + 3 * W));
             fig.ArmR = Bone("ArmR", fig.Torso, new Vector3(0, shY, -armZ));
-            fig.ForeR = Bone("ForeR", fig.ArmR, new Vector3(2, 88, -armZ - 3 * W));
+            fig.ForeR = Bone("ForeR", fig.ArmR, new Vector3(2, elbowY, -armZ - 3 * W));
             fig.ThighL = Bone("ThighL", fig.Hips, new Vector3(0, hipY, legZ));
             fig.ShinL = Bone("ShinL", fig.ThighL, new Vector3(0, kneeY, legZ));
             fig.ThighR = Bone("ThighR", fig.Hips, new Vector3(0, hipY, -legZ));
             fig.ShinR = Bone("ShinR", fig.ThighR, new Vector3(0, kneeY, -legZ));
-            fig.HandL = Bone("HandL", fig.ForeL, new Vector3(7, 63, armZ + 3 * W));
-            fig.HandR = Bone("HandR", fig.ForeR, new Vector3(7, 63, -armZ - 3 * W));
+            fig.HandL = Bone("HandL", fig.ForeL, new Vector3(7, handY, armZ + 3 * W));
+            fig.HandR = Bone("HandR", fig.ForeR, new Vector3(7, handY, -armZ - 3 * W));
             var bones = new[] { fig.Hips, fig.Torso, fig.Head, fig.ArmL, fig.ForeL, fig.ArmR, fig.ForeR, fig.ThighL, fig.ShinL, fig.ThighR, fig.ShinR };
             var bind = new Matrix4x4[bones.Length];
             for (int i = 0; i < bones.Length; i++) bind[i] = bones[i].worldToLocalMatrix * holder.localToWorldMatrix;
@@ -100,48 +119,30 @@ namespace PocketFootball.View
             k.Ellipsoid(new Vector3(0, hipY + 5, 0), new Vector3(15.5f * W, 12f, 19.5f * W), white);
             k.Ellipsoid(new Vector3(0, hipY + 11, 0), new Vector3(15.8f * W, 2.4f, 19.8f * W), Colors.Hex("#2b2b30"));     // belt
             On(1);
+            // a broad chest that tapers to the belt (gauntlet 3: the pads, not the helmet, set the width)
             var body = new FigureKit.Profile(Vector3.zero, new[]
             {
-                hipY + 10, 14.5f * W, 18f * W,
-                hipY + 22, 15.5f * W, 19.5f * W,
-                98f, 17.5f * W, 22.5f * W,
-                108f, 17f * W, 22f * W,
-                116f, 12f * W, 15f * W,
-                121f, 5f, 6f,
+                hipY + 10, 15f * W, 18.5f * W,
+                hipY + 22, 16.5f * W, 21f * W,
+                104f, 18.5f * W, 24f * W,
+                113f, 18f * W, 23.5f * W,
+                121f, 12.5f * W, 15.5f * W,
+                127f, 5f, 6f,
             });
             k.Lathe(body, team, 28);
-            // shoulder pads with sleeve stripes
+            // big shoulder pads, wider than the helmet, with the "TV numbers" on top where the camera sees them
+            string num = number.ToString();
             foreach (float s in new[] { 1f, -1f })
             {
-                var c = new Vector3(0, shY + 1, s * 16.5f * W);
-                var r = new Vector3(14f * W, 10.5f * T, 13.5f * W);
+                var c = new Vector3(0, shY + 2, s * 18f * W);
+                var r = new Vector3(15f * W, 11.5f * T, 15f * W);
                 k.Ellipsoid(c, r, team);
-                if (st.SleeveStripes)
-                {
-                    var surf = FigureKit.OnEllipsoid(c, r, Quaternion.identity, new Vector3(0, -0.15f, s), s);
-                    var stripe = white;
-                    k.Stroke(surf, new[] { new Vector2(-11, -3), new Vector2(11, -3) }, new[] { 2.2f, 2.2f }, 0.4f, st.Stripe2 != st.Stripe ? st.Stripe2 : stripe);
-                    k.Stroke(surf, new[] { new Vector2(-11, 1.5f), new Vector2(11, 1.5f) }, new[] { 2.2f, 2.2f }, 0.4f, stripe);
-                }
+                var top = FigureKit.OnEllipsoid(c, r, Quaternion.identity, new Vector3(0, 0.55f, s), s);
+                Number(k, top, num, 11.5f * Mathf.Lerp(1f, W, 0.5f), 3.2f, 0f, 0f, st.NumberEdge, white);
             }
-            // the numbers, chest and back: white with a team-trim edge
-            string num = number.ToString();
-            foreach (float front in new[] { 0f, 180f })
-            {
-                var surf = FigureKit.OnLathe(body, front);
-                float hgt = 21f, sw = 4.6f;
-                var strokes = Glyphs.Text(num, hgt, 0.18f, out float w);
-                foreach (var stroke in strokes)
-                {
-                    var pts = new Vector2[stroke.Length];
-                    for (int i = 0; i < pts.Length; i++) pts[i] = new Vector2((stroke[i].x - w * 0.5f) * (front > 0 ? -1 : 1), stroke[i].y + 84f);
-                    var wid = new float[pts.Length];
-                    for (int i = 0; i < wid.Length; i++) wid[i] = sw + 1.8f;
-                    k.Stroke(surf, pts, wid, 0.35f, st.NumberEdge, 2);
-                    for (int i = 0; i < wid.Length; i++) wid[i] = sw;
-                    k.Stroke(surf, pts, wid, 0.6f, white, 2);
-                }
-            }
+            // the numbers, chest and back: big, white with a team-trim edge (the back reads left to right from behind)
+            Number(k, FigureKit.OnLathe(body, 0f), num, 23f, 5.4f, 0f, 93.5f, st.NumberEdge, white);
+            Number(k, FigureKit.OnLathe(body, 180f), num, 25f, 5.6f, 0f, 95f, st.NumberEdge, white);
             k.Limb(new Vector3(0, neckY - 6, 0), new Vector3(1, neckY + 6, 0), 6.5f * T, 6f * T, skin);   // neck
 
             // ---- arms ----
@@ -149,18 +150,26 @@ namespace PocketFootball.View
             {
                 float z = s * armZ;
                 On(s > 0 ? 3 : 5);
-                k.Limb(new Vector3(0, shY, z), new Vector3(1, 99, z + s * 1.5f * W), 9.6f * T, 8.8f * T, team);                  // sleeve
-                k.Limb(new Vector3(1, 101, z + s * 1.5f * W), new Vector3(2, 88, z + s * 3 * W), 7.8f * T, 7f * T, skin);         // upper arm
-                if (build == Build.Big) k.Limb(new Vector3(1.6f, 93, z + s * 2.3f * W), new Vector3(2, 88.5f, z + s * 3 * W), 7.7f * T, 7.4f * T, black);
+                k.Limb(new Vector3(0, shY, z), new Vector3(1, shY - 12, z + s * 1.5f * W), 10f * T, 9.2f * T, team);             // sleeve
+                if (st.SleeveStripes)
+                {
+                    // two bands round the sleeve's cuff (Chiefs red-gold-white, Roughriders white)
+                    k.Limb(new Vector3(0.8f, shY - 7.5f, z + s * 1.1f * W), new Vector3(0.9f, shY - 9f, z + s * 1.2f * W), 9.8f * T, 9.75f * T, st.Stripe2 != st.Stripe ? st.Stripe2 : white, 12, false, false);
+                    k.Limb(new Vector3(0.9f, shY - 10f, z + s * 1.3f * W), new Vector3(1f, shY - 11.4f, z + s * 1.45f * W), 9.65f * T, 9.6f * T, white, 12, false, false);
+                }
+                k.Limb(new Vector3(1, shY - 10, z + s * 1.5f * W), new Vector3(2, elbowY, z + s * 3 * W), 8.2f * T, 7.2f * T, skin);   // upper arm
+                if (build == Build.Big) k.Limb(new Vector3(1.6f, elbowY + 5, z + s * 2.3f * W), new Vector3(2, elbowY + 0.5f, z + s * 3 * W), 7.9f * T, 7.6f * T, black);
                 On(s > 0 ? 4 : 6);
-                k.Limb(new Vector3(2, 88, z + s * 3 * W), new Vector3(6, 70, z + s * 3 * W), 6.9f * T, 5.6f * T, skin);           // forearm
-                if (build != Build.Big) k.Limb(new Vector3(5.2f, 74, z + s * 3 * W), new Vector3(6, 69.5f, z + s * 3 * W), 6.1f * T, 6f * T, white);   // wristband
-                else k.Limb(new Vector3(3, 82, z + s * 3 * W), new Vector3(4.6f, 76, z + s * 3 * W), 6.9f * T, 6.5f * T, black);
-                k.Ellipsoid(new Vector3(7.5f, 63.5f, z + s * 3 * W), new Vector3(7.5f, 8f, 6.5f) * T, glove);                   // glove
+                k.Limb(new Vector3(2, elbowY, z + s * 3 * W), new Vector3(6, wristY + 1, z + s * 3 * W), 7.1f * T, 5.8f * T, skin);   // forearm
+                if (build != Build.Big) k.Limb(new Vector3(5.2f, wristY + 5, z + s * 3 * W), new Vector3(6, wristY + 0.5f, z + s * 3 * W), 6.3f * T, 6.2f * T, white);   // wristband
+                else k.Limb(new Vector3(3, elbowY - 6, z + s * 3 * W), new Vector3(4.6f, elbowY - 12, z + s * 3 * W), 7.1f * T, 6.7f * T, black);
+                k.Ellipsoid(new Vector3(7.5f, handY + 0.5f, z + s * 3 * W), new Vector3(8f, 8.5f, 7f) * T, glove);           // glove
             }
 
             // ---- the head: face, eyes, helmet, facemask ----
+            // (modelled on a neck at 120 cm; HeadAt moves it onto this neck at HeadScale)
             On(2);
+            k.M = HeadAt(neckY);
             var faceC = new Vector3(8, 141, 0);
             var faceR = new Vector3(17, 19, 18.5f);
             k.Ellipsoid(faceC, faceR, skin, 12, 20);
@@ -224,18 +233,38 @@ namespace PocketFootball.View
                 decal.SetFloat("_Specular", 0.6f);
                 foreach (float s in new[] { 1f, -1f })
                 {
-                    var d = Looks.Flat(fig.Head, "Mark", Vector3.zero, new Vector2(24, 24), Color.white, decal, FigureKit.Gloss);
-                    d.transform.position = holder.TransformPoint(new Vector3(-3, 153, s * 32.4f));
+                    var d = Looks.Flat(fig.Head, "Mark", Vector3.zero, new Vector2(24, 24) * HeadScale, Color.white, decal, FigureKit.Gloss);
+                    d.transform.position = holder.TransformPoint(HeadAt(neckY).MultiplyPoint3x4(new Vector3(-3, 153, s * 32.4f)));
                     d.transform.localRotation = Quaternion.LookRotation(Vector3.up, new Vector3(0, 0, s));
                     d.transform.localScale = Vector3.one;
                     var r = d.GetComponent<MeshRenderer>();
                     r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 }
             }
-            // the chibi head: a size bigger than the body it was built on (skinned, so the helmet and face follow)
-            fig.Head.localScale = Vector3.one * 1.07f;
             fig.Pose(PoseKind.Ready, 0);
             return fig;
+        }
+
+        // The head is modelled round a neck at 120 cm; this places it on the real neck, a touch smaller (gauntlet 3:
+        // about 3 heads tall, the shoulder pads wider than the helmet).
+        const float HeadScale = 0.9f;
+        static Matrix4x4 HeadAt(float neckY) =>
+            Matrix4x4.Translate(new Vector3(0, neckY, 0)) * Matrix4x4.Scale(Vector3.one * HeadScale) * Matrix4x4.Translate(new Vector3(0, -120f, 0));
+
+        // A jersey number painted on a surface: white strokes over a wider team-trim edge, centred on (cx, cy).
+        static void Number(FigureKit k, FigureKit.Surface surf, string num, float hgt, float sw, float cx, float cy, Color edge, Color fill)
+        {
+            var strokes = Glyphs.Text(num, hgt, 0.18f, out float w);
+            foreach (var stroke in strokes)
+            {
+                var pts = new Vector2[stroke.Length];
+                for (int i = 0; i < pts.Length; i++) pts[i] = new Vector2(stroke[i].x - w * 0.5f + cx, stroke[i].y - hgt * 0.5f + cy);
+                var wid = new float[pts.Length];
+                for (int i = 0; i < wid.Length; i++) wid[i] = sw + 1.8f;
+                k.Stroke(surf, pts, wid, 0.35f, edge, 2);
+                for (int i = 0; i < wid.Length; i++) wid[i] = sw;
+                k.Stroke(surf, pts, wid, 0.6f, fill, 2);
+            }
         }
 
         static Vector2[] Rad(int n, float r) { var a = new Vector2[n]; for (int i = 0; i < n; i++) a[i] = new Vector2(r, r); return a; }

@@ -39,6 +39,11 @@ namespace PocketFootball.Sim
         public float nearScale, nearRowM, nearDepthM, nearHalfLengthM, nearStaffShare, nearPropShare, nearTentScale;
         public List<float> nearRefsXM = new List<float>(), nearTentsXM = new List<float>();
 
+        // The chain crew (gauntlet 3): one person in stripes holds each down marker, crewBackM behind it (off the
+        // field), crewScale of a player's height, an orange cap.
+        public float crewScale, crewBackM;
+        public string crewCapColor;
+
         // The goal posts on each end line: a padded base post postBackM behind it, a gooseneck, the crossbar
         // postCrossbarM up, uprights postWidthM apart and postUprightM tall with a ribbon on top, all postThickM thick.
         public float postCrossbarM, postWidthM, postUprightM, postThickM, postBackM, postPadM, postRibbonM;

@@ -173,6 +173,10 @@ namespace PocketFootball.Sim
     public sealed class ViewConfig
     {
         public float playerHeightM, playerRadiusM, findMeS, plateFontPx, joinPanelQrPx, ballLengthM, ballWidthM, meSendHz;
+        // the players' own toon shade (gauntlet 3): a warmer, same-hue shade than the stadium's cool purple family,
+        // so a green jersey shades dark green, not teal (View/FootballFigure.KitMaterial)
+        public string playerShadeHue, playerBounce, playerShadeLift;
+        public float playerShadeUnify, playerShadeSaturation;
     }
 
     // The players' moves on the TV (View/Moves.cs, FEATURES.moves): key frames per second (stepped, no wobble), how

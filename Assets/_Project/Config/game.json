@@ -254,7 +254,12 @@
     "joinPanelQrPx": 260,
     "ballLengthM": 0.5,
     "ballWidthM": 0.32,
-    "meSendHz": 5
+    "meSendHz": 5,
+    "playerShadeHue": "#a89a9c",
+    "playerShadeUnify": 0.18,
+    "playerShadeSaturation": 0.85,
+    "playerShadeLift": "#1a1719",
+    "playerBounce": "#6a7a70"
   },
   "anim": {
     "fps": 8,
@@ -516,6 +521,9 @@
     "nearPropShare": 0.1,
     "nearTentScale": 1,
     "nearRefsXM": [-30, 14],
+    "crewScale": 0.8,
+    "crewBackM": 0.38,
+    "crewCapColor": "#f07a1a",
     "nearTentsXM": [-24, 26, -50, 50],
     "postCrossbarM": 4.2,
     "postWidthM": 7.6,
