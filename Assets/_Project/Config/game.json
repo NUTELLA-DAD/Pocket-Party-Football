@@ -496,6 +496,7 @@
     "kicking": true,
     "botcoach": false,
     "botsV2": false,
-    "grassShader": true
+    "grassShader": true,
+    "gamelog": true
   }
 }
