@@ -246,6 +246,11 @@
       "PICK SIX"
     ]
   },
+  "lobby": {
+    "holdUntilKickoff": true,
+    "botCoversDropped": true,
+    "swapAskS": 12
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
@@ -255,6 +260,7 @@
     "moves": true,
     "replay": true,
     "receiving": false,
-    "clock": false
+    "clock": false,
+    "lobby": false
   }
 }

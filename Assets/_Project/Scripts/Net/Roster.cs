@@ -17,6 +17,9 @@ namespace PocketParty.Net
         public bool Connected;
         public int Conn = -1;        // phone WebSocket connection id
         public int Team = -1;        // -1 until the player picks (the game decides what a team is)
+        // Two-way players: the spot this person picked for when the team has the ball and when it does not (-1 = none
+        // yet; the game decides what a spot is). Kept for the whole session, so a dropped phone comes back to them.
+        public int OffenseSpot = -1, DefenseSpot = -1;
     }
 
     // Who is in the game. Slots are never removed during a session: a dropped phone keeps its slot and team,
@@ -83,6 +86,13 @@ namespace PocketParty.Net
         public void Remove(Seat s)
         {
             if (s != null && s.Slot >= 0 && s.Slot < seats.Length && seats[s.Slot] == s) seats[s.Slot] = null;
+        }
+
+        // A new team: the old team's spots mean nothing there.
+        public void ClearSpots(Seat s)
+        {
+            if (s == null) return;
+            s.OffenseSpot = -1; s.DefenseSpot = -1;
         }
 
         public void Disconnect(Seat s)

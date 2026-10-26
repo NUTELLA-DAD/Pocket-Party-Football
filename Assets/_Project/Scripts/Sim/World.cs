@@ -31,6 +31,7 @@ namespace PocketFootball.Sim
         public int BlockedTicks, FreeTicks, IdleTicks;   // engaged by a blocker / shed the block / a person not touching the phone
         public bool BotHelp;                              // a bot is playing for an idle person this tick
         public bool Blocking;                             // this player is blocking this tick (a person holding BLOCK, or a bot)
+        public int OffenseSpot = -1, DefenseSpot = -1;    // WS-07: a person's two-way picks (Formation.cs, FEATURES.lobby; -1 = any free spot)
         // bot v0
         public float GoalX, GoalZ;
         public int NextThinkTick;

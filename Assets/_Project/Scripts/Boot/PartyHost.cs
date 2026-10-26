@@ -82,6 +82,7 @@ namespace PocketFootball.Boot
             string photoName = PhotoScenes.Requested(args);
             if (photoName != null) h.Photo = PhotoScenes.Setup(photoName, h.World, h.Players, rig);
             on.AddComponent<ReceivingHud>().Host = h;   // WS-05: CALL FOR IT pulse on the TV and the QB's phone
+            Lobby.Attach(h, cfg, args);   // WS-07: the lobby and two-way players (FEATURES.lobby)
             return h;
         }
 
@@ -297,6 +298,7 @@ namespace PocketFootball.Boot
 
         public void StepOnce()
         {
+            if (Lobby.Instance != null && Lobby.Instance.Holding) return;   // WS-07: the game waits on the lobby until kickoff
             float now = Time.unscaledTime;
             inputs.Clear();
             foreach (var kv in sources)
@@ -359,6 +361,7 @@ namespace PocketFootball.Boot
                     else if (t == "pick") OnPick(src, PhoneProtocol.Int(m, "team", -1));
                     else if (t == "suggest") OnCall(src, m, false);
                     else if (t == "lock") OnCall(src, m, true);
+                    else if (Lobby.Instance != null) Lobby.Instance.OnMessage(src.Seat, t, m);   // WS-07: spot, swap, kickoff, lobbyme
                 }
             }
         }
