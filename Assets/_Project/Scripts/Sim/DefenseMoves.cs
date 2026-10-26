@@ -36,7 +36,7 @@ namespace PocketFootball.Sim
             public DefMove Shown;         // the last move, for the TV (shownS long)
             public int ShownTicks;        // ticks since Shown began
             public bool ShownWon;
-            public bool BotLineTried, BotCoverTried, BotDiveTried;   // a bot's one try per block / pass / play
+            public bool BotLineTried, BotDiveTried;   // a bot's one try per block / play
         }
 
         public sealed class State
@@ -44,6 +44,7 @@ namespace PocketFootball.Sim
             public readonly SortedDictionary<int, Defender> BySlot = new SortedDictionary<int, Defender>();
             public readonly SortedDictionary<DefMove, int> Tried = new SortedDictionary<DefMove, int>();
             public readonly SortedDictionary<DefMove, int> Won = new SortedDictionary<DefMove, int>();
+            public bool CoverRolled;   // a bot has had this pass's one try at a swat or jump
         }
 
         // Kept beside the World (not in it, so World.Hash and the baseline stay as they were); the players' positions,
@@ -80,6 +81,7 @@ namespace PocketFootball.Sim
             var s = Of(w);
             var c = w.Cfg.defense;
             if (w.Phase == Phase.Huddle || w.Phase == Phase.Set) { s.BySlot.Clear(); return; }
+            if (w.Ball.State != BallState.Flying) s.CoverRolled = false;
             foreach (var p in w.Players)
             {
                 if (p.Team != w.Defense) continue;
@@ -103,7 +105,6 @@ namespace PocketFootball.Sim
                     d.Pressed = DefMove.None;
                     continue;
                 }
-                if (w.Ball.State != BallState.Flying) d.BotCoverTried = false;
                 if (p.BlockedTicks == 0) d.BotLineTried = false;
                 if (!p.Human || p.BotHelp) BotThink(w, p, d);
                 if (d.Move == DefMove.None && d.Pressed != DefMove.None && d.Cooldown == 0) Begin(w, p, d, d.Pressed);
@@ -290,8 +291,9 @@ namespace PocketFootball.Sim
             else LivePlay.Whistle(w, "INTERCEPTED", p.X);
         }
 
-        // Bots: a line move once per block, a swat or jump once per pass when the ball coming down is about to reach them, a dive
-        // once per play at a carrier coming at them just out of tackle reach.
+        // Bots: a line move once per block; a swat or jump once per pass, by the first bot defender the ball coming down is
+        // about to reach (one roll per pass, not one per defender, or a crowd under every pass picks most of them off);
+        // a dive once per play at a carrier coming at them just out of tackle reach.
         static void BotThink(World w, Player p, Defender d)
         {
             var c = w.Cfg.defense;
@@ -303,13 +305,15 @@ namespace PocketFootball.Sim
                 return;
             }
             var b = w.Ball;
-            if (b.State == BallState.Flying && !d.BotCoverTried)
+            if (b.State == BallState.Flying)
             {
+                var s = Of(w);
+                if (s.CoverRolled) return;
                 if (b.VY >= 0f) return;   // bots go for it as it comes down to the receiver, not as it leaves the QB
                 int k = TicksToReach(w, p, c.swatMaxHeightYd, Huddle.Ticks(w, c.swatActiveS));
                 if (k >= 0 && k <= Huddle.Ticks(w, c.botCoverLeadS))
                 {
-                    d.BotCoverTried = true;
+                    s.CoverRolled = true;
                     if (w.Rng.Value() < c.botCoverChance) d.Pressed = w.Rng.Value() < c.botJumpFrac ? DefMove.Jump : DefMove.Swat;
                 }
                 return;

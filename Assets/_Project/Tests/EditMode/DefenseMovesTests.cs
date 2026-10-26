@@ -62,13 +62,17 @@ namespace PocketFootball.Tests.EditMode
 
         // ---- swat and jump ----
 
-        // A lob to a receiver standing at (tx, tz); the person on defense one yard short of him on the ball's line.
+        // A lob to a receiver standing at (tx, tz); the person on defense one yard short of him on the ball's line; everyone
+        // else off the field.
         // `press` is called every tick the ball is in the air, before the step.
         static void Lob(World w, out Player r, out Player d, System.Action<World> press)
         {
-            Clear(w, 25f);
             r = LivePlay.Receiver(w, 1);
             d = w.Find(Def);
+            // just the three of them: no other receiver (the tight end's route crosses here) or defender gets to it first
+            var others = new List<int>();
+            foreach (var p in w.Players) if (p.Slot != Qb && p != r && p != d) others.Add(p.Slot);
+            foreach (int slot in others) w.RemovePlayer(slot);
             float tx = w.LineOfScrimmageX + w.Dir * 12f, tz = -8f;
             Assert.IsTrue(w.Throw(tx, tz, true));
             w.Thrown = true;
