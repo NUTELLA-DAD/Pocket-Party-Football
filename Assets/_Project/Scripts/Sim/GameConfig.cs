@@ -32,6 +32,7 @@ namespace PocketFootball.Sim
         public CarrierConfig carrier = new CarrierConfig();   // WS-04 (CarrierMoves.cs)
         public DefenseConfig defense = new DefenseConfig();   // WS-03 defender moves (DefenseMoves.cs)
         public KickingConfig kicking = new KickingConfig();   // WS-01 (Kicking.cs)
+        public StadiumConfig stadium = new StadiumConfig();   // WS-10 the stadium and crowd (StadiumConfig.cs, View/Stadium.cs)
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 
@@ -193,6 +194,7 @@ namespace PocketFootball.Sim
         public float stripeYd, lineEveryYd, lineWidthYd, sidelineBorderYd;
         public float hashFromSidelineYd, hashLengthYd, surroundYd;
         public string grassColor, grassAltColor, lineColor, endZoneColor, surroundColor, skyColor;
+        public FieldPaintConfig paint = new FieldPaintConfig();   // WS-11 (FieldPaintConfig.cs, View/FieldView.cs)
 
         public float HalfLength => lengthYd * 0.5f;
         public float HalfWidth => widthYd * 0.5f;
