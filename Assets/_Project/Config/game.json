@@ -66,7 +66,13 @@
       2.5
     ],
     "readDeadlineS": 3.2,
-    "idleTakeoverS": 5
+    "idleTakeoverS": 5,
+    "pressureYd": 2.2,
+    "deadlineOpenYd": 2,
+    "missYd": 0.6,
+    "missPerYd": 0.06,
+    "pressureMissYd": 1.2,
+    "lobOverYd": 12
   },
   "formation": {
     "lineOfScrimmageXYd": -15,
@@ -211,12 +217,48 @@
     "getUpS": 0.5,
     "blockShoveS": 0.375
   },
+  "coach": {
+    "shortYd": 2,
+    "longYd": 7,
+    "lateDown": 3,
+    "redZoneYd": 20,
+    "fieldGoalRangeYd": 33,
+    "backedUpYd": 10,
+    "behindByPts": 7,
+    "aheadByPts": 7,
+    "otherWeight": 0.25,
+    "offense": {
+      "short":    { "sneak": 4, "dive": 5, "toss": 2, "slants": 2, "screen": 1 },
+      "medium":   { "dive": 3, "toss": 3, "slants": 4, "screen": 2, "boot": 3, "verts": 1 },
+      "long":     { "slants": 3, "boot": 3, "verts": 3, "screen": 2, "toss": 1, "dive": 1 },
+      "goal":     { "sneak": 2, "dive": 2, "slants": 2, "fg": 200 },
+      "late":     { "verts": 1, "slants": 1 },
+      "fourth":   { "punt": 30 },
+      "fgrange":  { "fg": 60, "punt": -30 },
+      "redzone":  { "verts": -3, "toss": 1, "slants": 1 },
+      "backedup": { "verts": -2, "screen": -1, "dive": 2 },
+      "behind":   { "verts": 2, "boot": 1 },
+      "ahead":    { "dive": 2, "toss": 1 }
+    },
+    "defense": {
+      "short":    { "goalline": 5, "mblitz": 3, "zblitz": 2, "cover3": 1 },
+      "medium":   { "cover3": 3, "cover2": 3, "zblitz": 2, "mblitz": 2 },
+      "long":     { "cover2": 3, "cover3": 3, "prevent": 3, "zblitz": 1 },
+      "goal":     { "goalline": 4, "mblitz": 2 },
+      "late":     { "mblitz": 1 },
+      "redzone":  { "prevent": -5 },
+      "behind":   { "mblitz": 2, "zblitz": 1 },
+      "ahead":    { "prevent": 2, "cover2": 1 }
+    }
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
     "liveplay": true,
     "downs": true,
     "intreturn": true,
-    "moves": true
+    "moves": true,
+    "botcoach": false,
+    "botsV2": false
   }
 }

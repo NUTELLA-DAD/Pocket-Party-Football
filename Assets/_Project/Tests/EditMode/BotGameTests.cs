@@ -44,6 +44,97 @@ namespace PocketFootball.Tests.EditMode
             Assert.Less(Count("PLAY OVER"), w.PlaysRun * 0.1f, "plays end on a whistle, not the clock: " + r);
         }
 
+        // ---- WS-06: the bot coach and bots v2 ----
+
+        // One 10-minute game with the coach and bots v2 on, counting what a box score would.
+        public sealed class Box
+        {
+            public int Plays, Yards, Passes, Incomplete, Scrambles, Punts, FieldGoalTries;
+            public SortedDictionary<string, int> Results, Calls = new SortedDictionary<string, int>(System.StringComparer.Ordinal);
+            public float PerPlay => Yards / (float)System.Math.Max(1, Plays);
+            public float IncompleteRate => Incomplete / (float)System.Math.Max(1, Passes);
+            public override string ToString()
+            {
+                var sb = new StringBuilder();
+                sb.Append(Plays).Append(" plays, ").Append(Yards).Append(" yards (").Append(PerPlay.ToString("0.0")).Append(" a play), ")
+                  .Append(Passes).Append(" passes, ").Append(Incomplete).Append(" incomplete (").Append((IncompleteRate * 100f).ToString("0")).Append("%), ")
+                  .Append(Scrambles).Append(" scrambles, ").Append(Punts).Append(" punts, ").Append(FieldGoalTries).Append(" field goal tries; results:");
+                foreach (var kv in Results) sb.Append(' ').Append(kv.Key).Append(' ').Append(kv.Value).Append(',');
+                sb.Append(" calls:");
+                foreach (var kv in Calls) sb.Append(' ').Append(kv.Key).Append(' ').Append(kv.Value).Append(',');
+                return sb.ToString();
+            }
+        }
+
+        public static Box PlayV2(int seed, int minutes, System.Action<GameConfig> tweak = null)
+        {
+            var cfg = BotCoachTests.On();
+            tweak?.Invoke(cfg);
+            var w = WorldTests.Full(cfg, seed);
+            var box = new Box();
+            bool wasLive = false, scrambled = false;
+            for (int i = 0; i < minutes * 60 * cfg.sim.tickHz; i++)
+            {
+                w.Step(null);
+                bool live = w.Phase == Phase.Live;
+                if (live && !wasLive)
+                {
+                    scrambled = false;
+                    string call = w.Calls[w.Offense] ?? "(kickoff)";
+                    box.Calls[call] = (box.Calls.TryGetValue(call, out int n) ? n : 0) + 1;
+                    if (call == "punt") box.Punts++;
+                    if (call == "fg" && w.Down >= cfg.downs.downsToGain) box.FieldGoalTries++;   // (not the extra point after a touchdown)
+                }
+                if (live && !scrambled)
+                {
+                    var qb = LivePlay.Qb(w);
+                    if (qb != null && LivePlay.Carrier(w) == qb && !w.Thrown && Bots.Scrambling(w, qb)) { scrambled = true; box.Scrambles++; }
+                }
+                // a play ends: was it a pass?
+                if (!live && wasLive && w.Thrown && w.Calls[w.Offense] != "punt" && w.Calls[w.Offense] != "fg") box.Passes++;
+                wasLive = live;
+            }
+            box.Plays = w.PlaysRun;
+            box.Yards = w.YardsGained;
+            box.Results = w.Results;
+            box.Incomplete = w.Results.TryGetValue("INCOMPLETE", out int inc) ? inc : 0;
+            return box;
+        }
+
+        // The WS-06 gate: with the coach and bots v2 on, bot games give 4 to 6 yards a play and 25 to 40 percent of
+        // passes fall incomplete. (With FEATURES.kicking on as well, PunterAndKickerGetWork checks the kicks.)
+        [TestCase(1)]
+        [TestCase(2)]
+        [TestCase(3)]
+        public void CoachedBotGamesLookLikeFootball(int seed)
+        {
+            var box = PlayV2(seed, 10);
+            TestContext.WriteLine("seed " + seed + ": " + box);
+            Assert.GreaterOrEqual(box.Plays, 40, "plays keep happening: " + box);
+            Assert.That(box.PerPlay, Is.InRange(4f, 6f), "yards per play: " + box);
+            Assert.GreaterOrEqual(box.Passes, 10, "the coach calls passes: " + box);
+            Assert.That(box.IncompleteRate, Is.InRange(0.25f, 0.4f), "incompletions: " + box);
+            Assert.Greater(box.Scrambles, 0, "the QB scrambles sometimes: " + box);
+            int Count(string k) => box.Results.TryGetValue(k, out int n) ? n : 0;
+            Assert.Less(Count("SACKED"), box.Plays * 0.15f, "sacks are rare: " + box);
+            Assert.Less(Count("PLAY OVER"), box.Plays * 0.05f, "plays end on a whistle, not the clock: " + box);
+        }
+
+        // Once kicking (WS-01) has merged: every 10-minute coached game has a punt and a field goal try.
+        [TestCase(1)]
+        [TestCase(2)]
+        [TestCase(3)]
+        public void PunterAndKickerGetWork(int seed)
+        {
+            var cfg = ConfigTests.Load();
+            if (!cfg.features.ContainsKey("kicking")) Assert.Inconclusive("kicking (WS-01) has not merged yet");
+            var box = PlayV2(seed, 10, c => c.features["kicking"] = true);
+            TestContext.WriteLine("seed " + seed + ": " + box);
+            Assert.GreaterOrEqual(box.Punts, 1, "a punt: " + box);
+            Assert.GreaterOrEqual(box.FieldGoalTries, 1, "a field goal try: " + box);
+            Assert.That(box.PerPlay, Is.InRange(4f, 6f), "yards per play: " + box);
+        }
+
         [Test]
         public void ABlockHoldsARusherUp()
         {

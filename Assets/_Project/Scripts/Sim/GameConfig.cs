@@ -23,6 +23,7 @@ namespace PocketFootball.Sim
         public NetConfig net = new NetConfig();
         public ViewConfig view = new ViewConfig();
         public AnimConfig anim = new AnimConfig();
+        public CoachConfig coach = new CoachConfig();   // WS-06 (BotCoach.cs)
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 
@@ -56,6 +57,10 @@ namespace PocketFootball.Sim
         // helps a person who has been idle idleTakeoverS during a live play
         public float blockReachYd, blockedSpeedFrac, shedAfterS, shedFreeS, rushAroundYd, openYd, readDeadlineS, idleTakeoverS;
         public List<float> readTimesS = new List<float>();
+        // bots v2 (WS-06, FEATURES.botsV2, Bots.cs): a rusher this close with no block on him is pressure (throw it
+        // or scramble); at the deadline or under pressure he throws only to a man with deadlineOpenYd of space; throws
+        // miss by up to missYd + missPerYd per yard (+ pressureMissYd when pressured); longer than lobOverYd: a lob
+        public float pressureYd, deadlineOpenYd, missYd, missPerYd, pressureMissYd, lobOverYd;
     }
 
     // One spot in a formation: back = yards from the line of scrimmage onto the team's own side, z = across.

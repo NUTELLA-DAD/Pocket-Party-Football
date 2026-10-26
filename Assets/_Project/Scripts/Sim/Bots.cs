@@ -38,18 +38,22 @@ namespace PocketFootball.Sim
             var qb = LivePlay.Qb(w);
             var job = JobOfCalled(w, p);
             bool ballOut = w.Ball.State == BallState.Flying || w.Thrown || (carrier != null && carrier != qb);
+            if (V2(w) && carrier != null && carrier == qb && Ahead(w, qb) > 0f) ballOut = true;   // WS-06: the QB took off, block and pursue
 
             // an interception return: his teammates block for him, the old offense chases him down
             if (carrier != null && carrier.Team != w.Offense && carrier != p)
                 return p.Team == carrier.Team ? Block(w, p, carrier) : Pursue(w, p, carrier);
             if (carrier == p)
             {
+                if (p == qb && !ballOut && !HasRunner(w) && V2(w)) return QbMoveV2(w, p, job);   // WS-06: drops, rolls out, scrambles
                 if (p == qb && !ballOut && !HasRunner(w)) return QbMove(w, p, job);   // in the pocket
                 if (p == qb && HasRunner(w)) return QbMove(w, p, job);                 // meet the runner for the handoff
                 return RunWithBall(w, p);
             }
             if (p.Team == w.Offense)
             {
+                // WS-06: the man the pass is for keeps running and goes to meet it (v1 stopped and blocked, so led passes fell short)
+                if (V2(w) && w.Ball.State == BallState.Flying && p == Intended(w)) return To(p, w.Ball.TargetX, w.Ball.TargetZ, 1f, true);
                 if (ballOut || job == null || job.kind == "block") return Block(w, p, carrier);
                 if (job.kind == "route" && job.pts.Count > 0)
                 {
@@ -95,6 +99,142 @@ namespace PocketFootball.Sim
             var t = Pt(w, job.pts[0]);
             if (Near(p, t, w.Cfg.bots.arriveYd)) return default;
             return To(p, t[0], t[1], 1f, false);
+        }
+
+        // ---- bots v2 (WS-06), behind FEATURES.botsV2 (NO_BOTS_V2=1: the v1 QB and receivers) ----
+        // The QB runs his whole route (a drop, a bootleg roll-out; a route ending past the line is a designed run, the
+        // sneak), reads as in v1, and scrambles: once his read deadline passes, or a free rusher gets within pressureYd,
+        // he tucks it and runs (RunWithBall), still throwing to anyone who comes open while he is behind the line.
+        // At the deadline or under pressure he throws to the most open man only if that man has deadlineOpenYd of space.
+        // His throws miss by up to missYd + missPerYd per yard of throw (+ pressureMissYd under pressure), seeded, and
+        // a throw longer than lobOverYd is a lob. The man a pass is for runs to where it is coming down.
+
+        public static bool V2(World w) => w.Cfg.Feature("botsV2");
+
+        static PlayerInput QbMoveV2(World w, Player p, JobConfig job)
+        {
+            if (DesignedRun(w, job))
+            {
+                // the sneak: follow the route to its end, then run like any carrier
+                if (Ahead(w, p) > 0f || job.pts.Count == 0) return RunWithBall(w, p);
+                return FollowRoute(w, p, job, true) ?? RunWithBall(w, p);
+            }
+            if (Scrambling(w, p)) return RunWithBall(w, p);
+            if (job == null || job.pts.Count == 0) return default;
+            return FollowRoute(w, p, job, false) ?? default;
+        }
+
+        // Route points in order; null at the end of the route.
+        static PlayerInput? FollowRoute(World w, Player p, JobConfig job, bool sprint)
+        {
+            var b = w.Cfg.bots;
+            while (p.RouteIndex < job.pts.Count - 1 && Near(p, Pt(w, job.pts[p.RouteIndex]), b.arriveYd)) p.RouteIndex++;
+            var t = Pt(w, job.pts[p.RouteIndex]);
+            if (p.RouteIndex == job.pts.Count - 1 && Near(p, t, b.arriveYd)) return null;
+            return To(p, t[0], t[1], 1f, sprint || p.RouteIndex > 0);
+        }
+
+        // A QB route that ends past the line of scrimmage: he keeps it and runs.
+        static bool DesignedRun(World w, JobConfig job) => job != null && job.kind == "route" && job.pts.Count > 0 && job.pts[job.pts.Count - 1][0] > 0f;
+
+        static float Ahead(World w, Player p) => (p.X - w.LineOfScrimmageX) * w.Dir;
+
+        static float Seconds(World w) => w.PlayTicks / (float)w.Cfg.sim.tickHz;
+
+        public static bool Scrambling(World w, Player qb) => V2(w) && (Seconds(w) >= w.Cfg.bots.readDeadlineS || Pressured(w, qb));
+
+        // A defender in on the QB with no blocker on him.
+        public static bool Pressured(World w, Player qb)
+        {
+            foreach (var d in w.Players)
+                if (d.Team != qb.Team && d.BlockedTicks == 0 && LivePlay.Dist(d, qb) <= w.Cfg.bots.pressureYd) return true;
+            return false;
+        }
+
+        // The receiver a pass in the air is meant for: the offense player nearest where it comes down (the QB aside).
+        public static Player Intended(World w)
+        {
+            if (w.Ball.State != BallState.Flying) return null;
+            var qb = LivePlay.Qb(w);
+            Player best = null; float bd = float.MaxValue;
+            foreach (var o in w.Players)
+            {
+                if (o.Team != w.Offense || o == qb) continue;
+                float dx = o.X - w.Ball.TargetX, dz = o.Z - w.Ball.TargetZ, d = dx * dx + dz * dz;
+                if (d < bd) { bd = d; best = o; }
+            }
+            return best;
+        }
+
+        // The v2 read. Throws (itself, with the miss) and returns null; LivePlay's own throw is never reached.
+        static Player QbReadV2(World w, Player qb, PlayConfig play)
+        {
+            var b = w.Cfg.bots;
+            if (Ahead(w, qb) > 0f) return null;                                   // past the line: no forward pass
+            if (play != null && qb.Spot >= 0 && qb.Spot < play.jobs.Count && DesignedRun(w, play.jobs[qb.Spot])) return null;
+            float t = Seconds(w);
+            bool pressured = Pressured(w, qb);
+            Player target = null;
+            if (t >= b.readDeadlineS)
+            {
+                // scrambling: anyone open, else keep running
+                var best = MostOpen(w, out float o);
+                if (best != null && o >= b.openYd) target = best;
+            }
+            else
+            {
+                int read = 0;
+                for (int k = 1; k <= w.Cfg.play.receivers.Count && read < b.readTimesS.Count && target == null; k++)
+                {
+                    var r = LivePlay.Receiver(w, k);
+                    var job = r != null ? JobOfCalled(w, r) : null;
+                    if (r == null || job == null || job.kind != "route") continue;
+                    if (t >= b.readTimesS[read] && Openness(w, r) >= b.openYd) target = r;
+                    read++;
+                }
+                if (target == null && pressured && b.readTimesS.Count > 0 && t >= b.readTimesS[0])
+                {
+                    var best = MostOpen(w, out float o);
+                    if (best != null && o >= b.deadlineOpenYd) target = best;
+                }
+                // the last moment in the pocket: the most open man if he has room, else a scramble
+                if (target == null && t + w.Dt >= b.readDeadlineS)
+                {
+                    var best = MostOpen(w, out float o);
+                    if (best != null && o >= b.deadlineOpenYd) target = best;
+                }
+            }
+            if (target != null) Throw(w, qb, target, pressured);
+            return null;
+        }
+
+        static Player MostOpen(World w, out float open)
+        {
+            Player best = null; open = -1f;
+            for (int k = 1; k <= w.Cfg.play.receivers.Count; k++)
+            {
+                var r = LivePlay.Receiver(w, k);
+                if (r == null || r == LivePlay.Qb(w)) continue;
+                float o = Openness(w, r);
+                if (o > open) { open = o; best = r; }
+            }
+            return best;
+        }
+
+        // Lead him by the flight time, then miss by a seeded amount.
+        static void Throw(World w, Player qb, Player r, bool pressured)
+        {
+            var b = w.Cfg.bots;
+            var bc = w.Cfg.ball;
+            float dx = r.X - qb.X, dz = r.Z - qb.Z;
+            float d = (float)Math.Sqrt(dx * dx + dz * dz);
+            bool lob = d > b.lobOverYd;
+            float vy = (float)Math.Sqrt((bc.gravityYdS2 + bc.gravityYdS2) * bc.lobApexYd);
+            float ft = lob ? (vy + vy) / bc.gravityYdS2 : d / bc.bulletSpeedYdS;
+            float miss = b.missYd + d * b.missPerYd + (pressured ? b.pressureMissYd : 0f);
+            float tx = r.X + r.VX * ft + w.Rng.Range(-miss, miss);
+            float tz = r.Z + r.VZ * ft + w.Rng.Range(-miss, miss);
+            if (w.Throw(tx, tz, lob)) w.Thrown = true;
         }
 
         // With the ball: for the end zone, sliding away from the nearest defender in front.
@@ -159,6 +299,7 @@ namespace PocketFootball.Sim
         // open (no defender within openYd); at readDeadlineS he throws to the most open. Null: keep holding it.
         public static Player QbRead(World w, Player qb, PlayConfig play)
         {
+            if (V2(w)) return QbReadV2(w, qb, play);   // WS-06
             var b = w.Cfg.bots;
             float t = w.PlayTicks / (float)w.Cfg.sim.tickHz;
             int read = 0;
