@@ -42,7 +42,7 @@
     "staminaDrainPerS": 0.25,
     "staminaRegenPerS": 0.2,
     "staminaRestart": 0.3,
-    "radiusYd": 0.5,
+    "radiusYd": 0.6,
     "bumpPushFrac": 0.5,
     "boundsMarginYd": 4,
     "perTeam": 11
@@ -122,11 +122,11 @@
     "handoffYd": 1.8,
     "handoffWindowS": 2.5,
     "botThrowS": 2.4,
-    "catchRadiusYd": 1.5,
+    "catchRadiusYd": 1.8,
     "catchMaxHeightYd": 2.8,
     "catchChanceOffense": 0.9,
     "catchChanceDefense": 0.1,
-    "tackleReachYd": 1.4,
+    "tackleReachYd": 1.7,
     "tackleBase": 0.55,
     "tackleSpeedBonus": 0.03,
     "tackleFromBehindBonus": 0.15,
@@ -237,7 +237,7 @@
     "coverMissSpeedFrac": 0.4,
     "diveSpeedYdS": 9,
     "diveAirS": 0.4,
-    "diveReachYd": 1.1,
+    "diveReachYd": 1.4,
     "diveChance": 0.85,
     "diveStretchPenalty": 0.3,
     "diveFromBehindBonus": 0.05,
@@ -254,6 +254,19 @@
     "botDiveFromYd": 3,
     "botDiveChance": 0.3
   },
+  "events": {
+    "logKeep": 2048
+  },
+  "replay": {
+    "seconds": 2,
+    "afterS": 0.6,
+    "speed": 0.5,
+    "cardS": 3,
+    "tagFontPx": 34,
+    "cardTitlePx": 52,
+    "cardLinePx": 30,
+    "cardWidthPx": 640
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
@@ -261,6 +274,7 @@
     "downs": true,
     "intreturn": true,
     "moves": true,
+    "replay": true,
     "defmoves": false
   }
 }

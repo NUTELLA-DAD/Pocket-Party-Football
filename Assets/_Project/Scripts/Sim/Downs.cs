@@ -23,7 +23,7 @@ namespace PocketFootball.Sim
                 TurnOver(w, dir * (goal - d.startOwnYd));
                 return;
             }
-            if (result == "INTERCEPTED") { TurnOver(w, w.NextLos); w.Note = "TURNOVER"; return; }
+            if (result == "INTERCEPTED") { TurnOver(w, w.NextLos); w.Note = "TURNOVER"; w.Events.Push(w, EventKind.Turnover, -1, w.Defense, w.NextLos, 0f, -1, w.Note); return; }
             if (result == "PICK SIX")
             {
                 // 6 to the defense; the team that threw it gets it back at its own 25, still going the same way
@@ -39,10 +39,11 @@ namespace PocketFootball.Sim
                 w.Down = 1;
                 w.FirstDownX = LineToGain(w, spot, dir);
                 w.Note = "FIRST DOWN";
+                w.Events.Push(w, EventKind.FirstDown, -1, w.Offense, spot, 0f);
                 return;
             }
             w.Down++;
-            if (w.Down > d.downsToGain) { TurnOver(w, spot); w.Note = "TURNOVER ON DOWNS"; }
+            if (w.Down > d.downsToGain) { TurnOver(w, spot); w.Note = "TURNOVER ON DOWNS"; w.Events.Push(w, EventKind.Turnover, -1, w.Defense, spot, 0f, -1, w.Note); }
         }
 
         // The other team gets the ball at x (applied at the next huddle): first and ten going the other way.

@@ -70,6 +70,7 @@ namespace PocketFootball.Sim
         // play-by-play numbers, for the bots' balance check (M1-d) and later the stats
         public int PlaysRun, YardsGained;
         public readonly SortedDictionary<string, int> Results = new SortedDictionary<string, int>(StringComparer.Ordinal);
+        public readonly EventLog Events = new EventLog();   // WS-00: what happened (Events.cs); not hashed, the sim never reads it
 
         public World(GameConfig cfg, int seed)
         {
@@ -192,6 +193,7 @@ namespace PocketFootball.Sim
         public void Step(IReadOnlyDictionary<int, PlayerInput> inputs)
         {
             float dt = Dt;
+            Events.BeginTick();   // WS-00
             foreach (var p in Players)
             {
                 PlayerInput input = default;

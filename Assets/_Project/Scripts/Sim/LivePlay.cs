@@ -42,12 +42,14 @@ namespace PocketFootball.Sim
             w.Result = "";
             w.CatchTried.Clear();
             foreach (var p in w.Players) { p.RouteIndex = 0; p.TackleCooldown = 0; p.StumbleTicks = 0; p.JukeTicks = 0; p.JukeCooldown = 0; p.BlockedTicks = 0; p.FreeTicks = 0; }
+            w.Events.Push(w, EventKind.Hike, Qb(w));
         }
 
         public static void Whistle(World w, string result, float spotX)
         {
             // an interception return ends like any run, but it is still an interception (or a pick six)
             if (w.Intercepted) result = result == "TOUCHDOWN" ? "PICK SIX" : "INTERCEPTED";
+            w.Events.Push(w, EventKind.Whistle, Carrier(w), null, result);
             var f = w.Cfg.field;
             float lim = f.GoalLineX - f.lineEveryYd * 0.5f;
             w.Phase = Phase.Whistle;
@@ -84,6 +86,7 @@ namespace PocketFootball.Sim
                 p.JukeCooldown = c.jukeCooldownTicks;
                 float side = input.MoveZ < 0f ? -1f : 1f;
                 p.VZ += side * c.jukeBurstYdS;
+                w.Events.Push(w, EventKind.Juke, p);
             }
             // a person's tackle
             if (input.Tackle && carrier != null && carrier.Team != p.Team && p.TackleCooldown == 0 && Dist(p, carrier) <= c.tackleReachYd * (1f + 0.5f))
@@ -101,7 +104,7 @@ namespace PocketFootball.Sim
             float d = (float)Math.Sqrt(dx * dx + dz * dz);
             float vy = (float)Math.Sqrt((b.gravityYdS2 + b.gravityYdS2) * b.lobApexYd);
             float t = lob ? (vy + vy) / b.gravityYdS2 : d / b.bulletSpeedYdS;
-            if (w.Throw(target.X + target.VX * t, target.Z + target.VZ * t, lob)) w.Thrown = true;
+            if (w.Throw(target.X + target.VX * t, target.Z + target.VZ * t, lob)) { w.Thrown = true; w.Events.Push(w, EventKind.Throw, qb, target); }
         }
 
         public static float Dist(Player a, Player b) { float dx = a.X - b.X, dz = a.Z - b.Z; return (float)Math.Sqrt(dx * dx + dz * dz); }
@@ -110,7 +113,7 @@ namespace PocketFootball.Sim
         {
             var c = w.Cfg.play;
             tackler.TackleCooldown = c.tackleCooldownTicks;
-            if (carrier.JukeTicks > 0) { tackler.StumbleTicks = c.stumbleTicks; return; }   // juked!
+            if (carrier.JukeTicks > 0) { tackler.StumbleTicks = c.stumbleTicks; w.Events.Push(w, EventKind.MissedTackle, tackler, carrier); return; }   // juked!
             float speed = (float)Math.Sqrt(tackler.VX * tackler.VX + tackler.VZ * tackler.VZ);
             float odds = c.tackleBase + speed * c.tackleSpeedBonus;
             // from behind: the carrier runs away from the tackler
@@ -118,9 +121,10 @@ namespace PocketFootball.Sim
             if (w.Rng.Value() < odds)
             {
                 bool sack = carrier == Qb(w) && !w.Thrown && (carrier.X - w.LineOfScrimmageX) * w.Dir < 0f;
+                w.Events.Push(w, sack ? EventKind.Sack : EventKind.Tackle, tackler, carrier);
                 Whistle(w, sack ? "SACKED" : "TACKLED", carrier.X);
             }
-            else tackler.StumbleTicks = c.stumbleTicks;
+            else { tackler.StumbleTicks = c.stumbleTicks; w.Events.Push(w, EventKind.MissedTackle, tackler, carrier); }
         }
 
         // After everyone moved and the ball flew: handoffs, bot throws, catches, incompletions, tackles, the lines.
@@ -139,7 +143,7 @@ namespace PocketFootball.Sim
             if (carrier != null && carrier == qb && play != null && play.runner >= 0 && w.PlayTicks <= Huddle.Ticks(w, c.handoffWindowS))
             {
                 var runner = SpotOf(w, w.Offense, play.runner);
-                if (runner != null && Dist(runner, qb) <= c.handoffYd) { w.Ball.GiveTo(runner, w.Cfg.ball); carrier = runner; }
+                if (runner != null && Dist(runner, qb) <= c.handoffYd) { w.Ball.GiveTo(runner, w.Cfg.ball); carrier = runner; w.Events.Push(w, EventKind.Handoff, runner, qb); }
             }
             // a bot QB (or one helping an idle person) reads his receivers
             if (carrier != null && carrier == qb && (!qb.Human || qb.BotHelp) && !w.Thrown && (play == null || play.runner < 0))
@@ -165,6 +169,7 @@ namespace PocketFootball.Sim
                     if (w.Rng.Value() < (offense ? c.catchChanceOffense : c.catchChanceDefense))
                     {
                         w.Ball.GiveTo(near, w.Cfg.ball);
+                        w.Events.Push(w, offense ? EventKind.Catch : EventKind.Interception, near, qb);
                         if (!offense)
                         {
                             // FEATURES.intreturn: he runs it back until the whistle; off: the play ends at the catch
@@ -174,14 +179,19 @@ namespace PocketFootball.Sim
                     }
                 }
             }
-            if (w.Ball.State == BallState.Loose) { Whistle(w, "INCOMPLETE", w.LineOfScrimmageX); return; }
+            if (w.Ball.State == BallState.Loose)
+            {
+                w.Events.Push(w, EventKind.Incomplete, qb != null ? qb.Slot : -1, w.Offense, w.Ball.X, w.Ball.Z);
+                Whistle(w, "INCOMPLETE", w.LineOfScrimmageX);
+                return;
+            }
 
             carrier = Carrier(w);
             if (carrier != null)
             {
-                if (carrier.Team == w.Offense && carrier.X * dir > f.GoalLineX) { Whistle(w, "TOUCHDOWN", carrier.X); return; }
-                if (carrier.Team != w.Offense && carrier.X * -dir > f.GoalLineX) { Whistle(w, "TOUCHDOWN", carrier.X); return; }   // a pick six
-                if (carrier.OutOfBounds) { Whistle(w, "OUT OF BOUNDS", carrier.X); return; }
+                bool td = carrier.Team == w.Offense ? carrier.X * dir > f.GoalLineX : carrier.X * -dir > f.GoalLineX;   // (the defense: a pick six)
+                if (td) { w.Events.Push(w, EventKind.Touchdown, carrier); Whistle(w, "TOUCHDOWN", carrier.X); return; }
+                if (carrier.OutOfBounds) { w.Events.Push(w, EventKind.OutOfBounds, carrier); Whistle(w, "OUT OF BOUNDS", carrier.X); return; }
                 // bot defenders next to the carrier try a tackle
                 foreach (var p in w.Players)
                 {

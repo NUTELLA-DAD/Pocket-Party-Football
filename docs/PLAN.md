@@ -79,8 +79,8 @@ In v1: kickoffs (bot kicker, humans return), punts, field goals, extra points, T
 - One sideline camera, never tilts/rolls/spins, only slides left-right following the ball, leads long passes.
 - About 60 yards visible so a player stays at least 48 px tall at 1080p; long lens from far back.
 - Off-screen players: edge portrait in their colour with an arrow.
-- Humans: coloured ring + name plate; bots: jersey number only; ball carrier: brighter ring.
-- FIND ME (button and automatic at each snap): ring flash, plate x2, colour beam for 2 s.
+- Humans: coloured ring + a small team-colour triangle overhead (the name plate only shows during FIND ME, so it never covers the play); bots: jersey number only; ball carrier: brighter ring.
+- FIND ME (button and automatic at each snap): ring flash, name plate, colour beam for 2 s.
 - Pass shapes over eligible receivers on pass plays. One banner at a time.
 
 ## Toon look

@@ -180,9 +180,11 @@ namespace PocketFootball.Sim
                         d.ShownWon = true;
                         End(w, d);
                         bool sack = carrier == LivePlay.Qb(w) && !w.Thrown && (carrier.X - w.LineOfScrimmageX) * w.Dir < 0f;
+                        w.Events.Push(w, sack ? EventKind.Sack : EventKind.Tackle, p, carrier);
                         LivePlay.Whistle(w, sack ? "SACKED" : "TACKLED", carrier.X);
                         return;
                     }
+                    w.Events.Push(w, EventKind.MissedTackle, p, carrier);
                     GoDown(w, p, d);   // bounced off him, or juked
                     return;
                 }
@@ -283,6 +285,7 @@ namespace PocketFootball.Sim
         static void PickOff(World w, Player p)
         {
             w.Ball.GiveTo(p, w.Cfg.ball);
+            w.Events.Push(w, EventKind.Interception, p, LivePlay.Qb(w));
             if (w.Cfg.Feature("intreturn")) w.Intercepted = true;
             else LivePlay.Whistle(w, "INTERCEPTED", p.X);
         }
