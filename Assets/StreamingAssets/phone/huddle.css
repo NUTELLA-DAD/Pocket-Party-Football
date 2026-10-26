@@ -1,21 +1,58 @@
-/* The secret huddle and the job diagram (huddle.js). */
-.card { background: var(--turf-2); border-radius: 16px; padding: 12px 14px; }
-.hud { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.clock { font-family: var(--display); font-size: 32px; font-variant-numeric: tabular-nums; color: var(--warn); }
-.plays { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+/* The secret huddle (huddle.js): a clean list of play names, one big picture of the play you tapped, LOCK IN always on screen. */
+#huddleView {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-areas: "hud" "plays" "prev" "go";
+  align-content: stretch;
+}
+.hud { grid-area: hud; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }
+.hudtext { min-width: 0; }
+.hudtext .sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.clock { font-family: var(--display); font-size: 28px; font-variant-numeric: tabular-nums; color: var(--warn); }
+
+.plays {
+  grid-area: plays; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-content: start;
+  overflow-y: auto; touch-action: pan-y; min-height: 0; padding: 2px;
+}
 .play {
-  position: relative; text-align: left; border: 3px solid transparent; border-radius: 14px; background: var(--ink);
-  padding: 10px; display: flex; flex-direction: column; gap: 6px; touch-action: manipulation;
+  position: relative; text-align: left; border: 3px solid transparent; border-radius: 12px; background: var(--ink);
+  padding: 8px 10px; min-height: 52px; display: grid; gap: 2px; align-content: center; touch-action: manipulation; min-width: 0;
 }
-.play[aria-pressed="true"] { border-color: var(--team-2); }
+.play[aria-pressed="true"] { border-color: var(--team-2); background: var(--turf-2); }
 .play:disabled { opacity: .55; }
-.play b { font-family: var(--display); font-weight: 400; font-size: 18px; }
-.play small { color: var(--muted); font-size: 12px; }
+.play b { font-family: var(--display); font-weight: 400; font-size: 17px; line-height: 1.1; }
+.play small { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .thumbs {
-  position: absolute; top: 8px; right: 8px; background: var(--team); color: var(--team-ink);
-  border-radius: 999px; padding: 1px 8px; font-size: 12px; font-weight: 800;
+  position: absolute; top: 4px; right: 4px; background: var(--team); color: var(--team-ink);
+  border-radius: 999px; padding: 0 7px; font-size: 12px; font-weight: 800;
 }
-.mini { width: 100%; height: auto; display: block; border-radius: 8px; }
-#hGo:disabled { opacity: .4; }
-.job { display: grid; gap: 6px; }
-.job h3 { font-family: var(--display); font-weight: 400; font-size: 20px; margin: 0; }
+
+.preview { grid-area: prev; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 6px; min-height: 0; background: var(--turf-2); border-radius: 14px; padding: 8px 10px; }
+.preview h3 { font-family: var(--display); font-weight: 400; font-size: 20px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.preview h3 small { font-family: var(--body); font-weight: 600; font-size: 13px; color: var(--muted); }
+.preview .pv-field { min-height: 0; display: flex; align-items: center; justify-content: center; }
+.preview .pv-field svg { display: block; width: 100%; height: 100%; max-height: 100%; border-radius: 8px; }
+.preview .pv-job { margin: 0; font-size: 14px; font-weight: 800; }
+.preview .pv-job span { color: var(--team-2); }
+.preview.empty { place-items: center; color: var(--muted); font-size: 15px; text-align: center; }
+
+.go { grid-area: go; display: grid; gap: 6px; }
+.go .line { font-size: 13px; color: var(--muted); }
+
+/* sideways: the list on the left, the picture and LOCK IN on the right */
+@media (orientation: landscape) {
+  #huddleView {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas: "hud hud" "plays prev" "plays go";
+    column-gap: 12px; row-gap: 6px;
+  }
+  .clock { font-size: 24px; }
+  .go { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+  .go .big { padding: 10px 22px; font-size: 22px; }
+}
+@media (orientation: landscape) and (max-height: 340px) {
+  .play { min-height: 44px; padding: 5px 8px; }
+  .play small { display: none; }
+  .preview .pv-job { font-size: 12px; }
+}
