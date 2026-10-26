@@ -25,6 +25,7 @@ namespace PocketFootball.Sim
 
             // velocity eases toward the wanted one: accelYdS2 when speeding up, decelYdS2 when slowing or turning hard
             float top = p.Sprinting ? c.sprintSpeedYdS : c.jogSpeedYdS;
+            if (p.StumbleTicks > 0) top *= w.Cfg.play.stumbleSpeedFrac;   // a missed tackle: on the turf for a moment
             float wantX = mx * top, wantZ = mz * top;
             float dx = wantX - p.VX, dz = wantZ - p.VZ;
             float d = (float)Math.Sqrt(dx * dx + dz * dz);

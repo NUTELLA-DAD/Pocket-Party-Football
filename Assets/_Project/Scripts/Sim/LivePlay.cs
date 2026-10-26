@@ -1,0 +1,188 @@
+using System;
+
+namespace PocketFootball.Sim
+{
+    // A live play (M1-c), behind FEATURES.liveplay (NO_LIVEPLAY=1: no hike, the huddle just repeats).
+    // The QB hikes; on a run play (play.runner) he hands off when the runner reaches him; else he throws (a person picks
+    // the receiver by shape, tap = bullet, hold = lob; a bot QB throws to the most open receiver after botThrowS).
+    // A pass coming down near a player may be caught (the offense more often than the defense: an interception);
+    // a ball that hits the grass is incomplete. Defenders next to the ball carrier try a tackle: the odds rise with the
+    // tackler's speed and from behind; a JUKE makes every try miss for a moment; a miss leaves the tackler stumbling.
+    // The whistle blows on a tackle (a sack behind the line), an incompletion, an interception, out of bounds,
+    // a touchdown or when the play runs too long; the next play starts where the ball ended up.
+    public static class LivePlay
+    {
+        public static bool On(World w) => w.Cfg.Feature("liveplay");
+
+        public static Player Qb(World w) => SpotOf(w, w.Offense, 0);
+
+        public static Player SpotOf(World w, int team, int spot)
+        {
+            foreach (var p in w.Players) if (p.Team == team && p.Spot == spot) return p;
+            return null;
+        }
+
+        public static Player Carrier(World w) => w.Ball.State == BallState.Held ? w.Find(w.Ball.Carrier) : null;
+
+        public static PlayConfig Called(World w, int team) => team >= 0 && team < w.Calls.Length ? Huddle.Find(w, w.Calls[team]) : null;
+
+        // The receiver for shape k (1-based), or null.
+        public static Player Receiver(World w, int k)
+        {
+            var r = w.Cfg.play.receivers;
+            return k >= 1 && k <= r.Count ? SpotOf(w, w.Offense, r[k - 1]) : null;
+        }
+
+        public static void Hike(World w)
+        {
+            w.Phase = Phase.Live;
+            w.PlayTicks = 0;
+            w.Thrown = false;
+            w.Result = "";
+            w.CatchTried.Clear();
+            foreach (var p in w.Players) { p.RouteIndex = 0; p.TackleCooldown = 0; p.StumbleTicks = 0; p.JukeTicks = 0; p.JukeCooldown = 0; }
+        }
+
+        public static void Whistle(World w, string result, float spotX)
+        {
+            var f = w.Cfg.field;
+            float lim = f.GoalLineX - f.lineEveryYd * 0.5f;
+            w.Phase = Phase.Whistle;
+            w.PhaseTicks = Huddle.Ticks(w, w.Cfg.play.whistleS);
+            w.Result = result;
+            w.NextLos = result == "TOUCHDOWN" ? w.Cfg.formation.lineOfScrimmageXYd : (spotX < -lim ? -lim : spotX > lim ? lim : spotX);
+        }
+
+        // One player's buttons this tick (after it moved).
+        public static void Act(World w, Player p, PlayerInput input)
+        {
+            if (!On(w)) return;
+            var c = w.Cfg.play;
+            if (p.TackleCooldown > 0) p.TackleCooldown--;
+            if (p.StumbleTicks > 0) p.StumbleTicks--;
+            if (p.JukeTicks > 0) p.JukeTicks--;
+            if (p.JukeCooldown > 0) p.JukeCooldown--;
+
+            if (w.Phase == Phase.Set && input.Hike && p == Qb(w)) { Hike(w); return; }
+            if (w.Phase != Phase.Live) return;
+            var carrier = Carrier(w);
+            // the QB's throw
+            if (input.Throw > 0 && carrier == p && p == Qb(w) && !w.Thrown) ThrowTo(w, Receiver(w, input.Throw), input.Lob);
+            // the ball carrier's juke: a burst to the side the stick points (or the far side)
+            if (input.Juke && carrier == p && p.JukeCooldown == 0)
+            {
+                p.JukeTicks = c.jukeTicks;
+                p.JukeCooldown = c.jukeCooldownTicks;
+                float side = input.MoveZ < 0f ? -1f : 1f;
+                p.VZ += side * c.jukeBurstYdS;
+            }
+            // a person's tackle
+            if (input.Tackle && carrier != null && carrier.Team != p.Team && p.TackleCooldown == 0 && Dist(p, carrier) <= c.tackleReachYd * (1f + 0.5f))
+                TryTackle(w, p, carrier);
+        }
+
+        public static void ThrowTo(World w, Player target, bool lob)
+        {
+            if (target == null) return;
+            var b = w.Cfg.ball;
+            var qb = Carrier(w);
+            if (qb == null) return;
+            // lead the receiver by the flight time
+            float dx = target.X - qb.X, dz = target.Z - qb.Z;
+            float d = (float)Math.Sqrt(dx * dx + dz * dz);
+            float vy = (float)Math.Sqrt((b.gravityYdS2 + b.gravityYdS2) * b.lobApexYd);
+            float t = lob ? (vy + vy) / b.gravityYdS2 : d / b.bulletSpeedYdS;
+            if (w.Throw(target.X + target.VX * t, target.Z + target.VZ * t, lob)) w.Thrown = true;
+        }
+
+        static float Dist(Player a, Player b) { float dx = a.X - b.X, dz = a.Z - b.Z; return (float)Math.Sqrt(dx * dx + dz * dz); }
+
+        static void TryTackle(World w, Player tackler, Player carrier)
+        {
+            var c = w.Cfg.play;
+            tackler.TackleCooldown = c.tackleCooldownTicks;
+            if (carrier.JukeTicks > 0) { tackler.StumbleTicks = c.stumbleTicks; return; }   // juked!
+            float speed = (float)Math.Sqrt(tackler.VX * tackler.VX + tackler.VZ * tackler.VZ);
+            float odds = c.tackleBase + speed * c.tackleSpeedBonus;
+            // from behind: the carrier runs away from the tackler
+            if ((carrier.X - tackler.X) * carrier.VX + (carrier.Z - tackler.Z) * carrier.VZ > 0f) odds += c.tackleFromBehindBonus;
+            if (w.Rng.Value() < odds)
+            {
+                bool sack = carrier == Qb(w) && !w.Thrown && (carrier.X - w.LineOfScrimmageX) * w.Cfg.formation.attackDir < 0f;
+                Whistle(w, sack ? "SACKED" : "TACKLED", carrier.X);
+            }
+            else tackler.StumbleTicks = c.stumbleTicks;
+        }
+
+        // After everyone moved and the ball flew: handoffs, bot throws, catches, incompletions, tackles, the lines.
+        public static void Step(World w)
+        {
+            if (!On(w) || w.Phase != Phase.Live) return;
+            var c = w.Cfg.play;
+            var f = w.Cfg.field;
+            float dir = w.Cfg.formation.attackDir;
+            w.PlayTicks++;
+            var qb = Qb(w);
+            var carrier = Carrier(w);
+            var play = Called(w, w.Offense);
+
+            // the handoff on a run play
+            if (carrier != null && carrier == qb && play != null && play.runner >= 0 && w.PlayTicks <= Huddle.Ticks(w, c.handoffWindowS))
+            {
+                var runner = SpotOf(w, w.Offense, play.runner);
+                if (runner != null && Dist(runner, qb) <= c.handoffYd) { w.Ball.GiveTo(runner, w.Cfg.ball); carrier = runner; }
+            }
+            // a bot QB throws to the most open receiver
+            if (carrier != null && carrier == qb && !qb.Human && !w.Thrown && (play == null || play.runner < 0) && w.PlayTicks >= Huddle.Ticks(w, c.botThrowS))
+            {
+                Player best = null; float bestOpen = -1f;
+                for (int k = 1; k <= c.receivers.Count; k++)
+                {
+                    var r = Receiver(w, k);
+                    if (r == null) continue;
+                    float open = float.MaxValue;
+                    foreach (var d in w.Players) if (d.Team != w.Offense) open = Math.Min(open, Dist(d, r));
+                    if (open > bestOpen) { bestOpen = open; best = r; }
+                }
+                if (best != null) ThrowTo(w, best, Dist(best, qb) > w.Cfg.bots.wanderYd);
+            }
+
+            // catches: the ball coming down within reach
+            if (w.Ball.State == BallState.Flying && w.Ball.VY < 0f && w.Ball.Y <= c.catchMaxHeightYd)
+            {
+                Player near = null; float nd = float.MaxValue;
+                foreach (var p in w.Players)
+                {
+                    if (w.CatchTried.Contains(p.Slot)) continue;
+                    float dx = p.X - w.Ball.X, dz = p.Z - w.Ball.Z, d = (float)Math.Sqrt(dx * dx + dz * dz);
+                    if (d <= c.catchRadiusYd && d < nd) { near = p; nd = d; }
+                }
+                if (near != null)
+                {
+                    w.CatchTried.Add(near.Slot);
+                    bool offense = near.Team == w.Offense;
+                    if (w.Rng.Value() < (offense ? c.catchChanceOffense : c.catchChanceDefense))
+                    {
+                        w.Ball.GiveTo(near, w.Cfg.ball);
+                        if (!offense) { Whistle(w, "INTERCEPTED", near.X); return; }
+                    }
+                }
+            }
+            if (w.Ball.State == BallState.Loose) { Whistle(w, "INCOMPLETE", w.LineOfScrimmageX); return; }
+
+            carrier = Carrier(w);
+            if (carrier != null)
+            {
+                if (carrier.Team == w.Offense && carrier.X * dir > f.GoalLineX) { Whistle(w, "TOUCHDOWN", carrier.X); return; }
+                if (carrier.OutOfBounds) { Whistle(w, "OUT OF BOUNDS", carrier.X); return; }
+                // bot defenders next to the carrier try a tackle
+                foreach (var p in w.Players)
+                {
+                    if (p.Human || p.Team == carrier.Team || p.TackleCooldown > 0) continue;
+                    if (Dist(p, carrier) <= c.tackleReachYd) { TryTackle(w, p, carrier); if (w.Phase != Phase.Live) return; }
+                }
+            }
+            if (w.PlayTicks >= Huddle.Ticks(w, c.maxPlayS)) Whistle(w, "PLAY OVER", carrier != null ? carrier.X : w.LineOfScrimmageX);
+        }
+    }
+}

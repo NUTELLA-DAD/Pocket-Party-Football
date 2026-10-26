@@ -14,6 +14,7 @@ namespace PocketFootball.Sim
         public FormationConfig formation = new FormationConfig();
         public BallConfig ball = new BallConfig();
         public HuddleConfig huddle = new HuddleConfig();
+        public LivePlayConfig play = new LivePlayConfig();
         // Loaded from Config/plays/*.json (not game.json) by ConfigLoader.AddPlays, sorted by id.
         [Newtonsoft.Json.JsonIgnore] public List<PlayConfig> plays = new List<PlayConfig>();
         public BaselineConfig baseline = new BaselineConfig();
@@ -86,10 +87,25 @@ namespace PocketFootball.Sim
         public float seconds, setSeconds;
     }
 
-    // One play (docs/PLAYS_FORMAT.md): 11 jobs in formation spot order.
+    // A live play (M1-c): the hike, handoffs, passes and catches, tackles, jukes, the whistle. Odds are 0..1.
+    // receivers: the offense spots the QB can throw to, in the order of the shapes (shapes[i] is the badge over them).
+    public sealed class LivePlayConfig
+    {
+        public float botHikeS, humanHikeMaxS, whistleS, maxPlayS, handoffYd, handoffWindowS, botThrowS;
+        public float catchRadiusYd, catchMaxHeightYd, catchChanceOffense, catchChanceDefense;
+        public float tackleReachYd, tackleBase, tackleSpeedBonus, tackleFromBehindBonus, stumbleSpeedFrac;
+        public int tackleCooldownTicks, stumbleTicks, jukeTicks, jukeCooldownTicks;
+        public float jukeBurstYdS, pursuitLeadS;
+        public List<int> receivers = new List<int>();
+        public List<string> shapes = new List<string>();
+    }
+
+    // One play (docs/PLAYS_FORMAT.md): 11 jobs in formation spot order. runner: the offense spot the QB hands off to
+    // (run plays), -1 = the QB keeps it.
     public sealed class PlayConfig
     {
         public string id, name, side, desc;
+        public int runner = -1;
         public List<JobConfig> jobs = new List<JobConfig>();
     }
 

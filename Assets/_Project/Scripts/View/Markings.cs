@@ -147,6 +147,36 @@ namespace PocketFootball.View
             GUI.color = Color.white;
         }
 
+        // A round badge with a painted receiver shape: 0 triangle, 1 circle, 2 square, 3 diamond, 4 star (the phone's
+        // receiver buttons show the same shapes, so the QB knows who is who).
+        static Texture2D[] shapes;
+        public static void ShapeBadge(Vector2 screen, int shape, float s)
+        {
+            Init();
+            if (shapes == null)
+            {
+                shapes = new Texture2D[5];
+                Color ink = new Color(0.08f, 0.08f, 0.1f);
+                shapes[0] = Shape(64, 64, p => p.Fill(new[] { new Vector2(32, 54), new Vector2(54, 14), new Vector2(10, 14) }, ink));
+                var ring = new Vector2[33];
+                for (int i = 0; i <= 32; i++) { float a = i * Mathf.PI * 2f / 32f; ring[i] = new Vector2(32 + Mathf.Cos(a) * 18, 32 + Mathf.Sin(a) * 18); }
+                shapes[1] = Shape(64, 64, p => p.Stroke(ring, 9, ink));
+                shapes[2] = Shape(64, 64, p => p.Fill(new[] { new Vector2(13, 13), new Vector2(51, 13), new Vector2(51, 51), new Vector2(13, 51) }, ink));
+                shapes[3] = Shape(64, 64, p => p.Fill(new[] { new Vector2(32, 58), new Vector2(56, 32), new Vector2(32, 6), new Vector2(8, 32) }, ink));
+                var star = new System.Collections.Generic.List<Vector2>();
+                for (int i = 0; i < 10; i++) { float a = (90 + i * 36) * Mathf.Deg2Rad, r = i % 2 == 0 ? 26 : 11; star.Add(new Vector2(32 + Mathf.Cos(a) * r, 32 + Mathf.Sin(a) * r)); }
+                shapes[4] = Shape(64, 64, p => p.Fill(star, ink));
+            }
+            float d = 40 * s;
+            var rr = new Rect(screen.x - d * 0.5f, screen.y - d, d, d);
+            GUI.color = new Color(0.08f, 0.08f, 0.1f, 1f);
+            GUI.DrawTexture(new Rect(rr.x - 3 * s, rr.y - 3 * s, rr.width + 6 * s, rr.height + 6 * s), disc);
+            GUI.color = new Color(1f, 0.85f, 0.3f);
+            GUI.DrawTexture(rr, disc);
+            GUI.color = Color.white;
+            if (shape >= 0 && shape < shapes.Length) GUI.DrawTexture(new Rect(rr.x + d * 0.2f, rr.y + d * 0.2f, d * 0.6f, d * 0.6f), shapes[shape]);
+        }
+
         // A round badge with a shape letter (△ ○ □ ◇ ☆ in the game; any short text).
         public static void Badge(Vector2 screen, string label, Color fill, float s)
         {

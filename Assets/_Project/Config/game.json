@@ -99,6 +99,44 @@
     "seconds": 15,
     "setSeconds": 6
   },
+  "play": {
+    "botHikeS": 3,
+    "humanHikeMaxS": 12,
+    "whistleS": 2.5,
+    "maxPlayS": 20,
+    "handoffYd": 1.8,
+    "handoffWindowS": 2.5,
+    "botThrowS": 2.4,
+    "catchRadiusYd": 1.5,
+    "catchMaxHeightYd": 2.8,
+    "catchChanceOffense": 0.9,
+    "catchChanceDefense": 0.3,
+    "tackleReachYd": 1.4,
+    "tackleBase": 0.55,
+    "tackleSpeedBonus": 0.03,
+    "tackleFromBehindBonus": 0.15,
+    "tackleCooldownTicks": 20,
+    "stumbleTicks": 18,
+    "stumbleSpeedFrac": 0.35,
+    "jukeTicks": 10,
+    "jukeBurstYdS": 7,
+    "jukeCooldownTicks": 45,
+    "pursuitLeadS": 0.3,
+    "receivers": [
+      2,
+      3,
+      4,
+      5,
+      1
+    ],
+    "shapes": [
+      "△",
+      "○",
+      "□",
+      "◇",
+      "☆"
+    ]
+  },
   "baseline": {
     "seconds": 60,
     "players": 22,
@@ -143,6 +181,7 @@
   },
   "features": {
     "fieldStripes": true,
-    "huddle": true
+    "huddle": true,
+    "liveplay": true
   }
 }

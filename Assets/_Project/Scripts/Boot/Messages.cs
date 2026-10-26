@@ -38,7 +38,13 @@ namespace PocketFootball.Boot
             ["t"] = "me", ["st"] = (int)System.Math.Round(p.Stamina * 100f), ["tired"] = p.Tired, ["oob"] = p.OutOfBounds,
         });
 
-        public static string Ui(string layout, string aid) => PhoneProtocol.Text(new JObject { ["t"] = "ui", ["layout"] = layout, ["aid"] = aid });
+        public static string Ui(string layout, string aid, JArray receivers = null, string line = null)
+        {
+            var o = new JObject { ["t"] = "ui", ["layout"] = layout, ["aid"] = aid };
+            if (receivers != null) o["receivers"] = receivers;
+            if (line != null) o["line"] = line;
+            return PhoneProtocol.Text(o);
+        }
 
         // ---- the huddle ----
 

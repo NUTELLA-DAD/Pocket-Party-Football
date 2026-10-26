@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using PocketFootball.Sim;
 using PocketParty.Net;
 
@@ -14,9 +15,12 @@ namespace PocketFootball.Input
 
         // What the phone is currently showing (sent in the "ui" message); presses must carry it.
         public string Aid = "";
+        // The receiver shapes in throw order (play.shapes): a throw names its target by shape.
+        public IList<string> Shapes = new string[0];
 
         float stickX, stickY, stickAt;
-        bool findPressed, sprintHeld;
+        bool findPressed, sprintHeld, hikePressed, jukePressed, tacklePressed, lob;
+        int throwTo;
 
         public PhoneSource(Seat seat) { Seat = seat; }
 
@@ -24,14 +28,26 @@ namespace PocketFootball.Input
         // the field and screen up is +Z, away from the camera.
         public void OnStick(float x, float y, float now) { stickX = x; stickY = y; stickAt = now; }
 
-        // Returns false when the press was ignored by the aid guard.
-        public bool OnButton(string b, bool down, string aid)
+        // Returns false when the press was ignored by the aid guard (or isn't a button this game knows).
+        // tgt / lobHeld: a throw's receiver shape and whether it was held long enough to be a lob (sent on release).
+        public bool OnButton(string b, bool down, string aid, string tgt = "", bool lobHeld = false)
         {
             if (aid != Aid) return false;
             switch (b)
             {
                 case "find": if (down) findPressed = true; break;
                 case "sprint": sprintHeld = down; break;
+                case "hike": if (down) hikePressed = true; break;
+                case "juke": case "spin": if (down) jukePressed = true; break;
+                case "tackle": case "dive": if (down) tacklePressed = true; break;
+                case "throw":
+                    if (down) return true;                     // (the throw goes on release: tap = bullet, hold = lob)
+                    int k = -1;
+                    for (int i = 0; i < Shapes.Count; i++) if (Shapes[i] == tgt) k = i;
+                    if (k < 0) return false;
+                    throwTo = k + 1; lob = lobHeld;
+                    break;
+                case "scramble": break;                        // (the QB just runs with the stick)
                 default: return false;
             }
             return true;
@@ -52,6 +68,16 @@ namespace PocketFootball.Input
             if (now - stickAt > staleSeconds) { stickX = 0; stickY = 0; }
         }
 
-        public PlayerInput Poll() => new PlayerInput { MoveX = stickX, MoveZ = -stickY, Sprint = sprintHeld };
+        public PlayerInput Poll()
+        {
+            var i = new PlayerInput
+            {
+                MoveX = stickX, MoveZ = -stickY, Sprint = sprintHeld,
+                Hike = hikePressed, Juke = jukePressed, Tackle = tacklePressed, Throw = throwTo, Lob = lob,
+            };
+            hikePressed = jukePressed = tacklePressed = false;
+            throwTo = 0; lob = false;
+            return i;
+        }
     }
 }

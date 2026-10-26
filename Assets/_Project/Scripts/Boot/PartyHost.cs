@@ -143,6 +143,7 @@ namespace PocketFootball.Boot
                 if (ticks == cfg.sim.maxTicksPerFrame) accumulator = 0f;
             }
             if (!phaseKnown || World.Phase != lastPhase || World.HuddleNumber != lastHuddle) OnPhaseChanged();
+            RefreshLayouts();
             Players.Render(World, lockstep || Photo != null ? 1f : Mathf.Clamp01(accumulator / dt));
             float firstX = Photo != null ? Photo.FirstDownX : World.LineOfScrimmageX + cfg.formation.attackDir * cfg.field.lineEveryYd * 2f;
             marks.SetLines(World.LineOfScrimmageX, firstX);
@@ -183,8 +184,75 @@ namespace PocketFootball.Boot
             {
                 string job = Messages.JobFor(World, p.Team, p);
                 if (job != null) Server.Send(seat.Conn, job);
-                SendUi(src, "walk");
+                SendUi(src, LayoutFor(p));
             }
+        }
+
+        // ---- the phone's buttons for this moment (M1-c; the layouts are drawn by the phone's layouts.js) ----
+        readonly Dictionary<int, string> lastLayout = new Dictionary<int, string>();
+
+        string LayoutFor(Player p)
+        {
+            if (!LivePlay.On(World)) return "walk";
+            switch (World.Phase)
+            {
+                case Phase.Huddle: return "huddle";
+                case Phase.Whistle: return "wait";
+            }
+            var carrier = LivePlay.Carrier(World);
+            bool qb = p == LivePlay.Qb(World);
+            if (World.Phase == Phase.Set) return qb ? "qbpre" : RoleLayout(p);
+            if (carrier == p) return qb && !World.Thrown ? "qb" : "carrier";
+            return RoleLayout(p);
+        }
+
+        static string RoleLayout(Player p)
+        {
+            switch (p.Pos)
+            {
+                case "OL": case "TE": return "block";
+                case "WR": case "RB": return "route";
+                case "DL": return "rush";
+                case "LB": return "lb";
+                case "CB": case "S": return "cover";
+            }
+            return "walk";
+        }
+
+        // Every frame: a phone whose moment changed (the ball was caught, the whistle blew) gets its new buttons.
+        void RefreshLayouts()
+        {
+            if (World.Phase == Phase.Huddle) return;   // (the huddle screen is sent with the huddle)
+            foreach (var kv in sources)
+            {
+                var src = kv.Value;
+                var p = World.Find(kv.Key);
+                if (p == null || src.Seat.Conn < 0 || src.Seat.Team < 0) continue;
+                string want = LayoutFor(p);
+                if (!lastLayout.TryGetValue(kv.Key, out var had) || had != want) SendUi(src, want);
+            }
+        }
+
+        // The phone's line after the whistle: what happened, and what comes next.
+        string WhistleLine()
+        {
+            string r = World.Result;
+            string what = r == "TACKLED" ? "Tackled!" : r == "SACKED" ? "Sacked!" : r == "INCOMPLETE" ? "Incomplete pass." : r == "INTERCEPTED" ? "Intercepted!"
+                : r == "TOUCHDOWN" ? "TOUCHDOWN!" : r == "OUT OF BOUNDS" ? "Out of bounds." : "Whistle.";
+            return what + " Back to the huddle...";
+        }
+
+        // The receivers the QB can throw to, in shape order, for the "qb" layout.
+        Newtonsoft.Json.Linq.JArray Receivers()
+        {
+            var a = new Newtonsoft.Json.Linq.JArray();
+            for (int k = 1; k <= cfg.play.receivers.Count && k <= cfg.play.shapes.Count; k++)
+            {
+                var r = LivePlay.Receiver(World, k);
+                if (r == null) continue;
+                a.Add(new Newtonsoft.Json.Linq.JObject { ["shape"] = cfg.play.shapes[k - 1], ["label"] = r.Pos + " #" + r.Number });
+            }
+            return a;
         }
 
         IEnumerable<(PhoneSource src, Player p)> TeamPhones(int team)
@@ -221,6 +289,9 @@ namespace PocketFootball.Boot
         {
             if (!Huddle.On(w)) return "";
             int secs = Messages.Secs(w);
+            if (w.Phase == Phase.Set && LivePlay.On(w)) return "SET   (the QB hikes)";
+            if (w.Phase == Phase.Live) return "";
+            if (w.Phase == Phase.Whistle) return w.Result + "!";
             if (w.Phase != Phase.Huddle) return "LINE UP   (next huddle in " + secs + ")";
             var parts = new List<string> { "HUDDLE 0:" + secs.ToString("00") };
             for (int t = 0; t < cfg.teams.Count; t++) parts.Add(cfg.teams[t].name + (Huddle.IsLocked(w, t) ? " CALLED ✓" : " ..."));
@@ -284,7 +355,8 @@ namespace PocketFootball.Boot
                 else if (byConn.TryGetValue(e.Conn, out var src))
                 {
                     if (t == "stick") src.OnStick(PhoneProtocol.Float(m, "x", -1f, 1f), PhoneProtocol.Float(m, "y", -1f, 1f), Time.unscaledTime);
-                    else if (t == "btn") src.OnButton(PhoneProtocol.Str(m, "b"), PhoneProtocol.Int(m, "d") == 1, PhoneProtocol.Str(m, "aid"));
+                    else if (t == "btn") src.OnButton(PhoneProtocol.Str(m, "b"), PhoneProtocol.Int(m, "d") == 1, PhoneProtocol.Str(m, "aid"),
+                                                      PhoneProtocol.Str(m, "tgt"), m["lob"]?.Type == Newtonsoft.Json.Linq.JTokenType.Boolean && (bool)m["lob"]);
                     else if (t == "pick") OnPick(src, PhoneProtocol.Int(m, "team", -1));
                     else if (t == "suggest") OnCall(src, m, false);
                     else if (t == "lock") OnCall(src, m, true);
@@ -298,7 +370,7 @@ namespace PocketFootball.Boot
             if (code != RoomCode) { Server.Send(conn, PhoneProtocol.Err("Wrong room code. Check the TV.")); return; }
             var seat = Roster.JoinPhone(conn, PhoneProtocol.Str(m, "name"), PhoneProtocol.Str(m, "token"), PhoneProtocol.Str(m, "pid"), out bool rejoined);
             if (seat == null) { Server.Send(conn, PhoneProtocol.Err("The game is full (" + Roster.Capacity + " people).")); return; }
-            if (!sources.TryGetValue(seat.Slot, out var src)) { src = new PhoneSource(seat); sources[seat.Slot] = src; }
+            if (!sources.TryGetValue(seat.Slot, out var src)) { src = new PhoneSource(seat) { Shapes = cfg.play.shapes }; sources[seat.Slot] = src; }
             byConn[conn] = src;
             lastMe.Remove(seat.Slot);
             Server.Send(conn, Messages.Joined(seat, RoomCode, cfg, Roster));
@@ -352,7 +424,8 @@ namespace PocketFootball.Boot
         void SendUi(PhoneSource src, string layout)
         {
             src.Aid = layout + (++aidCounter);
-            if (src.Seat.Conn >= 0) Server.Send(src.Seat.Conn, Messages.Ui(layout, src.Aid));
+            lastLayout[src.Seat.Slot] = layout;
+            if (src.Seat.Conn >= 0) Server.Send(src.Seat.Conn, Messages.Ui(layout, src.Aid, layout == "qb" ? Receivers() : null, layout == "wait" && World.Phase == Phase.Whistle ? WhistleLine() : null));
         }
 
         void BroadcastLobby()
@@ -401,6 +474,11 @@ namespace PocketFootball.Boot
                     Vector3 sp = cam.WorldToScreenPoint(Players.HeadPosition(p.Slot) + Vector3.up * 0.55f);
                     if (sp.z <= 0) continue;
                     if (p.Human) Hud.Pointer(new Vector2(sp.x, Screen.height - sp.y), s);
+                    if (Photo == null && LivePlay.On(World) && (World.Phase == Phase.Set || World.Phase == Phase.Live) && !World.Thrown && p.Team == World.Offense)
+                    {
+                        int k = cfg.play.receivers.IndexOf(p.Spot);
+                        if (k >= 0) Hud.ShapeBadge(new Vector2(sp.x, Screen.height - sp.y - 4 * s), k, s);
+                    }
                     if (Photo != null && Photo.Badges.TryGetValue(p.Slot, out var badge)) Hud.Badge(new Vector2(sp.x, Screen.height - sp.y - 4 * s), badge, p.Spot == 3 ? new Color(0.36f, 0.85f, 0.5f) : new Color(1f, 0.82f, 0.25f), s);
                 }
             if (Photo != null) return;

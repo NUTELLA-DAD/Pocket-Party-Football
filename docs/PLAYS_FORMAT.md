@@ -42,3 +42,5 @@ Job kinds:
 | `rush` | none | Go after the QB. |
 
 Every job has a `text`: one short line the phone shows as "your job". The EditMode test `PlaysTests` checks every file: 11 jobs, known kinds, points present where needed, `man` targets 0-10, unique ids, and both sides have at least one play.
+
+Optional, M1-c: `"runner": <offense spot>` on a run play: the QB hands the ball to that spot when they meet just after the snap (HB Dive and Toss Sweep use 1, the RB). Without it the QB keeps the ball and throws.

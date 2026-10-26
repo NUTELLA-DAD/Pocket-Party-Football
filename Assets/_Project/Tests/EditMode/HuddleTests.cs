@@ -97,7 +97,9 @@ namespace PocketFootball.Tests.EditMode
             var (w, cfg) = Started();
             Run(w, (int)(cfg.huddle.seconds * cfg.sim.tickHz));
             Assert.AreEqual(Phase.Set, w.Phase);
-            Run(w, (int)(cfg.huddle.setSeconds * cfg.sim.tickHz));
+            int n = w.HuddleNumber;
+            // the bot QB hikes, the play runs to the whistle, then the next huddle
+            for (int i = 0; i < cfg.sim.tickHz * 60 && w.HuddleNumber == n; i++) w.Step(null);
             Assert.AreEqual(Phase.Huddle, w.Phase);
             Assert.IsNull(w.Calls[0]);
         }

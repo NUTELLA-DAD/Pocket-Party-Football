@@ -2,13 +2,14 @@ using System.Collections.Generic;
 
 namespace PocketFootball.Sim
 {
-    public enum Phase { Huddle, Set }
+    public enum Phase { Huddle, Set, Live, Whistle }
 
     // The secret huddle (M1-b). Each team picks a play from its own playbook: the caller (the person at spot 0, QB on
     // offense, middle LB on defense; else the first person on that side by spot) taps LOCK IN, teammates SUGGEST.
     // When the clock runs out the bot coach picks for a team that hasn't locked: the most-suggested play, else one at
-    // random (seeded). Both locked (or time up) -> Set: everyone lines up with their job. Until M1-c's hike the Set
-    // phase just lasts setSeconds and then the next huddle starts.
+    // random (seeded). Both locked (or time up) -> Set: everyone lines up with their job. Then the QB hikes (a person
+    // taps HIKE; a bot QB hikes after botHikeS, a person who never does after humanHikeMaxS) -> Live (LivePlay.cs)
+    // -> the whistle -> the next huddle at the new spot. FEATURES.liveplay off: Set lasts setSeconds, then a new huddle.
     // FEATURES.huddle off (NO_HUDDLE=1): the game stays in Set and nobody calls anything.
     public static class Huddle
     {
@@ -24,7 +25,7 @@ namespace PocketFootball.Sim
             w.LineUp();
         }
 
-        static int Ticks(World w, float seconds) => (int)(seconds * w.Cfg.sim.tickHz);
+        public static int Ticks(World w, float seconds) => (int)(seconds * w.Cfg.sim.tickHz);
 
         public static string SideOf(World w, int team) => team == w.Offense ? "offense" : "defense";
 
@@ -102,20 +103,28 @@ namespace PocketFootball.Sim
         public static void Step(World w)
         {
             if (!On(w)) return;
+            if (w.Phase == Phase.Live) return;           // a live play ends on the whistle (LivePlay)
             if (--w.PhaseTicks > 0) return;
             if (w.Phase == Phase.Huddle)
             {
                 for (int t = 0; t < w.Calls.Length; t++) if (w.Calls[t] == null) w.Calls[t] = BotCoach(w, t);
                 GoSet(w);
             }
-            else Begin(w);
+            else if (w.Phase == Phase.Set && LivePlay.On(w) && w.HuddleNumber > 0) LivePlay.Hike(w);   // (the very first tick opens the first huddle)
+            else
+            {
+                if (w.Phase == Phase.Whistle) w.LineOfScrimmageX = w.NextLos;
+                Begin(w);
+            }
         }
 
         static void GoSet(World w)
         {
             w.Phase = Phase.Set;
-            w.PhaseTicks = Ticks(w, w.Cfg.huddle.setSeconds);
             w.LineUp();
+            if (!LivePlay.On(w)) { w.PhaseTicks = Ticks(w, w.Cfg.huddle.setSeconds); return; }
+            var qb = LivePlay.Qb(w);
+            w.PhaseTicks = Ticks(w, qb != null && qb.Human ? w.Cfg.play.humanHikeMaxS : w.Cfg.play.botHikeS);
         }
 
         // The most-suggested play (ties: the first by id), else a seeded random one from the playbook.

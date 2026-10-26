@@ -7,6 +7,7 @@
 <title>Pocket Party Football</title>
 <link rel="stylesheet" href="/style.css">
 <link rel="stylesheet" href="/huddle.css">
+<link rel="stylesheet" href="/layouts.css">
 </head>
 <body>
 <div class="app">
@@ -38,7 +39,8 @@
     <div class="stam" aria-label="Stamina"><i id="stam"></i></div>
     <div class="pad">
       <div class="stick" id="stick" aria-label="Movement stick: drag to walk"><div class="knob" id="knob"></div></div>
-      <div class="btns">
+      <div class="btns hidden" id="btnBox"></div>
+      <div class="btns" id="walkBtns">
         <button class="btn main" id="sprintBtn" data-b="sprint" aria-label="Sprint: hold to run faster (uses stamina)">SPRINT<span class="k">Hold. Uses stamina</span></button>
         <button class="btn" id="findBtn" data-b="find" aria-label="Find me: flash my name on the TV">FIND ME<span class="k">Your name gets big on the TV</span></button>
         <button class="btn small" id="teamBtn" aria-label="Change team">Change team</button>
@@ -47,6 +49,7 @@
   </section>
 </div>
 <div id="reconnect" class="overlay hidden" role="status">Reconnecting...</div>
+<script src="/layouts.js"></script>
 <script src="/app.js"></script>
 <script src="/huddle.js"></script>
 </body>

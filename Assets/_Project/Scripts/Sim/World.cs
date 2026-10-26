@@ -9,6 +9,9 @@ namespace PocketFootball.Sim
     {
         public float MoveX, MoveZ;
         public bool Sprint, Find;
+        public bool Hike, Juke, Tackle;
+        public int Throw;        // 0 = no throw; k = throw to receiver k (1-based, the order of play.receivers / shapes)
+        public bool Lob;         // with Throw: high and soft, else a bullet
     }
 
     public sealed class Player
@@ -22,6 +25,8 @@ namespace PocketFootball.Sim
         public bool Tired;                   // emptied the tank: no sprint until staminaRestart
         public bool Sprinting;
         public bool OutOfBounds;
+        // a live play
+        public int TackleCooldown, StumbleTicks, JukeTicks, JukeCooldown, RouteIndex;
         // bot v0
         public float GoalX, GoalZ;
         public int NextThinkTick;
@@ -45,6 +50,12 @@ namespace PocketFootball.Sim
         public int HuddleNumber;                                                             // counts huddles (a new one can follow a huddle)
         public readonly string[] Calls;                                                      // by team: the locked play id
         public readonly SortedDictionary<int, string> Suggestions = new SortedDictionary<int, string>();   // slot -> play id
+        // the live play (LivePlay.cs)
+        public int PlayTicks;
+        public string Result = "";                     // why the whistle blew: TACKLED, SACKED, INCOMPLETE, TOUCHDOWN, ...
+        public float NextLos;                          // where the next play starts (yards)
+        public bool Thrown;                            // the ball has been thrown this play
+        public readonly HashSet<int> CatchTried = new HashSet<int>();
 
         public World(GameConfig cfg, int seed)
         {
@@ -170,10 +181,12 @@ namespace PocketFootball.Sim
                 if (p.Human) { if (inputs != null) inputs.TryGetValue(p.Slot, out input); }
                 else input = Bots.Think(this, p);
                 Mover.Move(this, p, input, dt);
+                LivePlay.Act(this, p, input);
             }
             Mover.Bump(this);
             Mover.Bounds(this);
             Ball.Step(this, dt);
+            LivePlay.Step(this);
             Huddle.Step(this);
             Tick++;
         }
@@ -195,6 +208,7 @@ namespace PocketFootball.Sim
             Mix((int)Rng.State);
             Mix(Offense);
             Mix((int)Phase); Mix(PhaseTicks); Mix(HuddleNumber);
+            Mix(PlayTicks); MixS(Result); MixF(NextLos); MixF(LineOfScrimmageX); Mix(Thrown ? 1 : 0);
             foreach (var c in Calls) MixS(c);
             foreach (var kv in Suggestions) { Mix(kv.Key); MixS(kv.Value); }
             foreach (var p in Players)
@@ -202,6 +216,7 @@ namespace PocketFootball.Sim
                 Mix(p.Slot); Mix(p.Team); Mix(p.Spot); Mix(p.Number); Mix(p.Human ? 1 : 0);
                 MixF(p.X); MixF(p.Z); MixF(p.VX); MixF(p.VZ); MixF(p.Stamina);
                 Mix(p.Tired ? 1 : 0); Mix(p.OutOfBounds ? 1 : 0);
+                Mix(p.TackleCooldown); Mix(p.StumbleTicks); Mix(p.JukeTicks); Mix(p.JukeCooldown); Mix(p.RouteIndex);
                 MixF(p.GoalX); MixF(p.GoalZ); Mix(p.NextThinkTick);
             }
             Mix((int)Ball.State); Mix(Ball.Carrier);

@@ -1,5 +1,5 @@
 # Runs the built exe once per fixture and saves .shots\<fixture>.png
-param([string[]]$Fixtures = @('lineup', 'field_goal_line', 'ball_flight', 'bots_wander', 'huddle_called'))
+param([string[]]$Fixtures = @('lineup', 'field_goal_line', 'ball_flight', 'bots_wander', 'huddle_called', 'live_play'))
 . (Join-Path $PSScriptRoot 'env.ps1')
 $exe = Join-Path $PROJ 'Builds\Windows\PocketFootball.exe'
 $shots = Join-Path $PROJ '.shots'
@@ -11,6 +11,7 @@ foreach ($f in $Fixtures) {
         'ball_flight'     { @('-throw-demo','12','-warmup','24') }
         'bots_wander'     { @('-wander','-warmup','240') }
         'huddle_called'   { @('-called-demo','-warmup','2') }
+        'live_play'       { @('-warmup','585') }
         default           { }
     })
     $p = Start-Process -FilePath $exe -ArgumentList (@('-fixture',$f,'-seed','1','-bind','127.0.0.1') + $extra + @('-shots',"`"$shots`"",'-quit-after-shots','-screen-width','1920','-screen-height','1080','-screen-fullscreen','0','-logFile',"`"$LOGS\shots-$f.log`"")) -PassThru

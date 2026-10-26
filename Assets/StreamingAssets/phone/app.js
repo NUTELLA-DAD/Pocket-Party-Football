@@ -65,7 +65,7 @@
 
   document.addEventListener('visibilitychange', function () {
     if (document.visibilityState === 'visible' && wantJoin && !ws) { retryMs = RETRY_MIN_MS; connect(); }
-    if (document.visibilityState === 'hidden') releaseStick();
+    if (document.visibilityState === 'hidden') { releaseStick(); if (window.PPLayouts) window.PPLayouts.releaseAll(); }
   });
 
   function onErr(text) {
@@ -102,11 +102,28 @@
     line.classList.toggle('warn', !!(msg.oob || msg.tired));
     line.textContent = msg.oob ? 'Out of bounds! Get back on the field.'
       : msg.tired ? 'Out of breath! Sprint comes back soon.'
-      : 'Run with the stick. Hold SPRINT to go faster.';
+      : baseLine;
+  }
+
+  // the buttons for this moment of a play: drawn by layouts.js into #btnBox; 'walk' shows the plain walking buttons
+  var baseLine = 'Run with the stick. Hold SPRINT to go faster.';
+  if (window.PPLayouts) window.PPLayouts.mount($('btnBox'), send, function () { return aid; });
+  function playLayout(msg) {
+    var r = window.PPLayouts ? window.PPLayouts.show(msg.layout, { receivers: msg.receivers || [], line: msg.line }) : null;
+    var play = !!r;
+    $('btnBox').classList.toggle('hidden', !play);
+    $('walkBtns').classList.toggle('hidden', play);
+    var pad = document.querySelector('#playView .pad');
+    if (pad) pad.classList.toggle('no-stick', play && r.stick === false);
+    baseLine = play ? r.line : 'Run with the stick. Hold SPRINT to go faster.';
+    $('line').textContent = baseLine;
+    show('playView');
   }
 
   function onUi(msg) {
     aid = msg.aid;
+    if (window.PPLayouts && window.PPLayouts.names.indexOf(msg.layout) >= 0) { playLayout(msg); return; }
+    if (msg.layout === 'walk') playLayout({ layout: 'none' });
     if (msg.layout === 'pick') show('pickView');
     else if (msg.layout === 'walk') show('playView');
     else if (msg.layout === 'huddle') show('huddleView');
