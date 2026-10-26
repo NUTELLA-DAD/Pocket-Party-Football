@@ -468,14 +468,20 @@ namespace PocketFootball.Boot
             if (Photo != null) Hud.Scoreboard(cfg, Photo.Score, Photo.Quarter, Photo.Clock, Photo.Down, s);
             else Hud.Scoreboard(cfg, World.Score, "1ST", "", Downs.On(World) ? Downs.DownText(World) : "", s);
 
-            // the people: a cyan triangle over your player; shape badges over receivers (photo scenes for now)
+            // the people: a small team-coloured triangle over each person's player (no name, so it hides nothing);
+            // shape badges over receivers (photo scenes for now)
             if (cam != null)
                 foreach (var p in World.Players)
                 {
                     Vector3 sp = cam.WorldToScreenPoint(Players.HeadPosition(p.Slot) + Vector3.up * 0.55f);
                     if (sp.z <= 0) continue;
-                    if (p.Human && !Hud.EdgePortrait(cam, Players.HeadPosition(p.Slot), Colors.Hex(cfg.teams[p.Team].color), p.Number, s))
-                        Hud.Pointer(new Vector2(sp.x, Screen.height - sp.y), s);
+                    if (p.Human)
+                    {
+                        var tc = Colors.Hex(cfg.teams[p.Team].color);
+                        var seat = Photo == null ? Roster[p.Slot] : null;
+                        if (!Hud.EdgePortrait(cam, Players.HeadPosition(p.Slot), tc, p.Number, s))
+                            Hud.Pointer(new Vector2(sp.x, Screen.height - sp.y), tc, p.BotHelp || (seat != null && !seat.Connected), s);
+                    }
                     if (Photo == null && LivePlay.On(World) && (World.Phase == Phase.Set || World.Phase == Phase.Live) && !World.Thrown && p.Team == World.Offense)
                     {
                         int k = cfg.play.receivers.IndexOf(p.Spot);
@@ -511,25 +517,26 @@ namespace PocketFootball.Boot
                 GUI.Label(br, tv, banner);
             }
 
-            // name plates over people (bots wear their numbers); FIND ME doubles the plate; OUT past the lines
+            // name plates only while FIND ME is on (with the beam and the ring flash), and a small OUT past the lines; the rest of
+            // the time the triangle is enough and the name would cover the play (Kenny's playtest note)
             if (cam == null) return;
             float now = Time.unscaledTime;
             foreach (var p in World.Players)
             {
                 var seat = p.Human ? Roster[p.Slot] : null;
-                if (seat == null && !p.OutOfBounds) continue;
+                bool find = seat != null && findUntil.TryGetValue(p.Slot, out float until) && until > now;
+                if (!find && !p.OutOfBounds) continue;
                 Vector3 sp = cam.WorldToScreenPoint(Players.HeadPosition(p.Slot) + Vector3.up * 1.1f);
                 if (sp.z <= 0) continue;
-                bool find = findUntil.TryGetValue(p.Slot, out float until) && until > now;
-                string label = seat != null ? seat.Name + (seat.Connected ? "" : " ...") : p.Number.ToString();
+                string label = find ? seat.Name + (seat.Connected ? "" : " ...") : p.Number.ToString();
+                if (find && p.BotHelp) label += " (BOT)";   // a bot plays for a person who put the phone down
                 if (p.OutOfBounds) label += " OUT";
-                if (p.BotHelp) label += " (BOT)";   // a bot plays for a person who put the phone down
-                plate.fontSize = Mathf.RoundToInt(cfg.view.plateFontPx * s * (find ? 2f : 1f));
+                plate.fontSize = Mathf.RoundToInt(cfg.view.plateFontPx * s);
                 var size = plate.CalcSize(new GUIContent(label));
                 var r = new Rect(sp.x - size.x * 0.5f, Screen.height - sp.y - size.y, size.x, size.y);
                 var team = p.Team >= 0 && p.Team < cfg.teams.Count ? cfg.teams[p.Team] : null;
                 GUI.color = team != null ? Colors.Hex(team.color) : Color.grey;
-                if (p.Human) GUI.DrawTexture(r, Texture2D.whiteTexture);
+                if (find) GUI.DrawTexture(r, Texture2D.whiteTexture);
                 GUI.color = Color.white;
                 GUI.Label(r, label, plate);
             }
