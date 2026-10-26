@@ -94,14 +94,15 @@ Actions the game acts on today (`PhoneSource.OnButton`):
 | `sprint` | Held: sprint |
 | `block` | Held: block |
 | `hike` | QB starts the play |
-| `juke`, `spin` | Juke (spin is a juke until WS-04) |
+| `juke` | Juke |
 | `tackle`, `dive` | Tackle (dive is a tackle until WS-03) |
 | `throw` | Throws on **release** to `tgt` |
 | `scramble` | Accepted, does nothing (the QB runs with the stick) |
 | `call` | WS-05, `FEATURES.receiving`: a receiver's CALL FOR IT (see `call` below). Ignored for non-receivers and after the throw |
 | `catch` | WS-05, `FEATURES.receiving`: the CATCH timing tap (`Sim/Receiving.cs`) |
+| `spin`, `stiff`, `divein` | WS-04, `FEATURES.carriermoves`: the ball carrier's SPIN, STIFF ARM and DIVE (`Sim/CarrierMoves.cs`; a DIVE only works near the goal line). Ignored without the ball |
 
-Actions the page already sends but the game ignores (reserved for the workstream named): `stiff` (WS-04), `swim`, `bull`, `swat`, `jump` (WS-03).
+Actions the page already sends but the game ignores (reserved for the workstream named): `swim`, `bull`, `swat`, `jump` (WS-03).
 
 ### `pick`
 `{team: int}`, an index into `teams`. The person takes a bot's spot on that team; the spot left behind goes back to a bot. Team full of people: `err`.

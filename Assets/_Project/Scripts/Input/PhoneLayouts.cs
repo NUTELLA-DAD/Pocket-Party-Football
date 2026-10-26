@@ -4,7 +4,7 @@ namespace PocketFootball.Input
 {
     // Which buttons a person's phone shows at this moment of the game (M1-f). The phone draws them (layouts.js):
     //   huddle  the playbook (only your team's)          qbpre   HIKE, FIND ME
-    //   qb      a button per receiver shape, SCRAMBLE    carrier SPRINT, JUKE, SPIN, STIFF ARM
+    //   qb      a button per receiver shape, SCRAMBLE    carrier SPRINT, JUKE, SPIN, STIFF ARM, DIVE
     //   route   SPRINT, CALL FOR IT, CATCH               block   BLOCK (hold), SPRINT
     //   rush    SWIM, BULL RUSH, TACKLE, SWAT            lb      SPRINT, TACKLE, DIVE TACKLE, SWAT
     //   cover   SPRINT, TACKLE, JUMP, DIVE TACKLE        wait    FIND ME (after the whistle)

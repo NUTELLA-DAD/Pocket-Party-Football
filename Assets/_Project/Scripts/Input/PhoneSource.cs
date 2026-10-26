@@ -22,6 +22,7 @@ namespace PocketFootball.Input
         bool findPressed, sprintHeld, blockHeld, hikePressed, jukePressed, tacklePressed, lob;
         int throwTo;
         bool callPressed, catchPressed;   // WS-05
+        CarrierMove movePressed;          // WS-04: SPIN / STIFF ARM / DIVE
 
         public PhoneSource(Seat seat) { Seat = seat; }
 
@@ -40,7 +41,7 @@ namespace PocketFootball.Input
                 case "sprint": sprintHeld = down; break;
                 case "block": blockHeld = down; break;
                 case "hike": if (down) hikePressed = true; break;
-                case "juke": case "spin": if (down) jukePressed = true; break;
+                case "juke": if (down) jukePressed = true; break;
                 case "tackle": case "dive": if (down) tacklePressed = true; break;
                 case "throw":
                     if (down) return true;                     // (the throw goes on release: tap = bullet, hold = lob)
@@ -52,6 +53,9 @@ namespace PocketFootball.Input
                 case "scramble": break;                        // (the QB just runs with the stick)
                 case "call": if (down) callPressed = true; break;     // WS-05: CALL FOR IT
                 case "catch": if (down) catchPressed = true; break;   // WS-05: CATCH
+                case "spin": if (down) movePressed = CarrierMove.Spin; break;           // WS-04
+                case "stiff": if (down) movePressed = CarrierMove.StiffArm; break;      // WS-04
+                case "divein": if (down) movePressed = CarrierMove.Dive; break;         // WS-04 (the carrier's dive; "dive" is DIVE TACKLE)
                 default: return false;
             }
             return true;
@@ -79,9 +83,11 @@ namespace PocketFootball.Input
                 MoveX = stickX, MoveZ = -stickY, Sprint = sprintHeld, Block = blockHeld,
                 Hike = hikePressed, Juke = jukePressed, Tackle = tacklePressed, Throw = throwTo, Lob = lob,
                 Call = callPressed, Catch = catchPressed,   // WS-05
+                Move = movePressed,                         // WS-04
             };
             hikePressed = jukePressed = tacklePressed = false;
             callPressed = catchPressed = false;            // WS-05
+            movePressed = CarrierMove.None;                // WS-04
             throwTo = 0; lob = false;
             return i;
         }
