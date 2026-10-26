@@ -69,6 +69,7 @@ namespace PocketFootball.Boot
             h.marks = new Markings(cfg, baseMat);
             h.StartServer(args.Bind);
             h.FillWithBots();
+            GamepadHost.Attach(h, cfg);   // WS-14: Xbox pads join as players (FEATURES.gamepad)
             if (args.Wander) h.World.BotsWander = true;
             if (!args.LookX.HasValue) rig.SetLookAtX(h.World.LineOfScrimmageX);
             if (args.ThrowDemo.HasValue) h.World.Throw(h.World.Ball.X + h.World.Dir * args.ThrowDemo.Value, h.World.Ball.Z, true);
