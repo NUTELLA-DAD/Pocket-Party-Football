@@ -70,7 +70,7 @@ namespace PocketFootball.Tests.EditMode
             Assert.IsTrue(cfg.features.ContainsKey("carriermoves"), "FEATURES.carriermoves is in game.json");
             Assert.IsTrue(cfg.features.ContainsKey("fumbles"), "FEATURES.fumbles is in game.json");
             Assert.IsFalse(cfg.Feature("carriermoves"), "off until the laptop turns it on and re-pins");
-            Assert.IsFalse(cfg.Feature("fumbles"), "off until the laptop turns it on and re-pins");
+            Assert.IsTrue(cfg.Feature("fumbles"), "on in game.json (the merge captain turned it on and re-pinned)");
             Assert.AreEqual("NO_CARRIERMOVES", ConfigLoader.EnvName("carriermoves"));
             Assert.AreEqual("NO_FUMBLES", ConfigLoader.EnvName("fumbles"));
         }
@@ -310,6 +310,7 @@ namespace PocketFootball.Tests.EditMode
         public void NoFumbleInABotGameWithTheSwitchOffEvenAtFullChance()
         {
             var cfg = ConfigTests.Load();
+            cfg.features["fumbles"] = false;
             cfg.carrier.fumbleChance = 1f; cfg.carrier.bigHitSpeedYdS = 0f;
             var w = WorldTests.Full(cfg);
             for (int i = 0; i < cfg.sim.tickHz * 180; i++)
@@ -325,8 +326,11 @@ namespace PocketFootball.Tests.EditMode
         public void TheSwitchesOffLeaveTheGameExactlyAsItWas()
         {
             // the same seeded bot game, with the carrier numbers turned right up but both switches off, hashes the same
-            var plain = WorldTests.Full(ConfigTests.Load(), 2);
+            var off = ConfigTests.Load();
+            off.features["carriermoves"] = false; off.features["fumbles"] = false;
+            var plain = WorldTests.Full(off, 2);
             var cfg = ConfigTests.Load();
+            cfg.features["carriermoves"] = false; cfg.features["fumbles"] = false;
             cfg.carrier.fumbleChance = 1f; cfg.carrier.bigHitSpeedYdS = 0f; cfg.carrier.spinTackleMul = 0f; cfg.carrier.botMoveYd = 50f;
             var tuned = WorldTests.Full(cfg, 2);
             for (int i = 0; i < cfg.sim.tickHz * 120; i++)

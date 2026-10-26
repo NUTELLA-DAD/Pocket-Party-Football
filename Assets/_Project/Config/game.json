@@ -342,7 +342,7 @@
     "clock": true,
     "lobby": false,
     "carriermoves": false,
-    "fumbles": false,
+    "fumbles": true,
     "kicking": false
   }
 }
