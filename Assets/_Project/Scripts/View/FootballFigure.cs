@@ -134,11 +134,12 @@ namespace PocketFootball.View
             string num = number.ToString();
             foreach (float s in new[] { 1f, -1f })
             {
-                var c = new Vector3(0, shY + 2, s * 19f * W);
-                var r = new Vector3(17.5f * W, 12.5f * T, 17f * W);
+                float padW = Mathf.Max(W, 1.12f);   // (QBs and kickers get full-size pads: never narrower than the helmet)
+                var c = new Vector3(0, shY + 2, s * 20f * padW);
+                var r = new Vector3(18f * padW, 12.5f * T, 18f * padW);
                 k.Ellipsoid(c, r, team);
                 var top = FigureKit.OnEllipsoid(c, r, Quaternion.identity, new Vector3(0, 0.55f, s), s);
-                Number(k, top, num, 12.5f * Mathf.Lerp(1f, W, 0.5f), 3.4f, 0f, 0f, st.NumberEdge, white);
+                Number(k, top, num, 12.5f * Mathf.Lerp(1f, padW, 0.5f), 3.4f, 0f, 0f, st.NumberEdge, white);
             }
             // the numbers, chest and back: big, white with a team-trim edge (the back reads left to right from behind)
             Number(k, FigureKit.OnLathe(body, 0f), num, 21f, 5.4f, 0f, 85.5f, st.NumberEdge, white);
@@ -173,17 +174,18 @@ namespace PocketFootball.View
             var faceC = new Vector3(8, 141, 0);
             var faceR = new Vector3(17, 19, 18.5f);
             k.Ellipsoid(faceC, faceR, skin, 12, 20);
-            Color iris = Colors.Hex("#3a2416");
+            Color iris = Colors.Hex("#6b3e22");
             foreach (float s in new[] { 1f, -1f })
             {
                 var eye = FigureKit.OnEllipsoid(faceC, faceR, Quaternion.identity, new Vector3(1f, 0.05f, 0f), 1f);
                 float x = s * 8.2f, y = 1.5f;
-                k.Spot(eye, new Vector2(x, y), new Vector2(6.2f, 7.6f), 0, 0.3f, white, 16, FigureKit.Gloss);
-                k.Spot(eye, new Vector2(x + s * 0.5f, y - 0.5f), new Vector2(4.7f, 6f), 0, 0.55f, iris, 14, FigureKit.Paint);
-                k.Spot(eye, new Vector2(x + s * 0.5f, y - 0.7f), new Vector2(2.7f, 3.7f), 0, 0.7f, black, 12, FigureKit.Paint);
-                k.Spot(eye, new Vector2(x - s * 1f, y + 1.8f), new Vector2(1.4f, 1.5f), 0, 0.85f, white, 10, FigureKit.Gloss);
-                // a determined brow
-                k.Stroke(eye, new[] { new Vector2(x - s * 5.5f, y + 6.4f), new Vector2(x + s * 4.6f, y + 8.8f) }, new[] { 2.8f, 1.9f }, 0.5f, Colors.Hex("#3b2a20"));
+                // (concept 01: big whites, a brown iris, a small pupil and a glint, under a heavy slanted brow)
+                k.Spot(eye, new Vector2(x, y), new Vector2(6.6f, 7.8f), 0, 0.3f, white, 16, FigureKit.Gloss);
+                k.Spot(eye, new Vector2(x + s * 0.8f, y - 0.6f), new Vector2(4.4f, 5.6f), 0, 0.55f, iris, 14, FigureKit.Paint);
+                k.Spot(eye, new Vector2(x + s * 0.8f, y - 0.8f), new Vector2(2f, 2.8f), 0, 0.7f, black, 12, FigureKit.Paint);
+                k.Spot(eye, new Vector2(x - s * 0.6f, y + 1.8f), new Vector2(1.5f, 1.6f), 0, 0.85f, white, 10, FigureKit.Gloss);
+                // a determined brow: thick, low at the nose, rising outward
+                k.Stroke(eye, new[] { new Vector2(x - s * 6f, y + 6f), new Vector2(x + s * 5.5f, y + 9.6f) }, new[] { 3.8f, 2.6f }, 0.5f, Colors.Hex("#2e2018"));
             }
             var mouth = FigureKit.OnEllipsoid(faceC, faceR, Quaternion.identity, new Vector3(1f, -0.35f, 0f), 1f);
             k.Stroke(mouth, new[] { new Vector2(-3.5f, 0.8f), new Vector2(0, -0.4f), new Vector2(3.5f, 0.8f) }, new[] { 1.2f, 1.5f, 1.2f }, 0.4f, Colors.Hex("#5a2a20"));
@@ -338,7 +340,7 @@ namespace PocketFootball.View
                 case PoseKind.Stand: return new P { armL = 4, armLx = 10, foreL = 12, armR = 4, armRx = 10, foreR = 12, thighLx = 3, thighRx = 3 };
                 case PoseKind.Ready: return new P { drop = 13, lean = 24, head = -14, armL = 25, armLx = 18, foreL = 45, armR = 25, armRx = 18, foreR = 45, thighL = 18, thighLx = 9, shinL = -30, thighR = 18, thighRx = 9, shinR = -30 };
                 // a lineman's set (concept 01's 68 and 64): low and wide, chest forward, gloves out in front
-                case PoseKind.Stance: return new P { drop = 19, lean = 36, head = -26, armL = 58, armLx = 36, foreL = 38, armR = 58, armRx = 36, foreR = 38, thighL = 52, thighLx = 24, shinL = -70, thighR = 52, thighRx = 24, shinR = -70 };
+                case PoseKind.Stance: return new P { drop = 23, lean = 44, head = -32, armL = 42, armLx = 30, foreL = 48, armR = 42, armRx = 30, foreR = 48, thighL = 62, thighLx = 30, shinL = -80, thighR = 62, thighRx = 30, shinR = -80 };
                 case PoseKind.Block: return frame % 2 == 0
                         ? new P { drop = 20, lean = 42, head = -30, armL = 82, armLx = 10, foreL = 12, armR = 82, armRx = 10, foreR = 12, thighL = 48, thighLx = 10, shinL = -55, thighR = -12, thighRx = 10, shinR = -24 }
                         : new P { drop = 18, lean = 46, head = -32, armL = 92, armLx = 10, foreL = 4, armR = 92, armRx = 10, foreR = 4, thighL = -12, thighLx = 10, shinL = -24, thighR = 48, thighRx = 10, shinR = -55 };   // the shove: arms out, legs driving
