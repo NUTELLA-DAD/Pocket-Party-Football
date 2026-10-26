@@ -126,10 +126,10 @@ namespace PocketFootball.Editor
             var grade = Get<ColorAdjustments>();
             grade.active = true; grade.saturation.Override(6f); grade.contrast.Override(8f); grade.postExposure.Override(0.05f);
             var wb = Get<WhiteBalance>();
-            wb.active = true; wb.temperature.Override(14f); wb.tint.Override(2f);
+            wb.active = true; wb.temperature.Override(4f); wb.tint.Override(2f);   // (14 turned the white lines cream; concept 04's are white)
             var split = Get<SplitToning>();
             split.active = true;
-            split.highlights.Override(new Color(0.66f, 0.58f, 0.46f)); split.shadows.Override(new Color(0.46f, 0.5f, 0.6f)); split.balance.Override(-10f);
+            split.highlights.Override(new Color(0.6f, 0.58f, 0.53f)); split.shadows.Override(new Color(0.46f, 0.5f, 0.6f)); split.balance.Override(-10f);
             var vig = Get<Vignette>();
             vig.active = true; vig.intensity.Override(0.22f); vig.smoothness.Override(0.5f); vig.color.Override(new Color(0.2f, 0.16f, 0.1f));
             foreach (var c in vp.components) EditorUtility.SetDirty(c);
