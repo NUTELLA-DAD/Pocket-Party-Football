@@ -138,6 +138,7 @@ namespace PocketFootball.Sim
             int most = 0;
             foreach (var kv in Thumbs(w, team)) if (kv.Value > most) { best = kv.Key; most = kv.Value; }
             if (best != null) return best;
+            string coach = global::PocketFootball.Sim.BotCoach.Call(w, team); if (coach != null) return coach;   // WS-06: the situational coach (FEATURES.botcoach)
             string kick = Kicking.BotCall(w, team); if (kick != null) return kick;   // WS-01: the bot kicker's call
             var book = Playbook(w, team);
             return book.Count > 0 ? book[w.Rng.Below(book.Count)].id : "";

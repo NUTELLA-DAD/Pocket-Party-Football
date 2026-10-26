@@ -24,6 +24,7 @@ namespace PocketFootball.Sim
         public NetConfig net = new NetConfig();
         public ViewConfig view = new ViewConfig();
         public AnimConfig anim = new AnimConfig();
+        public CoachConfig coach = new CoachConfig();   // WS-06 (BotCoach.cs)
         public EventsConfig events = new EventsConfig();   // WS-00 (Events.cs)
         public ReplayConfig replay = new ReplayConfig();   // WS-08 (ReplayConfig.cs, View/Replay.cs)
         public ClockConfig clock = new ClockConfig();   // WS-02 (Clock.cs)
@@ -63,6 +64,15 @@ namespace PocketFootball.Sim
         // helps a person who has been idle idleTakeoverS during a live play
         public float blockReachYd, blockedSpeedFrac, shedAfterS, shedFreeS, rushAroundYd, openYd, readDeadlineS, idleTakeoverS;
         public List<float> readTimesS = new List<float>();
+        // bots v2 (WS-06, FEATURES.botsV2, Bots.cs): a rusher this close with no block on him is pressure (throw it
+        // or scramble); at the deadline or under pressure he throws only to a man with deadlineOpenYd of space; throws
+        // miss by up to missYd + missPerYd per yard (+ pressureMissYd when pressured); longer than lobOverYd: a lob;
+        // the man it is for sees where it will land only adjustS before it comes down; he won't throw it past a defender
+        // within laneYd of the back half of the throw; a carrier within stepOutYd of a sideline with a tackler within
+        // stepOutHitYd on his infield side heads out of bounds (stepOutAheadFrac: how much he still runs upfield)
+        // escapeAfterS: before this a QB under pressure can't escape it yet
+        public float escapeAfterS;
+        public float pressureYd, deadlineOpenYd, missYd, missPerYd, pressureMissYd, lobOverYd, adjustS, laneYd, stepOutYd, stepOutHitYd, stepOutAheadFrac;
     }
 
     // One spot in a formation: back = yards from the line of scrimmage onto the team's own side, z = across.
