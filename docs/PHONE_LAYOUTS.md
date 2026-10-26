@@ -14,7 +14,7 @@
 | Receiver button | `b: "throw"` plus `tgt: "△"`; on release also `lob: true` when held 350 ms or longer (tap = bullet) |
 | Kick pad (drag up, let go) | `{ t: "kick", power: 0..1, aim: -1..1, aid }` |
 
-Actions: `find`, `hike`, `throw`, `scramble`, `sprint` (hold), `juke`, `spin`, `stiff`, `call`, `catch`, `block` (hold), `swim`, `bull`, `tackle`, `swat`, `dive`, `jump`. A layout change while a button is held sends that button's release first, so the game never sees a stuck SPRINT or BLOCK.
+Actions: `find`, `hike`, `throw`, `scramble`, `sprint` (hold), `juke`, `spin`, `stiff`, `divein`, `call`, `catch`, `block` (hold), `swim`, `bull`, `tackle`, `swat`, `dive`, `jump`. A layout change while a button is held sends that button's release first, so the game never sees a stuck SPRINT or BLOCK.
 
 ## Checking it
 `node tools/phone/layouts-test.js` (needs Node and Playwright) draws all 10 layouts in a phone-sized headless browser, checks tap = bullet, hold = lob, release on layout change and the kick message, and saves `.shots/phone-<layout>.png`. Open `tools/phone/layouts-harness.html` in a browser to click through them by hand.
