@@ -53,7 +53,7 @@ namespace PocketFootball.Sim
             if (p.Team == w.Offense)
             {
                 // WS-06: the man the pass is for keeps running and goes to meet it (v1 stopped and blocked, so led passes fell short)
-                if (V2(w) && w.Ball.State == BallState.Flying && p == Intended(w)) return To(p, w.Ball.TargetX, w.Ball.TargetZ, 1f, true);
+                if (V2(w) && w.Ball.State == BallState.Flying && p == Intended(w)) return MeetThePass(w, p);
                 if (ballOut || job == null || job.kind == "block") return Block(w, p, carrier);
                 if (job.kind == "route" && job.pts.Count > 0)
                 {
@@ -65,6 +65,7 @@ namespace PocketFootball.Sim
                 return default;
             }
             // defense
+            if (w.Ball.State == BallState.Flying && V2(w)) return DefendThePass(w, p);   // WS-06
             if (w.Ball.State == BallState.Flying) return To(p, w.Ball.TargetX, w.Ball.TargetZ, 1f, true);
             if (ballOut && carrier != null) return Pursue(w, p, carrier);
             if (job == null) return default;
@@ -149,6 +150,40 @@ namespace PocketFootball.Sim
             foreach (var d in w.Players)
                 if (d.Team != qb.Team && d.BlockedTicks == 0 && LivePlay.Dist(d, qb) <= w.Cfg.bots.pressureYd) return true;
             return false;
+        }
+
+        // The man a pass is for keeps going the way he was (that is where the QB led him); in the last adjustS before it
+        // comes down he can see where it will land and goes for that spot. So a throw that misses by more than he can
+        // make up in adjustS falls incomplete.
+        static PlayerInput MeetThePass(World w, Player p)
+        {
+            var bl = w.Ball;
+            if (Landing(w) <= w.Cfg.bots.adjustS) return To(p, bl.TargetX, bl.TargetZ, 1f, true);
+            float sp = (float)Math.Sqrt(p.VX * p.VX + p.VZ * p.VZ);
+            if (sp <= 0f) return default;
+            return new PlayerInput { MoveX = p.VX / sp, MoveZ = p.VZ / sp, Sprint = true };
+        }
+
+        // A defender with a pass in the air: if he can get to where it comes down in time, he goes for the ball;
+        // the rest close on the man it is for, to make the tackle (v1 sent everyone to the ball, so passes drew a crowd
+        // and many more interceptions).
+        static PlayerInput DefendThePass(World w, Player p)
+        {
+            var bl = w.Ball;
+            float reach = Landing(w) * w.Cfg.players.sprintSpeedYdS + w.Cfg.play.catchRadiusYd;
+            float dx = bl.TargetX - p.X, dz = bl.TargetZ - p.Z;
+            if (dx * dx + dz * dz <= reach * reach) return To(p, bl.TargetX, bl.TargetZ, 1f, true);
+            var r = Intended(w);
+            return r != null ? Pursue(w, p, r) : To(p, bl.TargetX, bl.TargetZ, 1f, true);
+        }
+
+        // Seconds until a pass in the air is down at catching height: y + vy t - g t^2 / 2 = catchHeight.
+        static float Landing(World w)
+        {
+            var bl = w.Ball;
+            var bc = w.Cfg.ball;
+            float g = bc.gravityYdS2, drop = bl.Y - bc.catchHeightYd;
+            return (bl.VY + (float)Math.Sqrt(Math.Max(0f, bl.VY * bl.VY + (g + g) * drop))) / g;
         }
 
         // The receiver a pass in the air is meant for: the offense player nearest where it comes down (the QB aside).
