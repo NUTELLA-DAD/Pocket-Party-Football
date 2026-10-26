@@ -285,19 +285,8 @@ namespace PocketFootball.Boot
             if (lockIn) BroadcastStatus();
         }
 
-        // The TV's huddle line: whether each team has called, NEVER what.
-        public static string TvLine(World w, GameConfig cfg)
-        {
-            if (!Huddle.On(w)) return "";
-            int secs = Messages.Secs(w);
-            if (w.Phase == Phase.Set && LivePlay.On(w)) return "SET   (the QB hikes)";
-            if (w.Phase == Phase.Live) return w.Intercepted ? "INTERCEPTED!" : "";
-            if (w.Phase == Phase.Whistle) return w.Result + "!" + (w.Note.Length > 0 ? "   " + w.Note : "");
-            if (w.Phase != Phase.Huddle) return "LINE UP   (next huddle in " + secs + ")";
-            var parts = new List<string> { "HUDDLE 0:" + secs.ToString("00") };
-            for (int t = 0; t < cfg.teams.Count; t++) parts.Add(cfg.teams[t].name + (Huddle.IsLocked(w, t) ? " CALLED ✓" : " ..."));
-            return string.Join("     ", parts);
-        }
+        // The TV's huddle line: whether each team has called, NEVER what. (WS-02: it lives in View/Scoreboard.cs now)
+        public static string TvLine(World w, GameConfig cfg) => Scoreboard.TvLine(w);
 
         void StepOnce()
         {
@@ -466,7 +455,7 @@ namespace PocketFootball.Boot
 
             // the scoreboard bar, top centre (real numbers come with M1-e)
             if (Photo != null) Hud.Scoreboard(cfg, Photo.Score, Photo.Quarter, Photo.Clock, Photo.Down, s);
-            else Hud.Scoreboard(cfg, World.Score, "1ST", "", Downs.On(World) ? Downs.DownText(World) : "", s);
+            else Scoreboard.Draw(World, s);   // WS-02
 
             // the people: a cyan triangle over your player; shape badges over receivers (photo scenes for now)
             if (cam != null)

@@ -211,12 +211,26 @@
     "getUpS": 0.5,
     "blockShoveS": 0.375
   },
+  "clock": {
+    "quarters": 4,
+    "quarterS": 240,
+    "halftimeAfterQuarter": 2,
+    "halftimeS": 8,
+    "runsBetweenPlays": true,
+    "stopOn": [
+      "INCOMPLETE",
+      "OUT OF BOUNDS",
+      "TOUCHDOWN",
+      "PICK SIX"
+    ]
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
     "liveplay": true,
     "downs": true,
     "intreturn": true,
-    "moves": true
+    "moves": true,
+    "clock": false
   }
 }

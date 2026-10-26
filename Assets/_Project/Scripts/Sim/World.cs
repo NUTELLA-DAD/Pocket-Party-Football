@@ -70,6 +70,7 @@ namespace PocketFootball.Sim
         // play-by-play numbers, for the bots' balance check (M1-d) and later the stats
         public int PlaysRun, YardsGained;
         public readonly SortedDictionary<string, int> Results = new SortedDictionary<string, int>(StringComparer.Ordinal);
+        public readonly ClockState GameClock = new ClockState();   // WS-02: the game clock and quarters (Clock.cs)
 
         public World(GameConfig cfg, int seed)
         {
@@ -215,6 +216,7 @@ namespace PocketFootball.Sim
             Ball.Step(this, dt);
             LivePlay.Step(this);
             Huddle.Step(this);
+            Clock.Step(this);   // WS-02
             Tick++;
         }
 
