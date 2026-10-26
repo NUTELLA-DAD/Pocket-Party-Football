@@ -32,6 +32,7 @@ namespace PocketFootball.Sim
         public CarrierConfig carrier = new CarrierConfig();   // WS-04 (CarrierMoves.cs)
         public KickingConfig kicking = new KickingConfig();   // WS-01 (Kicking.cs)
         public StadiumConfig stadium = new StadiumConfig();   // WS-10 the stadium and crowd (StadiumConfig.cs, View/Stadium.cs)
+        public AudioConfig audio = new AudioConfig();   // WS-09 sound on the TV (AudioConfig.cs, View/Audio.cs)
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 
