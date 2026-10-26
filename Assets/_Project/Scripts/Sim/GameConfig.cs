@@ -33,6 +33,7 @@ namespace PocketFootball.Sim
         public KickingConfig kicking = new KickingConfig();   // WS-01 (Kicking.cs)
         public StadiumConfig stadium = new StadiumConfig();   // WS-10 the stadium and crowd (StadiumConfig.cs, View/Stadium.cs)
         public AudiblesConfig audibles = new AudiblesConfig();   // WS-13 (Audibles.cs)
+        public StatsConfig stats = new StatsConfig();      // WS-12 (Stats.cs, View/PostGame.cs, View/Celebrations.cs)
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 
