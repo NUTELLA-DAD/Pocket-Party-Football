@@ -88,7 +88,7 @@ namespace PocketFootball.Tests.EditMode
             Run(w, (int)(cfg.huddle.seconds * cfg.sim.tickHz));
             Assert.AreEqual(Phase.Set, w.Phase);
             Assert.AreEqual("dive", w.Calls[w.Offense], "the caller never locked: the suggestion wins");
-            Assert.That(w.Calls[w.Defense], Is.EqualTo("cover3").Or.EqualTo("mblitz"), "the all-bot defense got a play");
+            Assert.AreEqual("defense", Huddle.Find(w, w.Calls[w.Defense])?.side, "the all-bot defense got a play");   // (which one: the seeded pick, or the WS-06 coach's)
         }
 
         [Test]
