@@ -23,6 +23,7 @@ namespace PocketFootball.Sim
         public NetConfig net = new NetConfig();
         public ViewConfig view = new ViewConfig();
         public AnimConfig anim = new AnimConfig();
+        public DefenseConfig defense = new DefenseConfig();   // WS-03 defender moves (DefenseMoves.cs)
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 
