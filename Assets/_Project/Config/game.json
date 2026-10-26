@@ -200,11 +200,23 @@
     "ballWidthM": 0.32,
     "meSendHz": 5
   },
+  "anim": {
+    "fps": 8,
+    "throwS": 0.5,
+    "handoffS": 0.4,
+    "secureS": 0.4,
+    "bobbleS": 0.6,
+    "reachYd": 2.5,
+    "reachS": 0.7,
+    "getUpS": 0.5,
+    "blockShoveS": 0.375
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
     "liveplay": true,
     "downs": true,
-    "intreturn": true
+    "intreturn": true,
+    "moves": true
   }
 }

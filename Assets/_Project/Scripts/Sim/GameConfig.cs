@@ -22,6 +22,7 @@ namespace PocketFootball.Sim
         public List<TeamConfig> teams = new List<TeamConfig>();
         public NetConfig net = new NetConfig();
         public ViewConfig view = new ViewConfig();
+        public AnimConfig anim = new AnimConfig();
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 
@@ -147,6 +148,15 @@ namespace PocketFootball.Sim
     public sealed class ViewConfig
     {
         public float playerHeightM, playerRadiusM, findMeS, plateFontPx, joinPanelQrPx, ballLengthM, ballWidthM, meSendHz;
+    }
+
+    // The players' moves on the TV (View/Moves.cs, FEATURES.moves): key frames per second (stepped, no wobble), how
+    // long each one-off move lasts, when a receiver puts his hands up (within reachS he'll be within reachYd of the
+    // ball coming down at catching height), when the men on the grass get up (the last getUpS of the whistle), and
+    // how often a blocker shoves.
+    public sealed class AnimConfig
+    {
+        public float fps, throwS, handoffS, secureS, bobbleS, reachYd, reachS, getUpS, blockShoveS;
     }
 
     // The field runs along X (goal line to goal line), across Z (sideline to sideline); the centre is (0, 0).
