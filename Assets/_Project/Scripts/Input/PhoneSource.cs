@@ -19,7 +19,7 @@ namespace PocketFootball.Input
         public IList<string> Shapes = new string[0];
 
         float stickX, stickY, stickAt;
-        bool findPressed, sprintHeld, hikePressed, jukePressed, tacklePressed, lob;
+        bool findPressed, sprintHeld, blockHeld, hikePressed, jukePressed, tacklePressed, lob;
         int throwTo;
 
         public PhoneSource(Seat seat) { Seat = seat; }
@@ -37,6 +37,7 @@ namespace PocketFootball.Input
             {
                 case "find": if (down) findPressed = true; break;
                 case "sprint": sprintHeld = down; break;
+                case "block": blockHeld = down; break;
                 case "hike": if (down) hikePressed = true; break;
                 case "juke": case "spin": if (down) jukePressed = true; break;
                 case "tackle": case "dive": if (down) tacklePressed = true; break;
@@ -60,7 +61,7 @@ namespace PocketFootball.Input
             return f;
         }
 
-        public void OnDisconnect() { stickX = stickY = 0; sprintHeld = false; }
+        public void OnDisconnect() { stickX = stickY = 0; sprintHeld = false; blockHeld = false; }
 
         // A stick that has gone quiet (phone locked, Wi-Fi blip) stops.
         public void ExpireStick(float now, float staleSeconds)
@@ -72,7 +73,7 @@ namespace PocketFootball.Input
         {
             var i = new PlayerInput
             {
-                MoveX = stickX, MoveZ = -stickY, Sprint = sprintHeld,
+                MoveX = stickX, MoveZ = -stickY, Sprint = sprintHeld, Block = blockHeld,
                 Hike = hikePressed, Juke = jukePressed, Tackle = tacklePressed, Throw = throwTo, Lob = lob,
             };
             hikePressed = jukePressed = tacklePressed = false;

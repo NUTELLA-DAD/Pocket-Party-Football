@@ -521,6 +521,7 @@ namespace PocketFootball.Boot
                 bool find = findUntil.TryGetValue(p.Slot, out float until) && until > now;
                 string label = seat != null ? seat.Name + (seat.Connected ? "" : " ...") : p.Number.ToString();
                 if (p.OutOfBounds) label += " OUT";
+                if (p.BotHelp) label += " (BOT)";   // a bot plays for a person who put the phone down
                 plate.fontSize = Mathf.RoundToInt(cfg.view.plateFontPx * s * (find ? 2f : 1f));
                 var size = plate.CalcSize(new GUIContent(label));
                 var r = new Rect(sp.x - size.x * 0.5f, Screen.height - sp.y - size.y, size.x, size.y);

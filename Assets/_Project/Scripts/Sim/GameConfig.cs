@@ -48,6 +48,12 @@ namespace PocketFootball.Sim
         public int thinkEveryTicks, thinkJitterTicks;
         public float wanderYd, speedFrac, arriveYd;
         public bool wander;
+        // bots v1 (M1-d): blocking (a blocker in reach slows a defender to blockedSpeedFrac; he sheds the block after
+        // shedAfterS and runs free for shedFreeS), rushing round a blocker, the QB's reads (one receiver at each
+        // readTimesS, open = no defender within openYd; at readDeadlineS he throws to the most open), and a bot that
+        // helps a person who has been idle idleTakeoverS during a live play
+        public float blockReachYd, blockedSpeedFrac, shedAfterS, shedFreeS, rushAroundYd, openYd, readDeadlineS, idleTakeoverS;
+        public List<float> readTimesS = new List<float>();
     }
 
     // One spot in a formation: back = yards from the line of scrimmage onto the team's own side, z = across.

@@ -9,7 +9,7 @@ namespace PocketFootball.Sim
     {
         public float MoveX, MoveZ;
         public bool Sprint, Find;
-        public bool Hike, Juke, Tackle;
+        public bool Hike, Juke, Tackle, Block;
         public int Throw;        // 0 = no throw; k = throw to receiver k (1-based, the order of play.receivers / shapes)
         public bool Lob;         // with Throw: high and soft, else a bullet
     }
@@ -27,6 +27,9 @@ namespace PocketFootball.Sim
         public bool OutOfBounds;
         // a live play
         public int TackleCooldown, StumbleTicks, JukeTicks, JukeCooldown, RouteIndex;
+        public int BlockedTicks, FreeTicks, IdleTicks;   // engaged by a blocker / shed the block / a person not touching the phone
+        public bool BotHelp;                              // a bot is playing for an idle person this tick
+        public bool Blocking;                             // this player is blocking this tick (a person holding BLOCK, or a bot)
         // bot v0
         public float GoalX, GoalZ;
         public int NextThinkTick;
@@ -56,6 +59,9 @@ namespace PocketFootball.Sim
         public float NextLos;                          // where the next play starts (yards)
         public bool Thrown;                            // the ball has been thrown this play
         public readonly HashSet<int> CatchTried = new HashSet<int>();
+        // play-by-play numbers, for the bots' balance check (M1-d) and later the stats
+        public int PlaysRun, YardsGained;
+        public readonly SortedDictionary<string, int> Results = new SortedDictionary<string, int>(StringComparer.Ordinal);
 
         public World(GameConfig cfg, int seed)
         {
@@ -178,12 +184,22 @@ namespace PocketFootball.Sim
             foreach (var p in Players)
             {
                 PlayerInput input = default;
-                if (p.Human) { if (inputs != null) inputs.TryGetValue(p.Slot, out input); }
+                p.BotHelp = false;
+                if (p.Human)
+                {
+                    if (inputs != null) inputs.TryGetValue(p.Slot, out input);
+                    bool idle = input.MoveX == 0f && input.MoveZ == 0f && !input.Sprint && !input.Hike && !input.Juke && !input.Tackle && !input.Block && input.Throw == 0;
+                    p.IdleTicks = idle ? p.IdleTicks + 1 : 0;
+                    // a person who has put the phone down: a bot plays for them until they touch it again
+                    if (Phase == Phase.Live && p.IdleTicks >= Cfg.bots.idleTakeoverS * Cfg.sim.tickHz) { input = Bots.Think(this, p); p.BotHelp = true; }
+                }
                 else input = Bots.Think(this, p);
+                p.Blocking = input.Block;
                 Mover.Move(this, p, input, dt);
                 LivePlay.Act(this, p, input);
             }
             Mover.Bump(this);
+            Blocking.Step(this);
             Mover.Bounds(this);
             Ball.Step(this, dt);
             LivePlay.Step(this);
@@ -208,7 +224,7 @@ namespace PocketFootball.Sim
             Mix((int)Rng.State);
             Mix(Offense);
             Mix((int)Phase); Mix(PhaseTicks); Mix(HuddleNumber);
-            Mix(PlayTicks); MixS(Result); MixF(NextLos); MixF(LineOfScrimmageX); Mix(Thrown ? 1 : 0);
+            Mix(PlayTicks); MixS(Result); MixF(NextLos); MixF(LineOfScrimmageX); Mix(Thrown ? 1 : 0); Mix(PlaysRun); Mix(YardsGained);
             foreach (var c in Calls) MixS(c);
             foreach (var kv in Suggestions) { Mix(kv.Key); MixS(kv.Value); }
             foreach (var p in Players)
@@ -217,6 +233,7 @@ namespace PocketFootball.Sim
                 MixF(p.X); MixF(p.Z); MixF(p.VX); MixF(p.VZ); MixF(p.Stamina);
                 Mix(p.Tired ? 1 : 0); Mix(p.OutOfBounds ? 1 : 0);
                 Mix(p.TackleCooldown); Mix(p.StumbleTicks); Mix(p.JukeTicks); Mix(p.JukeCooldown); Mix(p.RouteIndex);
+                Mix(p.BlockedTicks); Mix(p.FreeTicks); Mix(p.IdleTicks);
                 MixF(p.GoalX); MixF(p.GoalZ); Mix(p.NextThinkTick);
             }
             Mix((int)Ball.State); Mix(Ball.Carrier);

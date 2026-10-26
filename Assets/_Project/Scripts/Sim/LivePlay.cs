@@ -40,7 +40,7 @@ namespace PocketFootball.Sim
             w.Thrown = false;
             w.Result = "";
             w.CatchTried.Clear();
-            foreach (var p in w.Players) { p.RouteIndex = 0; p.TackleCooldown = 0; p.StumbleTicks = 0; p.JukeTicks = 0; p.JukeCooldown = 0; }
+            foreach (var p in w.Players) { p.RouteIndex = 0; p.TackleCooldown = 0; p.StumbleTicks = 0; p.JukeTicks = 0; p.JukeCooldown = 0; p.BlockedTicks = 0; p.FreeTicks = 0; }
         }
 
         public static void Whistle(World w, string result, float spotX)
@@ -51,6 +51,11 @@ namespace PocketFootball.Sim
             w.PhaseTicks = Huddle.Ticks(w, w.Cfg.play.whistleS);
             w.Result = result;
             w.NextLos = result == "TOUCHDOWN" ? w.Cfg.formation.lineOfScrimmageXYd : (spotX < -lim ? -lim : spotX > lim ? lim : spotX);
+            // the numbers: yards gained this play (a touchdown counts to the goal line)
+            float end = result == "TOUCHDOWN" ? f.GoalLineX * w.Cfg.formation.attackDir : w.NextLos;
+            w.PlaysRun++;
+            w.YardsGained += (int)Math.Round((end - w.LineOfScrimmageX) * w.Cfg.formation.attackDir);
+            w.Results[result] = (w.Results.TryGetValue(result, out int n) ? n : 0) + 1;
         }
 
         // One player's buttons this tick (after it moved).
@@ -95,7 +100,7 @@ namespace PocketFootball.Sim
             if (w.Throw(target.X + target.VX * t, target.Z + target.VZ * t, lob)) w.Thrown = true;
         }
 
-        static float Dist(Player a, Player b) { float dx = a.X - b.X, dz = a.Z - b.Z; return (float)Math.Sqrt(dx * dx + dz * dz); }
+        public static float Dist(Player a, Player b) { float dx = a.X - b.X, dz = a.Z - b.Z; return (float)Math.Sqrt(dx * dx + dz * dz); }
 
         static void TryTackle(World w, Player tackler, Player carrier)
         {
@@ -132,19 +137,11 @@ namespace PocketFootball.Sim
                 var runner = SpotOf(w, w.Offense, play.runner);
                 if (runner != null && Dist(runner, qb) <= c.handoffYd) { w.Ball.GiveTo(runner, w.Cfg.ball); carrier = runner; }
             }
-            // a bot QB throws to the most open receiver
-            if (carrier != null && carrier == qb && !qb.Human && !w.Thrown && (play == null || play.runner < 0) && w.PlayTicks >= Huddle.Ticks(w, c.botThrowS))
+            // a bot QB (or one helping an idle person) reads his receivers
+            if (carrier != null && carrier == qb && (!qb.Human || qb.BotHelp) && !w.Thrown && (play == null || play.runner < 0))
             {
-                Player best = null; float bestOpen = -1f;
-                for (int k = 1; k <= c.receivers.Count; k++)
-                {
-                    var r = Receiver(w, k);
-                    if (r == null) continue;
-                    float open = float.MaxValue;
-                    foreach (var d in w.Players) if (d.Team != w.Offense) open = Math.Min(open, Dist(d, r));
-                    if (open > bestOpen) { bestOpen = open; best = r; }
-                }
-                if (best != null) ThrowTo(w, best, Dist(best, qb) > w.Cfg.bots.wanderYd);
+                var target = Bots.QbRead(w, qb, play);
+                if (target != null) ThrowTo(w, target, Dist(target, qb) > w.Cfg.bots.wanderYd);
             }
 
             // catches: the ball coming down within reach

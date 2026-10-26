@@ -51,7 +51,20 @@
     "wanderYd": 12,
     "speedFrac": 0.5,
     "arriveYd": 1,
-    "wander": false
+    "wander": false,
+    "blockReachYd": 1.7,
+    "blockedSpeedFrac": 0.22,
+    "shedAfterS": 2.6,
+    "shedFreeS": 1.2,
+    "rushAroundYd": 2.2,
+    "openYd": 3,
+    "readTimesS": [
+      0.9,
+      1.7,
+      2.5
+    ],
+    "readDeadlineS": 3.2,
+    "idleTakeoverS": 5
   },
   "formation": {
     "lineOfScrimmageXYd": -15,
@@ -110,7 +123,7 @@
     "catchRadiusYd": 1.5,
     "catchMaxHeightYd": 2.8,
     "catchChanceOffense": 0.9,
-    "catchChanceDefense": 0.3,
+    "catchChanceDefense": 0.1,
     "tackleReachYd": 1.4,
     "tackleBase": 0.55,
     "tackleSpeedBonus": 0.03,
@@ -130,11 +143,11 @@
       1
     ],
     "shapes": [
-      "△",
-      "○",
-      "□",
-      "◇",
-      "☆"
+      "???",
+      "???",
+      "???",
+      "???",
+      "???"
     ]
   },
   "baseline": {
