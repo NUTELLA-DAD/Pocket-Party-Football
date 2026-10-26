@@ -126,9 +126,11 @@ namespace PocketFootball.View
                 Label(new Rect(r.x + teamW * 0.62f, y, teamW * 0.38f, h), score[t].ToString(), Mathf.RoundToInt(46 * s), Color.white);
                 x += teamW + 2 * s;
             }
+            x += 4 * s;
             Box(new Rect(x, y, infoW, h), new Color(0.12f, 0.12f, 0.14f, 0.95f));
             Label(new Rect(x, y, infoW, h), quarter + "  " + clock, Mathf.RoundToInt(30 * s), Color.white);
-            x += infoW + 2 * s;
+            x += infoW + 6 * s;
+            Box(new Rect(x, y + 3 * s, 2 * s, h - 6 * s), new Color(1f, 1f, 1f, 0.35f));
             Box(new Rect(x, y, downW, h), new Color(0.16f, 0.16f, 0.18f, 0.95f));
             Label(new Rect(x, y, downW, h), down, Mathf.RoundToInt(30 * s), Color.white);
         }

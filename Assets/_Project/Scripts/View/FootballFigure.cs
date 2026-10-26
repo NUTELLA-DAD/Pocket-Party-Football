@@ -228,7 +228,7 @@ namespace PocketFootball.View
                 }
             }
             // the chibi head: a size bigger than the body it was built on (skinned, so the helmet and face follow)
-            fig.Head.localScale = Vector3.one * 1.14f;
+            fig.Head.localScale = Vector3.one * 1.07f;
             fig.Pose(PoseKind.Ready, 0);
             return fig;
         }
@@ -247,9 +247,9 @@ namespace PocketFootball.View
             switch (k)
             {
                 case PoseKind.Stand: return new P { armL = 4, armLx = 10, foreL = 12, armR = 4, armRx = 10, foreR = 12, thighLx = 3, thighRx = 3 };
-                case PoseKind.Ready: return new P { drop = 7, lean = 14, head = -8, armL = 25, armLx = 18, foreL = 45, armR = 25, armRx = 18, foreR = 45, thighL = 18, thighLx = 9, shinL = -30, thighR = 18, thighRx = 9, shinR = -30 };
+                case PoseKind.Ready: return new P { drop = 13, lean = 24, head = -14, armL = 25, armLx = 18, foreL = 45, armR = 25, armRx = 18, foreR = 45, thighL = 18, thighLx = 9, shinL = -30, thighR = 18, thighRx = 9, shinR = -30 };
                 case PoseKind.Stance: return new P { drop = 17, lean = 32, head = -22, armL = 62, armLx = 24, foreL = 22, armR = 62, armRx = 24, foreR = 22, thighL = 42, thighLx = 16, shinL = -62, thighR = 42, thighRx = 16, shinR = -62 };
-                case PoseKind.Block: return new P { drop = 13, lean = 30, head = -20, armL = 82, armLx = 10, foreL = 12, armR = 82, armRx = 10, foreR = 12, thighL = 48, thighLx = 10, shinL = -55, thighR = -12, thighRx = 10, shinR = -24 };
+                case PoseKind.Block: return new P { drop = 20, lean = 42, head = -30, armL = 82, armLx = 10, foreL = 12, armR = 82, armRx = 10, foreR = 12, thighL = 48, thighLx = 10, shinL = -55, thighR = -12, thighRx = 10, shinR = -24 };
                 case PoseKind.Throw: return new P { drop = 4, lean = -6, head = 0, armL = 62, armLx = 20, foreL = 30, armR = -150, armRx = 22, foreR = 70, thighL = 24, thighLx = 6, shinL = -18, thighR = -18, thighRx = 8, shinR = -12 };
                 case PoseKind.Carry: return frame % 2 == 0
                         ? new P { drop = 6, lean = 20, head = -10, armL = 30, armLx = 8, foreL = 100, armR = -30, armRx = 12, foreR = 70, thighL = 48, thighLx = 4, shinL = -70, thighR = -28, thighRx = 4, shinR = -40 }
@@ -257,7 +257,7 @@ namespace PocketFootball.View
                 case PoseKind.Run: return frame % 2 == 0
                         ? new P { drop = 5, lean = 16, head = -8, armL = -38, armLx = 12, foreL = 75, armR = 45, armRx = 12, foreR = 75, thighL = 46, thighLx = 4, shinL = -66, thighR = -26, thighRx = 4, shinR = -42 }
                         : new P { drop = 5, lean = 16, head = -8, armL = 45, armLx = 12, foreL = 75, armR = -38, armRx = 12, foreR = 75, thighL = -26, thighLx = 4, shinL = -42, thighR = 46, thighRx = 4, shinR = -66 };
-                case PoseKind.Backpedal: return new P { drop = 10, lean = 18, head = -10, armL = 30, armLx = 22, foreL = 60, armR = 30, armRx = 22, foreR = 60, thighL = frame % 2 == 0 ? 30 : 6, thighLx = 12, shinL = -40, thighR = frame % 2 == 0 ? 6 : 30, thighRx = 12, shinR = -40 };
+                case PoseKind.Backpedal: return new P { drop = 15, lean = 24, head = -16, armL = 30, armLx = 22, foreL = 60, armR = 30, armRx = 22, foreR = 60, thighL = frame % 2 == 0 ? 30 : 6, thighLx = 12, shinL = -40, thighR = frame % 2 == 0 ? 6 : 30, thighRx = 12, shinR = -40 };
                 case PoseKind.Dive: return new P { drop = -8, lean = 70, head = -40, armL = 160, armLx = 14, foreL = 10, armR = 160, armRx = 14, foreR = 10, thighL = -30, thighLx = 6, shinL = -30, thighR = -45, thighRx = 6, shinR = -10 };
                 case PoseKind.Catch: return new P { drop = 2, lean = -10, head = 18, armL = 165, armLx = 12, foreL = 20, armR = 165, armRx = 12, foreR = 20, thighL = 30, thighLx = 6, shinL = -50, thighR = -10, thighRx = 6, shinR = -20 };
             }

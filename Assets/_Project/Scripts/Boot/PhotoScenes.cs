@@ -73,13 +73,13 @@ namespace PocketFootball.Boot
             // defence (Chiefs): the line engaged, linebackers and backs reading
             float[] dlZ = { -1.5f, 1.5f, -4.5f, 4.5f };
             for (int i = 0; i < 4; i++) Put(w, view, away, 7 + i, los + 0.6f + (i % 2) * 0.5f + dlZ[i] * 0.18f, dlZ[i] * 1.5f - 1f, Pose.Block);
-            Put(w, view, away, 0, los + 24f, -2.5f, Pose.Ready);
-            Put(w, view, away, 1, los + 23f, -13.5f, Pose.Backpedal, -2, 0);
-            Put(w, view, away, 2, los + 19f, 20.5f, Pose.Backpedal, -2, 0);
-            Put(w, view, away, 3, los + 33f, 1f, Pose.Ready);
-            Put(w, view, away, 4, los + 34f, 20.5f, Pose.Ready);
-            Put(w, view, away, 5, los + 29f, 9f, Pose.Ready);
-            Put(w, view, away, 6, los + 30.5f, -6.5f, Pose.Ready);
+            Put(w, view, away, 0, los + 21.5f, -2.5f, Pose.Ready);          // on the TE
+            Put(w, view, away, 1, los + 21.5f, -14.5f, Pose.Backpedal, -2, 0);   // on B
+            Put(w, view, away, 2, los + 17.5f, 20f, Pose.Backpedal, -2, 0);     // on A
+            Put(w, view, away, 3, los + 30f, 1.5f, Pose.Ready);
+            Put(w, view, away, 4, los + 31f, 19.5f, Pose.Ready);
+            Put(w, view, away, 5, los + 25f, 9f, Pose.Ready);              // on the slot
+            Put(w, view, away, 6, los + 9f, -7f, Pose.Ready);
             var qb = Spot(w, home, 0);
             if (qb != null) qb.Human = true;
             rig.SetLookAtX(0f);

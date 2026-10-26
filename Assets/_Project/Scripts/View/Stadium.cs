@@ -37,7 +37,7 @@ namespace PocketFootball.View
         {
             float wallZ = side + 5.6f, x0 = -95f, x1 = 95f;
             var b = new Blocks();
-            Color wall = Colors.Hex("#1f4a33"), concrete = Colors.Hex("#9aa3a0"), seat = Colors.Hex("#4c5a58");
+            Color wall = Colors.Hex("#2f6b47"), concrete = Colors.Hex("#c9cec9"), seat = Colors.Hex("#aab3ae");
             b.Box(new Vector3(0, 0.75f, wallZ), new Vector3((x1 - x0) * 0.5f, 0.75f, 0.25f), wall);
             int rows = 26;
             var crowd = new Blocks { Flag = Looks.Gloss };
@@ -108,8 +108,8 @@ namespace PocketFootball.View
                 // the near side: bench players' backs at the bottom of the picture
                 for (int i = 0; i < 16; i++)
                 {
-                    float x = sx * (2f + i * 2.6f + Rand() * 1.0f), z = -side - 3.2f - Rand() * 1.4f;
-                    var f = FootballFigure.Create(root, team, 10 + (int)(Rand() * 80), Rand() < 0.35f ? FootballFigure.Build.Big : FootballFigure.Build.Mid, (int)(Rand() * 999), cfg.view.playerHeightM * 0.78f, mat, TeamMarks.For(team));
+                    float x = sx * (2f + i * 2.6f + Rand() * 1.0f), z = -side - 6.5f - Rand() * 1.4f;
+                    var f = FootballFigure.Create(root, team, 10 + (int)(Rand() * 80), Rand() < 0.35f ? FootballFigure.Build.Big : FootballFigure.Build.Mid, (int)(Rand() * 999), cfg.view.playerHeightM * 1.15f, mat, TeamMarks.For(team));
                     f.transform.localPosition = new Vector3(x, 0, z);
                     f.transform.localRotation = Quaternion.Euler(0, -90f + (Rand() - 0.5f) * 50f, 0);
                     f.Pose(FootballFigure.PoseKind.Stand, 0);
@@ -194,7 +194,7 @@ namespace PocketFootball.View
         public void SetMarkers(float losX, float firstX)
         {
             float m = cfg.field.yardM;
-            float z = (cfg.field.HalfWidth + cfg.field.sidelineBorderYd * 0.5f) * m;
+            float z = (cfg.field.HalfWidth + cfg.field.sidelineBorderYd) * m + 1.2f;   // on the sideline, past the white border
             markers[0].localPosition = new Vector3(losX * m, 0, z);
             markers[1].localPosition = new Vector3(firstX * m, 0, z);
             markers[2].localPosition = new Vector3(losX * m, 0, -z);

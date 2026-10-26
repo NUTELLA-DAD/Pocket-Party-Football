@@ -23,7 +23,8 @@ namespace PocketFootball.Tests.PlayMode
             var boot = GameBootstrap.Instance;
             Assert.IsNotNull(boot, "GameBootstrap did not start");
             Assert.IsNotNull(boot.Field, "no field");
-            Assert.Greater(boot.Field.transform.childCount, 40);
+            Assert.IsNotNull(boot.Field.transform.Find("Paint"), "the painted field");
+            Assert.AreEqual(22, boot.Host.Players.Count, "22 player figures on the field");
 
             var cam = Camera.main;
             Assert.IsNotNull(cam, "no main camera");

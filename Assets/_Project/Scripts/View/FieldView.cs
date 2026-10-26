@@ -102,7 +102,7 @@ namespace PocketFootball.View
                 }
 
             // the home team's mark in the middle
-            if (cfg.teams.Count > 1) Stamp(p, TeamMarks.For(cfg.teams[1]), new Vector2(px(0), pz(0)), 21f * PxPerYd, 11.5f * PxPerYd, 0.95f);
+            if (cfg.teams.Count > 1) Stamp(p, TeamMarks.For(cfg.teams[1]), new Vector2(px(0), pz(0)), 17f * PxPerYd, 14f * PxPerYd, 0.9f);
             return p.ToTexture("FieldPaint");
         }
 
