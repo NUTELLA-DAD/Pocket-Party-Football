@@ -62,11 +62,11 @@ namespace PocketFootball.View
             var st = StyleOf(teamCfg);
             float W = build == Build.Big ? 1.55f : build == Build.Slim ? 0.98f : 1.12f;
             float T = build == Build.Big ? 1.5f : build == Build.Slim ? 0.98f : 1.18f;
-            // gauntlet 3: longer legs and a taller chest under a slightly smaller helmet (about 3 heads tall, concept 01)
-            float hipY = 70f, kneeY = 38f, ankleY = 9f, neckY = 126f, shY = 117f;
+            // gauntlet 3 (concept 01): a stubby chibi build, short thick legs, a deep chest, pads wider than the big helmet
+            float hipY = 60f, kneeY = 31f, ankleY = 8f, neckY = 115f, shY = 108f;
             fig.hipY = hipY;
-            float legZ = 10f * W, armZ = 24.5f * W;
-            float elbowY = shY - 24f, wristY = shY - 43f, handY = shY - 50f;
+            float legZ = 10.5f * W, armZ = 25.5f * W;
+            float elbowY = shY - 22f, wristY = shY - 39f, handY = shY - 45f;
 
             Transform Bone(string n, Transform p, Vector3 worldAt)
             {
@@ -103,67 +103,67 @@ namespace PocketFootball.View
             {
                 float z = s * legZ;
                 On(s > 0 ? 8 : 10);   // shins
-                k.Limb(new Vector3(0, kneeY + 2, z), new Vector3(2, ankleY + 4, z), 7.6f * T, 6.2f * T, team);                 // sock
-                k.Ellipsoid(new Vector3(6, 6.5f, z), new Vector3(13f, 6.6f, 7.6f) * Mathf.Lerp(1f, T, 0.5f), team);              // cleat
-                k.Ellipsoid(new Vector3(6, 2.6f, z), new Vector3(13.6f, 2.8f, 8f) * Mathf.Lerp(1f, T, 0.5f), white);            // sole
+                k.Limb(new Vector3(0, kneeY + 2, z), new Vector3(2, ankleY + 4, z), 8.8f * T, 7.2f * T, team);                 // sock
+                k.Ellipsoid(new Vector3(6, 6.5f, z), new Vector3(14.5f, 7.2f, 8.6f) * Mathf.Lerp(1f, T, 0.5f), team);            // cleat
+                k.Ellipsoid(new Vector3(6, 2.6f, z), new Vector3(15f, 3f, 9f) * Mathf.Lerp(1f, T, 0.5f), white);                // sole
                 On(s > 0 ? 7 : 9);    // thighs
-                k.Limb(new Vector3(0, hipY, z), new Vector3(1, kneeY + 1, z), 11.5f * T, 9.2f * T, white);                       // pants
-                k.Ellipsoid(new Vector3(5, kneeY + 5, z), new Vector3(6.5f, 7f, 7.5f) * T, white);                               // knee pad
-                k.Limb(new Vector3(0, hipY - 2, z + s * 10.9f * T), new Vector3(1, kneeY + 3, z + s * 8.9f * T), 1.9f, 1.7f, st.Stripe);   // stripes
+                k.Limb(new Vector3(0, hipY, z), new Vector3(1, kneeY + 1, z), 13.5f * T, 11f * T, white);                       // pants
+                k.Ellipsoid(new Vector3(6, kneeY + 4, z), new Vector3(7.5f, 7.5f, 8.5f) * T, white);                             // knee pad
+                k.Limb(new Vector3(0, hipY - 2, z + s * 12.8f * T), new Vector3(1, kneeY + 3, z + s * 10.6f * T), 2.2f, 2f, st.Stripe);   // stripes
                 if (st.Stripe2 != st.Stripe)
-                    k.Limb(new Vector3(-2.4f, hipY - 2, z + s * 10.6f * T), new Vector3(-1.4f, kneeY + 3, z + s * 8.6f * T), 1.4f, 1.3f, st.Stripe2);
+                    k.Limb(new Vector3(-2.8f, hipY - 2, z + s * 12.5f * T), new Vector3(-1.8f, kneeY + 3, z + s * 10.3f * T), 1.6f, 1.5f, st.Stripe2);
             }
 
             // ---- hips and torso ----
             On(0);
-            k.Ellipsoid(new Vector3(0, hipY + 5, 0), new Vector3(15.5f * W, 12f, 19.5f * W), white);
-            k.Ellipsoid(new Vector3(0, hipY + 11, 0), new Vector3(15.8f * W, 2.4f, 19.8f * W), Colors.Hex("#2b2b30"));     // belt
+            k.Ellipsoid(new Vector3(0, hipY + 5, 0), new Vector3(17f * W, 12f, 21.5f * W), white);
+            k.Ellipsoid(new Vector3(0, hipY + 11, 0), new Vector3(17.3f * W, 2.4f, 21.8f * W), Colors.Hex("#2b2b30"));     // belt
             On(1);
             // a broad chest that tapers to the belt (gauntlet 3: the pads, not the helmet, set the width)
             var body = new FigureKit.Profile(Vector3.zero, new[]
             {
-                hipY + 10, 15f * W, 18.5f * W,
-                hipY + 22, 16.5f * W, 21f * W,
-                104f, 18.5f * W, 24f * W,
-                113f, 18f * W, 23.5f * W,
-                121f, 12.5f * W, 15.5f * W,
-                127f, 5f, 6f,
+                hipY + 10, 16.5f * W, 20f * W,
+                hipY + 20, 18.5f * W, 22.5f * W,
+                95f, 20.5f * W, 25f * W,
+                104f, 20f * W, 24.5f * W,
+                111f, 13.5f * W, 16.5f * W,
+                116f, 5f, 6f,
             });
             k.Lathe(body, team, 28);
             // big shoulder pads, wider than the helmet, with the "TV numbers" on top where the camera sees them
             string num = number.ToString();
             foreach (float s in new[] { 1f, -1f })
             {
-                var c = new Vector3(0, shY + 2, s * 18f * W);
-                var r = new Vector3(15f * W, 11.5f * T, 15f * W);
+                var c = new Vector3(0, shY + 2, s * 19f * W);
+                var r = new Vector3(17.5f * W, 12.5f * T, 17f * W);
                 k.Ellipsoid(c, r, team);
                 var top = FigureKit.OnEllipsoid(c, r, Quaternion.identity, new Vector3(0, 0.55f, s), s);
-                Number(k, top, num, 11.5f * Mathf.Lerp(1f, W, 0.5f), 3.2f, 0f, 0f, st.NumberEdge, white);
+                Number(k, top, num, 12.5f * Mathf.Lerp(1f, W, 0.5f), 3.4f, 0f, 0f, st.NumberEdge, white);
             }
             // the numbers, chest and back: big, white with a team-trim edge (the back reads left to right from behind)
-            Number(k, FigureKit.OnLathe(body, 0f), num, 23f, 5.4f, 0f, 93.5f, st.NumberEdge, white);
-            Number(k, FigureKit.OnLathe(body, 180f), num, 25f, 5.6f, 0f, 95f, st.NumberEdge, white);
-            k.Limb(new Vector3(0, neckY - 6, 0), new Vector3(1, neckY + 6, 0), 6.5f * T, 6f * T, skin);   // neck
+            Number(k, FigureKit.OnLathe(body, 0f), num, 21f, 5.4f, 0f, 85.5f, st.NumberEdge, white);
+            Number(k, FigureKit.OnLathe(body, 180f), num, 23f, 5.6f, 0f, 87f, st.NumberEdge, white);
+            k.Limb(new Vector3(0, neckY - 6, 0), new Vector3(1, neckY + 6, 0), 7f * T, 6.5f * T, skin);   // neck
 
             // ---- arms ----
             foreach (float s in new[] { 1f, -1f })
             {
                 float z = s * armZ;
                 On(s > 0 ? 3 : 5);
-                k.Limb(new Vector3(0, shY, z), new Vector3(1, shY - 12, z + s * 1.5f * W), 10f * T, 9.2f * T, team);             // sleeve
+                k.Limb(new Vector3(0, shY, z), new Vector3(1, shY - 12, z + s * 1.5f * W), 11f * T, 10f * T, team);              // sleeve
                 if (st.SleeveStripes)
                 {
                     // two bands round the sleeve's cuff (Chiefs red-gold-white, Roughriders white)
-                    k.Limb(new Vector3(0.8f, shY - 7.5f, z + s * 1.1f * W), new Vector3(0.9f, shY - 9f, z + s * 1.2f * W), 9.8f * T, 9.75f * T, st.Stripe2 != st.Stripe ? st.Stripe2 : white, 12, false, false);
-                    k.Limb(new Vector3(0.9f, shY - 10f, z + s * 1.3f * W), new Vector3(1f, shY - 11.4f, z + s * 1.45f * W), 9.65f * T, 9.6f * T, white, 12, false, false);
+                    k.Limb(new Vector3(0.8f, shY - 7.5f, z + s * 1.1f * W), new Vector3(0.9f, shY - 9f, z + s * 1.2f * W), 10.6f * T, 10.55f * T, st.Stripe2 != st.Stripe ? st.Stripe2 : white, 12, false, false);
+                    k.Limb(new Vector3(0.9f, shY - 10f, z + s * 1.3f * W), new Vector3(1f, shY - 11.4f, z + s * 1.45f * W), 10.4f * T, 10.35f * T, white, 12, false, false);
                 }
-                k.Limb(new Vector3(1, shY - 10, z + s * 1.5f * W), new Vector3(2, elbowY, z + s * 3 * W), 8.2f * T, 7.2f * T, skin);   // upper arm
-                if (build == Build.Big) k.Limb(new Vector3(1.6f, elbowY + 5, z + s * 2.3f * W), new Vector3(2, elbowY + 0.5f, z + s * 3 * W), 7.9f * T, 7.6f * T, black);
+                k.Limb(new Vector3(1, shY - 10, z + s * 1.5f * W), new Vector3(2, elbowY, z + s * 3 * W), 9.6f * T, 8.6f * T, skin);   // upper arm
+                if (build == Build.Big) k.Limb(new Vector3(1.6f, elbowY + 5, z + s * 2.3f * W), new Vector3(2, elbowY + 0.5f, z + s * 3 * W), 9.2f * T, 8.9f * T, black);
                 On(s > 0 ? 4 : 6);
-                k.Limb(new Vector3(2, elbowY, z + s * 3 * W), new Vector3(6, wristY + 1, z + s * 3 * W), 7.1f * T, 5.8f * T, skin);   // forearm
-                if (build != Build.Big) k.Limb(new Vector3(5.2f, wristY + 5, z + s * 3 * W), new Vector3(6, wristY + 0.5f, z + s * 3 * W), 6.3f * T, 6.2f * T, white);   // wristband
-                else k.Limb(new Vector3(3, elbowY - 6, z + s * 3 * W), new Vector3(4.6f, elbowY - 12, z + s * 3 * W), 7.1f * T, 6.7f * T, black);
-                k.Ellipsoid(new Vector3(7.5f, handY + 0.5f, z + s * 3 * W), new Vector3(8f, 8.5f, 7f) * T, glove);           // glove
+                k.Limb(new Vector3(2, elbowY, z + s * 3 * W), new Vector3(6, wristY + 1, z + s * 3 * W), 8.4f * T, 7f * T, skin);   // forearm
+                if (build != Build.Big) k.Limb(new Vector3(5.2f, wristY + 5, z + s * 3 * W), new Vector3(6, wristY + 0.5f, z + s * 3 * W), 7.4f * T, 7.3f * T, white);   // wristband
+                else k.Limb(new Vector3(3, elbowY - 6, z + s * 3 * W), new Vector3(4.6f, elbowY - 12, z + s * 3 * W), 8.4f * T, 8f * T, black);
+                k.Ellipsoid(new Vector3(7.5f, handY + 0.5f, z + s * 3 * W), new Vector3(9.5f, 10f, 8.5f) * T, glove);           // glove
             }
 
             // ---- the head: face, eyes, helmet, facemask ----
@@ -177,13 +177,13 @@ namespace PocketFootball.View
             foreach (float s in new[] { 1f, -1f })
             {
                 var eye = FigureKit.OnEllipsoid(faceC, faceR, Quaternion.identity, new Vector3(1f, 0.05f, 0f), 1f);
-                float x = s * 7.6f, y = 1.5f;
-                k.Spot(eye, new Vector2(x, y), new Vector2(4.6f, 5.6f), 0, 0.3f, white, 16, FigureKit.Gloss);
-                k.Spot(eye, new Vector2(x + s * 0.4f, y - 0.4f), new Vector2(3.3f, 4.3f), 0, 0.55f, iris, 14, FigureKit.Paint);
-                k.Spot(eye, new Vector2(x + s * 0.4f, y - 0.6f), new Vector2(1.8f, 2.6f), 0, 0.7f, black, 12, FigureKit.Paint);
-                k.Spot(eye, new Vector2(x - s * 0.8f, y + 1.4f), new Vector2(1.1f, 1.2f), 0, 0.85f, white, 10, FigureKit.Gloss);
+                float x = s * 8.2f, y = 1.5f;
+                k.Spot(eye, new Vector2(x, y), new Vector2(5.6f, 6.8f), 0, 0.3f, white, 16, FigureKit.Gloss);
+                k.Spot(eye, new Vector2(x + s * 0.5f, y - 0.5f), new Vector2(4.1f, 5.3f), 0, 0.55f, iris, 14, FigureKit.Paint);
+                k.Spot(eye, new Vector2(x + s * 0.5f, y - 0.7f), new Vector2(2.3f, 3.2f), 0, 0.7f, black, 12, FigureKit.Paint);
+                k.Spot(eye, new Vector2(x - s * 1f, y + 1.8f), new Vector2(1.4f, 1.5f), 0, 0.85f, white, 10, FigureKit.Gloss);
                 // a determined brow
-                k.Stroke(eye, new[] { new Vector2(x - s * 4.5f, y + 5.2f), new Vector2(x + s * 3.8f, y + 7.4f) }, new[] { 2.4f, 1.6f }, 0.5f, Colors.Hex("#3b2a20"));
+                k.Stroke(eye, new[] { new Vector2(x - s * 5.5f, y + 6.4f), new Vector2(x + s * 4.6f, y + 8.8f) }, new[] { 2.8f, 1.9f }, 0.5f, Colors.Hex("#3b2a20"));
             }
             var mouth = FigureKit.OnEllipsoid(faceC, faceR, Quaternion.identity, new Vector3(1f, -0.35f, 0f), 1f);
             k.Stroke(mouth, new[] { new Vector2(-3.5f, 0.8f), new Vector2(0, -0.4f), new Vector2(3.5f, 0.8f) }, new[] { 1.2f, 1.5f, 1.2f }, 0.4f, Colors.Hex("#5a2a20"));
@@ -201,7 +201,7 @@ namespace PocketFootball.View
                 k.Stroke(top, new[] { new Vector2(0, 22), new Vector2(0, 0), new Vector2(0, -26), new Vector2(0, -44) }, new[] { 7f, 7.5f, 7.5f, 7f }, 0.5f, white);
             }
             // facemask: two cross bars, three uprights, the bumper over the brow
-            float fm = 1.9f;
+            float fm = 2.7f;   // (chunky bars that read at TV distance)
             k.Tube(new[] { new Vector3(16, 140, -26), new Vector3(30, 138, -15), new Vector3(35, 137, 0), new Vector3(30, 138, 15), new Vector3(16, 140, 26) },
                    Rad(5, fm), Cols(5, white), 8);
             k.Tube(new[] { new Vector3(14, 128, -21), new Vector3(26, 125.5f, -11), new Vector3(30, 124.5f, 0), new Vector3(26, 125.5f, 11), new Vector3(14, 128, 21) },
@@ -231,25 +231,74 @@ namespace PocketFootball.View
                 decal.SetTexture("_MainTex", mark);
                 decal.SetColor("_PlayerColor", team);
                 decal.SetFloat("_Specular", 0.6f);
+                // (big, wrapped round the shell like the concept's; the Chiefs' arrowhead points forward on both sides)
+                var toHead = fig.Head.worldToLocalMatrix * holder.localToWorldMatrix * HeadAt(neckY);
                 foreach (float s in new[] { 1f, -1f })
-                {
-                    var d = Looks.Flat(fig.Head, "Mark", Vector3.zero, new Vector2(24, 24) * HeadScale, Color.white, decal, FigureKit.Gloss);
-                    d.transform.position = holder.TransformPoint(HeadAt(neckY).MultiplyPoint3x4(new Vector3(-3, 153, s * 32.4f)));
-                    d.transform.localRotation = Quaternion.LookRotation(Vector3.up, new Vector3(0, 0, s));
-                    d.transform.localScale = Vector3.one;
-                    var r = d.GetComponent<MeshRenderer>();
-                    r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                }
+                    HelmetMark(fig.Head, toHead, decal, s, teamCfg.@short == "KC" && s < 0);
             }
             fig.Pose(PoseKind.Ready, 0);
             return fig;
         }
 
-        // The head is modelled round a neck at 120 cm; this places it on the real neck, a touch smaller (gauntlet 3:
-        // about 3 heads tall, the shoulder pads wider than the helmet).
-        const float HeadScale = 0.9f;
+        // The head is modelled round a neck at 120 cm; this places it on the real neck at HeadScale (gauntlet 3: the
+        // concept 01 chibi, a helmet about a third of the height, still narrower than the shoulder pads).
+        const float HeadScale = 1.08f;
         static Matrix4x4 HeadAt(float neckY) =>
             Matrix4x4.Translate(new Vector3(0, neckY, 0)) * Matrix4x4.Scale(Vector3.one * HeadScale) * Matrix4x4.Translate(new Vector3(0, -120f, 0));
+
+        // A team mark laid onto the side of the helmet (side +1: the left, +z), bent to the shell: a grid of points on
+        // the helmet sphere (head-model units, round (0, 150, 0)), lifted a hair off it, with the texture's uv; flip
+        // mirrors it left to right. toHead: head-model space -> the head bone's space.
+        static void HelmetMark(Transform head, Matrix4x4 toHead, Material decal, float side, bool flip)
+        {
+            const int N = 8;
+            const float Size = 30f, Radius = 31f, Lift = 0.9f;
+            var c = new Vector3(0, 150, 0);
+            Vector3 n = new Vector3(-0.12f, 0.1f, side).normalized;
+            Vector3 v = (Vector3.up - n * Vector3.Dot(Vector3.up, n)).normalized;
+            Vector3 u = Vector3.Cross(n, v).normalized;   // the viewer's right, seen from that side
+            var verts = new Vector3[(N + 1) * (N + 1)];
+            var norms = new Vector3[verts.Length];
+            var uvs = new Vector2[verts.Length];
+            var cols = new Color[verts.Length];
+            var col = QualitySettings.activeColorSpace == ColorSpace.Linear ? Color.white.linear : Color.white;
+            col.a = FigureKit.Gloss;
+            var nm = toHead.inverse.transpose;
+            for (int i = 0; i <= N; i++)
+                for (int j = 0; j <= N; j++)
+                {
+                    float a = (i / (float)N - 0.5f) * Size, b = (j / (float)N - 0.5f) * Size;
+                    Vector3 d = (n * Radius + u * a + v * b).normalized;
+                    int ix = i * (N + 1) + j;
+                    verts[ix] = toHead.MultiplyPoint3x4(c + d * (Radius + Lift));
+                    norms[ix] = nm.MultiplyVector(d).normalized;
+                    uvs[ix] = new Vector2(flip ? 1f - i / (float)N : i / (float)N, j / (float)N);
+                    cols[ix] = col;
+                }
+            var tris = new List<int>();
+            for (int i = 0; i < N; i++)
+                for (int j = 0; j < N; j++)
+                {
+                    int a = i * (N + 1) + j, b = a + 1, cc = a + N + 1, dd = cc + 1;
+                    foreach (var t in new[] { (a, cc, dd), (a, dd, b) })
+                    {
+                        int p0 = t.Item1, p1 = t.Item2, p2 = t.Item3;
+                        // (front = cross(b - a, c - a) along the outward normal, as FigureKit builds them)
+                        if (Vector3.Dot(Vector3.Cross(verts[p1] - verts[p0], verts[p2] - verts[p0]), norms[p0]) < 0) { int sw = p1; p1 = p2; p2 = sw; }
+                        tris.Add(p0); tris.Add(p1); tris.Add(p2);
+                    }
+                }
+            var m = new Mesh { name = "HelmetMark" };
+            m.vertices = verts; m.normals = norms; m.uv = uvs; m.colors = cols;
+            m.SetTriangles(tris, 0);
+            m.RecalculateBounds();
+            var go = new GameObject("Mark");
+            go.transform.SetParent(head, false);
+            go.AddComponent<MeshFilter>().sharedMesh = m;
+            var r = go.AddComponent<MeshRenderer>();
+            r.sharedMaterial = decal;
+            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        }
 
         // A jersey number painted on a surface: white strokes over a wider team-trim edge, centred on (cx, cy).
         static void Number(FigureKit k, FigureKit.Surface surf, string num, float hgt, float sw, float cx, float cy, Color edge, Color fill)

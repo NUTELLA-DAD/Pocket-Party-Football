@@ -482,7 +482,7 @@ namespace PocketFootball.Boot
             var cam = rig != null ? rig.Cam : Camera.main;
 
             // the scoreboard bar, top centre (real numbers come with M1-e)
-            if (Photo != null) Hud.Scoreboard(cfg, Photo.Score, Photo.Quarter, Photo.Clock, Photo.Down, s);
+            if (Photo != null) { if (Photo.Hud) Hud.Scoreboard(cfg, Photo.Score, Photo.Quarter, Photo.Clock, Photo.Down, s); }
             else Scoreboard.Draw(World, s);   // WS-02
 
             // the people: a small team-coloured triangle over each person's player (no name, so it hides nothing);
