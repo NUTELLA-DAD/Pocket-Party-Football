@@ -69,6 +69,7 @@ namespace PocketFootball.View
             // (all seeded, so every run matches)
             int x0 = (int)px(-f.HalfLength), x1 = (int)px(f.HalfLength), z0 = (int)pz(-f.HalfWidth), z1 = (int)pz(f.HalfWidth);
             var dabs = Brush(pp, x1 - x0, z1 - z0);
+            float patch = Mathf.Max(pp.patchYd * PxPerYd, 1f);
             for (int y = z0; y < z1; y++)
                 for (int x = x0; x < x1; x++)
                 {
@@ -77,8 +78,8 @@ namespace PocketFootball.View
                     if (Mathf.Abs(xd) > f.GoalLineX) c = ez;
                     else c = striped && Mathf.FloorToInt((xd + f.GoalLineX) / f.stripeYd) % 2 == 1 ? b : a;
                     float v = dabs[(y - z0) * (x1 - x0) + (x - x0)];
-                    float n = (Hash(x, y) - 0.5f) * 2f * pp.grainStrength + (Blotch(x / 40f, y / 40f) - 0.5f) * 0.09f;
-                    float olive = (Blotch(x / 90f + 7f, y / 90f) - 0.5f) * 0.12f;
+                    float n = (Hash(x, y) - 0.5f) * 2f * pp.grainStrength + (Blotch(x / patch, y / patch) - 0.5f) * 2f * pp.patchStrength;
+                    float olive = (Blotch(x / (patch * 2.25f) + 7f, y / (patch * 2.25f)) - 0.5f) * 0.12f;
                     // (a lighter dab is a touch warmer, a darker one a touch cooler)
                     p.Px[y * w + x] = new Color(c.r * (1 + n + olive + v * 1.25f), c.g * (1 + n + v), c.b * (1 + n + v * 0.5f - olive * 0.5f), 1f);
                 }
@@ -133,7 +134,7 @@ namespace PocketFootball.View
                 var home = cfg.teams[1];
                 Color grass = a;
                 Color light = Color.Lerp(grass, line, pp.logoLightMix), dark = Color.Lerp(grass, Colors.Hex(home.color), pp.logoDarkMix) * pp.logoDarkValue;
-                CentreMark(p, TeamMarks.For(home), new Vector2(px(0), pz(0)), pp.logoWidthYd * PxPerYd, pp.logoHeightYd * PxPerYd, light, dark, pp.logoSplit, pp.logoAlpha);
+                CentreMark(p, TeamMarks.For(home), Colors.Hex(home.color), new Vector2(px(0), pz(0)), pp.logoWidthYd * PxPerYd, pp.logoHeightYd * PxPerYd, light, dark, pp.logoSplit, pp.logoAlpha);
             }
             return p.ToTexture("FieldPaint");
         }
@@ -183,9 +184,10 @@ namespace PocketFootball.View
         }
 
         // A team's mark painted onto the grass in two tones: centred at c, fitted inside w x h pixels (its shape kept,
-        // its empty margins trimmed), bright parts in `light`, the rest in `dark`, at `alpha`. The mark is the team's ONE
+        // its empty margins trimmed), the parts in the team's colour in `dark`, everything else (white, trim, a darker
+        // letter) in `light`, at `alpha`: a light emblem on a dark field, as in concept 04. The mark is the team's ONE
         // texture (TeamMarks: Resources/Logos/<SHORT>.png when there is one), so swapping that file swaps this too.
-        static void CentreMark(Painter p, Texture2D t, Vector2 c, float w, float h, Color light, Color dark, float split, float alpha)
+        static void CentreMark(Painter p, Texture2D t, Color team, Vector2 c, float w, float h, Color light, Color dark, float split, float alpha)
         {
             var src = Pixels(t);
             if (src == null) return;
@@ -205,8 +207,9 @@ namespace PocketFootball.View
                 {
                     var s = Bilinear(src, tw, th, bx0 + (x + 0.5f) / scale - 0.5f, by0 + (y + 0.5f) / scale - 0.5f);
                     if (s.a <= 0.003f) continue;
-                    float l = 0.2126f * s.r + 0.7152f * s.g + 0.0722f * s.b;
-                    float tone = Mathf.Clamp01((l - split) / 0.12f + 0.5f);
+                    // how far this pixel's colour is from the team colour (0 = the same, about 1.7 = opposite)
+                    float far = Mathf.Sqrt((s.r - team.r) * (s.r - team.r) + (s.g - team.g) * (s.g - team.g) + (s.b - team.b) * (s.b - team.b));
+                    float tone = Mathf.Clamp01((far - split) / 0.12f + 0.5f);
                     var col = Color.Lerp(dark, light, tone);
                     col.a = 1f;
                     p.Blend(ox + x, oy + y, col, s.a * alpha);
