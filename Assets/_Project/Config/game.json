@@ -220,6 +220,49 @@
     "getUpS": 0.5,
     "blockShoveS": 0.375
   },
+  "defense": {
+    "swimEarlyS": 0.5,
+    "swimEarlyChance": 0.55,
+    "swimLateChance": 0.25,
+    "swimFreeS": 1.2,
+    "bullSnapS": 0.8,
+    "bullSnapChance": 0.5,
+    "bullChance": 0.3,
+    "bullPushYd": 1.2,
+    "bullStunS": 0.5,
+    "bullFreeS": 0.6,
+    "swatReachYd": 1.4,
+    "swatMaxHeightYd": 3.4,
+    "swatActiveS": 0.5,
+    "swatPerfectS": 0.2,
+    "swatPerfectChance": 0.8,
+    "swatChance": 0.4,
+    "swatRollFrac": 0.3,
+    "jumpMaxHeightYd": 4,
+    "jumpPickPerfectChance": 0.35,
+    "jumpPickChance": 0.1,
+    "jumpKnockChance": 0.3,
+    "coverMissS": 0.6,
+    "coverMissSpeedFrac": 0.4,
+    "diveSpeedYdS": 9,
+    "diveAirS": 0.4,
+    "diveReachYd": 1.4,
+    "diveChance": 0.85,
+    "diveStretchPenalty": 0.3,
+    "diveFromBehindBonus": 0.05,
+    "diveDownS": 1.5,
+    "cooldownS": 1,
+    "shownS": 0.5,
+    "lineSkill": { "DL": 0.1, "LB": 0 },
+    "coverSkill": { "CB": 0.1, "S": 0.05, "LB": 0 },
+    "botLineMoveS": 0.6,
+    "botSwimFrac": 0.6,
+    "botCoverLeadS": 0.15,
+    "botCoverChance": 0.4,
+    "botJumpFrac": 0.3,
+    "botDiveFromYd": 3,
+    "botDiveChance": 0.3
+  },
   "events": {
     "logKeep": 2048
   },
@@ -285,6 +328,7 @@
     "clock": true,
     "lobby": false,
     "carriermoves": false,
-    "fumbles": false
+    "fumbles": false,
+    "defmoves": false
   }
 }
