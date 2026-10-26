@@ -340,7 +340,7 @@
     "replay": true,
     "receiving": true,
     "clock": true,
-    "lobby": false,
+    "lobby": true,
     "carriermoves": false,
     "fumbles": true,
     "kicking": false

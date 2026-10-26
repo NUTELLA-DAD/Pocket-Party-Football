@@ -30,7 +30,7 @@ namespace PocketFootball.Tests.EditMode
         [Test]
         public void ShipsOffAndHasAnEnvSwitch()
         {
-            Assert.IsFalse(ConfigTests.Load().Feature("lobby"), "FEATURES.lobby ships off; the merge captain turns it on");
+            Assert.IsTrue(ConfigTests.Load().Feature("lobby"), "FEATURES.lobby is on in game.json (the merge captain turned it on)");
             Assert.AreEqual("NO_LOBBY", ConfigLoader.EnvName("lobby"));
             var cfg = ConfigTests.Load();
             Assert.Greater(cfg.lobby.swapAskS, 0f);
@@ -126,7 +126,9 @@ namespace PocketFootball.Tests.EditMode
         [Test]
         public void OffItIsOneSpotForBothSides()
         {
-            var w = WorldTests.Full(ConfigTests.Load());
+            var off = ConfigTests.Load();
+            off.features["lobby"] = false;
+            var w = WorldTests.Full(off);
             var me = w.ReplaceBot(w.Offense, 900);
             int spot = me.Spot;
             me.OffenseSpot = 3; me.DefenseSpot = 1;
