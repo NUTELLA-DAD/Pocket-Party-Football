@@ -360,10 +360,13 @@
     "leanFeetShare": 0.6,
     "leanStepDeg": 2,
     "sideCapDeg": 16,
-    "speedLeanDeg": 7,
+    "speedLeanDeg": 13,
     "plantFrom": 0.45,
     "cutSpreadDeg": 18,
-    "cutTwistShare": 0.6
+    "cutTwistShare": 0.6,
+    "leanRateDegS": 360,
+    "turnLeanCapDeg": 20,
+    "turnSettleDegS": 240
   },
   "defense": {
     "swimEarlyS": 0.5,

@@ -129,7 +129,7 @@ namespace PocketFootball.Boot
         {
             var ic = CultureInfo.InvariantCulture;
             float fwd = 0f, side = 0f, plant = 0f, yaw = float.NaN;
-            if (host.Players.MomentumOf(p.Slot, out var ms)) { Momentum.Lean(ms, cfg.anim, cfg.players.sprintSpeedYdS, out fwd, out side, out plant); yaw = ms.Yaw; }
+            if (host.Players.MomentumOf(p.Slot, out var ms)) { Momentum.Lean(ms, cfg.anim, out fwd, out side, out plant); yaw = ms.Yaw; }
             var fig = host.Players.Figure(p.Slot);
             float speed = Mathf.Sqrt(p.VX * p.VX + p.VZ * p.VZ);
             csv.Append(string.Format(ic, "{0},{1},{2:0.00},{3:0.00},{4:0.00},{5:0.00},{6:0.00},{7:0.0},{8:0},{9:0},{10:0.0},{11}\n",

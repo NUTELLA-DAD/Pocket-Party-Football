@@ -233,6 +233,9 @@ namespace PocketFootball.Sim
         // to cutSpreadDeg and turns the shoulders cutTwistShare of the lean ahead into the cut.
         public float turnSlowDegS, turnFastDegS, leanTauS, leanFallS, leanRefYdS2, leanMaxDeg, leanGamma, leanFeetShare, leanStepDeg;
         public float sideCapDeg, speedLeanDeg, plantFrom, cutSpreadDeg, cutTwistShare;
+        // the lean shown moves at most leanRateDegS; a forward lean while still turning round stops at turnLeanCapDeg;
+        // stood still, a figure turns to face its team's way at turnSettleDegS
+        public float leanRateDegS, turnLeanCapDeg, turnSettleDegS;
     }
 
     // WS-07 the lobby (FEATURES.lobby): each person picks an offense spot and a defense spot before kickoff. The game

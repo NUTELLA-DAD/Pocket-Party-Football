@@ -138,14 +138,18 @@ namespace PocketFootball.View
 
                 if (PoseOverride.TryGetValue(p.Slot, out var held)) { fig.Pose(held, 0); continue; }
                 travelled[p.Slot] = (travelled.TryGetValue(p.Slot, out float d) ? d : 0f) + moved;
-                int frame = (int)(travelled[p.Slot] / StrideM) % 2;
+                // (with the momentum lean a sprint takes longer strides than a jog)
+                float stride = momentum ? StrideM * (0.8f + 0.4f * Mathf.Clamp01(speed / cfg.players.sprintSpeedYdS)) : StrideM;
+                int frame = (int)(travelled[p.Slot] / stride) % 2;
                 bool carrier = w.Ball.State == BallState.Held && w.Ball.Carrier == p.Slot;
                 if (!down && DefenseMovesView.PoseFor(w, p, out var dk, out int df)) { fig.Pose(dk, df); continue; }   // WS-03 defender moves
                 bool locked = move.Kind == Move.Block && move.Locked;
                 if (momentum && !down && !locked && (move.Kind == Move.None || move.Kind == Move.Reach || move.Kind == Move.Secure))
                 {
                     // the lean: leanFeetShare tips the whole body over its feet, the rest bends the chest
-                    Momentum.Lean(ms, cfg.anim, cfg.players.sprintSpeedYdS, out float fwd, out float side, out float plant);
+                    Momentum.Lean(ms, cfg.anim, out float fwd, out float side, out float plant);
+                    // planted (or leaning hard nearly stopped): the feet stay put, no pedalling in place
+                    if (plant > 0f || (speed < 2f && Mathf.Abs(fwd) + Mathf.Abs(side) >= 8f)) frame = 0;
                     float feet = Mathf.Clamp01(cfg.anim.leanFeetShare);
                     t.localRotation = Quaternion.Euler(0f, yaw, 0f) * Quaternion.Euler(side * feet, 0f, -fwd * feet);
                     fig.Carry(fwd * (1f - feet), side * (1f - feet), fwd, move.Kind == Move.None ? plant : 0f, cfg.anim.cutSpreadDeg, -side * cfg.anim.cutTwistShare);

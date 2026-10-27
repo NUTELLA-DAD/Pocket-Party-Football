@@ -19,6 +19,7 @@ namespace PocketFootball.View
         public float Vx, Vz;       // the velocity last tick (yd/s)
         public float X, Z;         // where it was last tick (yd), to spot a jump (lined up again, set down after a tackle)
         public float Lx, Lz;       // the smoothed velocity change (yd/s^2), world axes
+        public float Fwd, Side, Plant;   // the lean shown (degrees, its own frame), which moves at most leanRateDegS
     }
 
     public static class Momentum
@@ -50,10 +51,20 @@ namespace PocketFootball.View
             // the way it wants to face: where it runs; nearly stopped, the way it already faces while its weight is still
             // moving (a reverse passing through zero, a hard stop), then its team's way
             float lean = Mathf.Sqrt(s.Lx * s.Lx + s.Lz * s.Lz);
-            float target = speed > RunningYdS ? YawOf(vx, vz) : lean > 0.25f * a.leanRefYdS2 ? s.Yaw : standYaw;
-            float rate = Mathf.Lerp(a.turnSlowDegS, a.turnFastDegS, Mathf.Clamp01(speed / Mathf.Max(0.1f, topSpeed))) * dt;
+            bool settling = speed <= RunningYdS && lean <= 0.25f * a.leanRefYdS2;
+            float target = speed > RunningYdS ? YawOf(vx, vz) : settling ? standYaw : s.Yaw;
+            // (stood still, it turns to face its team's way slowly, turnSettleDegS: no snap once stopped)
+            float rate = (settling ? a.turnSettleDegS : Mathf.Lerp(a.turnSlowDegS, a.turnFastDegS, Mathf.Clamp01(speed / Mathf.Max(0.1f, topSpeed)))) * dt;
             s.Yaw = Mathf.Repeat(s.Yaw + Turn(s.Yaw, target, rate) + 180f, 360f) - 180f;
             s.Vx = vx; s.Vz = vz; s.X = x; s.Z = z;
+
+            // the lean shown follows the lean wanted at most leanRateDegS, so mid turn-around it rolls from sat back to
+            // forward over a few ticks instead of flipping
+            Raw(s, a, topSpeed, out float fwd, out float side, out float plant);
+            s.Plant = plant;
+            float most = a.leanRateDegS > 0f ? a.leanRateDegS * dt : 360f;
+            s.Fwd += Mathf.Clamp(fwd - s.Fwd, -most, most);
+            s.Side += Mathf.Clamp(side - s.Side, -most, most);
         }
 
         // How far to turn this tick toward target (degrees, at most rate). The short way round, except a near turn-around
@@ -70,11 +81,20 @@ namespace PocketFootball.View
             return Mathf.Clamp(d, -rate, rate);
         }
 
-        // The lean now, in the figure's own frame: fwdDeg (+ forward, - back), sideDeg (+ toward its left), in
-        // leanStepDeg steps. A sideways lean stops at sideCapDeg, the rest goes front or back (mid turn-around it stays
+        // The lean shown now, in the figure's own frame: fwdDeg (+ forward, - back), sideDeg (+ toward its left), in
+        // leanStepDeg steps; plant how hard it is braking (0, 0.5 or 1).
+        public static void Lean(in MomentumState s, AnimConfig a, out float fwdDeg, out float sideDeg, out float plant)
+        {
+            fwdDeg = Step(s.Fwd, a.leanStepDeg);
+            sideDeg = Step(s.Side, a.leanStepDeg);
+            plant = s.Plant;
+        }
+
+        // The lean wanted from the smoothed velocity change. A sideways lean stops at sideCapDeg, the rest goes front or back (mid turn-around it stays
         // sat back, then leans into the new way, never tipping over sideways); running adds speedLeanDeg forward at
-        // topSpeed (less slower), so a sprint and a jog differ. plant how hard it is braking past plantFrom, as stepped keys: 0, 0.5 (past 30% of the way) or 1 (past 75%).
-        public static void Lean(in MomentumState s, AnimConfig a, float topSpeed, out float fwdDeg, out float sideDeg, out float plant)
+        // topSpeed (by the square of the speed, so a sprint and a jog differ); while the body still turns toward where it
+        // runs (more than 30 degrees off) a forward lean stops at turnLeanCapDeg: a push, not a dive. plant how hard it is braking past plantFrom, as stepped keys: 0, 0.5 (past 30% of the way) or 1 (past 75%).
+        static void Raw(in MomentumState s, AnimConfig a, float topSpeed, out float fwdDeg, out float sideDeg, out float plant)
         {
             fwdDeg = sideDeg = plant = 0f;
             float mag = Mathf.Sqrt(s.Lx * s.Lx + s.Lz * s.Lz);
@@ -93,9 +113,11 @@ namespace PocketFootball.View
                 fwd = fwd > 0f ? rest : -rest;
             }
             float speed = Mathf.Sqrt(s.Vx * s.Vx + s.Vz * s.Vz);
-            fwd += a.speedLeanDeg * Mathf.Clamp01(speed / Mathf.Max(0.1f, topSpeed));
-            fwdDeg = Step(fwd, a.leanStepDeg);
-            sideDeg = Step(side, a.leanStepDeg);
+            float sp = Mathf.Clamp01(speed / Mathf.Max(0.1f, topSpeed));
+            fwd += a.speedLeanDeg * sp * sp;
+            if (speed > RunningYdS && Mathf.Abs(Mathf.DeltaAngle(s.Yaw, YawOf(s.Vx, s.Vz))) > 30f) fwd = Mathf.Min(fwd, a.turnLeanCapDeg);
+            fwdDeg = fwd;
+            sideDeg = side;
             float brake = -af / a.leanRefYdS2;
             float p = a.plantFrom < 1f ? Mathf.Clamp01((brake - a.plantFrom) / (1f - a.plantFrom)) : 0f;
             plant = p >= 0.75f ? 1f : p >= 0.3f ? 0.5f : 0f;
