@@ -69,7 +69,7 @@ namespace PocketFootball.View
             Moves.Observe(w);
             foreach (var p in w.Players)
             {
-                var fig = Body(p);
+                var fig = Body(w, p);
                 var move = PoseOverride.ContainsKey(p.Slot) ? default : Moves.Of(w, p);
                 bool down = move.Kind == Move.Tackle || move.Kind == Move.Tackled;
                 Vector2 now = new Vector2(p.X, p.Z);
@@ -275,14 +275,16 @@ namespace PocketFootball.View
 
         public Vector3 FeetPosition(int slot) => bodies.TryGetValue(slot, out var f) ? f.transform.position : Vector3.zero;
 
-        FootballFigure Body(Player p)
+        // A kit change (a new team, number or position, or the QB turning into the kicker for a kick) builds a new body.
+        FootballFigure Body(World w, Player p)
         {
-            string kit = p.Team + "/" + p.Number + "/" + p.Pos;
+            string pos = Kicking.ShowsKicker(w, p) ? "K" : p.Pos;
+            string kit = p.Team + "/" + p.Number + "/" + pos;
             if (bodies.TryGetValue(p.Slot, out var fig) && kitOf.TryGetValue(p.Slot, out var was) && was == kit) return fig;
             if (fig != null) Object.Destroy(fig.gameObject);
             var team = cfg.teams[Mathf.Clamp(p.Team, 0, cfg.teams.Count - 1)];
             fig = FootballFigure.Create(root, "Player " + p.Slot, cfg.view.playerHeightM);
-            ModelSkin.Wear(fig, team, p.Pos, cfg, mat);   // the team's (or the position's) rigged model over the pose rig
+            ModelSkin.Wear(fig, team, pos, cfg, mat);   // the team's (or the position's) rigged model over the pose rig
             bodies[p.Slot] = fig;
             kitOf[p.Slot] = kit;
             return fig;

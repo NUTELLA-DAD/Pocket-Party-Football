@@ -143,6 +143,41 @@ namespace PocketFootball.Tests.EditMode
 
         // ---- 4th down ----
 
+        // FEATURES.kickerModel: the QB's spot turns into the kicker (his own model, PlayersView) only once a kick is lined
+        // up, never in the huddle (the call stays secret), and back to the QB for the next huddle.
+        [Test]
+        public void TheKickerShowsOnlyForAKick()
+        {
+            var cfg = On();
+            Assert.IsTrue(cfg.Feature("kickerModel"));
+            var w = At(cfg, -20f, cfg.downs.downsToGain, -5f);   // 4th and 15 on our own 30: the bot coach punts
+            Assert.IsTrue(Run(w, 30, () =>
+            {
+                if (w.Phase == Phase.Huddle) foreach (var p in w.Players) Assert.IsFalse(Kicking.ShowsKicker(w, p), "no kicker in the huddle");
+                return w.Phase == Phase.Set;
+            }));
+            Assert.AreEqual(KickKind.Punt, Kicking.Mode(w));
+            var kicker = Kicking.Kicker(w);
+            foreach (var p in w.Players) Assert.AreEqual(p == kicker, Kicking.ShowsKicker(w, p), "only the punter, once lined up");
+            Assert.IsTrue(Run(w, 30, () => w.Kick.Kicked));
+            Assert.IsTrue(Kicking.ShowsKicker(w, kicker), "still the kicker with the ball in the air");
+            Assert.IsTrue(Run(w, 60, () => w.Phase == Phase.Huddle));
+            foreach (var p in w.Players) Assert.IsFalse(Kicking.ShowsKicker(w, p), "the QB again in the next huddle");
+            Assert.IsTrue(Run(w, 30, () => w.Phase == Phase.Set));
+            if (Kicking.Mode(w) == KickKind.None)
+                foreach (var p in w.Players) Assert.IsFalse(Kicking.ShowsKicker(w, p), "an ordinary play has no kicker");
+
+            var off = On();
+            ConfigLoader.ApplyEnvOverrides(off, k => k == "NO_KICKER_MODEL" ? "1" : null);
+            var w2 = WorldTests.Full(off);
+            w2.Step(null);
+            Assert.IsTrue(w2.Kick.Kickoff);
+            Assert.IsFalse(Kicking.ShowsKicker(w2, Kicking.Kicker(w2)), "NO_KICKER_MODEL=1: the QB kicks in his own model");
+            var w3 = WorldTests.Full(On());
+            w3.Step(null);
+            Assert.IsTrue(Kicking.ShowsKicker(w3, Kicking.Kicker(w3)), "the kicker takes the opening kickoff");
+        }
+
         [Test]
         public void FourthAndLongPunts()
         {

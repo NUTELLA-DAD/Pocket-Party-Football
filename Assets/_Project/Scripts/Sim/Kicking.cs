@@ -53,6 +53,11 @@ namespace PocketFootball.Sim
         // The kicker: the offense's spot 0 (the QB's spot).
         public static Player Kicker(World w) => LivePlay.Qb(w);
 
+        // FEATURES.kickerModel (NO_KICKER_MODEL=1): the kicker wears the kicker's model (posModels "K") from the line-up
+        // of a kick to its whistle; in the huddle he is still the QB, so the TV never shows a kick before it is lined up.
+        public static bool ShowsKicker(World w, Player p) =>
+            p != null && w.Cfg.Feature("kickerModel") && w.Phase != Phase.Huddle && Mode(w) != KickKind.None && p == Kicker(w);
+
         // The kicker before the kick: his phone shows the kick meter (and nobody else's does).
         public static bool WaitingToKick(World w, Player p)
         {
