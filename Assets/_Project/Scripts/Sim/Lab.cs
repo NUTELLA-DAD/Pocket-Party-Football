@@ -112,6 +112,10 @@ namespace PocketFootball.Sim
             w.CatchTried.Clear();
             for (int t = 0; t < w.Calls.Length; t++) w.Calls[t] = t == w.Offense ? d.offensePlay : d.defensePlay;
             w.HuddleNumber++;
+            // no kickoff in the lab: the game's opening kickoff (Kicking.Step, at the first huddle) would take over the
+            // first rep of the drill, move everyone and end it
+            w.Kick.Opened = true; w.Kick.PendingKickoff = false; w.Kick.Kickoff = false; w.Kick.Try = false;
+            w.Kick.NewPlay();
 
             You = d.you == "none" ? -1 : YouSlot;
             int bot = C.botSlotBase;

@@ -229,6 +229,18 @@ namespace PocketFootball.Sim
         public float cameraTurnDeg;
         // FEATURES.hitAngle (View/Moves.cs): a big hit's slide back to where he goes down, in knockKeys key frames
         public int knockKeys;
+        // FEATURES.momentumLean (View/Momentum.cs): a figure turns at most turnFastDegS at sprint speed (turnSlowDegS
+        // standing), and leans into its speeding up, slowing and turning (the sim's own velocity change, smoothed over
+        // leanTauS going in, leanFallS coming back): leanMaxDeg at leanRefYdS2, curved by leanGamma so small cuts stay
+        // small; sideways at most sideCapDeg (the rest goes front or back); plus speedLeanDeg forward at sprint speed.
+        // leanFeetShare of it tips the whole body over its feet, the rest bends the chest; in leanStepDeg steps. Braking
+        // past plantFrom of the full lean plants the lead leg (a reverse); a sideways lean widens the outside leg by up
+        // to cutSpreadDeg and turns the shoulders cutTwistShare of the lean ahead into the cut.
+        public float turnSlowDegS, turnFastDegS, leanTauS, leanFallS, leanRefYdS2, leanMaxDeg, leanGamma, leanFeetShare, leanStepDeg;
+        public float sideCapDeg, speedLeanDeg, plantFrom, cutSpreadDeg, cutTwistShare;
+        // the lean shown moves at most leanRateDegS; a forward lean while still turning round stops at turnLeanCapDeg;
+        // stood still, a figure turns to face its team's way at turnSettleDegS
+        public float leanRateDegS, turnLeanCapDeg, turnSettleDegS;
         // FEATURES.idleMotion (View/Alive.cs): a man standing still breathes, his chest up idleBreathDeg and back over
         // idleBreathKeys key frames, and shifts his weight foot to foot over idleShiftKeys: hips idleSwayCm over, the
         // other hip idleRollDeg lower, that knee eased idleKneeDeg
