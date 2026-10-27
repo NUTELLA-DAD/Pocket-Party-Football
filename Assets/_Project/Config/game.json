@@ -77,13 +77,19 @@
   },
   "camera": {
     "visibleYards": 46,
-    "fovDeg": 7,
-    "pitchDeg": 19,
+    "fovDeg": 35,
+    "pitchDeg": 22,
     "lookAtXYd": 0,
     "lookAtZYd": 0,
     "sideline": -1,
     "leadYd": 8,
     "followRate": 3,
+    "live": {
+      "visibleYards": 62,
+      "pitchDeg": 32,
+      "delayS": 0.4,
+      "rate": 1.6
+    },
     "free": {
       "orbitDegPerPx": 0.25,
       "zoomStep": 1.15,
@@ -94,11 +100,12 @@
       "boundsMarginYd": 20,
       "lensesDeg": [7, 12, 20, 30, 45, 60],
       "presets": [
-        { "name": "TV camera", "yawDeg": 0, "pitchDeg": 19, "fovDeg": 7, "visibleYards": 46 },
-        { "name": "Sideline, normal lens", "yawDeg": 0, "pitchDeg": 22, "fovDeg": 35, "visibleYards": 46 },
+        { "name": "TV camera before the snap", "yawDeg": 0, "pitchDeg": 22, "fovDeg": 35, "visibleYards": 46 },
+        { "name": "TV camera in a live play", "yawDeg": 0, "pitchDeg": 32, "fovDeg": 35, "visibleYards": 62 },
         { "name": "Low on the sideline", "yawDeg": 0, "pitchDeg": 8, "fovDeg": 40, "visibleYards": 26 },
         { "name": "Behind the offense", "yawDeg": 90, "pitchDeg": 16, "fovDeg": 40, "visibleYards": 30 },
         { "name": "Straight down", "yawDeg": 0, "pitchDeg": 89, "fovDeg": 40, "visibleYards": 60 },
+        { "name": "The old 7 degree lens", "yawDeg": 0, "pitchDeg": 19, "fovDeg": 7, "visibleYards": 46 },
         { "name": "Over the stadium", "yawDeg": 0, "pitchDeg": 24, "fovDeg": 45, "visibleYards": 260 },
         { "name": "Into the sunset", "yawDeg": 35, "pitchDeg": 3, "fovDeg": 60, "visibleYards": 20 }
       ]
@@ -272,7 +279,9 @@
       "posModels": [
         { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerKC_BaseColor" },
         { "pos": "QB", "model": "Models/QB/QB_Rigged", "modelTexture": "Models/QB/QB_BaseColor" }
-      ]
+      ],
+      "cheerModel": "Models/Cheerleader/Cheerleader_Rigged",
+      "cheerTexture": "Models/Cheerleader/Cheerleader_BaseColor"
     },
     {
       "name": "ROUGHRIDERS",
@@ -284,7 +293,9 @@
       "posModels": [
         { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/Linebacker_BaseColor" },
         { "pos": "QB", "model": "Models/QB/QB_Rigged", "modelTexture": "Models/QB/QBRR_BaseColor" }
-      ]
+      ],
+      "cheerModel": "Models/Cheerleader/Cheerleader_Rigged",
+      "cheerTexture": "Models/Cheerleader/CheerleaderRR_BaseColor"
     }
   ],
   "net": {
@@ -339,7 +350,8 @@
     "watchYd": 12,
     "lookTwistDeg": 75,
     "lookHeadDeg": 50,
-    "lookStepDeg": 10
+    "lookStepDeg": 10,
+    "cameraTurnDeg": 0
   },
   "defense": {
     "swimEarlyS": 0.5,
@@ -591,6 +603,14 @@
     "nearPropShare": 0.1,
     "nearTentScale": 1,
     "nearRefsXM": [-30, 14],
+    "cheerPerTeam": 6,
+    "cheerScale": 0.7,
+    "cheerRowM": 0.3,
+    "cheerFromCentreM": 9,
+    "cheerGapM": 4.2,
+    "cheerFps": 2.5,
+    "cheerRoutine": [0, 1, 2, 1, 3, 4, 5, 4, 1, 6, 1, 6, 2, 3, 7, 3, 1, 0],
+    "cheerTeamOffset": 5,
     "crewScale": 0.8,
     "crewBackM": 0.38,
     "crewCapColor": "#f07a1a",
@@ -804,7 +824,10 @@
     "watchBall": true,
     "turfV2": true,
     "labFreeCam": true,
+    "snapZoom": true,
     "grassBlades": true,
+    "cheerleaders": true,
+    "faceDownfield": true,
     "stadiumBowl": true,
     "sunsetSky": true
   }

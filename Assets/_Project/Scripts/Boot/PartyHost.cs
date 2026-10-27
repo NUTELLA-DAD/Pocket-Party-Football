@@ -73,6 +73,7 @@ namespace PocketFootball.Boot
             GamepadHost.Attach(h, cfg);   // WS-14: Xbox pads join as players (FEATURES.gamepad)
             if (args.Wander) h.World.BotsWander = true;
             if (!args.LookX.HasValue) rig.SetLookAtX(h.World.LineOfScrimmageX);
+            h.holdCamera = args.LookX.HasValue;
             if (args.ThrowDemo.HasValue) h.World.Throw(h.World.Ball.X + h.World.Dir * args.ThrowDemo.Value, h.World.Ball.Z, true);
             for (int i = 0; i < args.WarmupTicks; i++) h.StepOnce();
             if (args.CalledDemo)
@@ -168,7 +169,7 @@ namespace PocketFootball.Boot
             float now = Time.unscaledTime;
             foreach (var p in World.Players)
                 if (p.Human) marks.Beam(p.Slot, Players.FeetPosition(p.Slot), Colors.Hex(cfg.teams[p.Team].color), findUntil.TryGetValue(p.Slot, out float fu) && fu > now, now);
-            if (Photo == null) FollowBall(Time.deltaTime);
+            if (Photo == null && !holdCamera) FollowBall(Time.deltaTime);   // (-look-x holds the camera where it was put)
             Replay.Drive(gameObject, cfg, World, Players, rig, s => Roster[s]?.Name);   // WS-08: the instant replay and the result card
             AudibleHost.Drive(this);   // WS-13: each team's audible / hot route screen, to that team's phones only
             PostGameHost.Drive(this);   // WS-12: the stats, score celebrations, the post-game screen and the phones' final card
@@ -184,8 +185,23 @@ namespace PocketFootball.Boot
         int lastHuddle;
 
         // The broadcast camera slides along the field with the ball, a little ahead of it in the way the offense goes;
-        // on a pass it runs ahead to where the ball is coming down. It never tilts, rolls or spins.
+        // on a pass it runs ahead to where the ball is coming down. It never rolls or spins (it tilts only with snapZoom).
         float camX = float.NaN;
+        bool holdCamera;
+        float camZoom;
+
+        // FEATURES.snapZoom: close in for the snap, then (camera.live.delayS into the play) back and up so the whole play
+        // fits; it holds through the whistle and comes back in once the next play is set.
+        float SnapZoom(float dt)
+        {
+            if (!cfg.Feature("snapZoom")) return camZoom = 0f;
+            var live = cfg.camera.live;
+            float want = World.Phase == Phase.Live ? (World.PlayTicks >= live.delayS * cfg.sim.tickHz ? 1f : 0f)
+                : World.Phase == Phase.Whistle ? camZoom : 0f;
+            camZoom += (want - camZoom) * (1f - Mathf.Exp(-dt * live.rate));
+            return camZoom;
+        }
+
         void FollowBall(float dt)
         {
             var b = World.Ball;
@@ -199,6 +215,7 @@ namespace PocketFootball.Boot
             target = Mathf.Clamp(target, -lim, lim);
             if (float.IsNaN(camX)) camX = target;
             camX += (target - camX) * (1f - Mathf.Exp(-dt * cfg.camera.followRate));
+            rig.SetZoom(SnapZoom(dt));
             rig.SetLookAtX(camX);
         }
 

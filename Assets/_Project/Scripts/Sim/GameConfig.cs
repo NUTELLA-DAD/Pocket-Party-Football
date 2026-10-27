@@ -167,6 +167,8 @@ namespace PocketFootball.Sim
         public string model, modelTexture;
         // FEATURES.posModels: a position wearing its own model instead (e.g. the linebackers); first match wins
         public List<PosModelConfig> posModels = new List<PosModelConfig>();
+        // FEATURES.cheerleaders: the squad on the far sideline wears this rigged model and colour map (Stadium.cs)
+        public string cheerModel, cheerTexture;
 
         // The model and colour map a player at this position wears.
         public void ModelFor(string pos, bool byPos, out string m, out string tex)
@@ -220,6 +222,9 @@ namespace PocketFootball.Sim
         // FEATURES.watchBall (View/PlayersView.cs): with a pass in the air, the men within watchYd of where it's aimed
         // turn to follow it: shoulders up to lookTwistDeg, the head lookHeadDeg more, the rest the whole body; in lookStepDeg steps
         public float watchYd, lookTwistDeg, lookHeadDeg, lookStepDeg;
+        // FEATURES.faceDownfield (View/PlayersView.cs): a figure turns only cameraTurnDeg toward the camera (0 = it faces
+        // straight down the field, or along its run); a locked pair turns no more than that either
+        public float cameraTurnDeg;
     }
 
     // WS-07 the lobby (FEATURES.lobby): each person picks an offense spot and a defense spot before kickoff. The game
@@ -251,6 +256,14 @@ namespace PocketFootball.Sim
         public float sideline;   // -1: the camera stands on the -Z sideline
         public float leadYd, followRate;   // how far ahead of the ball it looks, how quickly it catches up (per second)
         public FreeCameraConfig free = new FreeCameraConfig();   // the practice lab's free camera (FEATURES.labFreeCam)
+        public LiveCameraConfig live = new LiveCameraConfig();   // the framing once a play is running (FEATURES.snapZoom)
+    }
+
+    // After the snap the TV camera eases back and up to this framing (from visibleYards / pitchDeg above), so the whole
+    // play fits; it comes back in for the next snap. delayS: seconds after the snap before it starts; rate: per second.
+    public sealed class LiveCameraConfig
+    {
+        public float visibleYards, pitchDeg, delayS, rate;
     }
 
     // The lab's free camera: drag to turn it, right-drag to slide it, the wheel to come closer, F1-F5 for these presets.

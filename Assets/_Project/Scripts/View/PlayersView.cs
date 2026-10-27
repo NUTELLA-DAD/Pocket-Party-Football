@@ -6,13 +6,14 @@ namespace PocketFootball.View
 {
     // One chibi figure per player (FootballFigure) and the ball. Reads the sim, never writes it.
     // Positions are blended between the last two sim ticks so 30 Hz data moves smoothly at 60 fps. A figure faces the
-    // way it runs (standing: its team's direction of play), turned a little toward the camera so faces and numbers
-    // show; running steps between two run frames by distance covered (stepped, no time-based wobble).
+    // way it runs (standing: its team's direction of play), straight down the field (FEATURES.faceDownfield: turned
+    // only anim.cameraTurnDeg toward the camera; off: 42 degrees, so faces and numbers show); running steps between
+    // two run frames by distance covered (stepped, no time-based wobble).
     // On top of that, the moves (Moves.cs): throws, catches, jukes, tackles... A man on the grass after a tackle stays
     // where and how he fell until the next huddle, though the sim may already be walking him back.
     public sealed class PlayersView
     {
-        const float TurnToCamera = 42f;     // degrees a figure turns toward the camera (faces and numbers show)
+        const float TurnToCamera = 42f;     // degrees a figure turns toward the camera without FEATURES.faceDownfield
         const float StrideM = 0.9f;         // metres per run frame
 
         readonly GameConfig cfg;
@@ -80,17 +81,17 @@ namespace PocketFootball.View
                 var pos = new Vector3(at.x * yd, 0f, at.y * yd);
                 float moved = (pos - t.localPosition).magnitude;
 
-                // facing: the way it runs, else its team's direction of play; turned toward the camera
+                // facing: the way it runs, else its team's direction of play; turned toward the camera by turn
                 float speed = Mathf.Sqrt(p.VX * p.VX + p.VZ * p.VZ);
                 float dir = w.Dir * (p.Team == w.Offense ? 1f : -1f);
                 Vector2 face = speed > 0.5f ? new Vector2(p.VX, p.VZ).normalized : new Vector2(dir, 0f);
-                float turn = TurnToCamera;
+                float turn = CameraTurn(cfg, false);
                 if (move.Kind == Move.Block && move.Locked && w.Find(move.Partner) is Player q)
                 {
                     // locked arms: square up to him, turned only a little toward the camera so the hands meet
                     Moves.LockOffset(q.Slot, alpha, out float qx, out float qz);
                     var them = new Vector2(q.X + qx, q.Z + qz) - (now + new Vector2(ox, oz));
-                    if (them.sqrMagnitude > 1e-4f) { face = them.normalized; turn = cfg.anim.lockTurnDeg; }
+                    if (them.sqrMagnitude > 1e-4f) { face = them.normalized; turn = CameraTurn(cfg, true); }
                 }
                 float yaw = Mathf.Atan2(-face.y, face.x) * Mathf.Rad2Deg;
                 yaw = TowardCamera(yaw, turn);
@@ -213,7 +214,14 @@ namespace PocketFootball.View
         }
 
         // Turn a facing (degrees, Unity yaw) a little toward the camera on the -z sideline.
-        static float TowardCamera(float yaw, float turn = TurnToCamera)
+        // How far a figure turns toward the camera (degrees); locked: a blocker squared up to his man.
+        public static float CameraTurn(GameConfig cfg, bool locked)
+        {
+            if (!cfg.Feature("faceDownfield")) return locked ? cfg.anim.lockTurnDeg : TurnToCamera;
+            return locked ? Mathf.Min(cfg.anim.lockTurnDeg, cfg.anim.cameraTurnDeg) : cfg.anim.cameraTurnDeg;
+        }
+
+        public static float TowardCamera(float yaw, float turn = TurnToCamera)
         {
             // yaw 0 faces +x; +90 faces -z (the camera). Pull toward +90 by turn.
             float delta = Mathf.DeltaAngle(yaw, 90f);

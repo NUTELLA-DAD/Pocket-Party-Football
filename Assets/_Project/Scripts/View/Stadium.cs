@@ -8,7 +8,9 @@ namespace PocketFootball.View
     // small tents against the wall, benches, coolers and ice chests, the wall with team banners, then the stands full
     // of a card crowd that waves. Near side: the home bench row seen from behind at the bottom of the picture (players
     // with their numbers, staff in caps, a ref, coolers, tents behind). Chunky goal posts on both end lines.
-    // Orange down markers on both sidelines. Every number is in game.json "stadium". Built once from code, seeded (the
+    // Orange down markers on both sidelines. FEATURES.cheerleaders (NO_CHEERLEADERS=1): each team's cheer squad in
+    // front of its half of the far sideline, Kenny's rigged cheerleader in the team's colours, cheering together in
+    // stepped poses. Every number is in game.json "stadium". Built once from code, seeded (the
     // same stadium every run).
     //
     // The crowd: every fan is a flat card (shirt, head, cap, arms, sometimes a sign). The stands are cut into slices;
@@ -30,6 +32,10 @@ namespace PocketFootball.View
         uint seed = 12345;
 
         sealed class CrowdSlice { public MeshFilter filter; public Mesh[] poses; public int pose, index; }
+
+        readonly List<(FootballFigure fig, int team)> cheerleaders = new List<(FootballFigure, int)>();
+        int lastCheerKey = int.MinValue;
+        public int CheerleaderCount => cheerleaders.Count;
 
         float Rand() { seed ^= seed << 13; seed ^= seed >> 17; seed ^= seed << 5; return (seed & 0xffffff) / 16777216f; }
         T Pick<T>(T[] a) => a[(int)(Rand() * a.Length) % a.Length];
@@ -56,6 +62,7 @@ namespace PocketFootball.View
             }
             FarSideline(side);
             NearSideline(side);
+            if (cfg.Feature("cheerleaders")) Cheerleaders(side);
             GoalPosts();
             for (int i = 0; i < 4; i++) markers.Add(DownMarker(i < 2 ? 1f : -1f));
             root.gameObject.AddComponent<StadiumClock>().Tick = Tick;
@@ -315,6 +322,13 @@ namespace PocketFootball.View
         // Called every frame (StadiumClock); swaps slice meshes only when the key frame changes.
         void Tick(float seconds)
         {
+            int ck = CrowdKey(seconds, sc.cheerFps);
+            if (ck != lastCheerKey)
+            {
+                lastCheerKey = ck;
+                foreach (var c in cheerleaders)
+                    if (c.fig != null) c.fig.Pose(FootballFigure.PoseKind.Cheer, CheerFrame(sc, ck, c.team));
+            }
             int key = CrowdKey(seconds, sc.fps);
             if (key == lastKey) return;
             lastKey = key;
@@ -356,6 +370,41 @@ namespace PocketFootball.View
             }
             foreach (float x in sc.farRefsXM) Person(new Vector3(x, 0, side + 0.8f), Color.white, Colors.Hex("#1e1e22"), Color.white, true, 90f, s);
             props.Build(root, "FarSideline", mat);
+        }
+
+        // ---- the cheerleaders: each team's squad in a row at the front of the far sideline, facing the field ----
+        void Cheerleaders(float side)
+        {
+            var kit = FootballFigure.KitMaterial(mat, cfg.view);
+            for (int t = 0; t < cfg.teams.Count; t++)
+            {
+                var team = cfg.teams[t];
+                float sx = t == 1 ? -1f : 1f;   // in front of the team's own half, like its players (home on the left)
+                for (int i = 0; i < sc.cheerPerTeam; i++)
+                {
+                    var f = FootballFigure.Create(root, "Cheerleader " + team.@short + " " + (i + 1), cfg.view.playerHeightM * sc.cheerScale);
+                    f.transform.localPosition = new Vector3(sx * (sc.cheerFromCentreM + i * sc.cheerGapM), 0, side + sc.cheerRowM);
+                    f.transform.localRotation = Quaternion.Euler(0, 90f, 0);   // facing the field (and the camera)
+                    if (ModelSkin.Wear(f, team.cheerModel, team.cheerTexture, kit, false) == null)
+                    {
+                        // no model: no cheerleader
+                        if (Application.isPlaying) Object.Destroy(f.gameObject); else Object.DestroyImmediate(f.gameObject);
+                        continue;
+                    }
+                    f.Pose(FootballFigure.PoseKind.Cheer, CheerFrame(sc, 0, t));
+                    cheerleaders.Add((f, t));
+                }
+            }
+        }
+
+        // The cheer pose (FootballFigure.PoseKind.Cheer frame) a team's squad shows on a cheer key: the routine in step,
+        // the second squad cheerTeamOffset keys behind the first.
+        public static int CheerFrame(StadiumConfig sc, int key, int team)
+        {
+            int n = sc.cheerRoutine == null ? 0 : sc.cheerRoutine.Count;
+            if (n == 0) return 0;
+            int k = key - team * sc.cheerTeamOffset;
+            return sc.cheerRoutine[((k % n) + n) % n];
         }
 
         // ---- the near sideline: the home bench row from behind ----
