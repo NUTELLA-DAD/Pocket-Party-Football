@@ -252,6 +252,19 @@ namespace PocketFootball.Sim
         // FEATURES.ballSpin (View/Alive.cs): a pass turns spiralDegPerKey about its long axis each key frame, a kick
         // tumbleDegPerKey end over end
         public float spiralDegPerKey, tumbleDegPerKey;
+        // FEATURES.strideCycle (View/Stride.cs): a whole stride with every in-between, its phase moved by the distance
+        // run. Each list is walk, jog, sprint (at strideWalkYdS and the players' jog and sprint speeds), blended by
+        // speed: strideCadence steps a second; strideStance the share of a stride a foot is on the grass, its sweep under
+        // the hip at most strideReach of the leg's length behind or ahead (strideAhead of the sweep ahead at touch-down);
+        // the planted knee bent strideKneeLandDeg at touch-down, strideKneeDeg under load and strideKneePushDeg at
+        // toe-off; in the swing the knee folds strideKneeFoldDeg and the thigh drives strideThighDriveDeg forward;
+        // strideBobCm the hips' rise in the air; strideHeelCm and strideToeDeg the heel's rise and the foot's point at
+        // push-off, strideHeelStrikeDeg the toes up landing; the arms swing strideArmFwdDeg to strideArmBackDeg, the
+        // elbow bent strideElbowFrontDeg in front and strideElbowBackDeg behind; the shoulders turn strideTwistDeg.
+        public float strideWalkYdS;
+        public float[] strideCadence, strideStance, strideReach, strideAhead, strideKneeLandDeg, strideKneeDeg, strideKneePushDeg;
+        public float[] strideKneeFoldDeg, strideThighDriveDeg, strideBobCm, strideHeelCm, strideToeDeg, strideHeelStrikeDeg;
+        public float[] strideArmFwdDeg, strideArmBackDeg, strideElbowFrontDeg, strideElbowBackDeg, strideTwistDeg;
     }
 
     // WS-07 the lobby (FEATURES.lobby): each person picks an offense spot and a defense spot before kickoff. The game
