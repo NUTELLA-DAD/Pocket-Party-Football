@@ -224,6 +224,17 @@ namespace PocketFootball.Sim
         // FEATURES.faceDownfield (View/PlayersView.cs): a figure turns only cameraTurnDeg toward the camera (0 = it faces
         // straight down the field, or along its run); a locked pair turns no more than that either
         public float cameraTurnDeg;
+        // FEATURES.idleMotion (View/Alive.cs): a man standing still breathes, his chest up idleBreathDeg and back over
+        // idleBreathKeys key frames, and shifts his weight foot to foot over idleShiftKeys: hips idleSwayCm over, the
+        // other hip idleRollDeg lower, that knee eased idleKneeDeg
+        public int idleBreathKeys, idleShiftKeys;
+        public float idleBreathDeg, idleSwayCm, idleRollDeg, idleKneeDeg;
+        // FEATURES.headTrack (View/Alive.cs): a man's head turns up to trackHeadDeg toward the ball, tips up to trackUpDeg
+        // to a ball in the air and down to trackDownDeg (in lookStepDeg steps)
+        public float trackHeadDeg, trackUpDeg, trackDownDeg;
+        // FEATURES.ballSpin (View/Alive.cs): a pass turns spiralDegPerKey about its long axis each key frame, a kick
+        // tumbleDegPerKey end over end
+        public float spiralDegPerKey, tumbleDegPerKey;
     }
 
     // WS-07 the lobby (FEATURES.lobby): each person picks an offense spot and a defense spot before kickoff. The game

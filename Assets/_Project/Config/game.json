@@ -349,7 +349,18 @@
     "lookTwistDeg": 75,
     "lookHeadDeg": 50,
     "lookStepDeg": 10,
-    "cameraTurnDeg": 0
+    "cameraTurnDeg": 0,
+    "idleBreathKeys": 28,
+    "idleBreathDeg": 2,
+    "idleShiftKeys": 72,
+    "idleSwayCm": 2.5,
+    "idleRollDeg": 2,
+    "idleKneeDeg": 6,
+    "trackHeadDeg": 60,
+    "trackUpDeg": 30,
+    "trackDownDeg": 20,
+    "spiralDegPerKey": 135,
+    "tumbleDegPerKey": 75
   },
   "defense": {
     "swimEarlyS": 0.5,
@@ -734,6 +745,9 @@
     "snapZoom": true,
     "grassBlades": true,
     "cheerleaders": true,
-    "faceDownfield": true
+    "faceDownfield": true,
+    "idleMotion": true,
+    "headTrack": true,
+    "ballSpin": true
   }
 }
