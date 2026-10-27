@@ -185,6 +185,19 @@ namespace PocketFootball.Boot
         // The broadcast camera slides along the field with the ball, a little ahead of it in the way the offense goes;
         // on a pass it runs ahead to where the ball is coming down. It never tilts, rolls or spins.
         float camX = float.NaN;
+        float camZoom;
+
+        // FEATURES.snapZoom: close in for the snap, then (camera.live.delayS into the play) back and up so the whole play
+        // fits; it holds through the whistle and comes back in once the next play is set.
+        float SnapZoom(float dt)
+        {
+            if (!cfg.Feature("snapZoom")) return camZoom = 0f;
+            var live = cfg.camera.live;
+            float want = World.Phase == Phase.Live ? (World.PlayTicks >= live.delayS * cfg.sim.tickHz ? 1f : 0f)
+                : World.Phase == Phase.Whistle ? camZoom : 0f;
+            camZoom += (want - camZoom) * (1f - Mathf.Exp(-dt * live.rate));
+            return camZoom;
+        }
         void FollowBall(float dt)
         {
             var b = World.Ball;
@@ -198,6 +211,7 @@ namespace PocketFootball.Boot
             target = Mathf.Clamp(target, -lim, lim);
             if (float.IsNaN(camX)) camX = target;
             camX += (target - camX) * (1f - Mathf.Exp(-dt * cfg.camera.followRate));
+            rig.SetZoom(SnapZoom(dt));
             rig.SetLookAtX(camX);
         }
 

@@ -250,6 +250,14 @@ namespace PocketFootball.Sim
         public float sideline;   // -1: the camera stands on the -Z sideline
         public float leadYd, followRate;   // how far ahead of the ball it looks, how quickly it catches up (per second)
         public FreeCameraConfig free = new FreeCameraConfig();   // the practice lab's free camera (FEATURES.labFreeCam)
+        public LiveCameraConfig live = new LiveCameraConfig();   // the framing once a play is running (FEATURES.snapZoom)
+    }
+
+    // After the snap the TV camera eases back and up to this framing (from visibleYards / pitchDeg above), so the whole
+    // play fits; it comes back in for the next snap. delayS: seconds after the snap before it starts; rate: per second.
+    public sealed class LiveCameraConfig
+    {
+        public float visibleYards, pitchDeg, delayS, rate;
     }
 
     // The lab's free camera: drag to turn it, right-drag to slide it, the wheel to come closer, F1-F5 for these presets.

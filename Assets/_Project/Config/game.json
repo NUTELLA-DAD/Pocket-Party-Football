@@ -77,13 +77,19 @@
   },
   "camera": {
     "visibleYards": 46,
-    "fovDeg": 7,
-    "pitchDeg": 19,
+    "fovDeg": 35,
+    "pitchDeg": 22,
     "lookAtXYd": 0,
     "lookAtZYd": 0,
     "sideline": -1,
     "leadYd": 8,
     "followRate": 3,
+    "live": {
+      "visibleYards": 62,
+      "pitchDeg": 32,
+      "delayS": 0.4,
+      "rate": 1.6
+    },
     "free": {
       "orbitDegPerPx": 0.25,
       "zoomStep": 1.15,
@@ -94,11 +100,12 @@
       "boundsMarginYd": 20,
       "lensesDeg": [7, 12, 20, 30, 45, 60],
       "presets": [
-        { "name": "TV camera", "yawDeg": 0, "pitchDeg": 19, "fovDeg": 7, "visibleYards": 46 },
-        { "name": "Sideline, normal lens", "yawDeg": 0, "pitchDeg": 22, "fovDeg": 35, "visibleYards": 46 },
+        { "name": "TV camera before the snap", "yawDeg": 0, "pitchDeg": 22, "fovDeg": 35, "visibleYards": 46 },
+        { "name": "TV camera in a live play", "yawDeg": 0, "pitchDeg": 32, "fovDeg": 35, "visibleYards": 62 },
         { "name": "Low on the sideline", "yawDeg": 0, "pitchDeg": 8, "fovDeg": 40, "visibleYards": 26 },
         { "name": "Behind the offense", "yawDeg": 90, "pitchDeg": 16, "fovDeg": 40, "visibleYards": 30 },
-        { "name": "Straight down", "yawDeg": 0, "pitchDeg": 89, "fovDeg": 40, "visibleYards": 60 }
+        { "name": "Straight down", "yawDeg": 0, "pitchDeg": 89, "fovDeg": 40, "visibleYards": 60 },
+        { "name": "The old 7 degree lens", "yawDeg": 0, "pitchDeg": 19, "fovDeg": 7, "visibleYards": 46 }
       ]
     }
   },
@@ -711,6 +718,7 @@
     "watchBall": true,
     "turfV2": true,
     "labFreeCam": true,
+    "snapZoom": true,
     "grassBlades": true
   }
 }
