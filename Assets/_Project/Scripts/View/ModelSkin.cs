@@ -4,11 +4,10 @@ using UnityEngine;
 
 namespace PocketFootball.View
 {
-    // A rigged model worn over a FootballFigure (FEATURES.modelPlayers, NO_MODEL_PLAYERS=1 turns it off): a team with
-    // "model" in game.json (a Humanoid FBX under Resources, Unity's own bone names) shows it instead of the figure
-    // built from code; a position listed in the team's "posModels" wears its own model (FEATURES.posModels,
-    // NO_POS_MODELS=1: every position wears the team's model). The figure keeps its 11 bones and every pose (FootballFigure.Get, the moves, the celebrations);
-    // only its mesh is hidden. Once a frame, after everything has posed the figure, the model's bones copy the
+    // The rigged model every player wears over his FootballFigure (the invisible pose rig): the team's "model" in game.json
+    // (a Humanoid FBX under Resources, Unity's own bone names); a position listed in the team's "posModels" wears its
+    // own model (FEATURES.posModels, NO_POS_MODELS=1: every position wears the team's model). The figure keeps its 11
+    // bones and every pose (FootballFigure.Get, the moves, the celebrations). Once a frame, after everything has posed the figure, the model's bones copy the
     // figure's bones' turns. The model's arms are first lowered to hang like the figure's at rest, so a pose reads
     // the same on both. HandL/HandR move onto the model's gloves, so the ball sits in its hands.
     [DefaultExecutionOrder(10000)]
@@ -43,15 +42,14 @@ namespace PocketFootball.View
 
         public static bool Wear(FootballFigure fig, TeamConfig team, string pos, GameConfig cfg, Material kit)
         {
-            if (!cfg.Feature("modelPlayers")) return false;
             team.ModelFor(pos, cfg.Feature("posModels"), out string model, out string modelTexture);
-            if (string.IsNullOrEmpty(model)) return false;
+            if (string.IsNullOrEmpty(model)) { Debug.LogError("[model] team " + team.@short + " has no \"model\" in game.json; its players don't show"); return false; }
             if (!prefabs.TryGetValue(model, out var prefab))
             {
                 prefabs[model] = prefab = Resources.Load<GameObject>(model);
-                if (prefab == null) Debug.LogWarning("[model] no model at Resources/" + model + "; the player keeps the figure built from code");
+                if (prefab == null) Debug.LogWarning("[model] no model at Resources/" + model + "; the player doesn't show");
             }
-            if (prefab == null) return false;
+            if (prefab == null) return false;   // (logged once, above)
 
             var holder = fig.transform;
             var pivot = new GameObject("Model").transform;
@@ -71,15 +69,13 @@ namespace PocketFootball.View
             foreach (var kv in b)
                 if (kv.Value == null || smr == null)
                 {
-                    Debug.LogWarning("[model] " + prefab.name + " has no " + (smr == null ? "skinned mesh" : "bone " + kv.Key) + "; the team keeps the figure built from code");
+                    Debug.LogError("[model] " + prefab.name + " has no " + (smr == null ? "skinned mesh" : "bone " + kv.Key) + "; the player doesn't show");
                     DestroyNow(pivot.gameObject);
                     return false;
                 }
 
             // the figure at rest (every bone straight, hips at their own height) while the two are lined up
             fig.Pose((FootballFigure.PoseKind)(-1), 0);
-            foreach (var r in holder.GetComponentsInChildren<Renderer>(true)) r.enabled = false;
-            smr.enabled = true;
 
             // face the figure's way (+x): the toes point forward
             Vector3 fwd = holder.InverseTransformDirection(b["LeftToes"].position - b["LeftFoot"].position);
@@ -148,6 +144,37 @@ namespace PocketFootball.View
         }
 
         void LateUpdate() => Follow();
+
+        // A player who never moves again (the sideline crowd), posed once: the model is baked into a plain mesh in the
+        // pose (one bake shared by every player in the same pose) and the skinning and the rig go away.
+        static readonly Dictionary<string, Mesh> frozen = new Dictionary<string, Mesh>();
+        public static void Freeze(FootballFigure fig, FootballFigure.PoseKind pose)
+        {
+            var skin = fig.GetComponentInChildren<ModelSkin>();
+            var smr = skin != null ? skin.GetComponentInChildren<SkinnedMeshRenderer>() : null;
+            if (smr == null) return;
+            fig.Pose(pose, 0);
+            skin.Follow();
+            string key = smr.sharedMesh.GetInstanceID() + "/" + pose;
+            if (!frozen.TryGetValue(key, out var mesh) || mesh == null)
+            {
+                frozen[key] = mesh = new Mesh { name = smr.sharedMesh.name + " (" + pose + ")" };
+                smr.BakeMesh(mesh, true);   // (in the renderer's own space, its scale taken out; it comes back from the transform)
+                mesh.RecalculateBounds();
+            }
+            var go = new GameObject(smr.name);
+            go.transform.SetParent(smr.transform, false);
+            go.transform.SetParent(fig.transform, true);
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var r = go.AddComponent<MeshRenderer>();
+            r.sharedMaterial = smr.sharedMaterial;
+            r.shadowCastingMode = smr.shadowCastingMode;
+            var gone = new List<GameObject>();   // (the rig's bones and the "Model" pivot with the skinned mesh)
+            foreach (Transform t in fig.transform) if (t != go.transform) gone.Add(t.gameObject);
+            foreach (var g in gone) DestroyNow(g);
+            if (Application.isPlaying) Destroy(fig);
+            else DestroyImmediate(fig);
+        }
 
         void Follow()
         {

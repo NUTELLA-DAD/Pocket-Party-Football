@@ -271,12 +271,14 @@ namespace PocketFootball.View
             props.Build(root, "NearSideline", mat);
         }
 
+        // A player on the sideline: the team's model (ModelSkin), standing, baked still.
         void Player(TeamConfig team, float x, float z, float scale, float yaw)
         {
-            var f = FootballFigure.Create(root, team, 10 + (int)(Rand() * 80), Rand() < 0.3f ? FootballFigure.Build.Big : FootballFigure.Build.Mid, (int)(Rand() * 999), cfg.view.playerHeightM * scale, FootballFigure.KitMaterial(mat, cfg.view), TeamMarks.HelmetFor(team));
+            var f = FootballFigure.Create(root, "Sideline player", cfg.view.playerHeightM * scale);
             f.transform.localPosition = new Vector3(x, 0, z);
             f.transform.localRotation = Quaternion.Euler(0, yaw, 0);
-            f.Pose(FootballFigure.PoseKind.Stand, 0);
+            if (ModelSkin.Wear(f, team, null, cfg, FootballFigure.KitMaterial(mat, cfg.view))) ModelSkin.Freeze(f, FootballFigure.PoseKind.Stand);
+            Rand(); Rand(); Rand();   // (what the code-built player drew: number, build, skin; the rest of the seeded layout stays put)
         }
 
         // A coach or trainer: a team polo (or white), khaki or dark trousers, a team cap.

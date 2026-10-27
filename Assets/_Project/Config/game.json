@@ -670,7 +670,6 @@
     "throwStick": true,
     "snap": true,
     "botQuickCall": true,
-    "modelPlayers": true,
     "tackleContact": true,
     "posModels": true,
     "blockLock": true,
