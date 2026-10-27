@@ -39,6 +39,10 @@ namespace PocketFootball.Sim
         public float nearScale, nearRowM, nearDepthM, nearHalfLengthM, nearStaffShare, nearPropShare, nearTentScale;
         public List<float> nearRefsXM = new List<float>(), nearTentsXM = new List<float>();
 
+        // The refs (FEATURES.refModel): Kenny's rigged referee (Resources paths), the same scale as the people round
+        // them; without it the code-built person in stripes.
+        public string refModel, refTexture;
+
         // The cheerleaders (FEATURES.cheerleaders): cheerPerTeam of each team's squad (the team's cheerModel) stand in a
         // row cheerRowM past the white border, in front of their own team's bench (spread out so the following camera
         // always has a few in the picture), from cheerFromCentreM out every cheerGapM, cheerScale of a player's height. They all do the same routine together: cheerRoutine lists the
@@ -57,5 +61,38 @@ namespace PocketFootball.Sim
         // postCrossbarM up, uprights postWidthM apart and postUprightM tall with a ribbon on top, all postThickM thick.
         public float postCrossbarM, postWidthM, postUprightM, postThickM, postBackM, postPadM, postRibbonM;
         public string postColor, postPadColor, postRibbonColor;
+
+        // The full bowl round the field (FEATURES.stadiumBowl, NO_STADIUM_BOWL=1: only the old straight stand on the
+        // far side). View/Bowl.cs.
+        public BowlConfig bowl = new BowlConfig();
+    }
+
+    // The outdoor stadium bowl (View/Bowl.cs): the wall line is a rounded rectangle round the field, the far side at the
+    // old wall (wallBackM past the border), the ends endBackM past the end lines, the near side nearBackM past its
+    // border, corners cornerM round. The lower tier keeps the old rows (rows, rowDepthM, rowRiseM) all the way round;
+    // behind it a concourse (concourseM deep), a fascia (fasciaM tall, a ribbon board with banners every bannerEveryM),
+    // then the upper tier (upperRows, steeper), a rim wall (rimM) and the outer wall with pilasters. Light towers at the
+    // corners (towerHeightM, a lamp head of towerLampsX by towerLampsY), flags along the rim, a big scoreboard over the
+    // left end, a ground plane with a car park and a ring of trees outside. segM / cornerDeg: how finely the curve is cut.
+    public sealed class BowlConfig
+    {
+        public float endBackM, nearBackM, cornerM, segM, cornerDeg;
+        public float concourseM, fasciaM, upperBackM, upperRowDepthM, upperRowRiseM, rimM, rimThickM;
+        public int upperRows;
+        public float upperSeatM, upperEmptyChance;
+        public float portalEveryM, portalWidthM;
+        public int portalRow, portalRows;
+        public float bannerEveryM, pilasterEveryM;
+        public string fasciaColor, ribbonColor, upperSeatColor, upperConcreteColor, rimColor, outerColor, pilasterColor, portalColor;
+        public float towerHeightM, towerOutM, towerTiltDeg, towerLampM;
+        public int towerLampsX, towerLampsY;
+        public string towerColor, lampColor;
+        public float lampGlow;
+        public float flagEveryM, flagPoleM, flagWM, flagHM;
+        public float boardWidthM, boardHeightM, boardLiftM;
+        public string boardColor;
+        public float groundRadiusM, parkingM, treeInM, treeOutM;
+        public int trees;
+        public string groundColor, parkingColor, treeColor, treeDarkColor, trunkColor;
     }
 }
