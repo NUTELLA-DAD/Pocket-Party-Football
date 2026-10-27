@@ -42,7 +42,7 @@ namespace PocketFootball.View
             this.cfg = cfg;
             mat = FootballFigure.KitMaterial(Looks.Toon(baseMat), cfg.view);
             root = new GameObject("Players").transform;
-            ball = FootballFigure.MakeBall(null, mat, cfg.view.ballLengthM).transform;
+            ball = FootballFigure.MakeBall(null, mat, cfg.view.ballLengthM, cfg.Feature("modelBall")).transform;
             // a dark spot on the grass under a ball in the air: shows how high it is and where it's going
             ballShadow = Looks.Flat(null, "BallShadow", Vector3.zero, new Vector2(cfg.view.ballLengthM, cfg.view.ballLengthM * 0.6f), new Color(0.12f, 0.22f, 0.1f), mat).transform;
         }
@@ -127,7 +127,7 @@ namespace PocketFootball.View
             {
                 var f = Figure(kv.Key);
                 if (f == null) continue;
-                if (!props.TryGetValue(kv.Key, out var prop)) props[kv.Key] = prop = FootballFigure.MakeBall(null, mat, cfg.view.ballLengthM).transform;
+                if (!props.TryGetValue(kv.Key, out var prop)) props[kv.Key] = prop = FootballFigure.MakeBall(null, mat, cfg.view.ballLengthM, cfg.Feature("modelBall")).transform;
                 var hand = kv.Value ? f.HandR : f.HandL;
                 prop.position = hand.position;
                 prop.rotation = hand.rotation * Quaternion.Euler(0, 90, 0);

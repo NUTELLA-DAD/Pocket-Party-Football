@@ -642,6 +642,7 @@
     "gamelog": true,
     "gamepad": true,
     "audio": true,
+    "modelBall": true,
     "defmoves": true,
     "throwStick": true,
     "snap": true,
