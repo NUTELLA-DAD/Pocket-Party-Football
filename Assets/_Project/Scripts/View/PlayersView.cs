@@ -200,9 +200,9 @@ namespace PocketFootball.View
                     // braking hard (a stop takes a tick or two) a stride smaller than a walk's shrinks over StrideShrinkTicks, not at once,
                     // so the last stride pose the stop eases from still has bent legs
                     float shown = speed;
-                    if (strideShown.TryGetValue(p.Slot, out var was))
-                        shown = Mathf.Max(speed, Mathf.Min(was.speed, cfg.anim.strideWalkYdS) * (1f - (w.Tick - was.tick) / StrideShrinkTicks));
-                    if (was.tick != w.Tick) strideShown[p.Slot] = (shown, w.Tick);
+                    if (strideShown.TryGetValue(p.Slot, out var drawn))
+                        shown = Mathf.Max(speed, Mathf.Min(drawn.speed, cfg.anim.strideWalkYdS) * (1f - (w.Tick - drawn.tick) / StrideShrinkTicks));
+                    if (drawn.tick != w.Tick) strideShown[p.Slot] = (shown, w.Tick);
                     fig.Stride(true, Stride.Pose(cfg.anim, cfg.players, fig.Legs, phase, shown, yd * FootballFigure.RigHeight / cfg.view.playerHeightM));
                     strideLast[p.Slot] = w.Tick;
                 }
