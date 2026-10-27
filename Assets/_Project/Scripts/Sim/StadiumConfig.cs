@@ -39,6 +39,10 @@ namespace PocketFootball.Sim
         public float nearScale, nearRowM, nearDepthM, nearHalfLengthM, nearStaffShare, nearPropShare, nearTentScale;
         public List<float> nearRefsXM = new List<float>(), nearTentsXM = new List<float>();
 
+        // The refs (FEATURES.refModel): Kenny's rigged referee (Resources paths), the same scale as the people round
+        // them; without it the code-built person in stripes.
+        public string refModel, refTexture;
+
         // The cheerleaders (FEATURES.cheerleaders): cheerPerTeam of each team's squad (the team's cheerModel) stand in a
         // row cheerRowM past the white border, in front of their own team's bench (spread out so the following camera
         // always has a few in the picture), from cheerFromCentreM out every cheerGapM, cheerScale of a player's height. They all do the same routine together: cheerRoutine lists the

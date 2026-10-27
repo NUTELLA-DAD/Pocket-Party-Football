@@ -601,6 +601,8 @@
     "nearPropShare": 0.1,
     "nearTentScale": 1,
     "nearRefsXM": [-30, 14],
+    "refModel": "Models/Referee/Referee_Rigged",
+    "refTexture": "Models/Referee/Referee_BaseColor",
     "cheerPerTeam": 6,
     "cheerScale": 0.7,
     "cheerRowM": 0.3,
@@ -734,6 +736,7 @@
     "snapZoom": true,
     "grassBlades": true,
     "cheerleaders": true,
-    "faceDownfield": true
+    "faceDownfield": true,
+    "refModel": true
   }
 }

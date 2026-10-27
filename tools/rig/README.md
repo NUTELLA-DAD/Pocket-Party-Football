@@ -16,3 +16,7 @@ Blender as a Python module (`pip install bpy`), run with `python script.py -- ar
 For another model (e.g. the linebacker): copy chiefs24.json, set the joints from slices of that mesh (shoulder at the
 sleeve/pad centre, elbow mid bare arm, wrist at the wristband, knee at the pants hem, ankle inside the shoe top), and
 check `headKeep` keeps the helmet and facemask rigid.
+
+`referee.json`: the referee (Resources/Models/Referee): no helmet, so `headKeep` keeps the head and cap rigid (rigged
+rigid above 1.245 m before rigfix) and `padShift` is 0. Its import/prep/rig scripts are in the project files under
+models/referee/scripts.
