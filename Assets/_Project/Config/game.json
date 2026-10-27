@@ -337,7 +337,8 @@
     "watchYd": 12,
     "lookTwistDeg": 75,
     "lookHeadDeg": 50,
-    "lookStepDeg": 10
+    "lookStepDeg": 10,
+    "cameraTurnDeg": 0
   },
   "defense": {
     "swimEarlyS": 0.5,
@@ -711,6 +712,7 @@
     "watchBall": true,
     "turfV2": true,
     "labFreeCam": true,
-    "grassBlades": true
+    "grassBlades": true,
+    "faceDownfield": true
   }
 }

@@ -219,6 +219,9 @@ namespace PocketFootball.Sim
         // FEATURES.watchBall (View/PlayersView.cs): with a pass in the air, the men within watchYd of where it's aimed
         // turn to follow it: shoulders up to lookTwistDeg, the head lookHeadDeg more, the rest the whole body; in lookStepDeg steps
         public float watchYd, lookTwistDeg, lookHeadDeg, lookStepDeg;
+        // FEATURES.faceDownfield (View/PlayersView.cs): a figure turns only cameraTurnDeg toward the camera (0 = it faces
+        // straight down the field, or along its run); a locked pair turns no more than that either
+        public float cameraTurnDeg;
     }
 
     // WS-07 the lobby (FEATURES.lobby): each person picks an offense spot and a defense spot before kickoff. The game

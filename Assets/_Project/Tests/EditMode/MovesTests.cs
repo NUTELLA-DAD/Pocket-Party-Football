@@ -392,6 +392,22 @@ namespace PocketFootball.Tests.EditMode
         }
 
         [Test]
+        public void PlayersFaceStraightDownTheField()
+        {
+            var cfg = ConfigTests.Load(null);
+            Assert.IsTrue(cfg.Feature("faceDownfield"));
+            // yaw 0 faces +x (one end zone), 180 the other: no turn toward the camera on the -z sideline
+            Assert.AreEqual(0f, PlayersView.TowardCamera(0f, PlayersView.CameraTurn(cfg, false)), 1e-3f);
+            Assert.AreEqual(180f, PlayersView.TowardCamera(180f, PlayersView.CameraTurn(cfg, false)), 1e-3f);
+            Assert.AreEqual(0f, PlayersView.CameraTurn(cfg, true), "a locked pair faces each other, not the camera");
+
+            var old = ConfigTests.Load(new Dictionary<string, string> { { "NO_FACE_DOWNFIELD", "1" } });
+            Assert.IsFalse(old.Feature("faceDownfield"));
+            Assert.AreEqual(42f, PlayersView.TowardCamera(0f, PlayersView.CameraTurn(old, false)), 1e-3f, "off: the old turn to the camera");
+            Assert.AreEqual(old.anim.lockTurnDeg, PlayersView.CameraTurn(old, true));
+        }
+
+        [Test]
         public void NoWatchBallSwitchesItOff()
         {
             var w = AtTheLine(env: new Dictionary<string, string> { { "NO_WATCH_BALL", "1" } });
