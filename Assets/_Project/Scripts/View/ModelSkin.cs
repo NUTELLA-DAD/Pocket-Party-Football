@@ -37,7 +37,7 @@ namespace PocketFootball.View
         Transform shoulderL, shoulderR, handL, handR;
         Transform[] feet, toes;
         float[] footPitch;     // each foot's pitch (toes above the heel, degrees) standing at rest
-        Quaternion[] footRest;
+        Quaternion[] footRest, toeRest;
         Quaternion shoulderRestL, shoulderRestR;
 
         bool fixArms = true;   // the helmeted players' arm fixes (Adapt, Splay); the cheerleaders have no helmet
@@ -131,6 +131,7 @@ namespace PocketFootball.View
             skin.toes = new[] { b["LeftToes"], b["RightToes"] };
             skin.footPitch = new float[2];
             skin.footRest = new[] { skin.feet[0].localRotation, skin.feet[1].localRotation };
+            skin.toeRest = new[] { skin.toes[0].localRotation, skin.toes[1].localRotation };
             for (int i = 0; i < 2; i++) skin.footPitch[i] = Pitch(skin.toes[i].position - skin.feet[i].position, holder.up);
             skin.shoulderRestL = skin.shoulderL.localRotation; skin.shoulderRestR = skin.shoulderR.localRotation;
 
@@ -200,6 +201,8 @@ namespace PocketFootball.View
             shoulderR.localRotation = shoulderRestR;
             feet[0].localRotation = footRest[0];
             feet[1].localRotation = footRest[1];
+            toes[0].localRotation = toeRest[0];
+            toes[1].localRotation = toeRest[1];
             for (int i = 0; i < from.Length; i++) to[i].rotation = from[i].rotation * offset[i];
             if (fixArms)
             {
@@ -211,6 +214,8 @@ namespace PocketFootball.View
             LevelFeet();
             Point(0, fig.ToeL);
             Point(1, fig.ToeR);
+            Bend(0, fig.BallL);
+            Bend(1, fig.BallR);
         }
 
         // The model's knee and elbow bends as drawn (degrees between the two bones, after every fix), for the motion
@@ -220,6 +225,15 @@ namespace PocketFootball.View
             float At(Transform a, Transform b, Transform c) => Vector3.Angle(b.position - a.position, c.position - b.position);
             kneeL = At(to[7], to[8], feet[0]); kneeR = At(to[9], to[10], feet[1]);
             elbowL = At(to[3], to[4], handL); elbowR = At(to[5], to[6], handR);
+        }
+
+        // FEATURES.footFlex: the toes bent deg up (+) at the ball of the foot, about the foot's crosswise axis.
+        void Bend(int i, float deg)
+        {
+            if (deg == 0f) return;
+            Vector3 axis = Vector3.Cross(toes[i].position - feet[i].position, fig.transform.up);
+            if (axis.sqrMagnitude < 1e-12f) return;
+            toes[i].rotation = Quaternion.AngleAxis(deg, axis.normalized) * toes[i].rotation;
         }
 
         // The stride's push-off and heel strike: the foot pitched deg more (- = toes down), about its own crosswise axis.

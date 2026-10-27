@@ -37,7 +37,7 @@ namespace PocketFootball.Tests.EditMode
         {
             yield return p.ThighL; yield return p.ShinL; yield return p.ThighR; yield return p.ShinR;
             yield return p.ArmL; yield return p.ForeL; yield return p.ArmR; yield return p.ForeR;
-            yield return p.ToeL; yield return p.ToeR; yield return p.Twist;
+            yield return p.ToeL; yield return p.ToeR; yield return p.BallL; yield return p.BallR; yield return p.Twist;
         }
 
         [Test]
@@ -145,6 +145,31 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual(0.3f, Stride.Advance(0.3f, cfg.anim, cfg.players, 6f, 0f), 1e-6f);
             float yd = Stride.CycleYd(cfg.anim, cfg.players, 6f);
             Assert.AreEqual(0.55f, Stride.Advance(0.3f, cfg.anim, cfg.players, 6f, yd * 0.25f), 1e-4f, "a quarter of a stride run");
+        }
+
+        // FEATURES.footFlex: pushing off, the heel comes up but the toes stay flat on the grass (the foot bends at its ball);
+        // in the air the toes come back straight and lift to clear the grass; switched off, the foot never bends.
+        [Test]
+        public void TheFootBendsAtItsBallPushingOff()
+        {
+            foreach (float v in Speeds)
+            {
+                float most = 0f; StridePose atMost = default; float lifted = 0f;
+                for (int i = 0; i < Steps; i++)
+                {
+                    var p = At(Model, (float)i / Steps, v);
+                    if (p.BallL > most) { most = p.BallL; atMost = p; }
+                    lifted = Mathf.Max(lifted, p.ToeL);
+                    Assert.GreaterOrEqual(p.BallL, 0f, "the toes never bend down (" + v + " yd/s)");
+                    var off = Stride.Pose(cfg.anim, cfg.players, Model, (float)i / Steps, v, CmPerYd, false);
+                    Assert.AreEqual(0f, off.BallL, "switched off (" + v + " yd/s)");
+                }
+                Assert.Greater(most, 10f, "the foot bends at its ball (" + v + " yd/s)");
+                Assert.Less(Mathf.Abs(atMost.ToeL + atMost.BallL), 0.2f * most, "the toes stay about flat (" + v + " yd/s)");
+                Assert.Greater(lifted, 3f, "the toes lift somewhere in the stride (" + v + " yd/s)");
+            }
+            Assert.AreEqual("NO_FOOT_FLEX", ConfigLoader.EnvName("footFlex"));
+            Assert.IsTrue(cfg.Feature("footFlex"));
         }
 
         [Test]

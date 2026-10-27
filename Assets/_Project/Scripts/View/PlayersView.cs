@@ -203,7 +203,7 @@ namespace PocketFootball.View
                     if (strideShown.TryGetValue(p.Slot, out var drawn))
                         shown = Mathf.Max(speed, Mathf.Min(drawn.speed, cfg.anim.strideWalkYdS) * (1f - (w.Tick - drawn.tick) / StrideShrinkTicks));
                     if (drawn.tick != w.Tick) strideShown[p.Slot] = (shown, w.Tick);
-                    fig.Stride(true, Stride.Pose(cfg.anim, cfg.players, fig.Legs, phase, shown, yd * FootballFigure.RigHeight / cfg.view.playerHeightM));
+                    fig.Stride(true, Stride.Pose(cfg.anim, cfg.players, fig.Legs, phase, shown, yd * FootballFigure.RigHeight / cfg.view.playerHeightM, cfg.Feature("footFlex")));
                     strideLast[p.Slot] = w.Tick;
                 }
                 else if (!down && move.Kind == Move.None && strideLast.TryGetValue(p.Slot, out int last))
