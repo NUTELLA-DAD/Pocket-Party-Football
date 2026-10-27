@@ -83,5 +83,16 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual(ssk.model, m, "NO_POS_MODELS=1: the team's model for every position");
             Assert.IsFalse(Load(new Dictionary<string, string> { { "NO_POS_MODELS", "1" } }).Feature("posModels"));
         }
+
+        [Test]
+        public void QuarterbacksWearTheirOwnModel()
+        {
+            Load().teams[0].ModelFor("QB", true, out string m, out string tex);
+            Assert.AreEqual("Models/QB/QB_Rigged", m);
+            Assert.AreEqual("Models/QB/QB_BaseColor", tex, "the Chiefs' QB wears the model's own colours");
+            Load().teams[1].ModelFor("QB", true, out m, out tex);
+            Assert.AreEqual("Models/QB/QB_Rigged", m);
+            Assert.AreEqual("Models/QB/QBRR_BaseColor", tex, "the Roughriders' QB wears the green recolour");
+        }
     }
 }
