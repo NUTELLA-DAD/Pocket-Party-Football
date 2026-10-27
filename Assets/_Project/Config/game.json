@@ -241,6 +241,8 @@
       "short": "SSK",
       "color": "#1f8a4c",
       "color2": "#f6f1de",
+      "model": "Models/Chiefs24/Chiefs24_Rigged",
+      "modelTexture": "Models/Roughriders/Roughriders_BaseColor",
       "posModels": [
         { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/Linebacker_BaseColor" }
       ]
@@ -258,6 +260,7 @@
   "view": {
     "playerHeightM": 2.85,
     "playerRadiusM": 0.45,
+    "tackleContactM": 1.0,
     "findMeS": 2,
     "plateFontPx": 22,
     "joinPanelQrPx": 260,
@@ -650,11 +653,13 @@
     "gamelog": true,
     "gamepad": true,
     "audio": true,
+    "modelBall": true,
     "defmoves": true,
     "throwStick": true,
     "snap": true,
     "botQuickCall": true,
     "modelPlayers": true,
+    "tackleContact": true,
     "posModels": true
   }
 }

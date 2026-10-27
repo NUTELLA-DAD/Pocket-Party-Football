@@ -21,11 +21,13 @@ namespace PocketFootball.View
         public bool GettingUp;    // Tackle / Tackled: the last part of the whistle
         public int UpFrame;       // key frame since he started getting up
         public int StartTick;     // tells one move from the next of the same kind
+        public bool HasPartner;   // Tackle / Tackled: the other man in the tackle is known
+        public int Partner;       // ... and his slot
     }
 
     public sealed class Moves
     {
-        sealed class Rec { public Move Kind; public int Start, End; public bool Hold, OnBack; }
+        sealed class Rec { public Move Kind; public int Start, End; public bool Hold, OnBack; public int Partner = -1; }
 
         readonly SortedDictionary<int, Rec> bySlot = new SortedDictionary<int, Rec>();
         readonly HashSet<int> reaching = new HashSet<int>();
@@ -44,9 +46,9 @@ namespace PocketFootball.View
 
         int FrameOf(World w, int ticks) => ticks <= 0 ? 0 : (int)(ticks * w.Cfg.anim.fps / w.Cfg.sim.tickHz);
 
-        void Start(World w, int slot, Move kind, float seconds, bool hold = false, bool onBack = false)
+        void Start(World w, int slot, Move kind, float seconds, bool hold = false, bool onBack = false, int partner = -1)
         {
-            bySlot[slot] = new Rec { Kind = kind, Start = w.Tick, End = hold ? int.MaxValue : w.Tick + Math.Max(1, Ticks(w, seconds)), Hold = hold, OnBack = onBack };
+            bySlot[slot] = new Rec { Kind = kind, Start = w.Tick, End = hold ? int.MaxValue : w.Tick + Math.Max(1, Ticks(w, seconds)), Hold = hold, OnBack = onBack, Partner = partner };
         }
 
         // Call once the World has stepped (calling again on the same tick does nothing).
@@ -90,9 +92,9 @@ namespace PocketFootball.View
                             float fx = c.VX, fz = c.VZ;
                             if (fx * fx + fz * fz < 0.25f) { fx = w.Dir * (c.Team == w.Offense ? 1f : -1f); fz = 0f; }
                             onBack = (t.X - c.X) * fx + (t.Z - c.Z) * fz > 0f;
-                            Start(w, t.Slot, Move.Tackle, 0f, true);
+                            Start(w, t.Slot, Move.Tackle, 0f, true, false, c.Slot);
                         }
-                        Start(w, c.Slot, Move.Tackled, 0f, true, onBack);
+                        Start(w, c.Slot, Move.Tackled, 0f, true, onBack, t != null ? t.Slot : -1);
                     }
                     else if (c != null && (w.Result == "TOUCHDOWN" || w.Result == "PICK SIX")) Start(w, c.Slot, Move.Celebrate, 0f, true);
                 }
@@ -139,9 +141,16 @@ namespace PocketFootball.View
             foreach (int slot in done) bySlot.Remove(slot);
         }
 
-        // The tackler: the nearest man on the other team.
-        static Player Tackler(World w, Player c)
+        // The tackler: the man the sim says made it (this tick's Tackle or Sack on him), else the nearest man on the
+        // other team. (A person's tackle reaches further than a bot's, so the nearest man is not always the one.)
+        public static Player Tackler(World w, Player c)
         {
+            foreach (var e in w.Events.ThisTick)
+                if ((e.Kind == EventKind.Tackle || e.Kind == EventKind.Sack) && e.Other == c.Slot)
+                {
+                    var t = w.Find(e.Slot);
+                    if (t != null) return t;
+                }
             Player best = null; float bd = float.MaxValue;
             foreach (var p in w.Players)
             {
@@ -158,7 +167,7 @@ namespace PocketFootball.View
             var a = w.Cfg.anim;
             if (bySlot.TryGetValue(p.Slot, out var r))
             {
-                var m = new MoveNow { Kind = r.Kind, Frame = FrameOf(w, w.Tick - r.Start), OnBack = r.OnBack, StartTick = r.Start };
+                var m = new MoveNow { Kind = r.Kind, Frame = FrameOf(w, w.Tick - r.Start), OnBack = r.OnBack, StartTick = r.Start, HasPartner = r.Partner >= 0, Partner = r.Partner };
                 int upTicks = Ticks(w, a.getUpS);
                 if (r.Hold && w.Phase == Phase.Whistle && w.PhaseTicks <= upTicks && (r.Kind == Move.Tackle || r.Kind == Move.Tackled))
                 {
@@ -178,6 +187,20 @@ namespace PocketFootball.View
             if (p.BlockedTicks > 0 || (p.Blocking && Engaged(w, p)))
                 return new MoveNow { Kind = Move.Block, Frame = (int)(w.PlayTicks / Math.Max(1, Ticks(w, a.blockShoveS))) };
             return default;
+        }
+
+        // Where the tackler goes down so the two bodies meet (FEATURES.tackleContact, NO_TACKLE_CONTACT=1 turns it
+        // off): the sim calls a tackle from reach (tackleReachYd, half again for a person), which can leave a yard or
+        // more of grass between them. The tackler lands contactYd short of the carrier, on the line from where he
+        // was, facing him (ux, uz: tackler to carrier); the carrier stays on his spot, where the ball is marked.
+        // False: they stand on the same spot, no line to put him on.
+        public static bool TackleContact(float tx, float tz, float cx, float cz, float contactYd, out float x, out float z, out float ux, out float uz)
+        {
+            float dx = cx - tx, dz = cz - tz, d = (float)Math.Sqrt(dx * dx + dz * dz);
+            if (d < 0.01f) { x = tx; z = tz; ux = uz = 0f; return false; }
+            ux = dx / d; uz = dz / d;
+            x = cx - ux * contactYd; z = cz - uz * contactYd;
+            return true;
         }
 
         static bool Engaged(World w, Player p)
