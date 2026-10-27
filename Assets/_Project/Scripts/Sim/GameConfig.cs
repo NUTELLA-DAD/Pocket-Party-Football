@@ -183,6 +183,8 @@ namespace PocketFootball.Sim
         public float playerShadeUnify, playerShadeSaturation;
         // and a bolder ink line than the stadium's (concept 01's outlines), a softer rim (less plastic)
         public float playerOutlinePx, playerOutlineTint, playerRim;
+        // how far apart (hips, metres) a tackler and the carrier go down, so the tackle meets (FEATURES.tackleContact)
+        public float tackleContactM;
     }
 
     // The players' moves on the TV (View/Moves.cs, FEATURES.moves): key frames per second (stepped, no wobble), how

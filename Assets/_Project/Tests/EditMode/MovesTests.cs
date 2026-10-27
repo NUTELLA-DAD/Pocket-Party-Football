@@ -161,6 +161,49 @@ namespace PocketFootball.Tests.EditMode
         }
 
         [Test]
+        public void APersonsLongTackleIsHisNotTheNearestMans()
+        {
+            // a person's tackle reaches half again a bot's: he tackles from further out than a bot standing nearer
+            const int Them = 600;
+            var w = AtTheLine(tune: c => c.play.tackleBase = 1f);
+            w.ReplaceBot(w.Defense, Them);
+            var m = new Moves();
+            Hike(w, m);
+            var qb = LivePlay.Qb(w);
+            var me = w.Find(Them);
+            var near = LivePlay.SpotOf(w, w.Defense, 1);
+            float reach = w.Cfg.play.tackleReachYd;
+            me.X = qb.X + w.Dir * reach * 1.35f; me.Z = qb.Z; me.VX = me.VZ = 0f;
+            near.X = qb.X; near.Z = qb.Z + reach * 1.1f; near.VX = near.VZ = 0f;
+            Step(w, m, new Dictionary<int, PlayerInput> { { Them, new PlayerInput { Tackle = true } } });
+            Assert.AreEqual(Phase.Whistle, w.Phase);
+            Assert.Less(LivePlay.Dist(near, qb), LivePlay.Dist(me, qb), "the bot stands nearer");
+            var t = m.Of(w, me);
+            Assert.AreEqual(Move.Tackle, t.Kind, "the man who made it goes down with him");
+            Assert.IsTrue(t.HasPartner);
+            Assert.AreEqual(qb.Slot, t.Partner);
+            Assert.AreNotEqual(Move.Tackle, m.Of(w, near).Kind);
+            var c = m.Of(w, qb);
+            Assert.AreEqual(Move.Tackled, c.Kind);
+            Assert.AreEqual(me.Slot, c.Partner);
+        }
+
+        [Test]
+        public void TheTacklerGoesDownAgainstTheCarrier()
+        {
+            // 2.5 yards apart: he lands 1.1 yards short of the carrier, on the line between them, facing him
+            Assert.IsTrue(Moves.TackleContact(0f, 0f, 2.5f, 0f, 1.1f, out float x, out float z, out float ux, out float uz));
+            Assert.AreEqual(1.4f, x, 1e-4f); Assert.AreEqual(0f, z, 1e-4f);
+            Assert.AreEqual(1f, ux, 1e-4f); Assert.AreEqual(0f, uz, 1e-4f);
+            // from the side and behind, and already closer than the contact: put back out to it
+            Assert.IsTrue(Moves.TackleContact(3f, 4f, 3f, 4.5f, 1.1f, out x, out z, out ux, out uz));
+            Assert.AreEqual(3f, x, 1e-4f); Assert.AreEqual(3.4f, z, 1e-4f);
+            Assert.AreEqual(0f, ux, 1e-4f); Assert.AreEqual(1f, uz, 1e-4f);
+            // on the same spot: nothing to line up on
+            Assert.IsFalse(Moves.TackleContact(1f, 1f, 1f, 1f, 1.1f, out x, out z, out ux, out uz));
+        }
+
+        [Test]
         public void AMissedTackleIsAWhiff()
         {
             var w = AtTheLine(tune: c => { c.play.tackleBase = 0f; c.play.tackleSpeedBonus = 0f; c.play.tackleFromBehindBonus = 0f; });

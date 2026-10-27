@@ -254,6 +254,7 @@
   "view": {
     "playerHeightM": 2.85,
     "playerRadiusM": 0.45,
+    "tackleContactM": 1.0,
     "findMeS": 2,
     "plateFontPx": 22,
     "joinPanelQrPx": 260,
@@ -651,6 +652,7 @@
     "throwStick": true,
     "snap": true,
     "botQuickCall": true,
-    "modelPlayers": true
+    "modelPlayers": true,
+    "tackleContact": true
   }
 }
