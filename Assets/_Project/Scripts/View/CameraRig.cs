@@ -24,6 +24,7 @@ namespace PocketFootball.View
             rig.Cam.tag = "MainCamera";
             rig.Cam.clearFlags = CameraClearFlags.SolidColor;
             rig.Cam.backgroundColor = Colors.Hex(cfg.field.skyColor);
+            SkyView.UseSkyBox(cfg, rig.Cam);   // the sunset sky box (FEATURES.sunsetSky)
             var extra = go.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
             extra.renderPostProcessing = true;   // the colour grade (ProjectSetup.LookVolume)
             extra.antialiasing = UnityEngine.Rendering.Universal.AntialiasingMode.SubpixelMorphologicalAntiAliasing;
@@ -62,7 +63,7 @@ namespace PocketFootball.View
                 Cam.fieldOfView = heldFov;
                 float d = Vector3.Distance(heldPos, heldLook);
                 Cam.nearClipPlane = Mathf.Max(0.3f, d * 0.02f);
-                Cam.farClipPlane = Mathf.Max(600f, d * 4f);
+                Cam.farClipPlane = Mathf.Max(1500f, d * 4f);   // (far enough for the ground out to the haze round the stadium)
                 return;
             }
             var p = Pose(cfg, Cam.aspect, lookAtXYd, zoom);
