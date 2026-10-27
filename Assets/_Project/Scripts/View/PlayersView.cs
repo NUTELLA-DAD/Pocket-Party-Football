@@ -150,11 +150,17 @@ namespace PocketFootball.View
                     Momentum.Lean(ms, cfg.anim, out float fwd, out float side, out float plant);
                     // planted (or leaning hard nearly stopped): the feet stay put, no pedalling in place
                     if (plant > 0f || (speed < 2f && Mathf.Abs(fwd) + Mathf.Abs(side) >= 8f)) frame = 0;
-                    float feet = Mathf.Clamp01(cfg.anim.leanFeetShare);
-                    t.localRotation = Quaternion.Euler(0f, yaw, 0f) * Quaternion.Euler(side * feet, 0f, -fwd * feet);
-                    fig.Carry(fwd * (1f - feet), side * (1f - feet), fwd, move.Kind == Move.None ? plant : 0f, cfg.anim.cutSpreadDeg, -side * cfg.anim.cutTwistShare);
-                    // still leaning hard (the middle of a turn-around): his legs keep running, no stand-up pose for a tick
-                    if (move.Kind == Move.None && speed <= 0.5f && (plant > 0f || Mathf.Abs(fwd) + Mathf.Abs(side) >= 8f))
+                    // the speed lean bends the spine (a sprint's silhouette), the rest of the lean tips him over his feet,
+                    // less so in a plant, where the bent legs take it
+                    float run = Mathf.Clamp01(speed / cfg.players.sprintSpeedYdS);
+                    float spine = cfg.anim.speedLeanDeg * run * run;
+                    float feet = Mathf.Clamp01(cfg.anim.leanFeetShare) * (plant > 0f ? 0.6f : 1f);
+                    float tip = (fwd - spine) * feet;
+                    t.localRotation = Quaternion.Euler(0f, yaw, 0f) * Quaternion.Euler(side * feet, 0f, -tip);
+                    float pump = Mathf.Clamp01((speed - cfg.players.jogSpeedYdS) / Mathf.Max(0.1f, cfg.players.sprintSpeedYdS - cfg.players.jogSpeedYdS));
+                    fig.Carry(fwd - tip, side * (1f - feet), fwd, move.Kind == Move.None ? plant : 0f, cfg.anim.cutSpreadDeg, -side * cfg.anim.cutTwistShare, pump);
+                    // planted in the middle of a turn-around: no stand-up pose for a tick
+                    if (move.Kind == Move.None && speed <= 0.5f && plant > 0f)
                     { fig.Pose(carrier ? FootballFigure.PoseKind.Carry : FootballFigure.PoseKind.Run, frame); continue; }
                 }
                 if (PoseFor(move, frame, out var kind, out int f)) fig.Pose(kind, f);
