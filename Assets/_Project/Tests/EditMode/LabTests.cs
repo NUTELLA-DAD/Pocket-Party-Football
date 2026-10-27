@@ -59,6 +59,20 @@ namespace PocketFootball.Tests.EditMode
         }
 
         [Test]
+        public void TheFirstRepIsNotTheOpeningKickoff()
+        {
+            var lab = Make("cuts");
+            var w = lab.W;
+            var me = w.Find(lab.You);
+            float x = me.X, z = me.Z;
+            for (int i = 0; i < Secs(lab, 3f); i++) Tick(lab);
+            Assert.IsFalse(w.Kick.Kickoff, "the game's opening kickoff stays out of the lab");
+            Assert.AreEqual(Phase.Live, w.Phase);
+            Assert.AreEqual(x, w.Find(lab.You).X, 0.01f, "nobody moved you");
+            Assert.AreEqual(z, w.Find(lab.You).Z, 0.01f);
+        }
+
+        [Test]
         public void QbDrillThrowCaughtThenItRunsAgain()
         {
             var lab = Make("throw", c => c.play.catchChanceOffense = 1f);

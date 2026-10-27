@@ -30,8 +30,11 @@ foreach ($cam in $Cams) {
     $big = New-Object System.Drawing.Font('Segoe UI', 18, [System.Drawing.FontStyle]::Bold)
     foreach ($label in $parts.Keys) {
         $list = $parts[$label]
-        $stride = [Math]::Max(1, [Math]::Ceiling($list.Count / 16))
-        $pick = @(for ($i = 0; $i -lt $list.Count; $i += $stride) { $list[$i] })
+        # the turn-arounds, the cut and the stop happen in their first second or so: every frame of that, not a spread
+        $quick = @('reverse', 'reverse jog', 'cut 90', 'stop') -contains $label
+        $stride = if ($quick) { 1 } else { [Math]::Max(1, [Math]::Ceiling($list.Count / 16)) }
+        $limit = if ($quick) { 24 } else { $list.Count }
+        $pick = @(for ($i = 0; $i -lt [Math]::Min($list.Count, $limit * $stride); $i += $stride) { $list[$i] })
         $nrows = [Math]::Ceiling($pick.Count / $cols)
         $sheet = New-Object System.Drawing.Bitmap ($cols * $thumb), (40 + $nrows * ($thumb + $cap))
         $g = [System.Drawing.Graphics]::FromImage($sheet)
