@@ -65,6 +65,7 @@ namespace PocketFootball.Boot
             var st = Concept04(w, view, rig);
             st.Name = pos.y > 20f ? "stadium" : "sunset";
             st.Hud = false;
+            st.Badges.Clear();
             rig.Hold(pos, lookAt, fovDeg);
             return st;
         }

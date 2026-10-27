@@ -70,6 +70,29 @@ namespace PocketFootball.Tests.EditMode
         }
 
         [Test]
+        public void TheNearSideIsCutAwayOnlyWhenItWouldHideTheField()
+        {
+            var cfg = ConfigTests.Load();
+            var go = new GameObject("BowlTest");
+            try
+            {
+                var bowl = new Bowl(cfg, go.transform, null, null);
+                // a long lens far back past the near stands: cut away
+                Assert.IsTrue(bowl.NearSideBlocks(new Vector3(0f, 63f, -182f)));
+                // a normal lens in front of the near stands, or high above their front rows: keep them
+                Assert.IsFalse(bowl.NearSideBlocks(new Vector3(0f, 14f, -34.8f)));
+                Assert.IsFalse(bowl.NearSideBlocks(new Vector3(0f, 26.8f, -42.9f)));
+                // on the field, or over the far side: keep them
+                Assert.IsFalse(bowl.NearSideBlocks(new Vector3(-25f, 3f, -18f)));
+                Assert.IsFalse(bowl.NearSideBlocks(new Vector3(0f, 40f, 120f)));
+                // the near side runs between the near corners
+                Assert.IsTrue(bowl.IsNear(bowl.Path.SegmentStart(4) + bowl.Path.SegmentLength(4) * 0.5f));
+                Assert.IsFalse(bowl.IsNear(bowl.Path.SegmentLength(0) * 0.5f));
+            }
+            finally { Object.DestroyImmediate(go); }
+        }
+
+        [Test]
         public void TheWaveGoesAllTheWayRoundTheBowl()
         {
             var cfg = ConfigTests.Load();

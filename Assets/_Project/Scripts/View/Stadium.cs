@@ -229,17 +229,18 @@ namespace PocketFootball.View
                 var low = new Mesh[Poses];
                 for (int p = 0; p < Poses; p++)
                     low[p] = p == IdleB && !far ? low[IdleA] : lower[i * Poses + p].Build("Crowd" + i + "." + p);
-                AddSlice("Crowd" + i, low);
+                var parent = bowl.IsNear((i + 0.5f) * sc.sliceM) ? bowl.NearRoot : root;
+                AddSlice("Crowd" + i, low, parent);
                 Mesh sit = upper[i * 2].Build("Upper" + i + ".0"), stood = upper[i * 2 + 1].Build("Upper" + i + ".1");
-                AddSlice("Upper" + i, new[] { sit, sit, stood, stood });
+                AddSlice("Upper" + i, new[] { sit, sit, stood, stood }, parent);
             }
         }
 
         // One crowd slice: its looks (IdleA, IdleB, Rising, Up), the same index along the stands as its neighbours'.
-        void AddSlice(string name, Mesh[] poses)
+        void AddSlice(string name, Mesh[] poses, Transform parent)
         {
             var go = new GameObject(name);
-            go.transform.SetParent(root, false);
+            go.transform.SetParent(parent, false);
             var s = new CrowdSlice { poses = poses, pose = IdleA, index = slices.Count / 2 };
             s.filter = go.AddComponent<MeshFilter>();
             s.filter.sharedMesh = s.poses[IdleA];

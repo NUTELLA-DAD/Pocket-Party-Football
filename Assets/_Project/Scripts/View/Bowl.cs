@@ -124,6 +124,11 @@ namespace PocketFootball.View
         readonly StadiumConfig sc;
         readonly BowlConfig bc;
         readonly Transform root;
+        // The near side (from the middle of one near corner to the other) is built under its own parent, so it can be
+        // cut away (BowlCutaway) whenever it stands between the camera and the field: the TV camera sits out past it.
+        public readonly Transform NearRoot;
+        bool nearPass;
+        Transform Parent => nearPass ? NearRoot : root;
         readonly Material mat, glow;
         readonly List<float> ts;
         Texture2D boardTex;
@@ -140,6 +145,8 @@ namespace PocketFootball.View
             sc = cfg.stadium;
             bc = sc.bowl;
             this.root = root;
+            NearRoot = new GameObject("BowlNearSide").transform;
+            NearRoot.SetParent(root, false);
             mat = toon;
             this.glow = glow;
             Path = MakePath(cfg);
@@ -183,11 +190,37 @@ namespace PocketFootball.View
 
         public void Build()
         {
-            Stands();
+            foreach (bool near in new[] { false, true })
+            {
+                nearPass = near;
+                Stands();
+                Flags();
+            }
+            nearPass = false;
             Towers();
-            Flags();
             Scoreboard();
             Outside();
+            root.gameObject.AddComponent<BowlCutaway>().Bowl = this;
+        }
+
+        // Whether t is on the near side (between the middles of the two near corners).
+        public bool IsNear(float t)
+        {
+            t = Mathf.Repeat(t, Path.Length);
+            return t >= Path.SegmentStart(3) + Path.SegmentLength(3) * 0.5f && t < Path.SegmentStart(5) + Path.SegmentLength(5) * 0.5f;
+        }
+
+        // Whether the near stands hide part of the field from a camera at `cam`: the line from it down to the near
+        // sideline below it dips under the stands' slope (from the front wall up to the rim). A camera inside the bowl,
+        // in front of the near stands, never is.
+        public bool NearSideBlocks(Vector3 cam)
+        {
+            float zF = Path.ZNear, zB = Path.ZNear - OuterD, zT = Path.ZNear + bc.nearBackM;   // front, back, the near sideline
+            if (cam.z >= zF || cam.z >= zT) return false;
+            float z0 = Mathf.Max(zB, cam.z);
+            float LineY(float z) => cam.y * (zT - z) / (zT - cam.z);
+            float StandY(float z) => Mathf.Lerp(RimTopY, LowerY(0), (z - zB) / (zF - zB));
+            return LineY(z0) < StandY(z0) + 0.5f || LineY(zF) < StandY(zF) + 0.5f;
         }
 
         // ---- flat pieces along the whole loop ----
@@ -199,6 +232,7 @@ namespace PocketFootball.View
 
         void RiserPiece(Blocks b, float ta, float tb, float d, float y0, float y1, Color c, bool outward = false)
         {
+            if (IsNear((ta + tb) * 0.5f) != nearPass) return;
             Vector3 a = Path.At(ta, d), e = Path.At(tb, d);
             var n = Path.Out((ta + tb) * 0.5f);
             b.Quad(a + Vector3.up * y0, a + Vector3.up * y1, e + Vector3.up * y1, e + Vector3.up * y0, c, outward ? n : -n);
@@ -212,6 +246,7 @@ namespace PocketFootball.View
 
         void TreadPiece(Blocks b, float ta, float tb, float d0, float d1, float y, Color c)
         {
+            if (IsNear((ta + tb) * 0.5f) != nearPass) return;
             var up = Vector3.up * y;
             b.Quad(Path.At(ta, d0) + up, Path.At(ta, d1) + up, Path.At(tb, d1) + up, Path.At(tb, d0) + up, c, Vector3.up);
         }
@@ -254,6 +289,7 @@ namespace PocketFootball.View
                 Color pil = Colors.Hex(bc.pilasterColor);
                 for (float t = 0f; t < Path.Length; t += bc.pilasterEveryM / Path.Stretch(t, OuterD))
                 {
+                    if (IsNear(t) != nearPass) continue;
                     var n = Path.Out(t);
                     var at = Path.At(t, OuterD + 0.3f) + Vector3.up * (RimTopY * 0.5f + 0.2f);
                     hard.Box(at, new Vector3(0.7f, RimTopY * 0.5f + 0.2f, 0.35f), pil, Quaternion.LookRotation(n));
@@ -287,6 +323,7 @@ namespace PocketFootball.View
                 {
                     float d0 = LowerD(r0) - dep * 0.5f - 0.05f, d1 = LowerD(r1) + dep * 0.5f;
                     float w = bc.portalWidthM / Path.Stretch(ta, d0), tb = ta + w;
+                    if (IsNear(ta + w * 0.5f) != nearPass) continue;
                     float y0 = r0 == 0 ? sc.wallHeightM : LowerY(r0 - 1), y1 = LowerY(r1) + 0.15f;
                     RiserPiece(hard, ta, tb, d0, y0, y1, concrete);
                     TreadPiece(hard, ta, tb, d0, d1, y1, concrete);
@@ -300,8 +337,8 @@ namespace PocketFootball.View
                 }
             }
 
-            rows.Build(root, "BowlRows", mat, false);
-            hard.Build(root, "BowlWalls", mat, false);
+            rows.Build(Parent, "BowlRows", mat, false);
+            hard.Build(Parent, "BowlWalls", mat, false);
             Fascia();
         }
 
@@ -312,8 +349,8 @@ namespace PocketFootball.View
             {
                 var ribbon = new Blocks { Flag = 1f };
                 float y0 = LowerTopY + bc.fasciaM * 0.3f, y1 = LowerTopY + bc.fasciaM * 0.7f;
-                Riser(ribbon, FasciaD - 0.04f, y0, y1, Colors.Hex(bc.ribbonColor) * bc.lampGlow * 0.6f);
-                ribbon.Build(root, "RibbonBoard", glow, false);
+                Riser(ribbon, FasciaD - 0.04f, y0, y1, Colors.Hex(bc.ribbonColor) * bc.lampGlow * 0.45f);
+                ribbon.Build(Parent, "RibbonBoard", glow, false);
             }
             if (bc.bannerEveryM <= 0f) return;
             float h = bc.fasciaM * 0.62f, y = LowerTopY + bc.fasciaM * 0.5f;
@@ -326,6 +363,7 @@ namespace PocketFootball.View
                 {
                     float t = Path.SegmentStart(s) + (i + 0.5f) * len / n;
                     var team = cfg.teams[k++ % 2 == 0 ? 1 : 0];
+                    if (IsNear(t) != nearPass) continue;
                     var facing = -Path.Out(t);
                     var at = Path.At(t, FasciaD - 0.08f) + Vector3.up * y;
                     var panel = new Blocks();
@@ -333,7 +371,7 @@ namespace PocketFootball.View
                     var c = Colors.Hex(team.color);
                     panel.Quad(at - right * h * 1.4f - Vector3.up * h * 0.5f, at - right * h * 1.4f + Vector3.up * h * 0.5f,
                         at + right * h * 1.4f + Vector3.up * h * 0.5f, at + right * h * 1.4f - Vector3.up * h * 0.5f, c, facing);
-                    panel.Build(root, "FasciaBanner", mat, false);
+                    panel.Build(Parent, "FasciaBanner", mat, false);
                     Mark(team, at + facing * 0.03f, facing, h * 0.85f);
                 }
             }
@@ -349,7 +387,7 @@ namespace PocketFootball.View
                 mark.SetColor("_PlayerColor", Colors.Hex(team.color));
                 marks[team.@short] = mark;
             }
-            var q = Looks.Flat(root, "BowlMark", at, new Vector2(size, size), Color.white, mark);
+            var q = Looks.Flat(Parent, "BowlMark", at, new Vector2(size, size), Color.white, mark);
             q.transform.localRotation = Quaternion.LookRotation(Vector3.up, facing);
         }
 
@@ -401,6 +439,7 @@ namespace PocketFootball.View
             for (float t = bc.flagEveryM * 0.5f; t < Path.Length; t += bc.flagEveryM / Path.Stretch(t, d))
             {
                 var team = cfg.teams[k++ % 2 == 0 ? 1 : 0];
+                if (IsNear(t) != nearPass) continue;
                 var at = Path.At(t, d) + Vector3.up * y;
                 b.Box(at + Vector3.up * bc.flagPoleM * 0.5f, new Vector3(0.08f, bc.flagPoleM * 0.5f, 0.08f), pole);
                 var n = Path.Out(t);
@@ -417,7 +456,7 @@ namespace PocketFootball.View
                     b.Quad(mid + stripe + f * 0.01f, mid + stripe * 2f + f * 0.01f, end + stripe * 2f + f * 0.01f, end + stripe + f * 0.01f, c2, f);
                 }
             }
-            b.Build(root, "Flags", mat, false);
+            b.Build(Parent, "Flags", mat, false);
         }
 
         // ---- the scoreboard over the left end: two legs on the rim, a dark frame, a screen with the live score ----
@@ -526,6 +565,20 @@ namespace PocketFootball.View
                 var mid = (p0 + p1) * 0.5f - at;
                 b.Quad(p0, p1, top, top, c, mid.normalized * h + Vector3.up * r);
             }
+        }
+    }
+
+    // Hides the bowl's near side while it would block the field from the camera (the TV camera stands out past it;
+    // the lab's free camera can be anywhere). Checked every frame; only the near side's parent is switched.
+    public sealed class BowlCutaway : MonoBehaviour
+    {
+        public Bowl Bowl;
+        void LateUpdate()
+        {
+            var cam = Camera.main;
+            if (cam == null || Bowl == null) return;
+            bool show = !Bowl.NearSideBlocks(cam.transform.position);
+            if (Bowl.NearRoot.gameObject.activeSelf != show) Bowl.NearRoot.gameObject.SetActive(show);
         }
     }
 }

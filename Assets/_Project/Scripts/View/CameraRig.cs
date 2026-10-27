@@ -59,7 +59,7 @@ namespace PocketFootball.View
                 Cam.fieldOfView = heldFov;
                 float d = Vector3.Distance(heldPos, heldLook);
                 Cam.nearClipPlane = Mathf.Max(0.3f, d * 0.02f);
-                Cam.farClipPlane = Mathf.Max(600f, d * 4f);
+                Cam.farClipPlane = Mathf.Max(1500f, d * 4f);   // (far enough for the ground out to the haze round the stadium)
                 return;
             }
             var p = Pose(cfg, Cam.aspect, lookAtXYd);
