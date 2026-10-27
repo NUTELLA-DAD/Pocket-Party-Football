@@ -14,8 +14,18 @@ namespace PocketFootball.View
     public sealed class ModelSkin : MonoBehaviour
     {
         const float ArmOutDeg = 12f;   // the lowered arms hang this far out from the side (the shoulder pads are wide)
-        const float PalmAlongHand = 0.45f;   // the ball sits this far past the wrist, in forearm lengths
+        const float PalmAlongHand = 0.55f;   // the ball sits this far past the wrist, in forearm lengths
+        const float PalmIn = 0.45f;          // and this far in front of the palm, in forearm lengths (cupped in the glove)
         const float RaisedSplayDeg = 35f;   // an arm straight up swings this far out, clear of the big helmet
+        // The model's arms are short under a big helmet, so a few of the figure's arm angles read badly on it
+        // (rig gauntlet, docs/progress/rig): a lowered arm's extra spread past SpreadFreeDeg is cut to SpreadKeep (the
+        // line-up's stiff wide arms), a bent forearm under a lowered arm stops FoldCapDeg above level (the ball stayed on the
+        // facemask in Secure and Carry), and the shoulder (with its pad) lifts ClavicleShare of the arm's rise past
+        // ClavicleFromDeg, so a raised arm doesn't crush the pad.
+        const float SpreadFreeDeg = 18f, SpreadKeep = 0.45f, FoldCapDeg = 15f, ClavicleFromDeg = -20f, ClavicleShare = 0.22f;
+        // The figure has no feet, so the model's feet follow its shins: a foot near the grass turns FootLevel of the
+        // way back to its standing pitch (soles flat in the stances, not toes-up), unless the body is falling over.
+        const float FootLevel = 0.7f, FootNearCm = 22f, FootLevelMaxTiltDeg = 30f;
 
         static readonly Dictionary<string, GameObject> prefabs = new Dictionary<string, GameObject>();
         static readonly Dictionary<string, Material> mats = new Dictionary<string, Material>();
@@ -24,6 +34,11 @@ namespace PocketFootball.View
         Transform[] from, to;
         Quaternion[] offset;   // model bone = figure bone * offset (world turns)
         Vector3 hipOffset;     // the model's hips in the figure's Hips space
+        Transform shoulderL, shoulderR, handL, handR;
+        Transform[] feet, toes;
+        float[] footPitch;     // each foot's pitch (toes above the heel, degrees) standing at rest
+        Quaternion[] footRest;
+        Quaternion shoulderRestL, shoulderRestR;
 
         public static bool Wear(FootballFigure fig, TeamConfig team, GameConfig cfg, Material kit)
         {
@@ -46,6 +61,7 @@ namespace PocketFootball.View
             {
                 "Hips", "Spine", "Head", "LeftUpperArm", "LeftLowerArm", "RightUpperArm", "RightLowerArm",
                 "LeftUpperLeg", "LeftLowerLeg", "RightUpperLeg", "RightLowerLeg", "LeftHand", "RightHand", "LeftFoot", "LeftToes",
+                "LeftShoulder", "RightShoulder", "RightFoot", "RightToes",
             };
             var b = new Dictionary<string, Transform>();
             foreach (var n in names) b[n] = Find(inst.transform, n);
@@ -72,13 +88,16 @@ namespace PocketFootball.View
             hb = BoundsIn(holder, smr);
             pivot.localPosition = new Vector3(-hb.center.x, -hb.min.y, -hb.center.z);
 
-            // the arms down by the sides, like the figure's at rest
+            // the arms down by the sides, like the figure's at rest (the T-pose's palms face down; they turn with the arm)
             Vector3 down = -holder.up;
+            var palm = new Dictionary<string, Vector3>();
             foreach (var side in new[] { ("Left", 1f), ("Right", -1f) })
             {
                 Transform up = b[side.Item1 + "UpperArm"], lo = b[side.Item1 + "LowerArm"];
                 Vector3 want = Quaternion.AngleAxis(-side.Item2 * ArmOutDeg, holder.right) * down;
-                up.rotation = Quaternion.FromToRotation(lo.position - up.position, want) * up.rotation;
+                var turn = Quaternion.FromToRotation(lo.position - up.position, want);
+                up.rotation = turn * up.rotation;
+                palm[side.Item1] = turn * down;
             }
 
             var skin = inst.AddComponent<ModelSkin>();
@@ -92,10 +111,18 @@ namespace PocketFootball.View
             skin.offset = new Quaternion[skin.from.Length];
             for (int i = 0; i < skin.from.Length; i++) skin.offset[i] = Quaternion.Inverse(skin.from[i].rotation) * skin.to[i].rotation;
             skin.hipOffset = fig.Hips.InverseTransformPoint(b["Hips"].position);
+            skin.shoulderL = b["LeftShoulder"]; skin.shoulderR = b["RightShoulder"];
+            skin.handL = b["LeftHand"]; skin.handR = b["RightHand"];
+            skin.feet = new[] { b["LeftFoot"], b["RightFoot"] };
+            skin.toes = new[] { b["LeftToes"], b["RightToes"] };
+            skin.footPitch = new float[2];
+            skin.footRest = new[] { skin.feet[0].localRotation, skin.feet[1].localRotation };
+            for (int i = 0; i < 2; i++) skin.footPitch[i] = Pitch(skin.toes[i].position - skin.feet[i].position, holder.up);
+            skin.shoulderRestL = skin.shoulderL.localRotation; skin.shoulderRestR = skin.shoulderR.localRotation;
 
             // the ball goes in the model's gloves, turned as it was in the figure's hands
-            fig.HandL = Glove(b["LeftHand"], b["LeftLowerArm"], fig.HandL.rotation);
-            fig.HandR = Glove(b["RightHand"], b["RightLowerArm"], fig.HandR.rotation);
+            fig.HandL = Glove(b["LeftHand"], b["LeftLowerArm"], fig.HandL.rotation, palm["Left"]);
+            fig.HandR = Glove(b["RightHand"], b["RightLowerArm"], fig.HandR.rotation, palm["Right"]);
 
             string key = team.model + "/" + kit.GetInstanceID();
             if (!mats.TryGetValue(key, out var m))
@@ -123,9 +150,72 @@ namespace PocketFootball.View
         {
             if (fig == null) return;
             to[0].position = fig.Hips.TransformPoint(hipOffset);
+            shoulderL.localRotation = shoulderRestL;
+            shoulderR.localRotation = shoulderRestR;
+            feet[0].localRotation = footRest[0];
+            feet[1].localRotation = footRest[1];
             for (int i = 0; i < from.Length; i++) to[i].rotation = from[i].rotation * offset[i];
+            Adapt(to[3], to[4], handL, shoulderL, 1f);
+            Adapt(to[5], to[6], handR, shoulderR, -1f);
             Splay(3, fig.ArmL, fig.ForeL, 1f);
             Splay(5, fig.ArmR, fig.ForeR, -1f);
+            LevelFeet();
+        }
+
+        void LevelFeet()
+        {
+            var holder = fig.transform;
+            if (Vector3.Angle(fig.Hips.up, holder.up) > FootLevelMaxTiltDeg) return;
+            for (int i = 0; i < 2; i++)
+            {
+                if (holder.InverseTransformPoint(feet[i].position).y > FootNearCm) continue;
+                Vector3 d = toes[i].position - feet[i].position;
+                float delta = Pitch(d, holder.up) - footPitch[i];
+                Vector3 axis = Vector3.Cross(d, holder.up);
+                if (axis.sqrMagnitude < 1e-12f) continue;
+                feet[i].rotation = Quaternion.AngleAxis(-FootLevel * delta, axis.normalized) * feet[i].rotation;
+            }
+        }
+
+        static float Pitch(Vector3 d, Vector3 up) => Mathf.Asin(Mathf.Clamp(Vector3.Dot(d.normalized, up), -1f, 1f)) * Mathf.Rad2Deg;
+
+        // The arm fixes for the model's proportions (see SpreadFreeDeg): narrow a wide arm, cap a folded forearm, lift
+        // the shoulder under a raised arm. Angles are measured against the figure's torso.
+        void Adapt(Transform upper, Transform lower, Transform hand, Transform shoulder, float side)
+        {
+            Vector3 up = fig.Torso.up, outward = fig.Torso.forward * side;   // (the figure's left is its +z)
+            Vector3 d = (lower.position - upper.position).normalized;
+            float lat = Mathf.Asin(Mathf.Clamp(Vector3.Dot(d, outward), -1f, 1f)) * Mathf.Rad2Deg;
+            float rise = Mathf.Asin(Mathf.Clamp(Vector3.Dot(d, up), -1f, 1f)) * Mathf.Rad2Deg;
+            bool upright = Vector3.Angle(fig.Hips.up, fig.transform.up) <= FootLevelMaxTiltDeg;
+            if (lat > SpreadFreeDeg && rise < 0f && upright)   // (not a raised arm, nor arms flung out lying on the grass)
+            {
+                Vector3 axis = Vector3.Cross(d, outward);
+                float cut = (lat - SpreadFreeDeg) * (1f - SpreadKeep);
+                if (axis.sqrMagnitude > 1e-12f) upper.rotation = Quaternion.AngleAxis(-cut, axis.normalized) * upper.rotation;
+            }
+
+            Vector3 du = (lower.position - upper.position).normalized, df = (hand.position - lower.position).normalized;
+            float eu = Mathf.Asin(Mathf.Clamp(Vector3.Dot(du, up), -1f, 1f)) * Mathf.Rad2Deg;
+            float ef = Mathf.Asin(Mathf.Clamp(Vector3.Dot(df, up), -1f, 1f)) * Mathf.Rad2Deg;
+            if (eu < 0f && Vector3.Angle(du, df) > 60f && ef > FoldCapDeg)
+            {
+                Vector3 axis = Vector3.Cross(df, up);
+                if (axis.sqrMagnitude > 1e-12f) lower.rotation = Quaternion.AngleAxis(-(ef - FoldCapDeg), axis.normalized) * lower.rotation;
+            }
+
+            float lift = Mathf.Max(0f, eu - ClavicleFromDeg) * ClavicleShare;
+            if (lift > 0f)
+            {
+                Quaternion keep = upper.rotation;
+                Vector3 lat0 = (upper.position - shoulder.position).normalized;
+                Vector3 axis = Vector3.Cross(lat0, du);
+                if (axis.sqrMagnitude > 1e-12f)
+                {
+                    shoulder.rotation = Quaternion.AngleAxis(Mathf.Min(lift, Vector3.Angle(lat0, du)), axis.normalized) * shoulder.rotation;
+                    upper.rotation = keep;   // (the arm keeps its direction; only its root rises)
+                }
+            }
         }
 
         // A raised arm swings out to the side, more the higher it goes: the model's shoulders sit inside its helmet's
@@ -140,11 +230,12 @@ namespace PocketFootball.View
             to[upper].rotation = q * to[upper].rotation;   // (the forearm, its child, comes with it)
         }
 
-        static Transform Glove(Transform hand, Transform lower, Quaternion turn)
+        static Transform Glove(Transform hand, Transform lower, Quaternion turn, Vector3 palm)
         {
             var g = new GameObject("Glove").transform;
             g.SetParent(hand, false);
-            g.position = hand.position + (hand.position - lower.position) * PalmAlongHand;
+            Vector3 fore = hand.position - lower.position;
+            g.position = hand.position + fore * PalmAlongHand + palm.normalized * (fore.magnitude * PalmIn);
             g.rotation = turn;
             return g;
         }
