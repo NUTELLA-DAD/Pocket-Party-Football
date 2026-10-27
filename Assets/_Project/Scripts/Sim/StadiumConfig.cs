@@ -39,6 +39,15 @@ namespace PocketFootball.Sim
         public float nearScale, nearRowM, nearDepthM, nearHalfLengthM, nearStaffShare, nearPropShare, nearTentScale;
         public List<float> nearRefsXM = new List<float>(), nearTentsXM = new List<float>();
 
+        // The cheerleaders (FEATURES.cheerleaders): cheerPerTeam of each team's squad (the team's cheerModel) stand in a
+        // row cheerRowM past the white border, in front of their own team's bench (spread out so the following camera
+        // always has a few in the picture), from cheerFromCentreM out every cheerGapM, cheerScale of a player's height. They all do the same routine together: cheerRoutine lists the
+        // cheer poses (FootballFigure.PoseKind.Cheer frames), one per key at cheerFps (stepped, no wobble); the second
+        // team's squad runs cheerTeamOffset keys behind the first.
+        public int cheerPerTeam, cheerTeamOffset;
+        public float cheerScale, cheerRowM, cheerFromCentreM, cheerGapM, cheerFps;
+        public List<int> cheerRoutine = new List<int>();
+
         // The chain crew (gauntlet 3): one person in stripes holds each down marker, crewBackM behind it (off the
         // field), crewScale of a player's height, an orange cap.
         public float crewScale, crewBackM;
