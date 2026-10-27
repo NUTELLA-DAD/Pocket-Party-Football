@@ -181,6 +181,7 @@ namespace PocketFootball.Sim
     public sealed class PosModelConfig
     {
         public string pos, model, modelTexture;
+    }
 
     public sealed class NetConfig
     {
