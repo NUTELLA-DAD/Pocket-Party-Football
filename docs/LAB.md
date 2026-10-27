@@ -25,6 +25,16 @@ WASD or arrows move, SHIFT sprint, SPACE hike, 1-5 throw to that receiver (hold 
 G block (hold). TAB next drill (SHIFT+TAB back), R run it again, V hitboxes on/off, P pause, N one tick while paused,
 `[` slower and `]` faster (normal, 0.5x, 0.25x, 0.1x).
 
+## The camera (FEATURES.labFreeCam, NO_LAB_FREE_CAM=1 turns it off)
+
+The lab starts on the TV camera. The mouse takes over: drag to turn around the field, right-drag (or middle-drag) to
+slide, the wheel to come closer or go further. F1-F5 jump to set angles (`camera.free.presets` in game.json): F1 the
+TV camera, F2 the same view with a normal 35° lens, F3 low on the sideline, F4 behind the offense, F5 straight down.
+`,` and `.` change the lens (longer = flatter, wider = deeper) while keeping the same framing, so you can see what
+the lens alone does. C goes back to the TV camera, which follows the ball again. The panel shows the angle and lens.
+`-lab-cam <n>` starts on preset n (screenshots). Code: `Scripts/Boot/LabCamera.cs`, `Scripts/View/OrbitCamera.cs`
+(tests: `OrbitCameraTests`).
+
 A phone works too: scan the QR, and the first phone that joins plays the drill (it gets the right buttons for each
 moment; the keyboard keeps working).
 

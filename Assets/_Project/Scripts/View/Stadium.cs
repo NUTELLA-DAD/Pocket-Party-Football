@@ -270,13 +270,12 @@ namespace PocketFootball.View
                 float sx = t == 1 ? -1f : 1f;   // in front of the team's own half, like its players (home on the left)
                 for (int i = 0; i < sc.cheerPerTeam; i++)
                 {
-                    var f = FootballFigure.Create(root, team, 0, FootballFigure.Build.Slim, i, cfg.view.playerHeightM * sc.cheerScale, kit, null);
-                    f.name = "Cheerleader " + team.@short + " " + (i + 1);
+                    var f = FootballFigure.Create(root, "Cheerleader " + team.@short + " " + (i + 1), cfg.view.playerHeightM * sc.cheerScale);
                     f.transform.localPosition = new Vector3(sx * (sc.cheerFromCentreM + i * sc.cheerGapM), 0, side + sc.cheerRowM);
                     f.transform.localRotation = Quaternion.Euler(0, 90f, 0);   // facing the field (and the camera)
                     if (ModelSkin.Wear(f, team.cheerModel, team.cheerTexture, kit, false) == null)
                     {
-                        // no model: no cheerleader (the figure underneath is a football player)
+                        // no model: no cheerleader
                         if (Application.isPlaying) Object.Destroy(f.gameObject); else Object.DestroyImmediate(f.gameObject);
                         continue;
                     }
@@ -321,12 +320,14 @@ namespace PocketFootball.View
             props.Build(root, "NearSideline", mat);
         }
 
+        // A player on the sideline: the team's model (ModelSkin), standing, baked still.
         void Player(TeamConfig team, float x, float z, float scale, float yaw)
         {
-            var f = FootballFigure.Create(root, team, 10 + (int)(Rand() * 80), Rand() < 0.3f ? FootballFigure.Build.Big : FootballFigure.Build.Mid, (int)(Rand() * 999), cfg.view.playerHeightM * scale, FootballFigure.KitMaterial(mat, cfg.view), TeamMarks.HelmetFor(team));
+            var f = FootballFigure.Create(root, "Sideline player", cfg.view.playerHeightM * scale);
             f.transform.localPosition = new Vector3(x, 0, z);
             f.transform.localRotation = Quaternion.Euler(0, yaw, 0);
-            f.Pose(FootballFigure.PoseKind.Stand, 0);
+            if (ModelSkin.Wear(f, team, null, cfg, FootballFigure.KitMaterial(mat, cfg.view))) ModelSkin.Freeze(f, FootballFigure.PoseKind.Stand);
+            Rand(); Rand(); Rand();   // (what the code-built player drew: number, build, skin; the rest of the seeded layout stays put)
         }
 
         // A coach or trainer: a team polo (or white), khaki or dark trousers, a team cap.

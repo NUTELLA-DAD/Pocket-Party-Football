@@ -63,15 +63,13 @@ namespace PocketFootball.Tests.EditMode
             var cfg = ConfigTests.Load();
             var team = cfg.teams[0];
             var kit = Looks.Toon(null);
-            var fig = FootballFigure.Create(null, team, 0, FootballFigure.Build.Slim, 0, cfg.view.playerHeightM, kit, null);
+            var fig = FootballFigure.Create(null, "Cheerleader", cfg.view.playerHeightM);
             try
             {
                 var skin = ModelSkin.Wear(fig, team.cheerModel, team.cheerTexture, kit, false);
                 Assert.IsNotNull(skin, "the cheerleader model is worn");
-                var smr = fig.transform.Find("Model").GetComponentInChildren<SkinnedMeshRenderer>();   // (not the hidden figure's own mesh)
+                var smr = fig.GetComponentInChildren<SkinnedMeshRenderer>();
                 Assert.IsTrue(smr.enabled, "the model shows");
-                foreach (var r in fig.GetComponentsInChildren<Renderer>(true))
-                    if (r != smr) Assert.IsFalse(r.enabled, "the figure built from code is hidden: " + r.name);
                 Assert.IsNotNull(smr.sharedMaterial.GetTexture("_MainTex"), "her colour map");
                 Assert.LessOrEqual(smr.sharedMesh.triangles.Length / 3, 25000, "slimmed like the players");
                 Transform Bone(string n)

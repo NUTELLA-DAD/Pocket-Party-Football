@@ -162,15 +162,14 @@ namespace PocketFootball.Sim
     public sealed class TeamConfig
     {
         public string name, @short, color, color2;
-        // a rigged Humanoid model under Resources worn instead of the figure built from code, and its colour map
-        // (FEATURES.modelPlayers; empty: the figure)
+        // the rigged Humanoid model under Resources every player of the team wears, and its colour map
         public string model, modelTexture;
         // FEATURES.posModels: a position wearing its own model instead (e.g. the linebackers); first match wins
         public List<PosModelConfig> posModels = new List<PosModelConfig>();
         // FEATURES.cheerleaders: the squad on the far sideline wears this rigged model and colour map (Stadium.cs)
         public string cheerModel, cheerTexture;
 
-        // The model and colour map a player at this position wears (empty: the figure built from code).
+        // The model and colour map a player at this position wears.
         public void ModelFor(string pos, bool byPos, out string m, out string tex)
         {
             m = model; tex = modelTexture;
@@ -216,6 +215,12 @@ namespace PocketFootball.Sim
     {
         public float fps, throwS, handoffS, secureS, bobbleS, reachYd, reachS, getUpS, blockShoveS;
         public float snapAheadYd, snapSpeedYdS, snapMinS, snapArcYd, snapSecureS;
+        // FEATURES.blockLock (View/Moves.cs): a blocker and his man lock arms lockGapYd apart (each slides at most
+        // lockPullYd, at lockSlideYdS) and face each other, turned only lockTurnDeg toward the camera
+        public float lockGapYd, lockPullYd, lockSlideYdS, lockTurnDeg;
+        // FEATURES.watchBall (View/PlayersView.cs): with a pass in the air, the men within watchYd of where it's aimed
+        // turn to follow it: shoulders up to lookTwistDeg, the head lookHeadDeg more, the rest the whole body; in lookStepDeg steps
+        public float watchYd, lookTwistDeg, lookHeadDeg, lookStepDeg;
     }
 
     // WS-07 the lobby (FEATURES.lobby): each person picks an offense spot and a defense spot before kickoff. The game
@@ -246,5 +251,23 @@ namespace PocketFootball.Sim
         public float visibleYards, fovDeg, pitchDeg, lookAtXYd, lookAtZYd;
         public float sideline;   // -1: the camera stands on the -Z sideline
         public float leadYd, followRate;   // how far ahead of the ball it looks, how quickly it catches up (per second)
+        public FreeCameraConfig free = new FreeCameraConfig();   // the practice lab's free camera (FEATURES.labFreeCam)
+    }
+
+    // The lab's free camera: drag to turn it, right-drag to slide it, the wheel to come closer, F1-F5 for these presets.
+    public sealed class FreeCameraConfig
+    {
+        public float orbitDegPerPx, zoomStep, minDistM, maxDistM, minPitchDeg, maxPitchDeg;
+        public float boundsMarginYd;  // how far past the field the point it looks at can slide
+        public List<float> lensesDeg = new List<float>();   // , and . step through these (keeping the same framing)
+        public List<FreeCameraPreset> presets = new List<FreeCameraPreset>();
+    }
+
+    // yawDeg 0 looks across the field from the -Z sideline (like the TV camera), 90 looks down the field toward +X.
+    // visibleYards: how many yards fit across the screen at the point it looks at.
+    public sealed class FreeCameraPreset
+    {
+        public string name;
+        public float yawDeg, pitchDeg, fovDeg, visibleYards;
     }
 }

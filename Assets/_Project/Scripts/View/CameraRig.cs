@@ -38,6 +38,11 @@ namespace PocketFootball.View
         Vector3 heldPos, heldLook;
         float heldFov;
         public void Hold(Vector3 pos, Vector3 lookAt, float fovDeg) { held = true; heldPos = pos; heldLook = lookAt; heldFov = fovDeg; Apply(); }
+        // Back to the broadcast framing (the lab's free camera lets go).
+        public void Release() { held = false; Apply(); }
+        public bool Held => held;
+        // The point on the grass the broadcast framing looks at (metres).
+        public Vector3 LookTarget => new Vector3(lookAtXYd * cfg.field.yardM, 0f, cfg.camera.lookAtZYd * cfg.field.yardM);
 
         void LateUpdate()
         {
@@ -51,8 +56,9 @@ namespace PocketFootball.View
             {
                 transform.SetPositionAndRotation(heldPos, Quaternion.LookRotation(heldLook - heldPos, Vector3.up));
                 Cam.fieldOfView = heldFov;
-                Cam.nearClipPlane = 0.3f;
-                Cam.farClipPlane = 600f;
+                float d = Vector3.Distance(heldPos, heldLook);
+                Cam.nearClipPlane = Mathf.Max(0.3f, d * 0.02f);
+                Cam.farClipPlane = Mathf.Max(600f, d * 4f);
                 return;
             }
             var p = Pose(cfg, Cam.aspect, lookAtXYd);
