@@ -14,9 +14,9 @@ namespace PocketFootball.Boot
     // (straight, small cuts back and forth, a full reverse at a sprint, a reverse at a jog, a hard 90 degree cut, a stop)
     // and saves a picture every few ticks, cropped around the runner, plus a CSV of his speed, facing and lean.
     // Screenshots run in lockstep (one tick a frame), so every camera sees exactly the same run.
-    // -motion-cam tv | close | behind: the TV camera (live framing, following him), a close look from the TV side, or
-    // from behind his first run. -motion-every <ticks> (default 2). Writes <shots>/motion-<cam>/<tick>.png and
-    // <shots>/motion-<cam>.csv, then quits.
+    // -motion-cam tv | close | side | behind: the TV camera (live framing, following him), a close look from the TV side,
+    // square from the side at hip height, or from behind his first run. -motion-run stride: the stride reel instead.
+    // -motion-every <ticks> (default 2). Writes <shots>/motion-<cam>/<tick>.png and <shots>/motion-<cam>.csv, then quits.
     public sealed class MotionReel : MonoBehaviour
     {
         // The run: (ticks, move x, move z, sprint, label). +x is down the field (the lab attacks +x), +z away from the camera.
@@ -33,12 +33,35 @@ namespace PocketFootball.Boot
             (30, 0f, 0f, false, "stop"),
         };
 
-        public static int Length { get { int n = 0; foreach (var r in Run) n += r.ticks; return n; } }
+        // The stride reel (-motion-run stride, FEATURES.strideCycle): straight down the field at a walk, a jog and a
+        // sprint, easing back down to a walk and a stop, for the arms and legs.
+        public static readonly (int ticks, float x, float z, bool sprint, string label)[] StrideRun =
+        {
+            (12, 0f, 0f, false, "stand"),
+            (60, 0.27f, 0f, false, "walk"),
+            (45, 1f, 0f, false, "jog"),
+            (45, 1f, 0f, true, "sprint"),
+            (30, 1f, 0f, false, "ease"),
+            (45, 0.27f, 0f, false, "walk again"),
+            (30, 0f, 0f, false, "stop"),
+        };
+
+        static (int ticks, float x, float z, bool sprint, string label)[] Picked
+        {
+            get
+            {
+                var args = System.Environment.GetCommandLineArgs();
+                for (int i = 0; i + 1 < args.Length; i++) if (args[i] == "-motion-run" && args[i + 1] == "stride") return StrideRun;
+                return Run;
+            }
+        }
+
+        public static int Length { get { int n = 0; foreach (var r in Picked) n += r.ticks; return n; } }
 
         // What "you" is told to do on tick t of the run (t from 0), and that part's label.
         public static PlayerInput At(int t, out string label)
         {
-            foreach (var r in Run)
+            foreach (var r in Picked)
             {
                 if (t < r.ticks) { label = r.label; return new PlayerInput { MoveX = r.x, MoveZ = r.z, Sprint = r.sprint }; }
                 t -= r.ticks;
@@ -98,6 +121,10 @@ namespace PocketFootball.Boot
                 case "close":   // from the TV's side and angle, about 9 yards across
                     rig.Hold(chest + Quaternion.Euler(cfg.camera.pitchDeg, 0f, 0f) * Vector3.back * 9f * yd, chest, 35f);
                     break;
+                case "side":    // square from the TV's side at his hip's height, about 6 yards across: the arms and legs
+                    var hip = feet + Vector3.up * h * 0.35f;
+                    rig.Hold(hip + Vector3.back * 6f * yd, hip, 35f);
+                    break;
                 case "behind":  // from behind his first run (down the field), a little above
                     rig.Hold(chest + new Vector3(-9f * yd, 2.5f * yd, 0f), chest, 35f);
                     break;
@@ -141,7 +168,7 @@ namespace PocketFootball.Boot
         {
             var shot = ScreenCapture.CaptureScreenshotAsTexture();
             var c = rig.Cam.WorldToScreenPoint(host.Players.FeetPosition(p.Slot) + Vector3.up * cfg.view.playerHeightM * 0.5f);
-            int size = Mathf.Min(shot.height, Mathf.RoundToInt(shot.height * (cam == "close" || cam == "behind" ? 0.9f : 0.34f)));
+            int size = Mathf.Min(shot.height, Mathf.RoundToInt(shot.height * (cam == "close" || cam == "behind" || cam == "side" ? 0.9f : 0.34f)));
             int x0 = Mathf.Clamp(Mathf.RoundToInt(c.x) - size / 2, 0, shot.width - size);
             int y0 = Mathf.Clamp(Mathf.RoundToInt(c.y) - size / 2, 0, shot.height - size);
             var crop = new Texture2D(size, size, TextureFormat.RGB24, false);

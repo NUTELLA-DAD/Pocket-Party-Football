@@ -2,16 +2,19 @@
 # (Scripts/Boot/MotionReel.cs) drives the runner along a fixed run and saves a picture every couple of ticks.
 # Then makes one contact sheet per part of the run and camera: .shots\motion\round-<N>\<cam>-<part>.png (8 frames a row,
 # each stamped with its tick, speed, lean and pose from the CSV). -Drill cutsball runs it with the ball.
-param([int]$Round = 1, [string[]]$Cams = @('tv', 'close', 'behind'), [string]$Drill = 'cuts', [int]$Every = 2)
+# -Run stride: the stride reel (FEATURES.strideCycle) instead, every tick, the last 24 ticks of each part (its steady
+# stride, not the speeding up) into .shots\stride\round-<N>; try -Cams side,tv.
+param([int]$Round = 1, [string[]]$Cams = @('tv', 'close', 'behind'), [string]$Drill = 'cuts', [int]$Every = 2, [string]$Run = '')
 . (Join-Path $PSScriptRoot 'env.ps1')
 Add-Type -AssemblyName System.Drawing
 $exe = Join-Path $PROJ 'Builds\Windows\PocketFootball.exe'
-$out = Join-Path $PROJ ".shots\motion\round-$Round"
+$out = if ($Run -eq 'stride') { Join-Path $PROJ ".shots\stride\round-$Round" } else { Join-Path $PROJ ".shots\motion\round-$Round" }
 New-Item -ItemType Directory -Force $out | Out-Null
 foreach ($cam in $Cams) {
     $frames = Join-Path $out "motion-$cam"
     Remove-Item $frames -Recurse -Force -ErrorAction SilentlyContinue
-    $p = Start-Process -FilePath $exe -ArgumentList @('-lab', '-lab-drill', $Drill, '-motion-cam', $cam, '-motion-every', $Every, '-fixture', "motion-$cam", '-seed', '1', '-bind', '127.0.0.1', '-shots', "`"$out`"", '-screen-width', '1920', '-screen-height', '1080', '-screen-fullscreen', '0', '-logFile', "`"$LOGS\motion-$cam.log`"") -PassThru
+    $more = if ($Run) { @('-motion-run', $Run) } else { @() }
+    $p = Start-Process -FilePath $exe -ArgumentList (@('-lab', '-lab-drill', $Drill, '-motion-cam', $cam, '-motion-every', $Every) + $more + @( '-fixture', "motion-$cam", '-seed', '1', '-bind', '127.0.0.1', '-shots', "`"$out`"", '-screen-width', '1920', '-screen-height', '1080', '-screen-fullscreen', '0', '-logFile', "`"$LOGS\motion-$cam.log`"")) -PassThru
     if (-not $p.WaitForExit(240000)) { $p.Kill(); Write-Host "TIMEOUT: $cam"; exit 1 }
     $csvPath = "$frames.csv"
     if (-not (Test-Path $csvPath)) { Write-Host "MISSING: $cam (see .logs\motion-$cam.log)"; exit 1 }
@@ -35,6 +38,7 @@ foreach ($cam in $Cams) {
         $stride = if ($quick) { 1 } else { [Math]::Max(1, [Math]::Ceiling($list.Count / 16)) }
         $limit = if ($quick) { 24 } else { $list.Count }
         $pick = @(for ($i = 0; $i -lt [Math]::Min($list.Count, $limit * $stride); $i += $stride) { $list[$i] })
+        if ($Run -eq 'stride') { $pick = @($list | Select-Object -Last 24); $stride = 1 }
         $nrows = [Math]::Ceiling($pick.Count / $cols)
         $sheet = New-Object System.Drawing.Bitmap ($cols * $thumb), (40 + $nrows * ($thumb + $cap))
         $g = [System.Drawing.Graphics]::FromImage($sheet)
@@ -54,6 +58,6 @@ foreach ($cam in $Cams) {
         $name = ($label -replace '[^a-z0-9]+', '-')
         $sheet.Save((Join-Path $out "$cam-$name.png"), [System.Drawing.Imaging.ImageFormat]::Png)
         $sheet.Dispose()
-        Write-Host "motion: .shots\motion\round-$Round\$cam-$name.png"
+        Write-Host "motion: $out\$cam-$name.png"
     }
 }
