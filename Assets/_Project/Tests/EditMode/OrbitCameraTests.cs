@@ -64,6 +64,24 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual(before, o.distM * Mathf.Tan(o.fovDeg * 0.5f * Mathf.Deg2Rad), 0.01f);
         }
 
+        // FEATURES.snapZoom: in a live play the TV camera stands further back and higher, showing camera.live.visibleYards.
+        [Test]
+        public void TheTvCameraZoomsOutForTheLivePlay()
+        {
+            var cfg = ConfigTests.Load();
+            var c = cfg.camera;
+            var set = CameraRig.Pose(cfg, Aspect, 0f, 0f);
+            var live = CameraRig.Pose(cfg, Aspect, 0f, 1f);
+            float hHalf = Mathf.Atan(Mathf.Tan(c.fovDeg * 0.5f * Mathf.Deg2Rad) * Aspect);
+            Assert.AreEqual(c.live.visibleYards, 2f * live.distance * Mathf.Tan(hHalf) / cfg.field.yardM, 0.01f);
+            Assert.Greater(live.distance, set.distance);
+            Assert.Greater(live.position.y, set.position.y);
+            Assert.AreEqual(c.live.pitchDeg, live.rotation.eulerAngles.x, 1e-3f);
+            Assert.AreEqual(0f, live.rotation.eulerAngles.z, 1e-3f);
+            Assert.IsTrue(cfg.Feature("snapZoom"));
+            Assert.AreEqual("NO_SNAP_ZOOM", ConfigLoader.EnvName("snapZoom"));
+        }
+
         [Test]
         public void NoLabFreeCamTurnsItOff()
         {

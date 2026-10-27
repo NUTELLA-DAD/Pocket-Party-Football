@@ -77,7 +77,7 @@ In v1: kickoffs (bot kicker, humans return), punts, field goals, extra points, T
 ## Camera and readability
 
 - One sideline camera, never tilts/rolls/spins, only slides left-right following the ball, leads long passes.
-- About 60 yards visible so a player stays at least 48 px tall at 1080p; long lens from far back.
+- About 60 yards visible so a player stays at least 48 px tall at 1080p. Since 2026-10-26 (Kenny's pick in the lab): a normal 35° lens, 46 yd across at 22° for the snap, easing back to 62 yd at 32° once the play runs (`camera.live`, FEATURES.snapZoom). It was a 7° long lens from far back, which flattened the 3D.
 - Off-screen players: edge portrait in their colour with an arrow.
 - Humans: coloured ring + a small team-colour triangle overhead (the name plate only shows during FIND ME, so it never covers the play); bots: jersey number only; ball carrier: brighter ring.
 - FIND ME (button and automatic at each snap): ring flash, name plate, colour beam for 2 s.
