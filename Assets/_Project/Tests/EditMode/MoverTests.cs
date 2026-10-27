@@ -83,6 +83,7 @@ namespace PocketFootball.Tests.EditMode
         public void PlayersBumpAndNeverOverlap()
         {
             var cfg = ConfigTests.Load(ConfigTests.NoHuddle);
+            cfg.features["ratings"] = false;   // a QB and a LB: with ratings on they run at different speeds
             var w = new World(cfg, 1);
             var a = w.AddPlayer(0, 0, true);
             var b = w.AddPlayer(1, 1, true);

@@ -700,7 +700,7 @@
   },
   "ratings": {
     "neutral": 5,
-    "speedPerPoint": 0.04,
+    "speedPerPoint": 0.02,
     "blockPerPoint": 0.06,
     "tacklePerPoint": 0.02,
     "handsPerPoint": 0.02,
@@ -711,9 +711,9 @@
       "TE": { "speed": 6, "size": 6, "hands": 7 },
       "OL": { "speed": 2, "size": 10, "hands": 2 },
       "DL": { "speed": 3, "size": 9, "hands": 2 },
-      "LB": { "speed": 6, "size": 7, "hands": 4 },
+      "LB": { "speed": 7, "size": 7, "hands": 4 },
       "CB": { "speed": 9, "size": 3, "hands": 6 },
-      "S": { "speed": 7, "size": 5, "hands": 5 }
+      "S": { "speed": 8, "size": 5, "hands": 5 }
     }
   },
   "features": {
