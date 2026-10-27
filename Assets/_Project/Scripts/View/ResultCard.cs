@@ -44,7 +44,7 @@ namespace PocketFootball.View
             foreach (var e in play)
             {
                 if (c.ByVerb == "Picked off by") break;   // (the pick is the play, whoever brings him down)
-                string verb = e.Kind == EventKind.Tackle ? "Tackle by" : e.Kind == EventKind.Sack ? "Sack by"
+                string verb = e.Kind == EventKind.Tackle ? TackleVerb(e.Text) : e.Kind == EventKind.Sack ? "Sack by"
                     : e.Kind == EventKind.Interception ? "Picked off by" : e.Kind == EventKind.Touchdown ? "Scored by"
                     : e.Kind == EventKind.Catch ? "Caught by" : e.Kind == EventKind.Handoff ? "Run by" : null;
                 if (verb != null) Name(w, c, verb, e.Slot);
@@ -64,6 +64,10 @@ namespace PocketFootball.View
             c.NextText = string.Join(" · ", parts);
             return c;
         }
+
+        // FEATURES.hitAngle: the sim notes how a tackle landed.
+        public static string TackleVerb(string how) =>
+            how == "BIG HIT" ? "Big hit by" : how == "TRIPPED" ? "Tripped up by" : how == "LOST BALANCE" ? "Knocked off balance by" : "Tackle by";
 
         static void Name(World w, Info c, string verb, int slot)
         {

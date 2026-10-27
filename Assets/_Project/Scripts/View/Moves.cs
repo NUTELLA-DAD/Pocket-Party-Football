@@ -6,12 +6,13 @@ namespace PocketFootball.View
 {
     // What each player is doing on the TV beyond running and standing: the QB's arm cocked, his throw and handoff, a receiver's hands
     // up for a pass coming in, the catch tucked away, a drop, a juke, a missed tackle, the tackle itself (both men go
-    // down and get up at the end of the whistle), a touchdown celebration, a blocker's shove. FEATURES.moves
+    // down and get up at the end of the whistle; FEATURES.hitAngle: a big hit drives them back, a carrier knocked off
+    // balance staggers, a trip or a lost balance puts him on his front), a touchdown celebration, a blocker's shove. FEATURES.moves
     // (NO_MOVES=1: the plain run and stand poses only).
     // It only reads the World, once per sim tick, and spots the moments by what changed since the tick before (the ball
     // left the QB's hand, a pass ended up held, the whistle blew on a tackle). Frames count sim ticks at anim.fps, so
     // the moves step like the rest of the look and never depend on the frame rate. Pure C#: tests drive it with a World.
-    public enum Move { None, Aim, Throw, Handoff, Reach, Secure, Bobble, Juke, Whiff, Tackle, Tackled, Celebrate, Block, Snap, TakeSnap }
+    public enum Move { None, Aim, Throw, Handoff, Reach, Secure, Bobble, Juke, Whiff, Tackle, Tackled, Celebrate, Block, Snap, TakeSnap, Stagger }
 
     public struct MoveNow
     {
@@ -24,11 +25,13 @@ namespace PocketFootball.View
         public bool HasPartner;   // Tackle / Tackled: the other man in the tackle is known
         public int Partner;       // ... and his slot (Block: the man he's engaged with)
         public bool Locked;       // Block (FEATURES.blockLock): arms locked with Partner
+        public bool BigHit;       // Tackle / Tackled (FEATURES.hitAngle): a straight-on big hit
+        public float KnockX, KnockZ;   // ... how far (yards) he still has to slide to where the hit put him down
     }
 
     public sealed class Moves
     {
-        sealed class Rec { public Move Kind; public int Start, End; public bool Hold, OnBack; public int Partner = -1; }
+        sealed class Rec { public Move Kind; public int Start, End; public bool Hold, OnBack, BigHit; public int Partner = -1; public float KnockX, KnockZ; }
 
         readonly SortedDictionary<int, Rec> bySlot = new SortedDictionary<int, Rec>();
         readonly HashSet<int> reaching = new HashSet<int>();
@@ -40,6 +43,7 @@ namespace PocketFootball.View
         readonly List<int> keys = new List<int>();
         readonly SortedDictionary<int, int> stumble = new SortedDictionary<int, int>();
         readonly SortedDictionary<int, int> juke = new SortedDictionary<int, int>();
+        readonly SortedDictionary<int, int> offBalance = new SortedDictionary<int, int>();
         readonly HashSet<int> tried = new HashSet<int>();
         readonly List<int> done = new List<int>();
         int lastTick = -1;
@@ -63,6 +67,7 @@ namespace PocketFootball.View
         {
             if (w.Tick == lastTick) return;
             bool first = lastTick < 0;
+            int was = lastTick;
             lastTick = w.Tick;
             var a = w.Cfg.anim;
             var b = w.Ball;
@@ -84,6 +89,7 @@ namespace PocketFootball.View
                 {
                     if (p.JukeTicks > 0 && (!juke.TryGetValue(p.Slot, out int j) || j == 0)) Start(w, p.Slot, Move.Juke, p.JukeTicks / (float)w.Cfg.sim.tickHz);
                     if (p.StumbleTicks > 0 && (!stumble.TryGetValue(p.Slot, out int s) || s == 0)) Start(w, p.Slot, Move.Whiff, p.StumbleTicks / (float)w.Cfg.sim.tickHz);
+                    if (p.OffBalanceTicks > 0 && (!offBalance.TryGetValue(p.Slot, out int o) || o == 0)) Start(w, p.Slot, Move.Stagger, p.OffBalanceTicks / (float)w.Cfg.sim.tickHz);
                 }
                 // the whistle: a tackle brings both men down; a touchdown, the carrier celebrates
                 if (phase == Phase.Live && w.Phase == Phase.Whistle)
@@ -91,17 +97,28 @@ namespace PocketFootball.View
                     var c = LivePlay.Carrier(w);
                     if (c != null && (w.Result == "TACKLED" || w.Result == "SACKED"))
                     {
-                        var t = Tackler(w, c);
+                        // FEATURES.hitAngle: how this tackle landed (the sim's note of it, since the last tick seen)
+                        var h = w.Hit;
+                        var kind = h.Carrier == c.Slot && h.Tick > was && h.Tick <= w.Tick ? h.Last : HitKind.None;
+                        var t = kind == HitKind.LostBalance ? null : Tackler(w, c);   // lost his balance: nobody is on him
                         bool onBack = false;
                         if (t != null)
                         {
                             // he was running into the tackler (or, standing, faced him): he goes over backwards
                             float fx = c.VX, fz = c.VZ;
                             if (fx * fx + fz * fz < 0.25f) { fx = w.Dir * (c.Team == w.Offense ? 1f : -1f); fz = 0f; }
-                            onBack = (t.X - c.X) * fx + (t.Z - c.Z) * fz > 0f;
+                            onBack = kind != HitKind.Trip && (t.X - c.X) * fx + (t.Z - c.Z) * fz > 0f;   // a trip: on his front
                             Start(w, t.Slot, Move.Tackle, 0f, true, false, c.Slot);
                         }
                         Start(w, c.Slot, Move.Tackled, 0f, true, onBack, t != null ? t.Slot : -1);
+                        if (kind == HitKind.BigHit)
+                        {
+                            // both men slide from where the hit landed to where the carrier went down
+                            foreach (var r in t != null ? new[] { bySlot[c.Slot], bySlot[t.Slot] } : new[] { bySlot[c.Slot] })
+                            {
+                                r.BigHit = true; r.KnockX = h.FromX - h.ToX; r.KnockZ = h.FromZ - h.ToZ;
+                            }
+                        }
                     }
                     else if (c != null && (w.Result == "TOUCHDOWN" || w.Result == "PICK SIX")) Start(w, c.Slot, Move.Celebrate, 0f, true);
                 }
@@ -114,8 +131,8 @@ namespace PocketFootball.View
             carrier = b.State == BallState.Held ? b.Carrier : -1;
             tried.Clear();
             foreach (int slot in w.CatchTried) tried.Add(slot);
-            juke.Clear(); stumble.Clear();
-            foreach (var p in w.Players) { juke[p.Slot] = p.JukeTicks; stumble[p.Slot] = p.StumbleTicks; }
+            juke.Clear(); stumble.Clear(); offBalance.Clear();
+            foreach (var p in w.Players) { juke[p.Slot] = p.JukeTicks; stumble[p.Slot] = p.StumbleTicks; offBalance[p.Slot] = p.OffBalanceTicks; }
             // hands up: the man of each team who will be nearest the ball as it comes down within catching height,
             // looking reachS ahead (the ball on its flight, each man at his speed)
             reaching.Clear();
@@ -176,7 +193,13 @@ namespace PocketFootball.View
             var a = w.Cfg.anim;
             if (bySlot.TryGetValue(p.Slot, out var r))
             {
-                var m = new MoveNow { Kind = r.Kind, Frame = FrameOf(w, w.Tick - r.Start), OnBack = r.OnBack, StartTick = r.Start, HasPartner = r.Partner >= 0, Partner = r.Partner };
+                var m = new MoveNow { Kind = r.Kind, Frame = FrameOf(w, w.Tick - r.Start), OnBack = r.OnBack, StartTick = r.Start, HasPartner = r.Partner >= 0, Partner = r.Partner, BigHit = r.BigHit };
+                if (r.BigHit)
+                {
+                    // the slide back, in stepped keys: knockKeys of them, the first already part of the way
+                    float done = Math.Min(1f, (m.Frame + 1) / (float)Math.Max(1, a.knockKeys));
+                    m.KnockX = r.KnockX * (1f - done); m.KnockZ = r.KnockZ * (1f - done);
+                }
                 int upTicks = Ticks(w, a.getUpS);
                 if (r.Hold && w.Phase == Phase.Whistle && w.PhaseTicks <= upTicks && (r.Kind == Move.Tackle || r.Kind == Move.Tackled))
                 {

@@ -16,13 +16,14 @@ namespace PocketFootball.Sim
         Interception,   // Slot: the defender who caught it, Other: the QB
         Juke,           // Slot: the ball carrier
         MissedTackle,   // Slot: the tackler, Other: the ball carrier
-        Tackle,         // Slot: the tackler, Other: the ball carrier
+        Tackle,         // Slot: the tackler, Other: the ball carrier, Text: BIG HIT, TRIPPED or LOST BALANCE (FEATURES.hitAngle)
         Sack,           // Slot: the tackler, Other: the QB (a sack is not also a Tackle)
         Touchdown,      // Slot: the scorer, Team: the team that scored (a pick six: the defense)
         OutOfBounds,    // Slot: the ball carrier
         Whistle,        // Slot: the ball carrier (or -1), Text: the result (TACKLED, INCOMPLETE, PLAY OVER, ...)
         FirstDown,      // Team: the team with the ball, at the new spot
         Turnover,       // Team: the team that gets the ball, Text: TURNOVER or TURNOVER ON DOWNS
+        Stumble,        // Slot: the ball carrier, Other: the tackler whose glancing blow knocked him off balance (FEATURES.hitAngle)
     }
 
     public struct GameEvent

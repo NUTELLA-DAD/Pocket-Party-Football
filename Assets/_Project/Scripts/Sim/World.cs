@@ -34,6 +34,7 @@ namespace PocketFootball.Sim
         public bool OutOfBounds;
         // a live play
         public int TackleCooldown, StumbleTicks, JukeTicks, JukeCooldown, RouteIndex;
+        public int OffBalanceTicks, OffBalanceBy = -1;     // FEATURES.hitAngle: staggering from a glancing blow, and who gave it (HitAngle.cs)
         public int BlockedTicks, FreeTicks, IdleTicks;   // engaged by a blocker / shed the block / a person not touching the phone
         public bool BotHelp;                              // a bot is playing for an idle person this tick
         public bool Blocking;                             // this player is blocking this tick (a person holding BLOCK, or a bot)
@@ -84,6 +85,7 @@ namespace PocketFootball.Sim
         public readonly ClockState GameClock = new ClockState();   // WS-02: the game clock and quarters (Clock.cs)
         public readonly CarrierState Carry = new CarrierState();   // WS-04: carrier moves and fumbles (CarrierMoves.cs, Fumbles.cs)
         public readonly KickState Kick = new KickState();   // WS-01: kickoffs, punts, field goals, tries (Kicking.cs)
+        public readonly HitState Hit = new HitState();   // FEATURES.hitAngle: the last hit, for the TV (HitAngle.cs); not hashed
         public readonly AudibleState Audible = new AudibleState();   // WS-13: audibles and hot routes this down (Audibles.cs)
 
         public World(GameConfig cfg, int seed)
@@ -268,6 +270,7 @@ namespace PocketFootball.Sim
                 Mix(p.Tired ? 1 : 0); Mix(p.OutOfBounds ? 1 : 0);
                 Mix(p.TackleCooldown); Mix(p.StumbleTicks); Mix(p.JukeTicks); Mix(p.JukeCooldown); Mix(p.RouteIndex);
                 Mix(p.BlockedTicks); Mix(p.FreeTicks); Mix(p.IdleTicks);
+                if (p.OffBalanceTicks > 0 || p.OffBalanceBy >= 0) { Mix(p.OffBalanceTicks); Mix(p.OffBalanceBy); }   // (only while it runs, so games without it hash as before)
                 MixF(p.GoalX); MixF(p.GoalZ); Mix(p.NextThinkTick);
             }
             Mix((int)Ball.State); Mix(Ball.Carrier);

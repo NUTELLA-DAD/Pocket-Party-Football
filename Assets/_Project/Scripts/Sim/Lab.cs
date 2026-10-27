@@ -265,6 +265,7 @@ namespace PocketFootball.Sim
             float speed = Len(tackler.VX, tackler.VZ);
             float odds = c.tackleBase + speed * c.tackleSpeedBonus;
             if ((carrier.X - tackler.X) * carrier.VX + (carrier.Z - tackler.Z) * carrier.VZ > 0f) odds += c.tackleFromBehindBonus;
+            odds = HitAngle.TackleOdds(w, carrier, odds);   // FEATURES.hitAngle: off balance
             odds = CarrierMoves.TackleOdds(w, tackler, carrier, odds);   // WS-04: spin, stiff arm, dive
             return odds < 0f ? 0f : odds > 1f ? 1f : odds;
         }

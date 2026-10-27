@@ -17,8 +17,8 @@ namespace PocketFootball.Sim
         // A fumble on the grass in a live play (a whistle that came some other way leaves nothing loose for the next).
         public static bool Loose(World w) => w.Carry.Loose && w.Phase == Phase.Live && w.Ball.State == BallState.Loose;
 
-        // A successful tackle. True: the ball came out (the play goes on), so no whistle.
-        public static bool OnHit(World w, Player tackler, Player carrier)
+        // A successful tackle (mul: FEATURES.hitAngle's odds for this kind of hit). True: the ball came out (the play goes on), so no whistle.
+        public static bool OnHit(World w, Player tackler, Player carrier, float mul = 1f)
         {
             if (!On(w) || w.Intercepted) return false;
             var c = w.Cfg.carrier;
@@ -26,6 +26,7 @@ namespace PocketFootball.Sim
             if (speed < c.bigHitSpeedYdS) return false;
             float chance = c.fumbleChance;
             if (!CarrierMoves.InFront(tackler, carrier)) chance += c.fumbleBlindsideBonus;
+            chance *= mul;   // FEATURES.hitAngle: a big hit shakes it loose more often
             if (w.Rng.Value() >= chance) return false;
             Pop(w, tackler, carrier);
             return true;

@@ -27,6 +27,7 @@ namespace PocketFootball.Sim
             float top = p.Sprinting ? c.sprintSpeedYdS : c.jogSpeedYdS;
             top *= Ratings.SpeedFrac(w, p);   // FEATURES.ratings: a running back is quicker than a lineman
             if (p.StumbleTicks > 0) top *= w.Cfg.play.stumbleSpeedFrac;   // a missed tackle: on the turf for a moment
+            if (p.OffBalanceTicks > 0) top *= w.Cfg.hit.offBalanceSpeedFrac;   // FEATURES.hitAngle: a glancing blow
             float wantX = mx * top, wantZ = mz * top;
             float dx = wantX - p.VX, dz = wantZ - p.VZ;
             float d = (float)Math.Sqrt(dx * dx + dz * dz);

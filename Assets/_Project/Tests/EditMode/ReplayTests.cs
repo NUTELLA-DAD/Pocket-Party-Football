@@ -186,7 +186,7 @@ namespace PocketFootball.Tests.EditMode
                     Assert.AreEqual("TACKLED", c.Headline);
                     Assert.AreEqual(w.YardsGained - yardsBefore, c.Yards, "the yards the sim counted, seed " + seed);
                     Assert.IsTrue(c.ShowYards);
-                    Assert.AreEqual("Tackle by", c.ByVerb);
+                    Assert.AreEqual(ResultCard.TackleVerb(tackle.Value.Text), c.ByVerb);   // (FEATURES.hitAngle: "Big hit by", ...)
                     Assert.AreEqual(tackle.Value.Slot, c.BySlot, "the tackler from the event list");
                     var tackler = w.Find(c.BySlot);
                     Assert.AreEqual(tackler.Number, c.ByNumber);

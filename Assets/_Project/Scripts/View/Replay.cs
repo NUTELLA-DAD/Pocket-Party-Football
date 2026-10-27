@@ -152,6 +152,9 @@ namespace PocketFootball.View
             tb.State = fb.State; tb.Carrier = fb.Carrier;
             tb.X = fb.X; tb.Y = fb.Y; tb.Z = fb.Z; tb.VX = fb.VX; tb.VY = fb.VY; tb.VZ = fb.VZ;
             tb.TargetX = fb.TargetX; tb.TargetZ = fb.TargetZ;
+            var fh = from.Hit; var th = to.Hit;   // FEATURES.hitAngle: how the last hit landed (Moves reads it)
+            th.Last = fh.Last; th.Tick = fh.Tick; th.Tackler = fh.Tackler; th.Carrier = fh.Carrier;
+            th.FromX = fh.FromX; th.FromZ = fh.FromZ; th.ToX = fh.ToX; th.ToZ = fh.ToZ;
         }
 
         static void CopyPlayer(Player f, Player t)
@@ -161,6 +164,7 @@ namespace PocketFootball.View
             t.Stamina = f.Stamina; t.Tired = f.Tired; t.Sprinting = f.Sprinting; t.OutOfBounds = f.OutOfBounds;
             t.TackleCooldown = f.TackleCooldown; t.StumbleTicks = f.StumbleTicks; t.JukeTicks = f.JukeTicks; t.JukeCooldown = f.JukeCooldown; t.RouteIndex = f.RouteIndex;
             t.BlockedTicks = f.BlockedTicks; t.FreeTicks = f.FreeTicks; t.IdleTicks = f.IdleTicks;
+            t.OffBalanceTicks = f.OffBalanceTicks; t.OffBalanceBy = f.OffBalanceBy;
             t.BotHelp = f.BotHelp; t.Blocking = f.Blocking;
             t.GoalX = f.GoalX; t.GoalZ = f.GoalZ; t.NextThinkTick = f.NextThinkTick;
         }

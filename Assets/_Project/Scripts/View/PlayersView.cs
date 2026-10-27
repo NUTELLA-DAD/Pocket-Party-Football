@@ -133,6 +133,7 @@ namespace PocketFootball.View
                     }
                     // the tackler's launch (the first key) is halfway in to the carrier, then he's on him
                     pos = move.Kind == Move.Tackle && move.Frame == 0 && !move.GettingUp ? Vector3.Lerp(downFrom[p.Slot], downAt[p.Slot], 0.5f) : downAt[p.Slot];
+                    pos += new Vector3(move.KnockX * yd, 0f, move.KnockZ * yd);   // FEATURES.hitAngle: a big hit drives them back
                     yaw = downYaw[p.Slot]; moved = 0f;
                 }
                 else downStart.Remove(p.Slot);
@@ -260,6 +261,7 @@ namespace PocketFootball.View
                 case Move.Secure: kind = FootballFigure.PoseKind.Secure; frame = stride; return true;
                 case Move.Bobble: kind = FootballFigure.PoseKind.Bobble; frame = Mathf.Min(1, m.Frame / 2); return true;
                 case Move.Juke: kind = FootballFigure.PoseKind.Juke; frame = Mathf.Min(1, m.Frame); return true;
+                case Move.Stagger: kind = FootballFigure.PoseKind.Stagger; frame = m.Frame % 2; return true;   // FEATURES.hitAngle: off balance
                 case Move.Whiff:
                     if (m.Frame == 0) kind = FootballFigure.PoseKind.Dive;
                     else { kind = FootballFigure.PoseKind.Whiff; frame = m.Frame; }
