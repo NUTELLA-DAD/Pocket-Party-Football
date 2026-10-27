@@ -165,6 +165,22 @@ namespace PocketFootball.Sim
         // a rigged Humanoid model under Resources worn instead of the figure built from code, and its colour map
         // (FEATURES.modelPlayers; empty: the figure)
         public string model, modelTexture;
+        // FEATURES.posModels: a position wearing its own model instead (e.g. the linebackers); first match wins
+        public List<PosModelConfig> posModels = new List<PosModelConfig>();
+
+        // The model and colour map a player at this position wears (empty: the figure built from code).
+        public void ModelFor(string pos, bool byPos, out string m, out string tex)
+        {
+            m = model; tex = modelTexture;
+            if (!byPos || posModels == null) return;
+            foreach (var pm in posModels)
+                if (pm != null && pm.pos == pos && !string.IsNullOrEmpty(pm.model)) { m = pm.model; tex = pm.modelTexture; return; }
+        }
+    }
+
+    public sealed class PosModelConfig
+    {
+        public string pos, model, modelTexture;
     }
 
     public sealed class NetConfig
@@ -177,6 +193,8 @@ namespace PocketFootball.Sim
     public sealed class ViewConfig
     {
         public float playerHeightM, playerRadiusM, findMeS, plateFontPx, joinPanelQrPx, ballLengthM, ballWidthM, meSendHz;
+        // FIND ME: the soft team-colour glow on the grass under the player (Markings.Beam): its size, how solid its middle
+        public float findMeRadiusM, findMeAlpha;
         // the players' own toon shade (gauntlet 3): a warmer, same-hue shade than the stadium's cool purple family,
         // so a green jersey shades dark green, not teal (View/FootballFigure.KitMaterial)
         public string playerShadeHue, playerBounce, playerShadeLift;
@@ -196,6 +214,12 @@ namespace PocketFootball.Sim
     {
         public float fps, throwS, handoffS, secureS, bobbleS, reachYd, reachS, getUpS, blockShoveS;
         public float snapAheadYd, snapSpeedYdS, snapMinS, snapArcYd, snapSecureS;
+        // FEATURES.blockLock (View/Moves.cs): a blocker and his man lock arms lockGapYd apart (each slides at most
+        // lockPullYd, at lockSlideYdS) and face each other, turned only lockTurnDeg toward the camera
+        public float lockGapYd, lockPullYd, lockSlideYdS, lockTurnDeg;
+        // FEATURES.watchBall (View/PlayersView.cs): with a pass in the air, the men within watchYd of where it's aimed
+        // turn to follow it: shoulders up to lookTwistDeg, the head lookHeadDeg more, the rest the whole body; in lookStepDeg steps
+        public float watchYd, lookTwistDeg, lookHeadDeg, lookStepDeg;
     }
 
     // WS-07 the lobby (FEATURES.lobby): each person picks an offense spot and a defense spot before kickoff. The game

@@ -31,6 +31,7 @@ namespace PocketFootball.Editor
             var mat = EnsureBaseMaterial();
             ResourceMaterial("Toon", "Assets/_Project/Art/Shaders/Toon.shader");
             ResourceMaterial("Sky", "Assets/_Project/Art/Shaders/Sky.shader");
+            ResourceMaterial("Glow", "Assets/_Project/Art/Shaders/Glow.shader");
             BuildBootScene(mat);
             AssetDatabase.SaveAssets();
             Debug.Log("[setup] ProjectSetup.Apply done");
