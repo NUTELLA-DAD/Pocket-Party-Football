@@ -8,12 +8,54 @@ namespace PocketFootball.View
     public static class Looks
     {
         public const float Matte = 1f, Shiny = 0.75f, Gloss = 0.5f, Paint = 0.25f;
-        static Material toon;
+        static Material toon, glow;
 
         public static Material Toon(Material fallback)
         {
             if (toon == null) toon = Resources.Load<Material>("Toon");
             return toon != null ? toon : fallback;
+        }
+
+        // The soft see-through material (Resources/Glow.mat): vertex colour, its alpha how solid (the arc, FIND ME).
+        public static Material Glow(Material fallback)
+        {
+            if (glow == null) glow = Resources.Load<Material>("Glow");
+            return glow != null ? glow : fallback;
+        }
+
+        // A soft round glow lying on the grass: solid in the middle (alpha `core`), fading to nothing at `radius`
+        // (metres). squashZ flattens it along the field's width, like the ring under each person's player.
+        public static GameObject SoftDisc(Transform parent, string name, float radius, Color color, float core, Material mat, float squashZ = 1f)
+        {
+            const int Around = 48;
+            // rings from the middle out: (share of the radius, alpha share); eased so the edge melts away
+            float[] at = { 0f, 0.45f, 0.7f, 0.85f, 1f }, a = { 1f, 0.9f, 0.6f, 0.25f, 0f };
+            var v = new Vector3[at.Length * Around];
+            var c = new Color[v.Length];
+            for (int r = 0; r < at.Length; r++)
+                for (int i = 0; i < Around; i++)
+                {
+                    float ang = i * Mathf.PI * 2f / Around;
+                    v[r * Around + i] = new Vector3(Mathf.Cos(ang) * radius * at[r], 0, Mathf.Sin(ang) * radius * at[r] * squashZ);
+                    c[r * Around + i] = Lin(color, core * a[r]);
+                }
+            var t = new System.Collections.Generic.List<int>();
+            for (int r = 0; r + 1 < at.Length; r++)
+                for (int i = 0; i < Around; i++)
+                {
+                    int i1 = (i + 1) % Around, p0 = r * Around + i, p1 = r * Around + i1, q0 = p0 + Around, q1 = p1 + Around;
+                    t.Add(p0); t.Add(q1); t.Add(q0); t.Add(p0); t.Add(p1); t.Add(q1);
+                }
+            var m = new Mesh { name = name, vertices = v, colors = c, triangles = t.ToArray() };
+            m.RecalculateBounds();
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.AddComponent<MeshFilter>().sharedMesh = m;
+            var mr = go.AddComponent<MeshRenderer>();
+            mr.sharedMaterial = mat;
+            mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            mr.receiveShadows = false;
+            return go;
         }
 
         static Color Lin(Color c, float flag)

@@ -193,6 +193,8 @@ namespace PocketFootball.Sim
     public sealed class ViewConfig
     {
         public float playerHeightM, playerRadiusM, findMeS, plateFontPx, joinPanelQrPx, ballLengthM, ballWidthM, meSendHz;
+        // FIND ME: the soft team-colour glow on the grass under the player (Markings.Beam): its size, how solid its middle
+        public float findMeRadiusM, findMeAlpha;
         // the players' own toon shade (gauntlet 3): a warmer, same-hue shade than the stadium's cool purple family,
         // so a green jersey shades dark green, not teal (View/FootballFigure.KitMaterial)
         public string playerShadeHue, playerBounce, playerShadeLift;
