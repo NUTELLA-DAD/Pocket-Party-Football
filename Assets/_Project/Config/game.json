@@ -279,6 +279,7 @@
       "posModels": [
         { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerKC_BaseColor" },
         { "pos": "QB", "model": "Models/QB/QB_Rigged", "modelTexture": "Models/QB/QB_BaseColor" },
+        { "pos": "K", "model": "Models/Kicker/Kicker_Rigged", "modelTexture": "Models/Kicker/Kicker_BaseColor" },
         { "pos": "WR", "model": "Models/WR/WR_Rigged", "modelTexture": "Models/WR/WR_BaseColor" }
       ],
       "cheerModel": "Models/Cheerleader/Cheerleader_Rigged",
@@ -294,6 +295,7 @@
       "posModels": [
         { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/Linebacker_BaseColor" },
         { "pos": "QB", "model": "Models/QB/QB_Rigged", "modelTexture": "Models/QB/QBRR_BaseColor" },
+        { "pos": "K", "model": "Models/Kicker/Kicker_Rigged", "modelTexture": "Models/Kicker/KickerRR_BaseColor" },
         { "pos": "WR", "model": "Models/WR/WR_Rigged", "modelTexture": "Models/WR/WRRR_BaseColor" }
       ],
       "cheerModel": "Models/Cheerleader/Cheerleader_Rigged",
@@ -864,6 +866,7 @@
     "idleMotion": true,
     "headTrack": true,
     "ballSpin": true,
+    "kickerModel": true,
     "stadiumBowl": true,
     "sunsetSky": true,
     "refModel": true,
