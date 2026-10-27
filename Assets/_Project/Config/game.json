@@ -386,7 +386,7 @@
     "spiralDegPerKey": 135,
     "tumbleDegPerKey": 75,
     "strideWalkYdS": 1.6,
-    "strideCadence": [2.0, 3.9, 5],
+    "strideCadence": [2.0, 3.4, 4.6],
     "strideStance": [0.6, 0.4, 0.32],
     "strideReach": [0.6, 0.55, 0.62],
     "strideAhead": [0.5, 0.3, 0.25],

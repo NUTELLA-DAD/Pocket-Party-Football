@@ -151,7 +151,7 @@ namespace PocketFootball.View
 
                 if (PoseOverride.TryGetValue(p.Slot, out var held)) { fig.Idle(0f, 0f); fig.Pose(held, 0); continue; }
                 travelled[p.Slot] = (travelled.TryGetValue(p.Slot, out float d) ? d : 0f) + moved;
-                float strideMoved = moved;   // (the stride holds only in a plant: walking on, leaning back, the feet keep stepping)
+                float strideMoved = moved;   // (the stride holds only in a plant slower than a walk: braking on the move, the feet keep stepping)
                 // (with the momentum lean a sprint takes longer strides than a jog)
                 float stride = momentum ? StrideM * (0.8f + 0.4f * Mathf.Clamp01(speed / cfg.players.sprintSpeedYdS)) : StrideM;
                 int frame = (int)(travelled[p.Slot] / stride) % 2;
@@ -178,7 +178,7 @@ namespace PocketFootball.View
                     // the lean: leanFeetShare tips the whole body over its feet, the rest bends the chest
                     Momentum.Lean(ms, cfg.anim, out float fwd, out float side, out float plant);
                     // planted (or leaning hard nearly stopped): the feet stay put, no pedalling in place
-                    if (plant > 0f || (speed < 2f && Mathf.Abs(fwd) + Mathf.Abs(side) >= 8f)) { frame = 0; moved = 0f; if (plant > 0f) strideMoved = 0f; }
+                    if (plant > 0f || (speed < 2f && Mathf.Abs(fwd) + Mathf.Abs(side) >= 8f)) { frame = 0; moved = 0f; if (plant > 0f && speed < cfg.anim.strideWalkYdS) strideMoved = 0f; }
                     // the speed lean bends the spine (a sprint's silhouette), the rest of the lean tips him over his feet,
                     // less so in a plant, where the bent legs take it
                     float run = Mathf.Clamp01(speed / cfg.players.sprintSpeedYdS);
