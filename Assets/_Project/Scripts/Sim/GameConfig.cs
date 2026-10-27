@@ -166,6 +166,8 @@ namespace PocketFootball.Sim
         public string model, modelTexture;
         // FEATURES.posModels: a position wearing its own model instead (e.g. the linebackers); first match wins
         public List<PosModelConfig> posModels = new List<PosModelConfig>();
+        // FEATURES.cheerleaders: the squad on the far sideline wears this rigged model and colour map (Stadium.cs)
+        public string cheerModel, cheerTexture;
 
         // The model and colour map a player at this position wears.
         public void ModelFor(string pos, bool byPos, out string m, out string tex)
