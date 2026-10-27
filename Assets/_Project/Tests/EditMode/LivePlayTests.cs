@@ -183,7 +183,8 @@ namespace PocketFootball.Tests.EditMode
             for (int i = 0; i < w.Cfg.sim.tickHz * 10 && w.Phase == Phase.Live; i++) w.Step(Press(new PlayerInput { MoveX = w.Cfg.formation.attackDir }));
             Assert.AreEqual(Phase.Whistle, w.Phase);
             Assert.That(w.Result, Is.EqualTo("TACKLED").Or.EqualTo("SACKED"));
-            Assert.AreEqual(qb.X, w.NextLos, 1e-3f, "the next play starts where he went down");
+            float spot = w.Hit.Last == HitKind.BigHit ? w.Hit.FromX : qb.X;   // FEATURES.hitAngle: a big hit is spotted where he was hit
+            Assert.AreEqual(spot, w.NextLos, 1e-3f, "the next play starts where he went down");
         }
 
         [Test]

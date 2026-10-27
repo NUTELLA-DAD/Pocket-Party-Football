@@ -42,7 +42,7 @@ namespace PocketFootball.Sim
             w.Intercepted = false;
             w.Result = "";
             w.CatchTried.Clear();
-            foreach (var p in w.Players) { p.RouteIndex = 0; p.TackleCooldown = 0; p.StumbleTicks = 0; p.JukeTicks = 0; p.JukeCooldown = 0; p.BlockedTicks = 0; p.FreeTicks = 0; }
+            foreach (var p in w.Players) { p.RouteIndex = 0; p.TackleCooldown = 0; p.StumbleTicks = 0; p.JukeTicks = 0; p.JukeCooldown = 0; p.BlockedTicks = 0; p.FreeTicks = 0; p.OffBalanceTicks = 0; p.OffBalanceBy = -1; }
             w.Events.Push(w, EventKind.Hike, Qb(w));
         }
 
@@ -74,6 +74,7 @@ namespace PocketFootball.Sim
             if (p.StumbleTicks > 0) p.StumbleTicks--;
             if (p.JukeTicks > 0) p.JukeTicks--;
             if (p.JukeCooldown > 0) p.JukeCooldown--;
+            if (p.OffBalanceTicks > 0) p.OffBalanceTicks--;   // FEATURES.hitAngle (HitAngle.Step: does he stay up?)
 
             if (w.Phase == Phase.Set && input.Hike && p == Qb(w)) { Hike(w); return; }
             if (w.Phase != Phase.Live) return;
@@ -120,13 +121,15 @@ namespace PocketFootball.Sim
             float odds = c.tackleBase + speed * c.tackleSpeedBonus;
             // from behind: the carrier runs away from the tackler
             if ((carrier.X - tackler.X) * carrier.VX + (carrier.Z - tackler.Z) * carrier.VZ > 0f) odds += c.tackleFromBehindBonus;
+            odds = HitAngle.TackleOdds(w, carrier, odds);   // FEATURES.hitAngle: easier on a man off balance
             odds = CarrierMoves.TackleOdds(w, tackler, carrier, odds);   // WS-04
             if (w.Rng.Value() < odds)
             {
-                if (Fumbles.OnHit(w, tackler, carrier)) return;   // WS-04: knocked loose, the play goes on
-                bool sack = carrier == Qb(w) && !w.Thrown && (carrier.X - w.LineOfScrimmageX) * w.Dir < 0f;
-                w.Events.Push(w, sack ? EventKind.Sack : EventKind.Tackle, tackler, carrier);
-                Whistle(w, sack ? "SACKED" : "TACKLED", carrier.X);
+                if (!HitAngle.Land(w, tackler, carrier, out float fumbleMul, out string how, out float spotX)) return;   // FEATURES.hitAngle: a glancing blow, he stays up
+                if (fumbleMul > 0f && Fumbles.OnHit(w, tackler, carrier, fumbleMul)) return;   // WS-04: knocked loose, the play goes on
+                bool sack = carrier == Qb(w) && !w.Thrown && (spotX - w.LineOfScrimmageX) * w.Dir < 0f;
+                w.Events.Push(w, sack ? EventKind.Sack : EventKind.Tackle, tackler, carrier, how);
+                Whistle(w, sack ? "SACKED" : "TACKLED", spotX);
             }
             else { tackler.StumbleTicks = c.stumbleTicks; w.Events.Push(w, EventKind.MissedTackle, tackler, carrier); }
         }
@@ -198,6 +201,7 @@ namespace PocketFootball.Sim
                 bool td = carrier.Team == w.Offense ? carrier.X * dir > f.GoalLineX : carrier.X * -dir > f.GoalLineX;   // (the defense: a pick six)
                 if (td) { w.Events.Push(w, EventKind.Touchdown, carrier); Whistle(w, "TOUCHDOWN", carrier.X); return; }
                 if (carrier.OutOfBounds) { w.Events.Push(w, EventKind.OutOfBounds, carrier); Whistle(w, "OUT OF BOUNDS", carrier.X); return; }
+                if (HitAngle.Step(w, carrier)) return;   // FEATURES.hitAngle: off balance, and down he goes
                 // bot defenders next to the carrier try a tackle
                 foreach (var p in w.Players)
                 {

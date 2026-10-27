@@ -349,7 +349,8 @@
     "lookTwistDeg": 75,
     "lookHeadDeg": 50,
     "lookStepDeg": 10,
-    "cameraTurnDeg": 0
+    "cameraTurnDeg": 0,
+    "knockKeys": 3
   },
   "defense": {
     "swimEarlyS": 0.5,
@@ -485,6 +486,23 @@
     "recoverReachYd": 1.2,
     "recoverChance": 0.35,
     "scrambleMaxS": 4
+  },
+  "hit": {
+    "squareMin": 0.8,
+    "glanceMax": 0.45,
+    "minRelYdS": 2,
+    "bigHitClosingYdS": 9,
+    "knockbackPerYdS": 0.15,
+    "knockbackMaxYd": 2.5,
+    "bigHitFumbleMul": 1.6,
+    "tripChance": 0.55,
+    "tripFallYd": 0.8,
+    "offBalanceS": 0.9,
+    "offBalanceSpeedFrac": 0.4,
+    "offBalanceKeepFrac": 0.2,
+    "offBalanceShoveYdS": 2.5,
+    "offBalanceTackleBonus": 0.25,
+    "fallLaterChance": 0.4
   },
   "kicking": {
     "puntPlay": "punt",
@@ -734,6 +752,7 @@
     "snapZoom": true,
     "grassBlades": true,
     "cheerleaders": true,
-    "faceDownfield": true
+    "faceDownfield": true,
+    "hitAngle": true
   }
 }

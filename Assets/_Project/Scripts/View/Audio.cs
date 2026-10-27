@@ -29,6 +29,7 @@ namespace PocketFootball.View
                 case EventKind.Juke: return new[] { Sound.Whoosh };
                 case EventKind.MissedTackle: return new[] { Sound.Whoosh };
                 case EventKind.Tackle: return new[] { Sound.Hit };
+                case EventKind.Stumble: return new[] { Sound.Hit };   // FEATURES.hitAngle: a glancing blow
                 case EventKind.Sack: return new[] { Sound.BigHit, Sound.Crowd };
                 case EventKind.Touchdown: return new[] { Sound.Sting, Sound.Crowd };
                 case EventKind.OutOfBounds: return new[] { Sound.Hit };
@@ -104,11 +105,13 @@ namespace PocketFootball.View
         // A tackle that lands hard: the tackler going at least carrier.bigHitSpeedYdS (the same big hit that can
         // knock the ball loose, Sim/Fumbles.cs), or the carrier stopped at or behind the line of scrimmage. The speed
         // is the faster of now and last frame, because the TV can step a few ticks in a frame and he slows down after.
-        // (The line is still the one the play started from: the next huddle moves it.)
+        // (The line is still the one the play started from: the next huddle moves it.) FEATURES.hitAngle: the sim says
+        // which hits were big (a straight-on BIG HIT), so a fast tackler on a glancing trip is not one.
         public bool BigTackle(World w, GameEvent e)
         {
             var tackler = w.Find(e.Slot);
-            if (tackler != null)
+            if (HitAngle.On(w)) { if (e.Text == "BIG HIT") return true; }
+            else if (tackler != null)
             {
                 float speed = Math.Max(Speed(tackler), lastSpeed.TryGetValue(tackler.Slot, out float was) ? was : 0f);
                 float big = cfg.carrier.bigHitSpeedYdS;

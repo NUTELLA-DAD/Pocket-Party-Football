@@ -12,7 +12,7 @@ namespace PocketFootball.View
             Stand, Ready, Stance, Block, Throw, Run, Carry, Backpedal, Dive, Catch,
             // the moves (Moves.cs): frame picks the key where a move has more than one
             Release, Handoff, Reach, Secure, Bobble, Juke, Whiff, FallFront, FallBack, Prone, Supine, Kneel, Celebrate,
-            Lock,
+            Lock, Stagger,
             // the cheerleaders on the sideline (Stadium.cs): frame picks one of CheerFrames cheer poses
             Cheer,
         }
@@ -144,6 +144,11 @@ namespace PocketFootball.View
                 case PoseKind.Whiff: return frame % 2 == 0
                         ? new P { drop = 10, tilt = 25, lean = 0, head = -20, armL = 120, armLx = 40, foreL = 30, armR = -40, armRx = 40, foreR = 50, thighL = 50, thighLx = 6, shinL = -40, thighR = -30, thighRx = 6, shinR = -60 }
                         : new P { drop = 10, tilt = 20, lean = 0, head = -20, armL = -40, armLx = 40, foreL = 50, armR = 120, armRx = 40, foreR = 30, thighL = -30, thighLx = 6, shinL = -60, thighR = 50, thighRx = 6, shinR = -40 };
+                // knocked off balance by a glancing blow (FEATURES.hitAngle), the ball still tucked: 0 tipped over to
+                // one side, the free arm thrown out, a foot hooked; 1 a wide catch step, still leaning
+                case PoseKind.Stagger: return frame == 0
+                        ? new P { drop = 10, tilt = 28, lean = 12, head = 10, armL = 110, armLx = 60, foreL = 20, armR = -30, armRx = 12, foreR = 70, thighL = 40, thighLx = 20, shinL = -60, thighR = -15, thighRx = 4, shinR = -20 }
+                        : new P { drop = 14, tilt = 18, lean = 20, head = -5, armL = 70, armLx = 70, foreL = 30, armR = -30, armRx = 12, foreR = 70, thighL = -20, thighLx = 30, shinL = -30, thighR = 45, thighRx = 8, shinR = -55 };
                 // going down: 0 the hit, 1 halfway to the grass
                 case PoseKind.FallFront: return frame == 0
                         ? new P { drop = 6, tilt = 25, head = -20, armL = 120, armLx = 30, foreL = 30, armR = 100, armRx = 30, foreR = 40, thighL = 10, thighLx = 6, shinL = -30, thighR = -20, thighRx = 6, shinR = -50 }
