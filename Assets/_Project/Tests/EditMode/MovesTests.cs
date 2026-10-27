@@ -270,6 +270,143 @@ namespace PocketFootball.Tests.EditMode
             foreach (var p in w.Players) Assert.AreEqual(Move.None, m.Of(w, p).Kind);
         }
 
+        // Steps through the first seconds of a play until a blocker and his man have picked each other; null if none did.
+        static (Player a, Player b) LockedPair(World w, Moves m, int seconds = 3)
+        {
+            for (int i = 0; i < w.Cfg.sim.tickHz * seconds && w.Phase == Phase.Live; i++)
+            {
+                Step(w, m);
+                foreach (var p in w.Players)
+                {
+                    var mp = m.Of(w, p);
+                    if (mp.Kind != Move.Block || !mp.Locked) continue;
+                    var q = w.Find(mp.Partner);
+                    var mq = m.Of(w, q);
+                    if (mq.Kind == Move.Block && mq.Locked && mq.Partner == p.Slot) return (p, q);
+                }
+            }
+            return (null, null);
+        }
+
+        static float DrawnGap(Moves m, Player a, Player b)
+        {
+            m.LockOffset(a.Slot, 1f, out float ax, out float az);
+            m.LockOffset(b.Slot, 1f, out float bx, out float bz);
+            float dx = b.X + bx - (a.X + ax), dz = b.Z + bz - (a.Z + az);
+            return (float)Math.Sqrt(dx * dx + dz * dz);
+        }
+
+        [Test]
+        public void ABlockerAndHisManLockArms()
+        {
+            var w = AtTheLine();
+            var m = new Moves();
+            Hike(w, m);
+            PastTheSnap(w, m);
+            var (a, b) = LockedPair(w, m);
+            Assert.IsNotNull(a, "a lineman and the man across from him lock up");
+            Assert.AreNotEqual(a.Team, b.Team);
+            Assert.IsTrue(a.Blocking || b.Blocking, "one of them is the blocker");
+            // the TV slides them together (or apart) until their hands meet
+            bool met = false;
+            for (int i = 0; i < w.Cfg.sim.tickHz && w.Phase == Phase.Live && !met; i++)
+            {
+                if (m.Of(w, a).Partner != b.Slot || m.Of(w, b).Partner != a.Slot) break;
+                met = Math.Abs(DrawnGap(m, a, b) - w.Cfg.anim.lockGapYd) < 0.15f;
+                Step(w, m);
+            }
+            Assert.IsTrue(met, "drawn lockGapYd apart");
+        }
+
+        [Test]
+        public void ALockedPairSlidesBackOnceItBreaks()
+        {
+            var w = AtTheLine();
+            var m = new Moves();
+            Hike(w, m);
+            PastTheSnap(w, m);
+            var (a, b) = LockedPair(w, m);
+            Assert.IsNotNull(a);
+            for (int i = 0; i < w.Cfg.sim.tickHz * 30 && w.Phase != Phase.Huddle; i++) Step(w, m);
+            foreach (var p in w.Players)
+            {
+                m.LockOffset(p.Slot, 1f, out float x, out float z);
+                Assert.AreEqual(0f, x, 1e-4f, "drawn on his own spot again");
+                Assert.AreEqual(0f, z, 1e-4f);
+            }
+        }
+
+        [Test]
+        public void NoBlockLockKeepsTheOldShove()
+        {
+            var w = AtTheLine(env: new Dictionary<string, string> { { "NO_BLOCK_LOCK", "1" } });
+            var m = new Moves();
+            Hike(w, m);
+            PastTheSnap(w, m);
+            bool blocked = false;
+            for (int i = 0; i < w.Cfg.sim.tickHz * 3 && w.Phase == Phase.Live; i++)
+            {
+                Step(w, m);
+                foreach (var p in w.Players)
+                {
+                    var mp = m.Of(w, p);
+                    if (mp.Kind != Move.Block) continue;
+                    blocked = true;
+                    Assert.IsFalse(mp.Locked);
+                    m.LockOffset(p.Slot, 1f, out float x, out float z);
+                    Assert.AreEqual(0f, x); Assert.AreEqual(0f, z);
+                }
+            }
+            Assert.IsTrue(blocked, "still blocks");
+        }
+
+        [Test]
+        public void ALockedBlockUsesTheLockPose()
+        {
+            Assert.IsTrue(PlayersView.PoseFor(new MoveNow { Kind = Move.Block, Locked = true, Frame = 1 }, 0, out var k, out int f));
+            Assert.AreEqual(FootballFigure.PoseKind.Lock, k);
+            Assert.AreEqual(1, f);
+            PlayersView.PoseFor(new MoveNow { Kind = Move.Block }, 0, out k, out f);
+            Assert.AreEqual(FootballFigure.PoseKind.Block, k);
+        }
+
+        [Test]
+        public void TheReceiverWatchesTheBallAllTheWayIn()
+        {
+            var w = AtTheLine(tune: c => c.play.catchChanceOffense = 1f);
+            ClearDefense(w);
+            var m = new Moves();
+            Hike(w, m);
+            var target = LivePlay.Receiver(w, 1);
+            for (int i = 0; i < 20; i++) Step(w, m);
+            Step(w, m, Press(new PlayerInput { Throw = 1 }));
+            Assert.AreEqual(BallState.Flying, w.Ball.State);
+            for (int i = 0; i < w.Cfg.sim.tickHz * 5 && w.Ball.State == BallState.Flying; i++)
+            {
+                Assert.IsTrue(m.Watching(target.Slot), "eyes on the ball from the throw to the catch");
+                Assert.IsFalse(m.Watching(LivePlay.Qb(w).Slot), "the thrower isn't the one watching");
+                Step(w, m);
+            }
+            Assert.AreEqual(target.Slot, w.Ball.Carrier);
+            Assert.IsFalse(m.Watching(target.Slot), "caught: done watching");
+        }
+
+        [Test]
+        public void NoWatchBallSwitchesItOff()
+        {
+            var w = AtTheLine(env: new Dictionary<string, string> { { "NO_WATCH_BALL", "1" } });
+            ClearDefense(w);
+            var m = new Moves();
+            Hike(w, m);
+            for (int i = 0; i < 20; i++) Step(w, m);
+            Step(w, m, Press(new PlayerInput { Throw = 1 }));
+            for (int i = 0; i < w.Cfg.sim.tickHz * 3; i++)
+            {
+                foreach (var p in w.Players) Assert.IsFalse(m.Watching(p.Slot));
+                Step(w, m);
+            }
+        }
+
         [Test]
         public void WatchingNeverChangesTheGame()
         {
@@ -281,7 +418,7 @@ namespace PocketFootball.Tests.EditMode
             {
                 a.Step(null);
                 b.Step(null); m.Observe(b);
-                foreach (var p in b.Players) m.Of(b, p);
+                foreach (var p in b.Players) { m.Of(b, p); m.Watching(p.Slot); m.LockOffset(p.Slot, 0.5f, out _, out _); }
             }
             Assert.AreEqual(a.Hash(), b.Hash());
         }

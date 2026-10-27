@@ -294,7 +294,15 @@
     "snapSpeedYdS": 14,
     "snapMinS": 0.22,
     "snapArcYd": 0.25,
-    "snapSecureS": 0.25
+    "snapSecureS": 0.25,
+    "lockGapYd": 1.6,
+    "lockPullYd": 0.6,
+    "lockSlideYdS": 3,
+    "lockTurnDeg": 20,
+    "watchYd": 12,
+    "lookTwistDeg": 75,
+    "lookHeadDeg": 50,
+    "lookStepDeg": 10
   },
   "defense": {
     "swimEarlyS": 0.5,
@@ -663,6 +671,8 @@
     "snap": true,
     "botQuickCall": true,
     "tackleContact": true,
-    "posModels": true
+    "posModels": true,
+    "blockLock": true,
+    "watchBall": true
   }
 }

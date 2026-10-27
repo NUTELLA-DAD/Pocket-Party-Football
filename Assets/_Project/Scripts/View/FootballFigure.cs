@@ -12,6 +12,7 @@ namespace PocketFootball.View
             Stand, Ready, Stance, Block, Throw, Run, Carry, Backpedal, Dive, Catch,
             // the moves (Moves.cs): frame picks the key where a move has more than one
             Release, Handoff, Reach, Secure, Bobble, Juke, Whiff, FallFront, FallBack, Prone, Supine, Kneel, Celebrate,
+            Lock,
         }
 
         public Transform Hips, Torso, Head, ArmL, ForeL, ArmR, ForeR, ThighL, ShinL, ThighR, ShinR, HandR, HandL;
@@ -103,6 +104,11 @@ namespace PocketFootball.View
                 case PoseKind.Block: return frame % 2 == 0
                         ? new P { drop = 20, lean = 42, head = -30, armL = 82, armLx = 10, foreL = 12, armR = 82, armRx = 10, foreR = 12, thighL = 48, thighLx = 10, shinL = -55, thighR = -12, thighRx = 10, shinR = -24 }
                         : new P { drop = 18, lean = 46, head = -32, armL = 92, armLx = 10, foreL = 4, armR = 92, armRx = 10, foreR = 4, thighL = -12, thighLx = 10, shinL = -24, thighR = 48, thighRx = 10, shinR = -55 };   // the shove: arms out, legs driving
+                // arms locked with the man in front (FEATURES.blockLock): chest to chest, both arms out level with his shoulder
+                // pads, elbows a little bent; 0 and 1 the legs drive and the hands fight for the inside
+                case PoseKind.Lock: return frame % 2 == 0
+                        ? new P { drop = 18, lean = 34, head = -26, armL = 108, armLx = 4, foreL = 24, armR = 100, armRx = 4, foreR = 30, thighL = 46, thighLx = 10, shinL = -52, thighR = -14, thighRx = 10, shinR = -26 }
+                        : new P { drop = 17, lean = 36, head = -28, armL = 100, armLx = 4, foreL = 30, armR = 108, armRx = 4, foreR = 24, thighL = -14, thighLx = 10, shinL = -26, thighR = 46, thighRx = 10, shinR = -52 };
                 case PoseKind.Throw: return new P { drop = 4, lean = -6, head = 0, armL = 62, armLx = 20, foreL = 30, armR = -150, armRx = 22, foreR = 70, thighL = 24, thighLx = 6, shinL = -18, thighR = -18, thighRx = 8, shinR = -12 };
                 case PoseKind.Carry: return frame % 2 == 0
                         ? new P { drop = 6, lean = 20, head = -10, armL = 30, armLx = 8, foreL = 100, armR = -30, armRx = 12, foreR = 70, thighL = 48, thighLx = 4, shinL = -70, thighR = -28, thighRx = 4, shinR = -40 }
@@ -157,24 +163,40 @@ namespace PocketFootball.View
 
         PoseKind current = (PoseKind)(-1);
         int currentFrame = -1;
+        P cur;
+        float twist, headYaw, headUp; bool looking;
 
         public void Pose(PoseKind kind, int frame)
         {
-            if (kind == current && frame == currentFrame) return;
-            current = kind; currentFrame = frame;
-            var p = Get(kind, frame);
-            Hips.localPosition = new Vector3(0, hipY - p.drop, 0);
-            Hips.localRotation = Quaternion.Euler(0, 0, -p.tilt);
-            Torso.localRotation = Quaternion.Euler(0, 0, -p.lean);
-            Head.localRotation = Quaternion.Euler(0, 0, -p.head);
-            ArmL.localRotation = Quaternion.Euler(-p.armLx, 0, p.armL);
-            ArmR.localRotation = Quaternion.Euler(p.armRx, 0, p.armR);
-            ForeL.localRotation = Quaternion.Euler(0, 0, p.foreL);
-            ForeR.localRotation = Quaternion.Euler(0, 0, p.foreR);
-            ThighL.localRotation = Quaternion.Euler(-p.thighLx, 0, p.thighL);
-            ThighR.localRotation = Quaternion.Euler(p.thighRx, 0, p.thighR);
-            ShinL.localRotation = Quaternion.Euler(0, 0, p.shinL);
-            ShinR.localRotation = Quaternion.Euler(0, 0, p.shinR);
+            if (kind != current || frame != currentFrame)
+            {
+                current = kind; currentFrame = frame;
+                var p = cur = Get(kind, frame);
+                Hips.localPosition = new Vector3(0, hipY - p.drop, 0);
+                Hips.localRotation = Quaternion.Euler(0, 0, -p.tilt);
+                ArmL.localRotation = Quaternion.Euler(-p.armLx, 0, p.armL);
+                ArmR.localRotation = Quaternion.Euler(p.armRx, 0, p.armR);
+                ForeL.localRotation = Quaternion.Euler(0, 0, p.foreL);
+                ForeR.localRotation = Quaternion.Euler(0, 0, p.foreR);
+                ThighL.localRotation = Quaternion.Euler(-p.thighLx, 0, p.thighL);
+                ThighR.localRotation = Quaternion.Euler(p.thighRx, 0, p.thighR);
+                ShinL.localRotation = Quaternion.Euler(0, 0, p.shinL);
+                ShinR.localRotation = Quaternion.Euler(0, 0, p.shinR);
+            }
+            // the chest and head: the pose's, turned by Look
+            Torso.localRotation = Quaternion.Euler(0, twist, 0) * Quaternion.Euler(0, 0, -cur.lean);
+            float head = looking ? Mathf.Clamp(-headUp - cur.lean - cur.tilt, -60f, 35f) : cur.head;
+            Head.localRotation = Quaternion.Euler(0, headYaw, 0) * Quaternion.Euler(0, 0, -head);
+        }
+
+        // Turn the chest twistDeg and the head yawDeg more about the spine (+ = toward his right), the head tipped to look
+        // upDeg above level (FEATURES.watchBall: following a pass). Look(0, 0, float.NaN): the pose's own chest and head.
+        // Takes hold at the next Pose.
+        public void Look(float twistDeg, float yawDeg, float upDeg)
+        {
+            twist = twistDeg; headYaw = yawDeg;
+            looking = !float.IsNaN(upDeg);
+            headUp = looking ? upDeg : 0f;
         }
 
         public PoseKind Current => current;
