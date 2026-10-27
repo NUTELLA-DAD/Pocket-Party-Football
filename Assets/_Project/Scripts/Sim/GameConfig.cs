@@ -232,8 +232,8 @@ namespace PocketFootball.Sim
     // The lab's free camera: drag to turn it, right-drag to slide it, the wheel to come closer, F1-F5 for these presets.
     public sealed class FreeCameraConfig
     {
-        public float orbitDegPerPx = 0.25f, zoomStep = 1.15f, minDistM = 3f, maxDistM = 450f, minPitchDeg = 2f, maxPitchDeg = 89f;
-        public float boundsMarginYd = 20f;   // how far past the field the point it looks at can slide
+        public float orbitDegPerPx, zoomStep, minDistM, maxDistM, minPitchDeg, maxPitchDeg;
+        public float boundsMarginYd;  // how far past the field the point it looks at can slide
         public List<float> lensesDeg = new List<float>();   // , and . step through these (keeping the same framing)
         public List<FreeCameraPreset> presets = new List<FreeCameraPreset>();
     }
