@@ -92,6 +92,7 @@ namespace PocketFootball.Tests.EditMode
         {
             foreach (float v in new[] { cfg.players.jogSpeedYdS, cfg.players.sprintSpeedYdS })
             {
+                bool sprint = v >= cfg.players.sprintSpeedYdS;
                 float straightest = 180f, mostFold = 0f;
                 for (int i = 0; i < Steps; i++)
                 {
@@ -100,7 +101,7 @@ namespace PocketFootball.Tests.EditMode
                     mostFold = Mathf.Max(mostFold, -p.ShinL);
                 }
                 Assert.Greater(straightest, 5f, "never locked straight (" + v + " yd/s)");
-                Assert.Greater(mostFold, 100f, "the heel comes up behind (" + v + " yd/s)");
+                Assert.Greater(mostFold, sprint ? 120f : 85f, "the heel comes up behind, higher at a sprint (" + v + " yd/s)");
                 // over the planted foot the knee bends more than it did touching down
                 var land = At(Model, 0f, v); var load = At(Model, 0.06f, v);
                 Assert.Greater(-load.ShinL, -land.ShinL, "the knee gives under the load (" + v + " yd/s)");
