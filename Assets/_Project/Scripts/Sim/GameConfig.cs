@@ -33,11 +33,13 @@ namespace PocketFootball.Sim
         public DefenseConfig defense = new DefenseConfig();   // WS-03 defender moves (DefenseMoves.cs)
         public KickingConfig kicking = new KickingConfig();   // WS-01 (Kicking.cs)
         public StadiumConfig stadium = new StadiumConfig();   // WS-10 the stadium and crowd (StadiumConfig.cs, View/Stadium.cs)
+        public SkyConfig sky = new SkyConfig();   // the sunset sky and its light (SkyConfig.cs, View/SkyView.cs)
         public AudiblesConfig audibles = new AudiblesConfig();   // WS-13 (Audibles.cs)
         public StatsConfig stats = new StatsConfig();      // WS-12 (Stats.cs, View/PostGame.cs, View/Celebrations.cs)
         public GamepadConfig gamepad = new GamepadConfig();   // WS-14 Xbox pads (GamepadConfig.cs, Input/GamepadSource.cs)
         public AudioConfig audio = new AudioConfig();   // WS-09 sound on the TV (AudioConfig.cs, View/Audio.cs)
         public HitConfig hit = new HitConfig();   // FEATURES.hitAngle: straight-on hits and glancing blows (HitAngle.cs)
+        public RatingsConfig ratings = new RatingsConfig();   // player ratings by position (Ratings.cs, FEATURES.ratings)
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 
@@ -227,6 +229,17 @@ namespace PocketFootball.Sim
         public float cameraTurnDeg;
         // FEATURES.hitAngle (View/Moves.cs): a big hit's slide back to where he goes down, in knockKeys key frames
         public int knockKeys;
+        // FEATURES.idleMotion (View/Alive.cs): a man standing still breathes, his chest up idleBreathDeg and back over
+        // idleBreathKeys key frames, and shifts his weight foot to foot over idleShiftKeys: hips idleSwayCm over, the
+        // other hip idleRollDeg lower, that knee eased idleKneeDeg
+        public int idleBreathKeys, idleShiftKeys;
+        public float idleBreathDeg, idleSwayCm, idleRollDeg, idleKneeDeg;
+        // FEATURES.headTrack (View/Alive.cs): a man's head turns up to trackHeadDeg toward the ball, tips up to trackUpDeg
+        // to a ball in the air and down to trackDownDeg (in lookStepDeg steps)
+        public float trackHeadDeg, trackUpDeg, trackDownDeg;
+        // FEATURES.ballSpin (View/Alive.cs): a pass turns spiralDegPerKey about its long axis each key frame, a kick
+        // tumbleDegPerKey end over end
+        public float spiralDegPerKey, tumbleDegPerKey;
     }
 
     // WS-07 the lobby (FEATURES.lobby): each person picks an offense spot and a defense spot before kickoff. The game

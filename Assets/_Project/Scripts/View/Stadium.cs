@@ -10,8 +10,8 @@ namespace PocketFootball.View
     // with their numbers, staff in caps, a ref, coolers, tents behind). Chunky goal posts on both end lines.
     // Orange down markers on both sidelines. FEATURES.cheerleaders (NO_CHEERLEADERS=1): each team's cheer squad in
     // front of its half of the far sideline, Kenny's rigged cheerleader in the team's colours, cheering together in
-    // stepped poses. Every number is in game.json "stadium". Built once from code, seeded (the
-    // same stadium every run).
+    // stepped poses. FEATURES.refModel (NO_REF_MODEL=1): the sideline refs wear Kenny's rigged referee. Every number is
+    // in game.json "stadium". Built once from code, seeded (the same stadium every run).
     //
     // The crowd: every fan is a flat card (shirt, head, cap, arms, sometimes a sign). The stands are cut into slices;
     // each slice is built in four looks (two idle looks, half up, standing with arms up) and only swaps its mesh on
@@ -27,10 +27,11 @@ namespace PocketFootball.View
         readonly Transform root;
         readonly List<Transform> markers = new List<Transform>();
         readonly List<CrowdSlice> slices = new List<CrowdSlice>();
+        readonly Bowl bowl;   // FEATURES.stadiumBowl: the full bowl round the field (Bowl.cs), else null
         int lastKey = int.MinValue;
         uint seed = 12345;
 
-        sealed class CrowdSlice { public MeshFilter filter; public Mesh[] poses; public int pose; }
+        sealed class CrowdSlice { public MeshFilter filter; public Mesh[] poses; public int pose, index; }
 
         readonly List<(FootballFigure fig, int team)> cheerleaders = new List<(FootballFigure, int)>();
         int lastCheerKey = int.MinValue;
@@ -47,8 +48,18 @@ namespace PocketFootball.View
             root = new GameObject("Stadium").transform;
             float m = cfg.field.yardM;
             float side = (cfg.field.HalfWidth + cfg.field.sidelineBorderYd) * m;   // where the white border ends (m)
-            Stands(side + sc.wallBackM);
-            Crowd(side + sc.wallBackM);
+            if (cfg.Feature("stadiumBowl"))
+            {
+                bowl = new Bowl(cfg, root, mat, Looks.Glow(null));
+                bowl.Build();
+                WallBanners(side + sc.wallBackM, bowl.Path.A - bowl.Path.R);
+                BowlCrowd();
+            }
+            else
+            {
+                Stands(side + sc.wallBackM);
+                Crowd(side + sc.wallBackM);
+            }
             FarSideline(side);
             NearSideline(side);
             if (cfg.Feature("cheerleaders")) Cheerleaders(side);
@@ -78,10 +89,17 @@ namespace PocketFootball.View
             }
             b.Box(new Vector3(0, RowY(sc.rows) + 2.5f, RowZ(wallZ, sc.rows) - 2f), new Vector3(hx, 0.6f, 4f), Colors.Hex(sc.roofColor));
             b.Build(root, "Stands", mat);
+            WallBanners(wallZ, hx);
+        }
 
-            // banners on the wall: team colour panels with the team mark
-            float gap = sc.banners > 0 ? hx * 2f / sc.banners : 0f;
-            for (int i = 0; i < sc.banners; i++)
+        // Banners on the far wall from -hx to +hx: team colour panels with the team mark, as far apart as the old
+        // full-length stand had them.
+        void WallBanners(float wallZ, float hx)
+        {
+            float gap = sc.banners > 0 ? sc.halfLengthM * 2f / sc.banners : 0f;
+            int count = gap > 0f ? Mathf.Min(sc.banners, Mathf.FloorToInt(hx * 2f / gap)) : 0;
+            if (count > 0) gap = hx * 2f / count;
+            for (int i = 0; i < count; i++)
             {
                 var team = cfg.teams[i % 2 == 0 ? 1 : 0];
                 float x = -hx + (i + 0.5f) * gap;
@@ -102,9 +120,8 @@ namespace PocketFootball.View
         {
             float x0 = -sc.halfLengthM, x1 = sc.halfLengthM;
             int count = Mathf.Max(1, Mathf.CeilToInt((x1 - x0) / Mathf.Max(0.1f, sc.sliceM)));
-            var normal = new Vector3(0f, sc.cardTiltUp, -1f).normalized;   // the cards face the camera, shaded as if leaning back
             var cards = new Cards[count * Poses];
-            for (int i = 0; i < cards.Length; i++) cards[i] = new Cards { Normal = normal };
+            for (int i = 0; i < cards.Length; i++) cards[i] = new Cards();
 
             Color home = Colors.Hex(cfg.teams[1].color), away = Colors.Hex(cfg.teams[0].color);
             Color[] homes = { home, home, Color.Lerp(home, Color.black, 0.25f), Colors.Hex(cfg.teams[1].color2) };
@@ -134,7 +151,7 @@ namespace PocketFootball.View
                     {
                         int arms = p == IdleA ? idleA : p == IdleB ? idleB : p == Rising ? 1 : 2;
                         float stand = p == Up ? sc.standM : p == Rising ? sc.standM * 0.5f : 0f;
-                        Fan(cards[slice * Poses + p], at, h, stand, arms, shirt, skin, trousers, cap, sign);
+                        Fan(cards[slice * Poses + p], at, Vector3.right, Vector3.back, h, stand, arms, shirt, skin, trousers, cap, sign);
                     }
                 }
             }
@@ -143,7 +160,7 @@ namespace PocketFootball.View
             {
                 var go = new GameObject("Crowd" + i);
                 go.transform.SetParent(root, false);
-                var s = new CrowdSlice { poses = new Mesh[Poses], pose = IdleA };
+                var s = new CrowdSlice { poses = new Mesh[Poses], pose = IdleA, index = i };
                 for (int p = 0; p < Poses; p++) s.poses[p] = cards[i * Poses + p].Build("Crowd" + i + "." + p);
                 s.filter = go.AddComponent<MeshFilter>();
                 s.filter.sharedMesh = s.poses[IdleA];
@@ -154,28 +171,123 @@ namespace PocketFootball.View
             }
         }
 
+        // ---- the card crowd in the bowl (FEATURES.stadiumBowl): every row of both tiers, all the way round ----
+        // Slices are cut along the wall line (sliceM each), straight up through both tiers, so the wave runs right
+        // round the stadium. The lower tier keeps all four looks; round the ends, the corners and the near side its
+        // two idle looks are one mesh, and the upper tier only sits or stands (less to keep in memory).
+        void BowlCrowd()
+        {
+            var path = bowl.Path;
+            int count = Mathf.Max(1, Mathf.CeilToInt(path.Length / Mathf.Max(0.1f, sc.sliceM)));
+            var lower = new Cards[count * Poses];
+            var upper = new Cards[count * 2];
+            for (int i = 0; i < lower.Length; i++) lower[i] = new Cards();
+            for (int i = 0; i < upper.Length; i++) upper[i] = new Cards();
+
+            Color home = Colors.Hex(cfg.teams[1].color), away = Colors.Hex(cfg.teams[0].color);
+            Color[] homes = { home, home, Color.Lerp(home, Color.black, 0.25f), Colors.Hex(cfg.teams[1].color2) };
+            Color[] aways = { away, away, Colors.Hex(cfg.teams[0].color2) };
+            Color[] neutrals = Hexes(sc.neutralColors);
+            Color[] skins = { Colors.Hex("#f2c8a5"), Colors.Hex("#d6a07a"), Colors.Hex("#a8704a"), Colors.Hex("#7a4b2e") };
+            Color[] signs = { Color.white, Colors.Hex(cfg.teams[1].color2), home, away };
+            Color trousers = Colors.Hex("#2c2f36");
+
+            int rows = sc.rows + sc.bowl.upperRows;
+            for (int r = 0; r < rows; r++)
+            {
+                bool up = r >= sc.rows;
+                int ur = r - sc.rows;
+                float d = (up ? bowl.UpperD(ur) : bowl.LowerD(r)) - 0.15f, y = up ? bowl.UpperY(ur) : bowl.LowerY(r);
+                float seat = up ? sc.bowl.upperSeatM : sc.seatM, empty = up ? sc.bowl.upperEmptyChance : sc.emptyChance;
+                for (float t = Rand() * seat; t < path.Length; t += (seat + Rand() * sc.seatJitterM) / path.Stretch(t, d))
+                {
+                    if (bowl.InAisle(t, d) || (!up && bowl.InPortal(t, r)) || Rand() < empty) continue;
+                    float u = Rand();
+                    Color shirt = u < sc.homeShare ? Pick(homes) : u < sc.homeShare + sc.awayShare ? Pick(aways) : Pick(neutrals);
+                    Color skin = Pick(skins);
+                    Color? cap = Rand() < sc.capChance ? (Color?)(Rand() < 0.5f ? shirt : Pick(homes)) : null;
+                    Color? sign = !up && Rand() < sc.signChance ? (Color?)Pick(signs) : null;
+                    float h = sc.fanM * (0.9f + Rand() * 0.2f);
+                    int idleA = IdleArms(), idleB = IdleArms();
+                    if (sign.HasValue) idleA = idleB = 2;   // a sign stays up
+                    int slice = Mathf.Clamp((int)(t / sc.sliceM), 0, count - 1);
+                    var n = path.Out(t);
+                    var at = path.At(t, d) + Vector3.up * y;
+                    var right = Vector3.Cross(Vector3.up, n);
+                    if (up)
+                    {
+                        Fan(upper[slice * 2], at, right, -n, h, 0f, idleA == 2 ? 2 : 0, shirt, skin, trousers, cap, null, true);
+                        Fan(upper[slice * 2 + 1], at, right, -n, h, sc.standM, 2, shirt, skin, trousers, cap, null, true);
+                        continue;
+                    }
+                    for (int p = 0; p < Poses; p++)
+                    {
+                        int arms = p == IdleA ? idleA : p == IdleB ? idleB : p == Rising ? 1 : 2;
+                        float stand = p == Up ? sc.standM : p == Rising ? sc.standM * 0.5f : 0f;
+                        Fan(lower[slice * Poses + p], at, right, -n, h, stand, arms, shirt, skin, trousers, cap, sign);
+                    }
+                }
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                // the far side (the one the TV camera faces) keeps both idle looks
+                bool far = path.Segment((i + 0.5f) * sc.sliceM, out _) == 0;
+                var low = new Mesh[Poses];
+                for (int p = 0; p < Poses; p++)
+                    low[p] = p == IdleB && !far ? low[IdleA] : lower[i * Poses + p].Build("Crowd" + i + "." + p);
+                var parent = bowl.IsNear((i + 0.5f) * sc.sliceM) ? bowl.NearRoot : root;
+                AddSlice("Crowd" + i, low, parent);
+                Mesh sit = upper[i * 2].Build("Upper" + i + ".0"), stood = upper[i * 2 + 1].Build("Upper" + i + ".1");
+                AddSlice("Upper" + i, new[] { sit, sit, stood, stood }, parent);
+            }
+        }
+
+        // One crowd slice: its looks (IdleA, IdleB, Rising, Up), the same index along the stands as its neighbours'.
+        void AddSlice(string name, Mesh[] poses, Transform parent)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            var s = new CrowdSlice { poses = poses, pose = IdleA, index = slices.Count / 2 };
+            s.filter = go.AddComponent<MeshFilter>();
+            s.filter.sharedMesh = s.poses[IdleA];
+            var mr = go.AddComponent<MeshRenderer>();
+            mr.sharedMaterial = mat;
+            mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            slices.Add(s);
+        }
+
+        // The scoreboard over the end shows the score (only with the bowl).
+        public void SetScore(int[] score) { bowl?.SetScore(score); }
+
         // Arms for an idle look: mostly down, now and then out or up.
         int IdleArms() { float u = Rand(); return u < sc.idleArmsChance ? 2 : u < sc.idleArmsChance * 2f ? 1 : 0; }
 
         // One fan as a flat card: legs when standing, shirt, head, cap, arms (0 down, 1 out, 2 up), a sign held up.
-        static void Fan(Cards c, Vector3 seat, float h, float stand, int arms, Color shirt, Color skin, Color trousers, Color? cap, Color? sign)
+        // The card stands at `seat`, `right` along its row and `toward` the field (the camera's side). simple: no arms
+        // hanging down (the upper tier, too far off to see them).
+        void Fan(Cards c, Vector3 seat, Vector3 right, Vector3 toward, float h, float stand, int arms, Color shirt, Color skin, Color trousers, Color? cap, Color? sign, bool simple = false)
         {
+            c.Right = right;
+            c.Normal = (toward + Vector3.up * sc.cardTiltUp).normalized;   // facing the field, shaded as if leaning back
+            Vector3 P(float x, float y, float z) => seat + right * x + Vector3.up * (y - seat.y) + toward * z;
             float hip = seat.y + stand, torso = h * 0.56f, headR = h * 0.14f;
-            if (stand > 0f) c.Rect(new Vector3(seat.x, seat.y + stand * 0.5f, seat.z + 0.01f), h * 0.13f, stand * 0.5f, trousers);
-            c.Rect(new Vector3(seat.x, hip + torso * 0.5f, seat.z), h * 0.19f, torso * 0.5f, shirt);
+            if (stand > 0f) c.Rect(P(0, seat.y + stand * 0.5f, -0.01f), h * 0.13f, stand * 0.5f, trousers);
+            c.Rect(P(0, hip + torso * 0.5f, 0), h * 0.19f, torso * 0.5f, shirt);
             float headY = hip + torso + headR * 0.9f;
-            c.Rect(new Vector3(seat.x, headY, seat.z - 0.01f), headR * 0.85f, headR, skin);
-            if (cap.HasValue) c.Rect(new Vector3(seat.x, headY + headR * 0.75f, seat.z - 0.02f), headR * 0.95f, headR * 0.35f, cap.Value);
+            c.Rect(P(0, headY, 0.01f), headR * 0.85f, headR, skin);
+            if (cap.HasValue) c.Rect(P(0, headY + headR * 0.75f, 0.02f), headR * 0.95f, headR * 0.35f, cap.Value);
             float armL = h * 0.36f, armW = h * 0.055f;
-            for (int s = -1; s <= 1; s += 2)
-            {
-                var dir = arms == 0 ? new Vector2(s * 0.12f, -1f) : arms == 1 ? new Vector2(s * 0.75f, 0.66f) : new Vector2(s * 0.22f, 1f);
-                dir.Normalize();
-                var shoulder = new Vector3(seat.x + s * h * 0.17f, hip + torso * 0.9f, seat.z - 0.02f);
-                var mid = shoulder + new Vector3(dir.x, dir.y, 0f) * armL * 0.5f;
-                c.Rect(mid, armW, armL * 0.5f, arms == 0 ? shirt : skin, Mathf.Atan2(-dir.x, dir.y));
-            }
-            if (sign.HasValue) c.Rect(new Vector3(seat.x, headY + headR + h * 0.2f, seat.z - 0.03f), h * 0.34f, h * 0.2f, sign.Value);
+            if (!(simple && arms == 0))
+                for (int s = -1; s <= 1; s += 2)
+                {
+                    var dir = arms == 0 ? new Vector2(s * 0.12f, -1f) : arms == 1 ? new Vector2(s * 0.75f, 0.66f) : new Vector2(s * 0.22f, 1f);
+                    dir.Normalize();
+                    var shoulder = P(s * h * 0.17f, hip + torso * 0.9f, 0.02f);
+                    var mid = shoulder + (right * dir.x + Vector3.up * dir.y) * armL * 0.5f;
+                    c.Rect(mid, armW, armL * 0.5f, arms == 0 ? shirt : skin, Mathf.Atan2(-dir.x, dir.y));
+                }
+            if (sign.HasValue && !simple) c.Rect(P(0, headY + headR + h * 0.2f, 0.03f), h * 0.34f, h * 0.2f, sign.Value);
         }
 
         static Color[] Hexes(List<string> hex)
@@ -222,7 +334,7 @@ namespace PocketFootball.View
             lastKey = key;
             for (int i = 0; i < slices.Count; i++)
             {
-                int p = SlicePose(sc, key, i);
+                int p = SlicePose(sc, key, slices[i].index);
                 if (p == slices[i].pose) continue;
                 slices[i].pose = p;
                 slices[i].filter.sharedMesh = slices[i].poses[p];
@@ -256,7 +368,7 @@ namespace PocketFootball.View
                 for (int i = 0; i < sc.farStaffPerTeam; i++)
                     Staff(team, new Vector3(sx * ((i + Rand()) * sc.staffSpreadM / ns), 0, side + sc.farRowM * 0.6f + Rand() * sc.farDepthM), 90f + (Rand() - 0.5f) * 40f, s);
             }
-            foreach (float x in sc.farRefsXM) Person(new Vector3(x, 0, side + 0.8f), Color.white, Colors.Hex("#1e1e22"), Color.white, true, 90f, s);
+            foreach (float x in sc.farRefsXM) Referee(new Vector3(x, 0, side + 0.8f), 90f, s);
             props.Build(root, "FarSideline", mat);
         }
 
@@ -314,7 +426,7 @@ namespace PocketFootball.View
                 else if (u < sc.nearPropShare + sc.nearStaffShare) Staff(home, new Vector3(x, 0, z), yaw, s);
                 else Player(home, x, z, s, yaw);
             }
-            foreach (float x in sc.nearRefsXM) Person(new Vector3(x, 0, -side - sc.nearRowM + 0.6f), Color.white, Colors.Hex("#1e1e22"), Color.white, true, -90f, s);
+            foreach (float x in sc.nearRefsXM) Referee(new Vector3(x, 0, -side - sc.nearRowM + 0.6f), -90f, s);
             foreach (float x in sc.nearTentsXM)
                 Tent(props, new Vector3(x, 0, -side - sc.nearRowM - sc.nearDepthM - 1f), Colors.Hex(home.color), sc.nearTentScale);
             props.Build(root, "NearSideline", mat);
@@ -328,6 +440,26 @@ namespace PocketFootball.View
             f.transform.localRotation = Quaternion.Euler(0, yaw, 0);
             if (ModelSkin.Wear(f, team, null, cfg, FootballFigure.KitMaterial(mat, cfg.view))) ModelSkin.Freeze(f, FootballFigure.PoseKind.Stand);
             Rand(); Rand(); Rand();   // (what the code-built player drew: number, build, skin; the rest of the seeded layout stays put)
+        }
+
+        // A ref on the sideline. FEATURES.refModel (NO_REF_MODEL=1): Kenny's rigged referee (stadium.refModel), standing,
+        // baked still; otherwise, or if the model is missing, the code-built person in stripes.
+        void Referee(Vector3 at, float yaw, float scale)
+        {
+            if (cfg.Feature("refModel"))
+            {
+                var f = FootballFigure.Create(root, "Referee", cfg.view.playerHeightM * scale);
+                f.transform.localPosition = at;
+                f.transform.localRotation = Quaternion.Euler(0, yaw, 0);
+                if (ModelSkin.Wear(f, sc.refModel, sc.refTexture, FootballFigure.KitMaterial(mat, cfg.view), false) != null)
+                {
+                    ModelSkin.Freeze(f, FootballFigure.PoseKind.Stand);
+                    Rand();   // (what the code-built ref drew: skin; the rest of the seeded layout stays put)
+                    return;
+                }
+                if (Application.isPlaying) Object.Destroy(f.gameObject); else Object.DestroyImmediate(f.gameObject);
+            }
+            Person(at, Color.white, Colors.Hex("#1e1e22"), Color.white, true, yaw, scale);
         }
 
         // A coach or trainer: a team polo (or white), khaki or dark trousers, a team cap.
@@ -486,17 +618,17 @@ namespace PocketFootball.View
         sealed class Cards
         {
             readonly List<Vector3> pos = new List<Vector3>(), nrm = new List<Vector3>();
-            readonly List<Color> col = new List<Color>();
+            readonly List<Color32> col = new List<Color32>();
             readonly List<int> tris = new List<int>();
-            public Vector3 Normal;
+            public Vector3 Normal = Vector3.back, Right = Vector3.right;
 
-            // A rectangle standing in the x-y plane, facing the camera (-z), turned by angle (radians) round its centre.
+            // A rectangle standing upright along Right, facing the field, turned by angle (radians) round its centre.
             public void Rect(Vector3 c, float hw, float hh, Color color, float angle = 0f)
             {
-                var ax = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * hw;
-                var ay = new Vector3(-Mathf.Sin(angle), Mathf.Cos(angle), 0f) * hh;
+                var ax = (Right * Mathf.Cos(angle) + Vector3.up * Mathf.Sin(angle)) * hw;
+                var ay = (-Right * Mathf.Sin(angle) + Vector3.up * Mathf.Cos(angle)) * hh;
                 int s = pos.Count;
-                var vc = Looks.VertexColor(color, Looks.Paint);
+                Color32 vc = Looks.VertexColor(color, Looks.Paint);
                 foreach (var p in new[] { c - ax - ay, c - ax + ay, c + ax + ay, c + ax - ay }) { pos.Add(p); nrm.Add(Normal); col.Add(vc); }
                 tris.Add(s); tris.Add(s + 1); tris.Add(s + 2); tris.Add(s); tris.Add(s + 2); tris.Add(s + 3);
             }
@@ -510,6 +642,7 @@ namespace PocketFootball.View
                 m.SetColors(col);
                 m.SetTriangles(tris, 0);
                 m.RecalculateBounds();
+                m.UploadMeshData(true);   // (only ever swapped whole: no need to keep a copy in memory)
                 return m;
             }
         }

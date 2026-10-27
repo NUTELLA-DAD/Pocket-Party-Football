@@ -32,6 +32,9 @@ namespace PocketFootball.View
         readonly Dictionary<int, int> downStart = new Dictionary<int, int>();
         readonly Transform ball, ballShadow;
         Vector3 ballPrev;
+        // the ball in the air (FEATURES.ballSpin): the tick it went up, and whether it was kicked
+        bool flying, kicked;
+        int flightTick;
 
         // Photo scenes (and later the play view) can hold a pose for a player: slot -> pose.
         public readonly Dictionary<int, FootballFigure.PoseKind> PoseOverride = new Dictionary<int, FootballFigure.PoseKind>();
@@ -69,7 +72,7 @@ namespace PocketFootball.View
             Moves.Observe(w);
             foreach (var p in w.Players)
             {
-                var fig = Body(p);
+                var fig = Body(w, p);
                 var move = PoseOverride.ContainsKey(p.Slot) ? default : Moves.Of(w, p);
                 bool down = move.Kind == Move.Tackle || move.Kind == Move.Tackled;
                 Vector2 now = new Vector2(p.X, p.Z);
@@ -96,7 +99,8 @@ namespace PocketFootball.View
                 float yaw = Mathf.Atan2(-face.y, face.x) * Mathf.Rad2Deg;
                 yaw = TowardCamera(yaw, turn);
                 fig.Look(0f, 0f, float.NaN);
-                if (!down && !PoseOverride.ContainsKey(p.Slot) && Moves.Watching(p.Slot)) yaw = WatchBall(w, p, fig, yaw);
+                bool watching = !down && !PoseOverride.ContainsKey(p.Slot) && Moves.Watching(p.Slot);
+                if (watching) yaw = WatchBall(w, p, fig, yaw);
                 if (down)
                 {
                     // stays where and how he went down
@@ -115,11 +119,24 @@ namespace PocketFootball.View
                 t.localPosition = pos;
                 t.localRotation = Quaternion.Euler(0f, yaw, 0f);
 
-                if (PoseOverride.TryGetValue(p.Slot, out var held)) { fig.Pose(held, 0); continue; }
+                if (PoseOverride.TryGetValue(p.Slot, out var held)) { fig.Idle(0f, 0f); fig.Pose(held, 0); continue; }
                 travelled[p.Slot] = (travelled.TryGetValue(p.Slot, out float d) ? d : 0f) + moved;
                 int frame = (int)(travelled[p.Slot] / StrideM) % 2;
                 bool carrier = w.Ball.State == BallState.Held && w.Ball.Carrier == p.Slot;
-                if (!down && DefenseMovesView.PoseFor(w, p, out var dk, out int df)) { fig.Pose(dk, df); continue; }   // WS-03 defender moves
+                var dk = FootballFigure.PoseKind.Ready; int df = 0;
+                bool defMove = !down && DefenseMovesView.PoseFor(w, p, out dk, out df);
+                // a man with nothing else on: his head follows the ball (FEATURES.headTrack), and standing he breathes
+                // and shifts his weight (FEATURES.idleMotion)
+                bool free = !down && !defMove && move.Kind == Move.None;
+                if (free && !carrier && !watching)
+                {
+                    BallAt(w, out float bx, out float by, out float bz);
+                    if (Alive.HeadTrack(cfg, yaw, p.X, p.Z, bx, by, bz, out float hy, out float tip)) fig.Track(hy, tip);
+                }
+                float breath = 0f, shift = 0f;
+                if (free && speed <= 0.5f) Alive.Idle(cfg, Alive.Key(cfg, w.Tick, p.Slot), out breath, out shift);
+                fig.Idle(breath, shift);
+                if (defMove) { fig.Pose(dk, df); continue; }   // WS-03 defender moves
                 if (PoseFor(move, frame, out var kind, out int f)) fig.Pose(kind, f);
                 else if (speed > 0.5f) fig.Pose(carrier ? FootballFigure.PoseKind.Carry : FootballFigure.PoseKind.Run, frame);
                 else fig.Pose(p.Pos == "OL" || p.Pos == "DL" ? FootballFigure.PoseKind.Stance : FootballFigure.PoseKind.Ready, 0);
@@ -141,7 +158,16 @@ namespace PocketFootball.View
                 ball.localPosition = new Vector3(bat.x * yd, bat.y * yd + cfg.view.ballWidthM * 0.5f, bat.z * yd);
                 var bv = new Vector3(b.VX, b.State == BallState.Flying ? b.VY : 0f, b.VZ);
                 if (bv.sqrMagnitude > 0.01f) ball.rotation = Quaternion.LookRotation(bv.normalized, Vector3.up);
+                if (b.State == BallState.Flying && bv.sqrMagnitude > 0.01f)
+                {
+                    // the spiral turns it about its long axis (+z), a kick end over end about its width (+x)
+                    if (!flying || w.Tick < flightTick) { flightTick = w.Tick; kicked = w.Kick.Kicked && !w.Kick.Landed; }
+                    int keys = (int)((w.Tick - flightTick) * cfg.anim.fps / Mathf.Max(1, cfg.sim.tickHz));
+                    float spin = Alive.Spin(cfg, keys, kicked);
+                    ball.rotation *= kicked ? Quaternion.Euler(spin, 0f, 0f) : Quaternion.Euler(0f, 0f, spin);
+                }
             }
+            flying = b.State == BallState.Flying;
             foreach (var kv in PropBalls)
             {
                 var f = Figure(kv.Key);
@@ -272,19 +298,33 @@ namespace PocketFootball.View
 
         public Vector3 BallPosition => ball.position;
 
+        // Where the ball is, for the heads that follow it (yards): in the carrier's arms, on the grass at the snap, or
+        // where the sim has it.
+        static void BallAt(World w, out float x, out float y, out float z)
+        {
+            var b = w.Ball;
+            x = b.X; y = b.Y; z = b.Z;
+            if (Snap.Spotted(w, out float sx, out float sz)) { x = sx; y = 0f; z = sz; return; }
+            var k = b.State == BallState.Held ? w.Find(b.Carrier) : null;
+            if (k != null) { x = k.X; z = k.Z; y = w.Cfg.ball.carryHeightYd; }
+        }
+
         public Vector3 HeadPosition(int slot) =>
             bodies.TryGetValue(slot, out var f) ? f.Head.position + Vector3.up * cfg.view.playerHeightM * 0.22f : Vector3.zero;
 
         public Vector3 FeetPosition(int slot) => bodies.TryGetValue(slot, out var f) ? f.transform.position : Vector3.zero;
 
-        FootballFigure Body(Player p)
+        // A kit change (a new team, number or position, or the QB turning into the kicker for a kick) builds a new body.
+        FootballFigure Body(World w, Player p)
         {
-            string kit = p.Team + "/" + p.Number + "/" + p.Pos;
+            string pos = Kicking.ShowsKicker(w, p) ? "K" : p.Pos;
+            string kit = p.Team + "/" + p.Number + "/" + pos;
             if (bodies.TryGetValue(p.Slot, out var fig) && kitOf.TryGetValue(p.Slot, out var was) && was == kit) return fig;
             if (fig != null) Object.Destroy(fig.gameObject);
             var team = cfg.teams[Mathf.Clamp(p.Team, 0, cfg.teams.Count - 1)];
             fig = FootballFigure.Create(root, "Player " + p.Slot, cfg.view.playerHeightM);
-            ModelSkin.Wear(fig, team, p.Pos, cfg, mat);   // the team's (or the position's) rigged model over the pose rig
+            ModelSkin.Wear(fig, team, pos, cfg, mat);   // the team's (or the position's) rigged model over the pose rig
+            fig.SwayCm = cfg.anim.idleSwayCm; fig.RollDeg = cfg.anim.idleRollDeg; fig.KneeDeg = cfg.anim.idleKneeDeg;
             bodies[p.Slot] = fig;
             kitOf[p.Slot] = kit;
             return fig;

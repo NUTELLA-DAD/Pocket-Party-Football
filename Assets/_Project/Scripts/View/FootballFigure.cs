@@ -192,7 +192,14 @@ namespace PocketFootball.View
         PoseKind current = (PoseKind)(-1);
         int currentFrame = -1;
         P cur;
-        float twist, headYaw, headUp; bool looking;
+        float twist, headYaw, headUp, headTip; bool looking;
+        float breath, shift;   // Idle
+
+        // FEATURES.idleMotion (Alive.Idle): the hips sway idleSwayCm over the foot he leans on (dropping a little on the
+        // other side, that knee easing), the legs angled back so the feet stay put; the chest comes up breathDeg.
+        // Idle(0, 0): still. Takes hold at the next Pose.
+        public void Idle(float breathDeg, float weightShift) { breath = breathDeg; shift = weightShift; }
+        public float SwayCm, RollDeg, KneeDeg;   // (set once from anim.idleSwayCm / idleRollDeg / idleKneeDeg)
 
         public void Pose(PoseKind kind, int frame)
         {
@@ -200,20 +207,23 @@ namespace PocketFootball.View
             {
                 current = kind; currentFrame = frame;
                 var p = cur = Get(kind, frame);
-                Hips.localPosition = new Vector3(0, hipY - p.drop, 0);
-                Hips.localRotation = Quaternion.Euler(0, 0, -p.tilt);
                 ArmL.localRotation = Quaternion.Euler(-p.armLx, 0, p.armL);
                 ArmR.localRotation = Quaternion.Euler(p.armRx, 0, p.armR);
                 ForeL.localRotation = Quaternion.Euler(0, 0, p.foreL);
                 ForeR.localRotation = Quaternion.Euler(0, 0, p.foreR);
-                ThighL.localRotation = Quaternion.Euler(-p.thighLx, 0, p.thighL);
-                ThighR.localRotation = Quaternion.Euler(p.thighRx, 0, p.thighR);
-                ShinL.localRotation = Quaternion.Euler(0, 0, p.shinL);
-                ShinR.localRotation = Quaternion.Euler(0, 0, p.shinR);
             }
-            // the chest and head: the pose's, turned by Look
-            Torso.localRotation = Quaternion.Euler(0, twist, 0) * Quaternion.Euler(0, 0, -cur.lean);
-            float head = looking ? Mathf.Clamp(-headUp - cur.lean - cur.tilt, -60f, 35f) : cur.head;
+            // the hips and legs: the pose's, swayed by Idle (+ shift: his weight on his left foot, the figure's +z)
+            float sway = shift * SwayCm, roll = -shift * RollDeg;
+            float keep = Mathf.Atan2(sway, Mathf.Max(hipY - cur.drop, 1f)) * Mathf.Rad2Deg - roll;   // (the feet stay put)
+            Hips.localPosition = new Vector3(0, hipY - cur.drop, sway);
+            Hips.localRotation = Quaternion.Euler(roll, 0, -cur.tilt);
+            ThighL.localRotation = Quaternion.Euler(-cur.thighLx + keep, 0, cur.thighL);
+            ThighR.localRotation = Quaternion.Euler(cur.thighRx + keep, 0, cur.thighR);
+            ShinL.localRotation = Quaternion.Euler(0, 0, cur.shinL - Mathf.Max(0f, -shift) * KneeDeg);
+            ShinR.localRotation = Quaternion.Euler(0, 0, cur.shinR - Mathf.Max(0f, shift) * KneeDeg);
+            // the chest and head: the pose's, turned by Look, the chest up by the breath and back level over the hips
+            Torso.localRotation = Quaternion.Euler(0, twist, 0) * Quaternion.Euler(-roll, 0, 0) * Quaternion.Euler(0, 0, -(cur.lean - breath));
+            float head = looking ? Mathf.Clamp(-headUp - cur.lean - cur.tilt, -60f, 35f) : cur.head - headTip;
             Head.localRotation = Quaternion.Euler(0, headYaw, 0) * Quaternion.Euler(0, 0, -head);
         }
 
@@ -222,9 +232,16 @@ namespace PocketFootball.View
         // Takes hold at the next Pose.
         public void Look(float twistDeg, float yawDeg, float upDeg)
         {
-            twist = twistDeg; headYaw = yawDeg;
+            twist = twistDeg; headYaw = yawDeg; headTip = 0f;
             looking = !float.IsNaN(upDeg);
             headUp = looking ? upDeg : 0f;
+        }
+
+        // FEATURES.headTrack (Alive.HeadTrack): only the head turns yawDeg (+ = toward his right) and tips tipDeg up
+        // from the pose's own (- = down). Takes hold at the next Pose; the next Look puts it back.
+        public void Track(float yawDeg, float tipDeg)
+        {
+            twist = 0f; headYaw = yawDeg; headTip = tipDeg; looking = false; headUp = 0f;
         }
 
         public PoseKind Current => current;

@@ -209,7 +209,7 @@ namespace PocketFootball.Sim
                     triesSeen.Add(slot);
                     var p = w.Find(slot);
                     bool offense = p != null && p.Team == w.Offense;
-                    float chance = offense ? c.catchChanceOffense : c.catchChanceDefense;
+                    float chance = Ratings.Catch(w, p, offense ? c.catchChanceOffense : c.catchChanceDefense);
                     string air = F1((w.Tick - passTick) / (float)w.Cfg.sim.tickHz) + " s in the air";
                     if (b.State == BallState.Held && b.Carrier == slot)
                     {

@@ -5,7 +5,8 @@ namespace PocketFootball.Sim
     // Blocking (M1-d). A defender with a blocker in reach, the blocker standing between him and the ball, is held up:
     // his speed drops to blockedSpeedFrac. After shedAfterS of being blocked he sheds it and runs free for shedFreeS
     // (no block holds him then), so a pass rush always gets home in the end. Blockers: offense bots whose job is to
-    // block (and every offense bot once the ball has left the QB), and people holding BLOCK.
+    // block (and every offense bot once the ball has left the QB), and people holding BLOCK. FEATURES.ratings: a bigger
+    // blocker holds his man longer.
     public static class Blocking
     {
         public static void Step(World w)
@@ -20,7 +21,7 @@ namespace PocketFootball.Sim
             {
                 if (d.Team == blockers || d == ball) continue;
                 if (d.FreeTicks > 0) { d.FreeTicks--; continue; }
-                bool held = false;
+                Player held = null;
                 foreach (var o in w.Players)
                 {
                     if (o.Team != blockers || !o.Blocking || o == ball) continue;
@@ -28,12 +29,12 @@ namespace PocketFootball.Sim
                     if (dx * dx + dz * dz > b.blockReachYd * b.blockReachYd) continue;
                     // between: the blocker is on the ball's side of the defender
                     if ((o.X - d.X) * (bx - d.X) + (o.Z - d.Z) * (bz - d.Z) <= 0f) continue;
-                    held = true;
+                    held = o;
                     break;
                 }
-                if (!held) { d.BlockedTicks = 0; continue; }
+                if (held == null) { d.BlockedTicks = 0; continue; }
                 d.BlockedTicks++;
-                if (d.BlockedTicks >= b.shedAfterS * w.Cfg.sim.tickHz)
+                if (d.BlockedTicks >= b.shedAfterS * Ratings.ShedFrac(w, held, d) * w.Cfg.sim.tickHz)   // FEATURES.ratings: size
                 {
                     d.BlockedTicks = 0;
                     d.FreeTicks = (int)(b.shedFreeS * w.Cfg.sim.tickHz);
