@@ -279,7 +279,8 @@
       "posModels": [
         { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerKC_BaseColor" },
         { "pos": "QB", "model": "Models/QB/QB_Rigged", "modelTexture": "Models/QB/QB_BaseColor" },
-        { "pos": "K", "model": "Models/Kicker/Kicker_Rigged", "modelTexture": "Models/Kicker/Kicker_BaseColor" }
+        { "pos": "K", "model": "Models/Kicker/Kicker_Rigged", "modelTexture": "Models/Kicker/Kicker_BaseColor" },
+        { "pos": "WR", "model": "Models/WR/WR_Rigged", "modelTexture": "Models/WR/WR_BaseColor" }
       ],
       "cheerModel": "Models/Cheerleader/Cheerleader_Rigged",
       "cheerTexture": "Models/Cheerleader/Cheerleader_BaseColor"
@@ -294,7 +295,8 @@
       "posModels": [
         { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/Linebacker_BaseColor" },
         { "pos": "QB", "model": "Models/QB/QB_Rigged", "modelTexture": "Models/QB/QBRR_BaseColor" },
-        { "pos": "K", "model": "Models/Kicker/Kicker_Rigged", "modelTexture": "Models/Kicker/KickerRR_BaseColor" }
+        { "pos": "K", "model": "Models/Kicker/Kicker_Rigged", "modelTexture": "Models/Kicker/KickerRR_BaseColor" },
+        { "pos": "WR", "model": "Models/WR/WR_Rigged", "modelTexture": "Models/WR/WRRR_BaseColor" }
       ],
       "cheerModel": "Models/Cheerleader/Cheerleader_Rigged",
       "cheerTexture": "Models/Cheerleader/CheerleaderRR_BaseColor"
@@ -353,7 +355,18 @@
     "lookTwistDeg": 75,
     "lookHeadDeg": 50,
     "lookStepDeg": 10,
-    "cameraTurnDeg": 0
+    "cameraTurnDeg": 0,
+    "idleBreathKeys": 28,
+    "idleBreathDeg": 2,
+    "idleShiftKeys": 72,
+    "idleSwayCm": 2.5,
+    "idleRollDeg": 2,
+    "idleKneeDeg": 6,
+    "trackHeadDeg": 60,
+    "trackUpDeg": 30,
+    "trackDownDeg": 20,
+    "spiralDegPerKey": 135,
+    "tumbleDegPerKey": 75
   },
   "defense": {
     "swimEarlyS": 0.5,
@@ -605,6 +618,8 @@
     "nearPropShare": 0.1,
     "nearTentScale": 1,
     "nearRefsXM": [-30, 14],
+    "refModel": "Models/Referee/Referee_Rigged",
+    "refTexture": "Models/Referee/Referee_BaseColor",
     "cheerPerTeam": 6,
     "cheerScale": 0.7,
     "cheerRowM": 0.3,
@@ -830,8 +845,12 @@
     "grassBlades": true,
     "cheerleaders": true,
     "faceDownfield": true,
+    "idleMotion": true,
+    "headTrack": true,
+    "ballSpin": true,
     "kickerModel": true,
     "stadiumBowl": true,
-    "sunsetSky": true
+    "sunsetSky": true,
+    "refModel": true
   }
 }

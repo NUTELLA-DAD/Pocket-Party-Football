@@ -10,8 +10,8 @@ namespace PocketFootball.View
     // with their numbers, staff in caps, a ref, coolers, tents behind). Chunky goal posts on both end lines.
     // Orange down markers on both sidelines. FEATURES.cheerleaders (NO_CHEERLEADERS=1): each team's cheer squad in
     // front of its half of the far sideline, Kenny's rigged cheerleader in the team's colours, cheering together in
-    // stepped poses. Every number is in game.json "stadium". Built once from code, seeded (the
-    // same stadium every run).
+    // stepped poses. FEATURES.refModel (NO_REF_MODEL=1): the sideline refs wear Kenny's rigged referee. Every number is
+    // in game.json "stadium". Built once from code, seeded (the same stadium every run).
     //
     // The crowd: every fan is a flat card (shirt, head, cap, arms, sometimes a sign). The stands are cut into slices;
     // each slice is built in four looks (two idle looks, half up, standing with arms up) and only swaps its mesh on
@@ -368,7 +368,7 @@ namespace PocketFootball.View
                 for (int i = 0; i < sc.farStaffPerTeam; i++)
                     Staff(team, new Vector3(sx * ((i + Rand()) * sc.staffSpreadM / ns), 0, side + sc.farRowM * 0.6f + Rand() * sc.farDepthM), 90f + (Rand() - 0.5f) * 40f, s);
             }
-            foreach (float x in sc.farRefsXM) Person(new Vector3(x, 0, side + 0.8f), Color.white, Colors.Hex("#1e1e22"), Color.white, true, 90f, s);
+            foreach (float x in sc.farRefsXM) Referee(new Vector3(x, 0, side + 0.8f), 90f, s);
             props.Build(root, "FarSideline", mat);
         }
 
@@ -426,7 +426,7 @@ namespace PocketFootball.View
                 else if (u < sc.nearPropShare + sc.nearStaffShare) Staff(home, new Vector3(x, 0, z), yaw, s);
                 else Player(home, x, z, s, yaw);
             }
-            foreach (float x in sc.nearRefsXM) Person(new Vector3(x, 0, -side - sc.nearRowM + 0.6f), Color.white, Colors.Hex("#1e1e22"), Color.white, true, -90f, s);
+            foreach (float x in sc.nearRefsXM) Referee(new Vector3(x, 0, -side - sc.nearRowM + 0.6f), -90f, s);
             foreach (float x in sc.nearTentsXM)
                 Tent(props, new Vector3(x, 0, -side - sc.nearRowM - sc.nearDepthM - 1f), Colors.Hex(home.color), sc.nearTentScale);
             props.Build(root, "NearSideline", mat);
@@ -440,6 +440,26 @@ namespace PocketFootball.View
             f.transform.localRotation = Quaternion.Euler(0, yaw, 0);
             if (ModelSkin.Wear(f, team, null, cfg, FootballFigure.KitMaterial(mat, cfg.view))) ModelSkin.Freeze(f, FootballFigure.PoseKind.Stand);
             Rand(); Rand(); Rand();   // (what the code-built player drew: number, build, skin; the rest of the seeded layout stays put)
+        }
+
+        // A ref on the sideline. FEATURES.refModel (NO_REF_MODEL=1): Kenny's rigged referee (stadium.refModel), standing,
+        // baked still; otherwise, or if the model is missing, the code-built person in stripes.
+        void Referee(Vector3 at, float yaw, float scale)
+        {
+            if (cfg.Feature("refModel"))
+            {
+                var f = FootballFigure.Create(root, "Referee", cfg.view.playerHeightM * scale);
+                f.transform.localPosition = at;
+                f.transform.localRotation = Quaternion.Euler(0, yaw, 0);
+                if (ModelSkin.Wear(f, sc.refModel, sc.refTexture, FootballFigure.KitMaterial(mat, cfg.view), false) != null)
+                {
+                    ModelSkin.Freeze(f, FootballFigure.PoseKind.Stand);
+                    Rand();   // (what the code-built ref drew: skin; the rest of the seeded layout stays put)
+                    return;
+                }
+                if (Application.isPlaying) Object.Destroy(f.gameObject); else Object.DestroyImmediate(f.gameObject);
+            }
+            Person(at, Color.white, Colors.Hex("#1e1e22"), Color.white, true, yaw, scale);
         }
 
         // A coach or trainer: a team polo (or white), khaki or dark trousers, a team cap.

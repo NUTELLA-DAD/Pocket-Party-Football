@@ -96,6 +96,19 @@ namespace PocketFootball.Tests.EditMode
         }
 
         [Test]
+        public void WideReceiversWearTheirOwnModel()
+        {
+            Load().teams[0].ModelFor("WR", true, out string m, out string tex);
+            Assert.AreEqual("Models/WR/WR_Rigged", m);
+            Assert.AreEqual("Models/WR/WR_BaseColor", tex, "the Chiefs' WR wears the model's own colours");
+            Load().teams[1].ModelFor("WR", true, out m, out tex);
+            Assert.AreEqual("Models/WR/WR_Rigged", m);
+            Assert.AreEqual("Models/WR/WRRR_BaseColor", tex, "the Roughriders' WR wears the green recolour");
+            Load().teams[0].ModelFor("CB", true, out m, out _);
+            Assert.AreEqual(Load().teams[0].model, m, "defensive backs keep the team's model");
+        }
+
+        [Test]
         public void KickersWearTheirOwnModel()
         {
             Load().teams[0].ModelFor("K", true, out string m, out string tex);
