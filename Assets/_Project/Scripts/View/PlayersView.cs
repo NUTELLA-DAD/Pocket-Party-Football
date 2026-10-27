@@ -11,6 +11,8 @@ namespace PocketFootball.View
     // two run frames by distance covered (stepped, no time-based wobble).
     // On top of that, the moves (Moves.cs): throws, catches, jukes, tackles... A man on the grass after a tackle stays
     // where and how he fell until the next huddle, though the sim may already be walking him back.
+    // FEATURES.momentumLean (Momentum.cs): the facing turns at a limited rate instead of snapping, and a running figure
+    // leans into its speeding up, slowing and cuts; a hard brake plants the lead leg and leans back the new way.
     public sealed class PlayersView
     {
         const float TurnToCamera = 42f;     // degrees a figure turns toward the camera without FEATURES.faceDownfield
@@ -23,6 +25,8 @@ namespace PocketFootball.View
         readonly Dictionary<int, string> kitOf = new Dictionary<int, string>();
         readonly Dictionary<int, Vector2> prev = new Dictionary<int, Vector2>();
         readonly Dictionary<int, float> travelled = new Dictionary<int, float>();
+        readonly Dictionary<int, MomentumState> carry = new Dictionary<int, MomentumState>();
+        readonly Dictionary<int, int> carryTick = new Dictionary<int, int>();
         readonly List<int> gone = new List<int>();
         public readonly Moves Moves = new Moves();
         // a man on the grass: where he went down, his facing, which fall (slot -> start tick)
@@ -52,6 +56,9 @@ namespace PocketFootball.View
         public int Count => bodies.Count;
 
         public FootballFigure Figure(int slot) => bodies.TryGetValue(slot, out var f) ? f : null;
+
+        // The facing and lean state a player's figure carries (FEATURES.momentumLean), for the motion reel.
+        public bool MomentumOf(int slot, out MomentumState s) => carry.TryGetValue(slot, out s);
 
         // Call just before World.Step: remembers where everyone was, for the blend.
         public void BeforeStep(World w)
@@ -86,6 +93,20 @@ namespace PocketFootball.View
                 float dir = w.Dir * (p.Team == w.Offense ? 1f : -1f);
                 Vector2 face = speed > 0.5f ? new Vector2(p.VX, p.VZ).normalized : new Vector2(dir, 0f);
                 float turn = CameraTurn(cfg, false);
+                bool momentum = cfg.Feature("momentumLean") && !PoseOverride.ContainsKey(p.Slot);
+                var ms = default(MomentumState);
+                if (momentum)
+                {
+                    // once a sim tick (the view renders the same tick more than once)
+                    carry.TryGetValue(p.Slot, out ms);
+                    if (!carryTick.TryGetValue(p.Slot, out int seen) || seen != w.Tick)
+                    {
+                        Momentum.Step(ref ms, cfg.anim, p.X, p.Z, p.VX, p.VZ, Momentum.YawOf(dir, 0f), cfg.players.sprintSpeedYdS, w.Dt);
+                        carry[p.Slot] = ms; carryTick[p.Slot] = w.Tick;
+                    }
+                    float r = ms.Yaw * Mathf.Deg2Rad;
+                    face = new Vector2(Mathf.Cos(r), -Mathf.Sin(r));
+                }
                 if (move.Kind == Move.Block && move.Locked && w.Find(move.Partner) is Player q)
                 {
                     // locked arms: square up to him, turned only a little toward the camera so the hands meet
@@ -113,12 +134,22 @@ namespace PocketFootball.View
                 else downStart.Remove(p.Slot);
                 t.localPosition = pos;
                 t.localRotation = Quaternion.Euler(0f, yaw, 0f);
+                fig.Carry(0f, 0f, 0f, 0f, 0f);
 
                 if (PoseOverride.TryGetValue(p.Slot, out var held)) { fig.Pose(held, 0); continue; }
                 travelled[p.Slot] = (travelled.TryGetValue(p.Slot, out float d) ? d : 0f) + moved;
                 int frame = (int)(travelled[p.Slot] / StrideM) % 2;
                 bool carrier = w.Ball.State == BallState.Held && w.Ball.Carrier == p.Slot;
                 if (!down && DefenseMovesView.PoseFor(w, p, out var dk, out int df)) { fig.Pose(dk, df); continue; }   // WS-03 defender moves
+                bool locked = move.Kind == Move.Block && move.Locked;
+                if (momentum && !down && !locked && (move.Kind == Move.None || move.Kind == Move.Reach || move.Kind == Move.Secure))
+                {
+                    // the lean: leanFeetShare tips the whole body over its feet, the rest bends the chest
+                    Momentum.Lean(ms, cfg.anim, out float fwd, out float side, out float plant);
+                    float feet = Mathf.Clamp01(cfg.anim.leanFeetShare);
+                    t.localRotation = Quaternion.Euler(0f, yaw, 0f) * Quaternion.Euler(side * feet, 0f, -fwd * feet);
+                    fig.Carry(fwd * (1f - feet), side * (1f - feet), fwd, move.Kind == Move.None ? plant : 0f, cfg.anim.cutSpreadDeg);
+                }
                 if (PoseFor(move, frame, out var kind, out int f)) fig.Pose(kind, f);
                 else if (speed > 0.5f) fig.Pose(carrier ? FootballFigure.PoseKind.Carry : FootballFigure.PoseKind.Run, frame);
                 else fig.Pose(p.Pos == "OL" || p.Pos == "DL" ? FootballFigure.PoseKind.Stance : FootballFigure.PoseKind.Ready, 0);
@@ -155,7 +186,7 @@ namespace PocketFootball.View
             if (inAir) ballShadow.localPosition = new Vector3(bat.x * yd, 0.02f, bat.z * yd);
             gone.Clear();
             foreach (var kv in bodies) if (w.Find(kv.Key) == null) gone.Add(kv.Key);
-            foreach (int slot in gone) { Object.Destroy(bodies[slot].gameObject); bodies.Remove(slot); kitOf.Remove(slot); downStart.Remove(slot); downFrom.Remove(slot); }
+            foreach (int slot in gone) { Object.Destroy(bodies[slot].gameObject); bodies.Remove(slot); kitOf.Remove(slot); carry.Remove(slot); carryTick.Remove(slot); downStart.Remove(slot); downFrom.Remove(slot); }
         }
 
         // A tackle that meets (Moves.TackleContact): the tackler goes down against the carrier, facing him; the carrier

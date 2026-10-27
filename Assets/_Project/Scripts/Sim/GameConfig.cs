@@ -224,6 +224,13 @@ namespace PocketFootball.Sim
         // FEATURES.faceDownfield (View/PlayersView.cs): a figure turns only cameraTurnDeg toward the camera (0 = it faces
         // straight down the field, or along its run); a locked pair turns no more than that either
         public float cameraTurnDeg;
+        // FEATURES.momentumLean (View/Momentum.cs): a figure turns at most turnFastDegS at sprint speed (turnSlowDegS
+        // standing), and leans into its speeding up, slowing and turning (the sim's own velocity change, smoothed over
+        // leanTauS): leanMaxDeg at leanRefYdS2, curved by leanGamma so small cuts stay small; leanFeetShare of it tips
+        // the whole body over its feet, the rest bends the chest; in leanStepDeg steps. Braking past plantFrom of the
+        // full lean plants the lead leg (a reverse); a sideways lean widens the outside leg by up to cutSpreadDeg.
+        public float turnSlowDegS, turnFastDegS, leanTauS, leanRefYdS2, leanMaxDeg, leanGamma, leanFeetShare, leanStepDeg;
+        public float plantFrom, cutSpreadDeg;
     }
 
     // WS-07 the lobby (FEATURES.lobby): each person picks an offense spot and a defense spot before kickoff. The game

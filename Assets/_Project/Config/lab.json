@@ -57,6 +57,25 @@
       "live": true, "endOnCatch": false, "maxS": 10
     },
     {
+      "id": "cuts",
+      "name": "Cutting and reversing",
+      "help": "Just you on an empty field: run, cut back and forth, then turn right around. Watch the body: small cuts shift the stance a little, a full reverse plants a foot and leans hard the new way.",
+      "note": "The QB holds the ball (a run play with no back to hand it to), so the play never ends by itself. tools/motion.ps1 drives the runner here for the momentum reel.",
+      "offensePlay": "dive", "defensePlay": "cover3",
+      "you": "offense", "youSpot": 2, "carrier": 0,
+      "offense": [0, 2], "defense": [],
+      "live": true, "endOnCatch": false, "maxS": 0
+    },
+    {
+      "id": "cutsball",
+      "name": "Cutting and reversing with the ball",
+      "help": "The same with the ball in your arm.",
+      "offensePlay": "dive", "defensePlay": "cover3",
+      "you": "offense", "youSpot": 1, "carrier": 1,
+      "offense": [1], "defense": [],
+      "live": true, "endOnCatch": false, "maxS": 0
+    },
+    {
       "id": "scrimmage",
       "name": "Full scrimmage",
       "help": "All 22 players, Slants against Cover 3, you at QB. A normal play from the snap to the whistle, then it starts again.",

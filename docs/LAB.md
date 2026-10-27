@@ -13,6 +13,8 @@ A test bench for the game's mechanics without a whole game: one drill on the fie
 | Catching | WR | A bullet, then a lob, thrown to you over and over; the catch circle |
 | Tackling | LB | A runner comes at you; tackle reach and odds |
 | Running and juking | RB | Three defenders chase you; juke timing |
+| Cutting and reversing | WR | Just you: run, cut back and forth, turn right around; the momentum lean (FEATURES.momentumLean) |
+| ... with the ball | RB | The same carrying the ball |
 | Full scrimmage | QB | All 22, Slants vs Cover 3 |
 | Watch the bots | nobody | Bots only, for watching hitboxes in slow motion |
 
@@ -55,3 +57,12 @@ moment; the keyboard keeps working).
 - `Scripts/Boot/LabMode.cs`: keyboard, phone, pause and speed, the panel. `Scripts/View/LabOverlay.cs`: the hitboxes.
 - `PartyHost` has two hooks for it (`BeforeTick`, `AfterTick`) and `DevKeys` (off in the lab).
 - Screenshots: `tools/shots.ps1` fixtures `lab_catch` and `lab_tackle`.
+
+## The momentum gauntlet (`tools/motion.ps1`)
+
+`Scripts/Boot/MotionReel.cs` drives "you" in the cuts drill along a fixed run (start, small cuts back and forth, a
+sprint, a full reverse at a sprint, a reverse at a jog, a hard 90 degree cut, a stop) and saves a picture every 2 ticks
+around the runner, with a CSV of his speed, facing and lean. `tools/motion.ps1 -Round N` runs it for three cameras (the
+TV camera, a close look from the TV side, from behind) and makes one contact sheet per part of the run in
+`.shots\motion\round-N\`. The lean itself: `Scripts/View/Momentum.cs` (tests: `MomentumTests`), tuned by the `turn*`,
+`lean*`, `plantFrom` and `cutSpreadDeg` numbers in game.json's `anim` block.

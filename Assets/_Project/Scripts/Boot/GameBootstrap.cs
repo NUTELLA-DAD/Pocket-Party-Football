@@ -42,6 +42,7 @@ namespace PocketFootball.Boot
                 h.Dir = Args.ShotsDir;
                 h.Fixture = Args.Fixture;
                 h.QuitAfter = Args.QuitAfterShots;
+                if (MotionReel.Requested(out string motionCam)) MotionReel.Attach(gameObject, Config, Host, Lab, Rig, Args.ShotsDir, motionCam);
             }
             Debug.Log($"[boot] Pocket Party Football up: field {Config.field.lengthYd} x {Config.field.widthYd} yd, camera {Config.camera.visibleYards} yd wide");
         }

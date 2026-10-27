@@ -349,7 +349,17 @@
     "lookTwistDeg": 75,
     "lookHeadDeg": 50,
     "lookStepDeg": 10,
-    "cameraTurnDeg": 0
+    "cameraTurnDeg": 0,
+    "turnSlowDegS": 900,
+    "turnFastDegS": 420,
+    "leanTauS": 0.15,
+    "leanRefYdS2": 22,
+    "leanMaxDeg": 34,
+    "leanGamma": 2,
+    "leanFeetShare": 0.6,
+    "leanStepDeg": 2,
+    "plantFrom": 0.45,
+    "cutSpreadDeg": 14
   },
   "defense": {
     "swimEarlyS": 0.5,
@@ -734,6 +744,7 @@
     "snapZoom": true,
     "grassBlades": true,
     "cheerleaders": true,
-    "faceDownfield": true
+    "faceDownfield": true,
+    "momentumLean": true
   }
 }

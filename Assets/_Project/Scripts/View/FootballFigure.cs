@@ -188,13 +188,51 @@ namespace PocketFootball.View
         int currentFrame = -1;
         P cur;
         float twist, headYaw, headUp; bool looking;
+        // FEATURES.momentumLean (Momentum.cs): the chest's share of the lean, the whole lean (for the head), the plant
+        float carryFwd, carrySide, carryAll, carryPlant, carrySpread;
+        bool carryDirty;
+
+        // The weight shift on top of the next poses (PlayersView, Momentum.cs): chestFwd/chestSide degrees the chest
+        // bends forward / to its left on top of what the body already leans (totalFwd, so the head keeps looking
+        // ahead); plant 0..1 the lead leg dug in ahead, arms out for balance (a reverse); spreadDeg how far the
+        // outside leg of a sideways lean swings wide at a full lean. Carry(0, 0, 0, 0, 0): none.
+        public void Carry(float chestFwd, float chestSide, float totalFwd, float plant, float spreadDeg)
+        {
+            if (chestFwd == carryFwd && chestSide == carrySide && totalFwd == carryAll && plant == carryPlant && spreadDeg == carrySpread) return;
+            carryFwd = chestFwd; carrySide = chestSide; carryAll = totalFwd; carryPlant = plant; carrySpread = spreadDeg;
+            carryDirty = true;
+        }
+
+        P Carried(P p)
+        {
+            if (carryPlant > 0f)
+            {
+                // the plant: lead leg out ahead and nearly straight (the heel digs in), the other bent under him, arms out
+                float t = carryPlant;
+                p.thighL = Mathf.Lerp(p.thighL, 58f, t); p.thighLx = Mathf.Lerp(p.thighLx, 10f, t); p.shinL = Mathf.Lerp(p.shinL, -6f, t);
+                p.thighR = Mathf.Lerp(p.thighR, -14f, t); p.thighRx = Mathf.Lerp(p.thighRx, 8f, t); p.shinR = Mathf.Lerp(p.shinR, -78f, t);
+                p.armL = Mathf.Lerp(p.armL, 62f, t); p.armLx = Mathf.Lerp(p.armLx, 38f, t); p.foreL = Mathf.Lerp(p.foreL, 30f, t);
+                if (current != PoseKind.Carry)   // (the carrier keeps the ball tucked in his right arm)
+                { p.armR = Mathf.Lerp(p.armR, 62f, t); p.armRx = Mathf.Lerp(p.armRx, 38f, t); p.foreR = Mathf.Lerp(p.foreR, 30f, t); }
+                p.drop += 10f * t;
+            }
+            float all = Mathf.Abs(carryAll) + Mathf.Abs(carrySide);
+            p.drop += 0.25f * all;                 // a lean sinks the hips a little
+            p.lean += carryFwd;
+            p.head -= 0.7f * carryAll;             // (+ head tips it down: keep the eyes up the field)
+            // a sideways lean: the outside leg swings wide, the inside one tucks in under him
+            float side = Mathf.Clamp(carrySide / 20f, -1f, 1f) * carrySpread;
+            if (side > 0f) { p.thighRx += side; p.thighLx -= 0.4f * side; }
+            else if (side < 0f) { p.thighLx -= side; p.thighRx += 0.4f * side; }
+            return p;
+        }
 
         public void Pose(PoseKind kind, int frame)
         {
-            if (kind != current || frame != currentFrame)
+            if (kind != current || frame != currentFrame || carryDirty)
             {
-                current = kind; currentFrame = frame;
-                var p = cur = Get(kind, frame);
+                current = kind; currentFrame = frame; carryDirty = false;
+                var p = cur = Carried(Get(kind, frame));
                 Hips.localPosition = new Vector3(0, hipY - p.drop, 0);
                 Hips.localRotation = Quaternion.Euler(0, 0, -p.tilt);
                 ArmL.localRotation = Quaternion.Euler(-p.armLx, 0, p.armL);
@@ -207,7 +245,7 @@ namespace PocketFootball.View
                 ShinR.localRotation = Quaternion.Euler(0, 0, p.shinR);
             }
             // the chest and head: the pose's, turned by Look
-            Torso.localRotation = Quaternion.Euler(0, twist, 0) * Quaternion.Euler(0, 0, -cur.lean);
+            Torso.localRotation = Quaternion.Euler(0, twist, 0) * Quaternion.Euler(carrySide, 0, -cur.lean);
             float head = looking ? Mathf.Clamp(-headUp - cur.lean - cur.tilt, -60f, 35f) : cur.head;
             Head.localRotation = Quaternion.Euler(0, headYaw, 0) * Quaternion.Euler(0, 0, -head);
         }
