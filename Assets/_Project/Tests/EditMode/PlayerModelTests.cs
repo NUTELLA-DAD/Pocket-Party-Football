@@ -31,8 +31,16 @@ namespace PocketFootball.Tests.EditMode
                         var smr = fig.GetComponentInChildren<SkinnedMeshRenderer>();
                         Assert.IsNotNull(smr);
                         Assert.IsNotNull(smr.sharedMaterial.GetTexture("_MainTex"), team.@short + " " + (pos ?? "player") + " has its colour map");
-                        float h = smr.bounds.size.y;
-                        Assert.That(h, Is.InRange(cfg.view.playerHeightM * 0.6f, cfg.view.playerHeightM * 1.2f), "player height (in the Ready crouch)");
+                        var baked = new Mesh();   // (the posed model itself; the renderer's bounds are padded for dives and falls)
+                        smr.BakeMesh(baked, true);
+                        float lo = float.MaxValue, hi = float.MinValue;
+                        foreach (var v in baked.vertices)
+                        {
+                            float y = smr.transform.TransformPoint(v).y;
+                            lo = Mathf.Min(lo, y); hi = Mathf.Max(hi, y);
+                        }
+                        Object.DestroyImmediate(baked);
+                        Assert.That(hi - lo, Is.InRange(cfg.view.playerHeightM * 0.6f, cfg.view.playerHeightM * 1.2f), team.@short + " " + (pos ?? "player") + " height (in the Ready crouch)");
                     }
                     finally { Object.DestroyImmediate(fig.gameObject); }
                 }

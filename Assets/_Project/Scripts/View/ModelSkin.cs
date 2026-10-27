@@ -159,7 +159,7 @@ namespace PocketFootball.View
             if (!frozen.TryGetValue(key, out var mesh) || mesh == null)
             {
                 frozen[key] = mesh = new Mesh { name = smr.sharedMesh.name + " (" + pose + ")" };
-                smr.BakeMesh(mesh, false);   // (in the renderer's own space; its scale comes back from the transform)
+                smr.BakeMesh(mesh, true);   // (in the renderer's own space, its scale taken out; it comes back from the transform)
                 mesh.RecalculateBounds();
             }
             var go = new GameObject(smr.name);
