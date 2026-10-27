@@ -243,7 +243,7 @@ namespace PocketFootball.View
             if (fig != null) Object.Destroy(fig.gameObject);
             var team = cfg.teams[Mathf.Clamp(p.Team, 0, cfg.teams.Count - 1)];
             fig = FootballFigure.Create(root, team, p.Number, FootballFigure.BuildOf(p.Pos), p.Slot * 7 + p.Number, cfg.view.playerHeightM, mat, TeamMarks.HelmetFor(team));
-            ModelSkin.Wear(fig, team, cfg, mat);   // FEATURES.modelPlayers: a team's rigged model over the figure
+            ModelSkin.Wear(fig, team, p.Pos, cfg, mat);   // FEATURES.modelPlayers: a team's (or position's) rigged model over the figure
             fig.name = "Player " + p.Slot;
             bodies[p.Slot] = fig;
             kitOf[p.Slot] = kit;
