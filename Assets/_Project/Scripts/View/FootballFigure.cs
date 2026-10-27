@@ -226,6 +226,7 @@ namespace PocketFootball.View
                 if (current != PoseKind.Carry)   // (the carrier keeps the ball tucked in his right arm)
                 { p.armR = Mathf.Lerp(p.armR, 62f, t); p.armRx = Mathf.Lerp(p.armRx, 38f, t); p.foreR = Mathf.Lerp(p.foreR, 30f, t); }
                 p.drop += 14f * t;
+                p.lean -= 10f * t;                 // and the chest sits back over the bent back leg
             }
             float all = Mathf.Abs(carryAll) + Mathf.Abs(carrySide);
             p.drop += 0.25f * all;                 // a lean sinks the hips a little

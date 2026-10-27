@@ -61,6 +61,8 @@ namespace PocketFootball.View
             // the lean shown follows the lean wanted at most leanRateDegS, so mid turn-around it rolls from sat back to
             // forward over a few ticks instead of flipping
             Raw(s, a, topSpeed, out float fwd, out float side, out float plant);
+            // still swinging round at a walk after a plant: the feet stay planted, the pivot is over them
+            if (plant == 0f && s.Plant > 0f && speed < 3f && Mathf.Abs(Mathf.DeltaAngle(s.Yaw, YawOf(vx, vz))) > 30f) plant = 0.5f;
             s.Plant = plant;
             float most = a.leanRateDegS > 0f ? a.leanRateDegS * dt : 360f;
             s.Fwd += Mathf.Clamp(fwd - s.Fwd, -most, most);

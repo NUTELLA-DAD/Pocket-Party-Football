@@ -362,7 +362,7 @@
     "sideCapDeg": 16,
     "speedLeanDeg": 13,
     "plantFrom": 0.45,
-    "cutSpreadDeg": 18,
+    "cutSpreadDeg": 24,
     "cutTwistShare": 0.6,
     "leanRateDegS": 360,
     "turnLeanCapDeg": 20,
