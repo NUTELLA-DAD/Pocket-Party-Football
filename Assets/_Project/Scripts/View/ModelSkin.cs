@@ -97,7 +97,7 @@ namespace PocketFootball.View
             fig.HandL = Glove(b["LeftHand"], b["LeftLowerArm"], fig.HandL.rotation);
             fig.HandR = Glove(b["RightHand"], b["RightLowerArm"], fig.HandR.rotation);
 
-            string key = team.model + "/" + kit.GetInstanceID();
+            string key = team.model + "/" + team.modelTexture + "/" + kit.GetInstanceID();   // (two teams can share a model)
             if (!mats.TryGetValue(key, out var m))
             {
                 var tex = string.IsNullOrEmpty(team.modelTexture) ? null : Resources.Load<Texture2D>(team.modelTexture);
