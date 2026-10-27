@@ -8,6 +8,7 @@ foreach ($f in $Fixtures) {
     Remove-Item (Join-Path $shots "$f.png") -ErrorAction SilentlyContinue
     $extra = @(switch ($f) {
         'field_goal_line' { @('-look-x','-40') }
+        'cheerleaders'    { @('-look-x','40') }
         'ball_flight'     { @('-throw-demo','12','-warmup','24') }
         'bots_wander'     { @('-wander','-warmup','240') }
         'huddle_called'   { @('-called-demo','-warmup','2') }

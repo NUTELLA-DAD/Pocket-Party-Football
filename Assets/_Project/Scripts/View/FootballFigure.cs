@@ -17,7 +17,11 @@ namespace PocketFootball.View
             Stand, Ready, Stance, Block, Throw, Run, Carry, Backpedal, Dive, Catch,
             // the moves (Moves.cs): frame picks the key where a move has more than one
             Release, Handoff, Reach, Secure, Bobble, Juke, Whiff, FallFront, FallBack, Prone, Supine, Kneel, Celebrate,
+            // the cheerleaders on the sideline (Stadium.cs): frame picks one of CheerFrames cheer poses
+            Cheer,
         }
+
+        public const int CheerFrames = 8;
 
         public Transform Hips, Torso, Head, ArmL, ForeL, ArmR, ForeR, ThighL, ShinL, ThighR, ShinR, HandR, HandL;
         float hipY;
@@ -412,8 +416,27 @@ namespace PocketFootball.View
                 case PoseKind.Celebrate: return frame % 2 == 0
                         ? new P { drop = -6, lean = -6, head = -16, armL = 175, armLx = 20, foreL = 10, armR = 175, armRx = 20, foreR = 10, thighL = 30, thighLx = 6, shinL = -60, thighR = 10, thighRx = 6, shinR = -40 }
                         : new P { drop = 0, lean = 0, head = -10, armL = 40, armLx = 40, foreL = 80, armR = 170, armRx = 15, foreR = 10, thighL = 4, thighLx = 4, shinL = -6, thighR = 4, thighRx = 4, shinR = -6 };
+                case PoseKind.Cheer: return CheerPose(frame);
             }
             return default;
+        }
+
+        // The cheer poses (X spreads an arm out to the side: 90 straight out, 180 straight up):
+        // 0 ready, pom-poms low; 1 high V; 2 low V; 3 T; 4 both arms straight up; 5 a high kick, arms out in a T;
+        // 6 a tuck jump with a high V; 7 an L (left arm up, right arm out).
+        static P CheerPose(int frame)
+        {
+            switch (((frame % CheerFrames) + CheerFrames) % CheerFrames)
+            {
+                case 1: return new P { head = 8, armL = 8, armLx = 140, foreL = 0, armR = 8, armRx = 140, foreR = 0, thighLx = 3, thighRx = 3 };
+                case 2: return new P { armL = 10, armLx = 42, foreL = 0, armR = 10, armRx = 42, foreR = 0, thighLx = 3, thighRx = 3 };
+                case 3: return new P { armL = 0, armLx = 90, foreL = 0, armR = 0, armRx = 90, foreR = 0, thighLx = 3, thighRx = 3 };
+                case 4: return new P { drop = -3, head = 10, armL = 172, armLx = 6, foreL = 0, armR = 172, armRx = 6, foreR = 0, thighLx = 3, thighRx = 3 };
+                case 5: return new P { lean = -6, armL = 0, armLx = 90, foreL = 0, armR = 0, armRx = 90, foreR = 0, thighL = 80, thighLx = 4, shinL = -4, thighRx = 3 };
+                case 6: return new P { drop = -18, head = 8, armL = 8, armLx = 150, foreL = 0, armR = 8, armRx = 150, foreR = 0, thighL = 40, thighLx = 8, shinL = -95, thighR = 40, thighRx = 8, shinR = -95 };
+                case 7: return new P { armL = 6, armLx = 170, foreL = 0, armR = 0, armRx = 90, foreR = 0, thighLx = 3, thighRx = 3 };
+            }
+            return new P { armL = 6, armLx = 16, foreL = 18, armR = 6, armRx = 16, foreR = 18, thighLx = 3, thighRx = 3 };
         }
 
         PoseKind current = (PoseKind)(-1);
