@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace PocketFootball.View
 {
-    // Each team's mark is ONE texture, used everywhere (helmets, the centre of the field, the scoreboard, banners).
+    // Each team's mark is ONE texture, used everywhere (the centre of the field, the scoreboard, banners).
     // A PNG at Assets/_Project/Resources/Logos/<SHORT>.png (KC, SSK) replaces it, a one-file change; without one, the
     // game draws its own mark from code (our own simple marks, not the official logos).
     public static class TeamMarks
@@ -18,26 +18,6 @@ namespace PocketFootball.View
             tex = Resources.Load<Texture2D>("Logos/" + t.@short);
             if (tex == null) tex = t.@short == "KC" ? Arrowhead(t) : Sweep(t);
             cache[t.@short] = tex;
-            return tex;
-        }
-
-        // The mark on the helmet: the same one texture when a PNG replaces it; the code-drawn Roughriders mark, whose
-        // team-colour banner vanishes on a green shell, becomes a solid white S with a dark edge there
-        // (concept 01's helmet).
-        static readonly Dictionary<string, Texture2D> helmetCache = new Dictionary<string, Texture2D>();
-        public static Texture2D HelmetFor(TeamConfig t)
-        {
-            if (t.@short == "KC" || Resources.Load<Texture2D>("Logos/" + t.@short) != null) return For(t);
-            if (helmetCache.TryGetValue(t.@short, out var tex) && tex != null) return tex;
-            var p = new Painter(Size, Size, new Color(1, 1, 1, 0));
-            Color dark = Colors.Hex(t.color) * 0.6f + new Color(0, 0, 0, 0.4f), wh = Color.white;
-            var s0 = Glyphs.Text(t.@short.Substring(0, 1), 340, 0f, out float sw0);
-            Slant(s0, 0.3f);
-            Offset(s0, new Vector2(230 - sw0 * 0.5f, 80));
-            p.Strokes(s0, 124, dark);
-            p.Strokes(s0, 92, wh);
-            tex = p.ToTexture("Helmet mark " + t.@short);
-            helmetCache[t.@short] = tex;
             return tex;
         }
 
