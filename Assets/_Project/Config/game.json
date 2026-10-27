@@ -65,7 +65,24 @@
     "lookAtZYd": 0,
     "sideline": -1,
     "leadYd": 8,
-    "followRate": 3
+    "followRate": 3,
+    "free": {
+      "orbitDegPerPx": 0.25,
+      "zoomStep": 1.15,
+      "minDistM": 3,
+      "maxDistM": 450,
+      "minPitchDeg": 2,
+      "maxPitchDeg": 89,
+      "boundsMarginYd": 20,
+      "lensesDeg": [7, 12, 20, 30, 45, 60],
+      "presets": [
+        { "name": "TV camera", "yawDeg": 0, "pitchDeg": 19, "fovDeg": 7, "visibleYards": 46 },
+        { "name": "Sideline, normal lens", "yawDeg": 0, "pitchDeg": 22, "fovDeg": 35, "visibleYards": 46 },
+        { "name": "Low on the sideline", "yawDeg": 0, "pitchDeg": 8, "fovDeg": 40, "visibleYards": 26 },
+        { "name": "Behind the offense", "yawDeg": 90, "pitchDeg": 16, "fovDeg": 40, "visibleYards": 30 },
+        { "name": "Straight down", "yawDeg": 0, "pitchDeg": 89, "fovDeg": 40, "visibleYards": 60 }
+      ]
+    }
   },
   "players": {
     "jogSpeedYdS": 6,
@@ -653,6 +670,7 @@
     "snap": true,
     "botQuickCall": true,
     "modelPlayers": true,
-    "tackleContact": true
+    "tackleContact": true,
+    "labFreeCam": true
   }
 }

@@ -14,6 +14,9 @@ foreach ($f in $Fixtures) {
         'live_play'       { @('-warmup','585') }
         'lab_catch'       { @('-lab','-lab-drill','catch','-lab-warmup','10') }
         'lab_tackle'      { @('-lab','-lab-drill','tackle','-lab-warmup','15') }
+        'lab_cam_normal'  { @('-lab','-lab-drill','scrimmage','-lab-cam','2') }
+        'lab_cam_low'     { @('-lab','-lab-drill','scrimmage','-lab-cam','3') }
+        'lab_cam_behind'  { @('-lab','-lab-drill','scrimmage','-lab-cam','4') }
         default           { }
     })
     $p = Start-Process -FilePath $exe -ArgumentList (@('-fixture',$f,'-seed','1','-bind','127.0.0.1') + $extra + @('-shots',"`"$shots`"",'-quit-after-shots','-screen-width','1920','-screen-height','1080','-screen-fullscreen','0','-logFile',"`"$LOGS\shots-$f.log`"")) -PassThru

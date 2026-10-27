@@ -34,7 +34,7 @@ namespace PocketFootball.Boot
             Rig = CameraRig.Create(Config);
             if (Args.LookX.HasValue) Rig.SetLookAtX(Args.LookX.Value);
             Host = PartyHost.Create(gameObject, Config, baseMaterial, Rig, Args);
-            if (LabMode.Requested()) Lab = LabMode.Create(gameObject, Config, baseMaterial, Host, ConfigDir);
+            if (LabMode.Requested()) Lab = LabMode.Create(gameObject, Config, baseMaterial, Host, Rig, ConfigDir);
 
             if (!string.IsNullOrEmpty(Args.ShotsDir))
             {
