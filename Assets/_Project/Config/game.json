@@ -395,14 +395,14 @@
     "strideKneePushDeg": [40, 14, 10],
     "strideKneeFoldDeg": [80, 95, 140],
     "strideThighDriveDeg": [28, 40, 85],
-    "strideBobCm": [0, 4, 8],
+    "strideBobCm": [0, 5, 11],
     "strideHeelCm": [3, 4, 5],
     "strideToeDeg": [20, 35, 45],
     "strideHeelStrikeDeg": [14, 0, -10],
     "strideArmFwdDeg": [28, 28, 45],
     "strideArmBackDeg": [-30, -34, -65],
-    "strideElbowFrontDeg": [35, 88, 100],
-    "strideElbowBackDeg": [25, 75, 80],
+    "strideElbowFrontDeg": [30, 58, 60],
+    "strideElbowBackDeg": [22, 48, 42],
     "strideTwistDeg": [5, 7, 8]
   },
   "defense": {
