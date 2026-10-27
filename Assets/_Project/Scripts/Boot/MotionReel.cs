@@ -15,7 +15,7 @@ namespace PocketFootball.Boot
     // and saves a picture every few ticks, cropped around the runner, plus a CSV of his speed, facing and lean.
     // Screenshots run in lockstep (one tick a frame), so every camera sees exactly the same run.
     // -motion-cam tv | close | side | behind: the TV camera (live framing, following him), a close look from the TV side,
-    // square from the side at hip height, or from behind his first run. -motion-run stride: the stride reel instead.
+    // square from the side at his middle, or from behind his first run. -motion-run stride: the stride reel instead.
     // -motion-every <ticks> (default 2). Writes <shots>/motion-<cam>/<tick>.png and <shots>/motion-<cam>.csv, then quits.
     public sealed class MotionReel : MonoBehaviour
     {
@@ -121,9 +121,9 @@ namespace PocketFootball.Boot
                 case "close":   // from the TV's side and angle, about 9 yards across
                     rig.Hold(chest + Quaternion.Euler(cfg.camera.pitchDeg, 0f, 0f) * Vector3.back * 9f * yd, chest, 35f);
                     break;
-                case "side":    // square from the TV's side at his hip's height, about 6 yards across: the arms and legs
-                    var hip = feet + Vector3.up * h * 0.35f;
-                    rig.Hold(hip + Vector3.back * 6f * yd, hip, 35f);
+                case "side":    // square from the TV's side at his middle, about 9 yards across: the whole of him, arms and legs
+                    var mid = feet + Vector3.up * h * 0.5f;
+                    rig.Hold(mid + Vector3.back * 9f * yd, mid, 35f);
                     break;
                 case "behind":  // from behind his first run (down the field), a little above
                     rig.Hold(chest + new Vector3(-9f * yd, 2.5f * yd, 0f), chest, 35f);

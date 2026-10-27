@@ -3,7 +3,7 @@
 # Then makes one contact sheet per part of the run and camera: .shots\motion\round-<N>\<cam>-<part>.png (8 frames a row,
 # each stamped with its tick, speed, lean and pose from the CSV). -Drill cutsball runs it with the ball.
 # -Run stride: the stride reel (FEATURES.strideCycle) instead, every tick, the last 24 ticks of each part (its steady
-# stride, not the speeding up) into .shots\stride\round-<N>; try -Cams side,tv.
+# stride, not the speeding up; the stop's first 24, the settling) into .shots\stride\round-<N>; try -Cams side,tv.
 param([int]$Round = 1, [string[]]$Cams = @('tv', 'close', 'behind'), [string]$Drill = 'cuts', [int]$Every = 2, [string]$Run = '')
 . (Join-Path $PSScriptRoot 'env.ps1')
 Add-Type -AssemblyName System.Drawing
@@ -38,7 +38,7 @@ foreach ($cam in $Cams) {
         $stride = if ($quick) { 1 } else { [Math]::Max(1, [Math]::Ceiling($list.Count / 16)) }
         $limit = if ($quick) { 24 } else { $list.Count }
         $pick = @(for ($i = 0; $i -lt [Math]::Min($list.Count, $limit * $stride); $i += $stride) { $list[$i] })
-        if ($Run -eq 'stride') { $pick = @($list | Select-Object -Last 24); $stride = 1 }
+        if ($Run -eq 'stride') { $pick = if ($label -eq 'stop') { @($list | Select-Object -First 24) } else { @($list | Select-Object -Last 24) }; $stride = 1 }
         $nrows = [Math]::Ceiling($pick.Count / $cols)
         $sheet = New-Object System.Drawing.Bitmap ($cols * $thumb), (40 + $nrows * ($thumb + $cap))
         $g = [System.Drawing.Graphics]::FromImage($sheet)
