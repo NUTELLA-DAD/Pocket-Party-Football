@@ -278,7 +278,8 @@
       "modelTexture": "Models/Chiefs24/Chiefs24_BaseColor",
       "posModels": [
         { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerKC_BaseColor" },
-        { "pos": "QB", "model": "Models/QB/QB_Rigged", "modelTexture": "Models/QB/QB_BaseColor" }
+        { "pos": "QB", "model": "Models/QB/QB_Rigged", "modelTexture": "Models/QB/QB_BaseColor" },
+        { "pos": "WR", "model": "Models/WR/WR_Rigged", "modelTexture": "Models/WR/WR_BaseColor" }
       ],
       "cheerModel": "Models/Cheerleader/Cheerleader_Rigged",
       "cheerTexture": "Models/Cheerleader/Cheerleader_BaseColor"
@@ -292,7 +293,8 @@
       "modelTexture": "Models/Roughriders/Roughriders_BaseColor",
       "posModels": [
         { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/Linebacker_BaseColor" },
-        { "pos": "QB", "model": "Models/QB/QB_Rigged", "modelTexture": "Models/QB/QBRR_BaseColor" }
+        { "pos": "QB", "model": "Models/QB/QB_Rigged", "modelTexture": "Models/QB/QBRR_BaseColor" },
+        { "pos": "WR", "model": "Models/WR/WR_Rigged", "modelTexture": "Models/WR/WRRR_BaseColor" }
       ],
       "cheerModel": "Models/Cheerleader/Cheerleader_Rigged",
       "cheerTexture": "Models/Cheerleader/CheerleaderRR_BaseColor"
