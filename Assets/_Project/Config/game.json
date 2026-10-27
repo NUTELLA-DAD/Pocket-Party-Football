@@ -229,13 +229,17 @@
       "name": "CHIEFS",
       "short": "KC",
       "color": "#d7263d",
-      "color2": "#ffb612"
+      "color2": "#ffb612",
+      "model": "Models/Chiefs24/Chiefs24_Rigged",
+      "modelTexture": "Models/Chiefs24/Chiefs24_BaseColor"
     },
     {
       "name": "ROUGHRIDERS",
       "short": "SSK",
       "color": "#1f8a4c",
-      "color2": "#f6f1de"
+      "color2": "#f6f1de",
+      "model": "Models/Chiefs24/Chiefs24_Rigged",
+      "modelTexture": "Models/Roughriders/Roughriders_BaseColor"
     }
   ],
   "net": {
@@ -646,6 +650,7 @@
     "defmoves": true,
     "throwStick": true,
     "snap": true,
-    "botQuickCall": true
+    "botQuickCall": true,
+    "modelPlayers": true
   }
 }

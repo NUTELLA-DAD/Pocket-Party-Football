@@ -55,9 +55,10 @@ namespace PocketFootball.View
 
         public static Build BuildOf(string pos) => pos == "OL" || pos == "DL" ? Build.Big : pos == "QB" || pos == "K" ? Build.Slim : Build.Mid;
 
+        public const float RigHeight = 182f;   // the figure's height in rig units (cm)
+
         public static FootballFigure Create(Transform parent, TeamConfig teamCfg, int number, Build build, int seed, float heightM, Material mat, Texture2D mark)
         {
-            const float RigHeight = 182f;
             var holder = new GameObject("Figure #" + number).transform;
             holder.SetParent(parent, false);
             holder.localScale = Vector3.one * heightM / RigHeight;
