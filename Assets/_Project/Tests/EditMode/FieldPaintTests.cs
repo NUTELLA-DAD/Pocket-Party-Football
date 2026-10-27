@@ -27,8 +27,10 @@ namespace PocketFootball.Tests.EditMode
             var pp = ConfigTests.Load().field.paint;
             foreach (float v in new[] { pp.lineAlpha, pp.numberHeightYd, pp.numberStrokeYd, pp.numberAlpha, pp.arrowYd, pp.logoWidthYd, pp.logoHeightYd,
                          pp.logoAlpha, pp.logoSplit, pp.logoLightMix, pp.logoDarkMix, pp.logoDarkValue, pp.brushDabsPerSqYd, pp.patchYd, pp.patchStrength, pp.brushLenYd, pp.brushWidthYd,
-                         pp.detailM, pp.detailFadePx, pp.gradeSaturation, pp.scrimmageWidthYd })
+                         pp.detailM, pp.detailFadePx, pp.gradeSaturation, pp.scrimmageWidthYd,
+                         pp.stripeSoftYd, pp.washYd, pp.washStretch, pp.washStrength, pp.washEdge, pp.lightYd, pp.lightStrength, pp.nearShade })
                 Assert.Greater(v, 0f);
+            Assert.AreEqual(2, pp.detailScale.Length);
             Assert.AreEqual(3, pp.gradeGain.Length);
             Assert.AreEqual(3, pp.gradeLift.Length);
             foreach (var c in new[] { pp.scrimmageColor, pp.firstDownColor }) StringAssert.IsMatch("^#[0-9a-fA-F]{6}$", c);
@@ -72,6 +74,43 @@ namespace PocketFootball.Tests.EditMode
                     }
                 Assert.Greater(lightHits, 50, "no light tone in the centre mark");
                 Assert.Greater(darkHits, 50, "no dark tone in the centre mark");
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        // Turf v2 (FEATURES.turfV2): the near side of the field is painted darker than the far side, and NO_TURF_V2=1
+        // brings back the even field.
+        [Test]
+        public void TurfV2ShadesTheNearSideAndCanBeSwitchedOff()
+        {
+            var on = ConfigTests.Load();
+            Assert.IsTrue(on.Feature("turfV2"));
+            var off = ConfigTests.Load(new Dictionary<string, string> { { "NO_TURF_V2", "1" } });
+            Assert.IsFalse(off.Feature("turfV2"));
+            float onGap = NearFarGap(on), offGap = NearFarGap(off);
+            Assert.Greater(onGap, on.field.paint.nearShade * 0.25f, "turf v2: the near side should be darker than the far side");
+            Assert.Less(Mathf.Abs(offGap), onGap, "NO_TURF_V2: the near-side shade should be gone");
+        }
+
+        // The far rows' average green minus the near rows' (between the sidelines, a strip 3 yards in from each).
+        static float NearFarGap(GameConfig cfg)
+        {
+            var root = FieldView.Build(cfg, null);
+            try
+            {
+                var tex = (Texture2D)root.transform.Find("Paint").GetComponent<MeshRenderer>().sharedMaterial.GetTexture("_MainTex");
+                int border = Mathf.RoundToInt(cfg.field.sidelineBorderYd * 32), strip = 3 * 32;
+                float Rows(int y0)
+                {
+                    float sum = 0; int n = 0;
+                    for (int y = y0; y < y0 + strip; y += 4)
+                        for (int x = tex.width / 4; x < tex.width * 3 / 4; x += 4) { sum += tex.GetPixel(x, y).g; n++; }
+                    return sum / n;
+                }
+                return Rows(tex.height - border - strip) - Rows(border);
             }
             finally
             {

@@ -1,5 +1,6 @@
 // The grass on top of the toon core (Grass.shader): fine painterly brush strokes up close and a warm grade.
-// The strokes are world-space value noise stretched along the mowing direction (x) and leaning a little this way
+// The strokes are world-space value noise stretched along one axis (_DetailScale; long along z reads round through
+// the TV camera, which squashes z) and leaning a little this way
 // and that, two sizes; they fade out where one stroke would be under _DetailFadePx pixels (no shimmer far away).
 // Painted lines, numbers and the logo (bright paint) take them at a lower share, so the paint looks worn into the
 // grass. Static: nothing here moves with time (no wobble).
@@ -12,6 +13,7 @@
 float _DetailM;
 half _DetailAmount;
 float _DetailFadePx;
+float4 _DetailScale;
 half _GradeSaturation;
 half4 _GradeGain;
 half4 _GradeLift;
@@ -39,8 +41,9 @@ float GrassStrokes(float2 xz)
     float lean = (GrassNoise(q * 0.07 + 11.0) - 0.5) * 0.9;
     float cs = cos(lean), sn = sin(lean);
     float2 r = float2(cs * q.x - sn * q.y, sn * q.x + cs * q.y);
-    float big = GrassNoise(r * float2(0.33, 1.0));            // long strokes, three times longer than wide
-    float small = GrassNoise(r * float2(0.66, 2.0) + 37.0);
+    // (_DetailScale: noise frequency along x and z; the lower one is the stroke's long axis)
+    float big = GrassNoise(r * _DetailScale.xy);
+    float small = GrassNoise(r * _DetailScale.xy * 2.0 + 37.0);
     return (big * 0.65 + small * 0.35) * 2 - 1;
 }
 

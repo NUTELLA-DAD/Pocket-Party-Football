@@ -36,6 +36,7 @@ Shader "PocketParty/Grass"
         _DetailM ("Brush stroke width (m)", Float) = 0.11
         _DetailAmount ("Brush stroke strength", Range(0, 0.5)) = 0.09
         _DetailFadePx ("Strokes fade out under (px)", Float) = 3
+        _DetailScale ("Stroke noise frequency (x, z)", Vector) = (0.33, 1.0, 0, 0)
         _GradeSaturation ("Grade: saturation", Range(0, 1.5)) = 0.86
         _GradeGain ("Grade: gain (linear)", Vector) = (1.1, 1.07, 1.0, 1)
         _GradeLift ("Grade: warm lift (linear)", Vector) = (0.02, 0.016, 0.012, 0)

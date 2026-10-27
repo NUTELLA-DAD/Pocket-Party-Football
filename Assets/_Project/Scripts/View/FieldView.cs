@@ -47,6 +47,7 @@ namespace PocketFootball.View
             mat.SetFloat("_DetailM", pp.detailM);
             mat.SetFloat("_DetailAmount", pp.detailAmount);
             mat.SetFloat("_DetailFadePx", pp.detailFadePx);
+            if (pp.detailScale != null && pp.detailScale.Length >= 2) mat.SetVector("_DetailScale", new Vector4(pp.detailScale[0], pp.detailScale[1], 0, 0));
             mat.SetFloat("_GradeSaturation", pp.gradeSaturation);
             if (pp.gradeGain != null && pp.gradeGain.Length >= 3) mat.SetVector("_GradeGain", new Vector4(pp.gradeGain[0], pp.gradeGain[1], pp.gradeGain[2], 1));
             if (pp.gradeLift != null && pp.gradeLift.Length >= 3) mat.SetVector("_GradeLift", new Vector4(pp.gradeLift[0], pp.gradeLift[1], pp.gradeLift[2], 0));
@@ -70,19 +71,37 @@ namespace PocketFootball.View
             int x0 = (int)px(-f.HalfLength), x1 = (int)px(f.HalfLength), z0 = (int)pz(-f.HalfWidth), z1 = (int)pz(f.HalfWidth);
             var dabs = Brush(pp, x1 - x0, z1 - z0);
             float patch = Mathf.Max(pp.patchYd * PxPerYd, 1f);
+            // FEATURES.turfV2 (NO_TURF_V2=1): soft stripe edges, a watercolour wash, broad sunlight and cloud shade, and
+            // the near side a little darker (concept 04). Washes are stretched along z, the axis the TV camera squashes.
+            bool v2 = cfg.Feature("turfV2");
+            float stripeSoft = v2 ? pp.stripeSoftYd / f.stripeYd : 0f;
+            float wash = Mathf.Max(pp.washYd * PxPerYd, 1f), washZ = wash * Mathf.Max(pp.washStretch, 0.01f);
+            float sun = Mathf.Max(pp.lightYd * PxPerYd, 1f);
             for (int y = z0; y < z1; y++)
+            {
+                float zd = y / (float)PxPerYd - hz;
+                float near = v2 ? Mathf.Clamp01((f.HalfWidth - zd) / (2f * f.HalfWidth)) : 0f;
+                near *= near * pp.nearShade;
                 for (int x = x0; x < x1; x++)
                 {
                     float xd = x / (float)PxPerYd - hx;
                     Color c;
                     if (Mathf.Abs(xd) > f.GoalLineX) c = ez;
-                    else c = striped && Mathf.FloorToInt((xd + f.GoalLineX) / f.stripeYd) % 2 == 1 ? b : a;
+                    else c = Color.Lerp(a, b, striped ? Stripe((xd + f.GoalLineX) / f.stripeYd, stripeSoft) : 0f);
                     float v = dabs[(y - z0) * (x1 - x0) + (x - x0)];
                     float n = (Hash(x, y) - 0.5f) * 2f * pp.grainStrength + (Blotch(x / patch, y / patch) - 0.5f) * 2f * pp.patchStrength;
                     float olive = (Blotch(x / (patch * 2.25f) + 7f, y / (patch * 2.25f)) - 0.5f) * 0.12f;
+                    if (v2)
+                    {
+                        // the wash: two sizes of soft noise, its edges sharpened a little like pooled paint
+                        float w1 = Blotch(x / wash + 3.1f, y / washZ + 1.7f) * 0.65f + Blotch(x / (wash * 0.45f) + 9.2f, y / (washZ * 0.45f) + 4.4f) * 0.35f;
+                        w1 = Mathf.Clamp01((w1 - 0.5f) * pp.washEdge + 0.5f);
+                        n += (w1 - 0.5f) * 2f * pp.washStrength + (Blotch(x / sun + 21f, y / (sun * 0.6f) + 5f) - 0.5f) * 2f * pp.lightStrength - near;
+                    }
                     // (a lighter dab is a touch warmer, a darker one a touch cooler)
                     p.Px[y * w + x] = new Color(c.r * (1 + n + olive + v * 1.25f), c.g * (1 + n + v), c.b * (1 + n + v * 0.5f - olive * 0.5f), 1f);
                 }
+            }
 
             Color line = Colors.Hex(f.lineColor);
             float lw = f.lineWidthYd * PxPerYd, soft = pp.lineSoftYd * PxPerYd, la = pp.lineAlpha;
@@ -139,6 +158,17 @@ namespace PocketFootball.View
             return p.ToTexture("FieldPaint");
         }
 
+        // Which stripe colour at s stripes from the goal line: 0 or 1, blended over `edge` stripes either side of a
+        // stripe's edge (0: hard).
+        static float Stripe(float s, float edge)
+        {
+            float k = Mathf.FloorToInt(s) % 2 == 1 ? 1f : 0f;
+            if (edge <= 0f) return k;
+            float fr = s - Mathf.Floor(s), e = Mathf.Min(fr, 1f - fr);
+            float t = Mathf.Clamp01(0.5f + e / (2f * edge));
+            return Mathf.Lerp(1f - k, k, t);
+        }
+
         static void Shift(System.Collections.Generic.List<Vector2[]> s, Vector2 by) { foreach (var a in s) for (int i = 0; i < a.Length; i++) a[i] += by; }
 
         // A pen stroke with a soft edge: a faint wider pass `soft` pixels out each side, then the core, together `alpha`
@@ -152,7 +182,7 @@ namespace PocketFootball.View
             p.Stroke(pts, width, new Color(c.r, c.g, c.b, core));
         }
 
-        // The brush: seeded paint dabs (long along the mowing direction, leaning a little either way), each a touch
+        // The brush: seeded paint dabs (brushLenYd along x, brushWidthYd along z, leaning a little either way), each a touch
         // lighter or darker than the grass; later dabs lie over earlier ones. One value per pixel of a bw x bh area.
         static float[] Brush(FieldPaintConfig pp, int bw, int bh)
         {
@@ -166,7 +196,7 @@ namespace PocketFootball.View
                 float ang = (Hash(i, 303) - 0.5f) * 2f * tilt, ca = Mathf.Cos(ang), sa = Mathf.Sin(ang);
                 float shade = (Hash(i, 404) - 0.5f) * 2f * pp.brushStrength;
                 float len = Mathf.Max(half * (0.6f + 0.8f * Hash(i, 505)), 0.5f);
-                int r = Mathf.CeilToInt(len) + 1;
+                int r = Mathf.CeilToInt(Mathf.Max(len, wid)) + 1;
                 for (int y = Mathf.Max(0, (int)cy - r); y < Mathf.Min(bh, (int)cy + r); y++)
                     for (int x = Mathf.Max(0, (int)cx - r); x < Mathf.Min(bw, (int)cx + r); x++)
                     {
