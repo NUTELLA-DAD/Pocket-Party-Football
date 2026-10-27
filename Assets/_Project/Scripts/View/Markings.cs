@@ -5,14 +5,14 @@ using UnityEngine;
 namespace PocketFootball.View
 {
     // On-field marks drawn over the paint (concept 04): the blue line of scrimmage, the yellow first-down line, and a
-    // cyan ring on the grass under each person's player.
+    // cyan ring on the grass under each person's player (and the soft FIND ME glow under it).
     public sealed class Markings
     {
         readonly GameConfig cfg;
         readonly Transform los, first;
-        readonly Material mat;
+        readonly Material mat, glow;
         readonly Dictionary<int, Transform> rings = new Dictionary<int, Transform>();
-        readonly Dictionary<int, Transform> beams = new Dictionary<int, Transform>();
+        readonly Dictionary<int, Transform> glows = new Dictionary<int, Transform>();
         readonly Transform root;
 
         public static readonly Color Cyan = new Color(0.35f, 0.92f, 1f);
@@ -21,6 +21,7 @@ namespace PocketFootball.View
         {
             this.cfg = cfg;
             mat = Looks.Toon(baseMat);
+            glow = Looks.Glow(baseMat);
             root = new GameObject("Markings").transform;
             // (a little wider than the painted yard lines, so they read as paint rather than tape; field.paint in game.json)
             var pp = cfg.field.paint;
@@ -50,21 +51,25 @@ namespace PocketFootball.View
             foreach (var kv in rings) if (!seen.Contains(kv.Key)) kv.Value.gameObject.SetActive(false);
         }
 
-        // FIND ME: a tall beam of the team colour over the player and the ring flashing (stepped at 8 a second).
+        // FIND ME: a soft glow of the team colour on the grass under the player, pulsing with the ring (stepped at
+        // 8 a second, no wobble).
         public void Beam(int slot, Vector3 feet, Color color, bool on, float now)
         {
-            if (!beams.TryGetValue(slot, out var b))
+            if (!glows.TryGetValue(slot, out var g))
             {
                 if (!on) return;
-                var bl = new Blocks { Flag = Looks.Gloss };
-                bl.Box(new Vector3(0, 6f, 0), new Vector3(0.22f, 6f, 0.22f), color);
-                b = bl.Build(root, "Beam", mat, false).transform;
-                beams[slot] = b;
+                g = Looks.SoftDisc(root, "FindMe", cfg.view.findMeRadiusM, color, cfg.view.findMeAlpha, glow, 0.85f).transform;
+                glows[slot] = g;
             }
-            b.gameObject.SetActive(on);
-            if (on) b.position = new Vector3(feet.x, 0, feet.z);
+            g.gameObject.SetActive(on);
+            bool big = on && ((int)(now * 8f)) % 2 == 0;
+            if (on)
+            {
+                g.position = new Vector3(feet.x, 0.035f, feet.z);
+                g.localScale = Vector3.one * (big ? 1.2f : 1f);
+            }
             if (rings.TryGetValue(slot, out var r))
-                r.localScale = Vector3.one * (on && ((int)(now * 8f)) % 2 == 0 ? 1.4f : 1f);
+                r.localScale = Vector3.one * (big ? 1.4f : 1f);
         }
 
         Transform Ring()

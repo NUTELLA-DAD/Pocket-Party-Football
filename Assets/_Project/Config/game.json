@@ -255,6 +255,8 @@
     "playerHeightM": 2.85,
     "playerRadiusM": 0.45,
     "findMeS": 2,
+    "findMeRadiusM": 1.6,
+    "findMeAlpha": 0.8,
     "plateFontPx": 22,
     "joinPanelQrPx": 260,
     "ballLengthM": 0.5,
