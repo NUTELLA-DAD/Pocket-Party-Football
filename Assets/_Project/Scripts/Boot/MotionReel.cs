@@ -14,8 +14,8 @@ namespace PocketFootball.Boot
     // (straight, small cuts back and forth, a full reverse at a sprint, a reverse at a jog, a hard 90 degree cut, a stop)
     // and saves a picture every few ticks, cropped around the runner, plus a CSV of his speed, facing and lean.
     // Screenshots run in lockstep (one tick a frame), so every camera sees exactly the same run.
-    // -motion-cam tv | close | side | behind: the TV camera (live framing, following him), a close look from the TV side,
-    // square from the side at his middle, or from behind his first run. -motion-run stride: the stride reel instead.
+    // -motion-cam tv | close | side | feet | behind: the TV camera (live framing, following him), a close look from the TV
+    // side, square from the side at his middle or close at his shins, or from behind his first run. -motion-run stride: the stride reel instead.
     // -motion-every <ticks> (default 2). Writes <shots>/motion-<cam>/<tick>.png and <shots>/motion-<cam>.csv, then quits.
     public sealed class MotionReel : MonoBehaviour
     {
@@ -125,6 +125,10 @@ namespace PocketFootball.Boot
                     var mid = feet + Vector3.up * h * 0.5f;
                     rig.Hold(mid + Vector3.back * 9f * yd, mid, 35f);
                     break;
+                case "feet":    // square from the TV's side at his shins, about 3 yards across: the feet and knees
+                    var shin = feet + Vector3.up * h * 0.15f;
+                    rig.Hold(shin + Vector3.back * 3f * yd, shin, 35f);
+                    break;
                 case "behind":  // from behind his first run (down the field), a little above
                     rig.Hold(chest + new Vector3(-9f * yd, 2.5f * yd, 0f), chest, 35f);
                     break;
@@ -179,8 +183,8 @@ namespace PocketFootball.Boot
         void Shoot(Player p)
         {
             var shot = ScreenCapture.CaptureScreenshotAsTexture();
-            var c = rig.Cam.WorldToScreenPoint(host.Players.FeetPosition(p.Slot) + Vector3.up * cfg.view.playerHeightM * 0.5f);
-            int size = Mathf.Min(shot.height, Mathf.RoundToInt(shot.height * (cam == "close" || cam == "behind" || cam == "side" ? 0.9f : 0.34f)));
+            var c = rig.Cam.WorldToScreenPoint(host.Players.FeetPosition(p.Slot) + Vector3.up * cfg.view.playerHeightM * (cam == "feet" ? 0.15f : 0.5f));
+            int size = Mathf.Min(shot.height, Mathf.RoundToInt(shot.height * (cam == "close" || cam == "behind" || cam == "side" || cam == "feet" ? 0.9f : 0.34f)));
             int x0 = Mathf.Clamp(Mathf.RoundToInt(c.x) - size / 2, 0, shot.width - size);
             int y0 = Mathf.Clamp(Mathf.RoundToInt(c.y) - size / 2, 0, shot.height - size);
             var crop = new Texture2D(size, size, TextureFormat.RGB24, false);
