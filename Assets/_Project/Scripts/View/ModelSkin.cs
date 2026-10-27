@@ -211,12 +211,14 @@ namespace PocketFootball.View
         {
             var holder = fig.transform;
             if (Vector3.Angle(fig.Hips.up, holder.up) > FootLevelMaxTiltDeg) return;
+            // level with the grass, not with the figure: a leaning figure (FEATURES.momentumLean) tips its holder over
+            Vector3 grassUp = holder.parent != null ? holder.parent.up : Vector3.up;
             for (int i = 0; i < 2; i++)
             {
                 if (holder.InverseTransformPoint(feet[i].position).y > FootNearCm) continue;
                 Vector3 d = toes[i].position - feet[i].position;
-                float delta = Pitch(d, holder.up) - footPitch[i];
-                Vector3 axis = Vector3.Cross(d, holder.up);
+                float delta = Pitch(d, grassUp) - footPitch[i];
+                Vector3 axis = Vector3.Cross(d, grassUp);
                 if (axis.sqrMagnitude < 1e-12f) continue;
                 feet[i].rotation = Quaternion.AngleAxis(-FootLevel * delta, axis.normalized) * feet[i].rotation;
             }
