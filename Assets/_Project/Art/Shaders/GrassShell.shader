@@ -47,6 +47,7 @@ Shader "PocketParty/GrassShell"
         _BladeSteps ("Light steps root to tip", Float) = 2
         _BladeRootDark ("Root darker by", Range(0, 1)) = 0.15
         _BladeTipLight ("Tip lighter by", Range(0, 1)) = 0.22
+        _PaintRect ("Painted field rect (min x, min z, 1/size x, 1/size z)", Vector) = (0, 0, 1, 1)
         _GradeSaturation ("Grade: saturation", Range(0, 1.5)) = 0.86
         _GradeGain ("Grade: gain (linear)", Vector) = (1.1, 1.07, 1.0, 1)
         _GradeLift ("Grade: warm lift (linear)", Vector) = (0.02, 0.016, 0.012, 0)
@@ -91,8 +92,12 @@ Shader "PocketParty/GrassShell"
             half4 frag (Varyings i) : SV_Target
             {
                 float tip;
-                if (!GrassBlade(i.positionWS.xz, i.shell, tip)) discard;
-                half3 albedo = GrassDetail(ToonAlbedo(i.color, i.uv), i.positionWS);
+                float2 root;
+                if (!GrassBlade(i.positionWS.xz, i.shell, tip, root)) discard;
+                // the paint where the blade stands, so a blade is all line or all grass (no fringe along the markings);
+                // the top mip, since the uv is constant across a blade and its derivatives say nothing
+                half4 tex = SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_MainTex, saturate((root - _PaintRect.xy) * _PaintRect.zw), 0);
+                half3 albedo = GrassDetail(lerp(_PlayerColor.rgb, tex.rgb, tex.a) * i.color.rgb * _BaseColor.rgb, i.positionWS);
                 albedo *= GrassBladeShade(albedo, tip);
                 half3 col = GrassGrade(ToonShade(albedo, i.positionWS, i.normalWS, i.color.a));
                 return half4(lerp(col, MixFog(col, i.fog), _FogAmount), 1);

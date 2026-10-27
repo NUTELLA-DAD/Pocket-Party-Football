@@ -17,6 +17,8 @@ float4 _DetailScale;
 // the blades (GrassShell.shader, FEATURES.grassBlades)
 float _BladeHeightM, _BladeSpacingM, _BladeWidth, _BladeFlat, _BladeLeanM, _BladeSteps;
 half _BladeRootDark, _BladeTipLight, _GroundShade;
+float4 _PaintRect;   // the painted field's world rect: xy = its min corner (x, z), zw = 1 / its size
+
 half _GradeSaturation;
 half4 _GradeGain;
 half4 _GradeLift;
@@ -65,13 +67,15 @@ half3 GrassDetail(half3 albedo, float3 positionWS)
 // Is there a blade at this spot (xz in metres) at height share t (0 the ground, 1 the tallest tip)? Each cell of
 // _BladeSpacingM holds one seeded blade: its own height, a flat lens-shaped cross-section (_BladeFlat times longer
 // than thick) turned its own way, tapering to a point and curling over a little (_BladeLeanM at the tip). The
-// neighbouring cells are checked too, so blades overlap into tufts. tip: 0 at the root .. 1 at the tip.
-bool GrassBlade(float2 xz, float t, out float tip)
+// neighbouring cells are checked too, so blades overlap into tufts. tip: 0 at the root .. 1 at the tip; root: where
+// the blade stands (xz, m), so a whole blade takes one colour of paint.
+bool GrassBlade(float2 xz, float t, out float tip, out float2 root)
 {
     float2 q = xz / max(_BladeSpacingM, 1e-3);
     float2 c = floor(q);
     bool hit = false;
     tip = 0;
+    root = xz;
     [unroll] for (int j = -1; j <= 1; j++)
     [unroll] for (int i = -1; i <= 1; i++)
     {
@@ -80,10 +84,11 @@ bool GrassBlade(float2 xz, float t, out float tip)
         float height = 0.55 + 0.45 * h3;
         float s = saturate(t / height);
         float a = h4 * 6.2832, ca = cos(a), sa = sin(a);
-        float2 d = q - (cell + 0.15 + 0.7 * float2(h1, h2) + float2(ca, sa) * (_BladeLeanM / max(_BladeSpacingM, 1e-3)) * s * s);
+        float2 base = cell + 0.15 + 0.7 * float2(h1, h2);
+        float2 d = q - (base + float2(ca, sa) * (_BladeLeanM / max(_BladeSpacingM, 1e-3)) * s * s);
         float u = d.x * ca + d.y * sa, v = (d.y * ca - d.x * sa) * _BladeFlat;
         float r = _BladeWidth * (1 - s);
-        if (t <= height && u * u + v * v < r * r) { hit = true; tip = max(tip, s); }
+        if (t <= height && u * u + v * v < r * r && s >= tip) { hit = true; tip = s; root = base * _BladeSpacingM; }
     }
     return hit;
 }

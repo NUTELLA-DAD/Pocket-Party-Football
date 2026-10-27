@@ -56,6 +56,8 @@ namespace PocketFootball.View
             mat.SetFloat("_BladeSteps", pp.bladeSteps);
             mat.SetFloat("_BladeRootDark", pp.bladeRootDark);
             mat.SetFloat("_BladeTipLight", pp.bladeTipLight);
+            var b = field.GetComponent<MeshRenderer>().bounds;
+            mat.SetVector("_PaintRect", new Vector4(b.min.x, b.min.z, 1f / Mathf.Max(b.size.x, 1e-3f), 1f / Mathf.Max(b.size.z, 1e-3f)));
             mat.renderQueue = 1999;
             ground.renderQueue = paint.renderQueue = 1998;
             ground.SetFloat("_GroundShade", 1f - pp.bladeRootDark);
