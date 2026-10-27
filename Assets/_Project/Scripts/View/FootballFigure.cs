@@ -189,17 +189,18 @@ namespace PocketFootball.View
         P cur;
         float twist, headYaw, headUp; bool looking;
         // FEATURES.momentumLean (Momentum.cs): the chest's share of the lean, the whole lean (for the head), the plant
-        float carryFwd, carrySide, carryAll, carryPlant, carrySpread;
+        float carryFwd, carrySide, carryAll, carryPlant, carrySpread, carryTwist;
         bool carryDirty;
 
         // The weight shift on top of the next poses (PlayersView, Momentum.cs): chestFwd/chestSide degrees the chest
         // bends forward / to its left on top of what the body already leans (totalFwd, so the head keeps looking
         // ahead); plant 0..1 the lead leg dug in ahead, arms out for balance (a reverse); spreadDeg how far the
-        // outside leg of a sideways lean swings wide at a full lean. Carry(0, 0, 0, 0, 0): none.
-        public void Carry(float chestFwd, float chestSide, float totalFwd, float plant, float spreadDeg)
+        // outside leg of a sideways lean swings wide at a full lean; twistDeg the shoulders turn about the spine (+ toward
+        // his right), ahead into a cut. Carry(0, 0, 0, 0, 0): none.
+        public void Carry(float chestFwd, float chestSide, float totalFwd, float plant, float spreadDeg, float twistDeg = 0f)
         {
-            if (chestFwd == carryFwd && chestSide == carrySide && totalFwd == carryAll && plant == carryPlant && spreadDeg == carrySpread) return;
-            carryFwd = chestFwd; carrySide = chestSide; carryAll = totalFwd; carryPlant = plant; carrySpread = spreadDeg;
+            if (chestFwd == carryFwd && chestSide == carrySide && totalFwd == carryAll && plant == carryPlant && spreadDeg == carrySpread && twistDeg == carryTwist) return;
+            carryFwd = chestFwd; carrySide = chestSide; carryAll = totalFwd; carryPlant = plant; carrySpread = spreadDeg; carryTwist = twistDeg;
             carryDirty = true;
         }
 
@@ -209,19 +210,19 @@ namespace PocketFootball.View
             {
                 // the plant: lead leg out ahead and nearly straight (the heel digs in), the other bent under him, arms out
                 float t = carryPlant;
-                p.thighL = Mathf.Lerp(p.thighL, 58f, t); p.thighLx = Mathf.Lerp(p.thighLx, 10f, t); p.shinL = Mathf.Lerp(p.shinL, -6f, t);
-                p.thighR = Mathf.Lerp(p.thighR, -14f, t); p.thighRx = Mathf.Lerp(p.thighRx, 8f, t); p.shinR = Mathf.Lerp(p.shinR, -78f, t);
+                p.thighL = Mathf.Lerp(p.thighL, 66f, t); p.thighLx = Mathf.Lerp(p.thighLx, 12f, t); p.shinL = Mathf.Lerp(p.shinL, -4f, t);
+                p.thighR = Mathf.Lerp(p.thighR, -30f, t); p.thighRx = Mathf.Lerp(p.thighRx, 10f, t); p.shinR = Mathf.Lerp(p.shinR, -62f, t);
                 p.armL = Mathf.Lerp(p.armL, 62f, t); p.armLx = Mathf.Lerp(p.armLx, 38f, t); p.foreL = Mathf.Lerp(p.foreL, 30f, t);
                 if (current != PoseKind.Carry)   // (the carrier keeps the ball tucked in his right arm)
                 { p.armR = Mathf.Lerp(p.armR, 62f, t); p.armRx = Mathf.Lerp(p.armRx, 38f, t); p.foreR = Mathf.Lerp(p.foreR, 30f, t); }
-                p.drop += 10f * t;
+                p.drop += 14f * t;
             }
             float all = Mathf.Abs(carryAll) + Mathf.Abs(carrySide);
             p.drop += 0.25f * all;                 // a lean sinks the hips a little
             p.lean += carryFwd;
             p.head -= 0.7f * carryAll;             // (+ head tips it down: keep the eyes up the field)
             // a sideways lean: the outside leg swings wide, the inside one tucks in under him
-            float side = Mathf.Clamp(carrySide / 20f, -1f, 1f) * carrySpread;
+            float side = Mathf.Clamp(carrySide / 6f, -1f, 1f) * carrySpread;   // (full spread at the chest's share of a 16 degree cut)
             if (side > 0f) { p.thighRx += side; p.thighLx -= 0.4f * side; }
             else if (side < 0f) { p.thighLx -= side; p.thighRx += 0.4f * side; }
             return p;
@@ -245,7 +246,7 @@ namespace PocketFootball.View
                 ShinR.localRotation = Quaternion.Euler(0, 0, p.shinR);
             }
             // the chest and head: the pose's, turned by Look
-            Torso.localRotation = Quaternion.Euler(0, twist, 0) * Quaternion.Euler(carrySide, 0, -cur.lean);
+            Torso.localRotation = Quaternion.Euler(0, twist + carryTwist, 0) * Quaternion.Euler(carrySide, 0, -cur.lean);
             float head = looking ? Mathf.Clamp(-headUp - cur.lean - cur.tilt, -60f, 35f) : cur.head;
             Head.localRotation = Quaternion.Euler(0, headYaw, 0) * Quaternion.Euler(0, 0, -head);
         }

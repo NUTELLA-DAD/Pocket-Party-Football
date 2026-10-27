@@ -41,13 +41,16 @@ namespace PocketFootball.View
             float ax = (vx - s.Vx) / dt, az = (vz - s.Vz) / dt;
             float cap = 2f * Mathf.Max(1f, a.leanRefYdS2), am = Mathf.Sqrt(ax * ax + az * az);
             if (am > cap) { ax *= cap / am; az *= cap / am; }   // (a shove or a stop the sim set outright)
-            float k = a.leanTauS > 0f ? 1f - Mathf.Exp(-dt / a.leanTauS) : 1f;
+            // it leans in quickly (leanTauS) and comes back up slower (leanFallS), so a lean holds a moment after the push
+            float tau = ax * ax + az * az > s.Lx * s.Lx + s.Lz * s.Lz ? a.leanTauS : Mathf.Max(a.leanTauS, a.leanFallS);
+            float k = tau > 0f ? 1f - Mathf.Exp(-dt / tau) : 1f;
             s.Lx += (ax - s.Lx) * k;
             s.Lz += (az - s.Lz) * k;
 
-            // the way it wants to face: where it runs; nearly stopped, the way it is pushing off; else its team's way
+            // the way it wants to face: where it runs; nearly stopped, the way it already faces while its weight is still
+            // moving (a reverse passing through zero, a hard stop), then its team's way
             float lean = Mathf.Sqrt(s.Lx * s.Lx + s.Lz * s.Lz);
-            float target = speed > RunningYdS ? YawOf(vx, vz) : lean > 0.25f * a.leanRefYdS2 ? YawOf(s.Lx, s.Lz) : standYaw;
+            float target = speed > RunningYdS ? YawOf(vx, vz) : lean > 0.25f * a.leanRefYdS2 ? s.Yaw : standYaw;
             float rate = Mathf.Lerp(a.turnSlowDegS, a.turnFastDegS, Mathf.Clamp01(speed / Mathf.Max(0.1f, topSpeed))) * dt;
             s.Yaw = Mathf.Repeat(s.Yaw + Turn(s.Yaw, target, rate) + 180f, 360f) - 180f;
             s.Vx = vx; s.Vz = vz; s.X = x; s.Z = z;
@@ -68,19 +71,31 @@ namespace PocketFootball.View
         }
 
         // The lean now, in the figure's own frame: fwdDeg (+ forward, - back), sideDeg (+ toward its left), in
-        // leanStepDeg steps; plant how hard it is braking past plantFrom, as stepped keys: 0, 0.5 (past 30% of the way) or 1 (past 75%).
-        public static void Lean(in MomentumState s, AnimConfig a, out float fwdDeg, out float sideDeg, out float plant)
+        // leanStepDeg steps. A sideways lean stops at sideCapDeg, the rest goes front or back (mid turn-around it stays
+        // sat back, then leans into the new way, never tipping over sideways); running adds speedLeanDeg forward at
+        // topSpeed (less slower), so a sprint and a jog differ. plant how hard it is braking past plantFrom, as stepped keys: 0, 0.5 (past 30% of the way) or 1 (past 75%).
+        public static void Lean(in MomentumState s, AnimConfig a, float topSpeed, out float fwdDeg, out float sideDeg, out float plant)
         {
             fwdDeg = sideDeg = plant = 0f;
             float mag = Mathf.Sqrt(s.Lx * s.Lx + s.Lz * s.Lz);
-            if (!s.Ready || mag < 1e-3f || a.leanRefYdS2 <= 0f) return;
+            if (!s.Ready || a.leanRefYdS2 <= 0f) return;
+            if (mag < 1e-3f) mag = 1e-3f;
             float r = s.Yaw * Mathf.Deg2Rad;
             float fx = Mathf.Cos(r), fz = -Mathf.Sin(r);    // forward (local +x)
             float lx = Mathf.Sin(r), lz = Mathf.Cos(r);     // its left (local +z)
             float af = s.Lx * fx + s.Lz * fz, al = s.Lx * lx + s.Lz * lz;
             float deg = a.leanMaxDeg * Mathf.Pow(Mathf.Clamp01(mag / a.leanRefYdS2), Mathf.Max(0.1f, a.leanGamma));
-            fwdDeg = Step(deg * af / mag, a.leanStepDeg);
-            sideDeg = Step(deg * al / mag, a.leanStepDeg);
+            float fwd = deg * af / mag, side = deg * al / mag;
+            if (a.sideCapDeg > 0f && Mathf.Abs(side) > a.sideCapDeg)
+            {
+                float rest = Mathf.Sqrt(Mathf.Max(0f, fwd * fwd + side * side - a.sideCapDeg * a.sideCapDeg));
+                side = Mathf.Sign(side) * a.sideCapDeg;
+                fwd = fwd > 0f ? rest : -rest;
+            }
+            float speed = Mathf.Sqrt(s.Vx * s.Vx + s.Vz * s.Vz);
+            fwd += a.speedLeanDeg * Mathf.Clamp01(speed / Mathf.Max(0.1f, topSpeed));
+            fwdDeg = Step(fwd, a.leanStepDeg);
+            sideDeg = Step(side, a.leanStepDeg);
             float brake = -af / a.leanRefYdS2;
             float p = a.plantFrom < 1f ? Mathf.Clamp01((brake - a.plantFrom) / (1f - a.plantFrom)) : 0f;
             plant = p >= 0.75f ? 1f : p >= 0.3f ? 0.5f : 0f;

@@ -145,10 +145,13 @@ namespace PocketFootball.View
                 if (momentum && !down && !locked && (move.Kind == Move.None || move.Kind == Move.Reach || move.Kind == Move.Secure))
                 {
                     // the lean: leanFeetShare tips the whole body over its feet, the rest bends the chest
-                    Momentum.Lean(ms, cfg.anim, out float fwd, out float side, out float plant);
+                    Momentum.Lean(ms, cfg.anim, cfg.players.sprintSpeedYdS, out float fwd, out float side, out float plant);
                     float feet = Mathf.Clamp01(cfg.anim.leanFeetShare);
                     t.localRotation = Quaternion.Euler(0f, yaw, 0f) * Quaternion.Euler(side * feet, 0f, -fwd * feet);
-                    fig.Carry(fwd * (1f - feet), side * (1f - feet), fwd, move.Kind == Move.None ? plant : 0f, cfg.anim.cutSpreadDeg);
+                    fig.Carry(fwd * (1f - feet), side * (1f - feet), fwd, move.Kind == Move.None ? plant : 0f, cfg.anim.cutSpreadDeg, -side * cfg.anim.cutTwistShare);
+                    // still leaning hard (the middle of a turn-around): his legs keep running, no stand-up pose for a tick
+                    if (move.Kind == Move.None && speed <= 0.5f && (plant > 0f || Mathf.Abs(fwd) + Mathf.Abs(side) >= 8f))
+                    { fig.Pose(carrier ? FootballFigure.PoseKind.Carry : FootballFigure.PoseKind.Run, frame); continue; }
                 }
                 if (PoseFor(move, frame, out var kind, out int f)) fig.Pose(kind, f);
                 else if (speed > 0.5f) fig.Pose(carrier ? FootballFigure.PoseKind.Carry : FootballFigure.PoseKind.Run, frame);

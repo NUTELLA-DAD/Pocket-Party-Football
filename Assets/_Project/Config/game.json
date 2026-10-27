@@ -353,13 +353,17 @@
     "turnSlowDegS": 900,
     "turnFastDegS": 420,
     "leanTauS": 0.15,
+    "leanFallS": 0.35,
     "leanRefYdS2": 22,
-    "leanMaxDeg": 34,
-    "leanGamma": 2,
+    "leanMaxDeg": 32,
+    "leanGamma": 1.5,
     "leanFeetShare": 0.6,
     "leanStepDeg": 2,
+    "sideCapDeg": 16,
+    "speedLeanDeg": 7,
     "plantFrom": 0.45,
-    "cutSpreadDeg": 14
+    "cutSpreadDeg": 18,
+    "cutTwistShare": 0.6
   },
   "defense": {
     "swimEarlyS": 0.5,

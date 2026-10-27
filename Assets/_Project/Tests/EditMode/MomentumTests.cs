@@ -40,7 +40,7 @@ namespace PocketFootball.Tests.EditMode
                     Assert.AreEqual(Phase.Live, w.Phase, "the cuts drill runs the whole way (" + r.label + ")");
                     var p = w.Find(lab.You);
                     Momentum.Step(ref ms, cfg.anim, p.X, p.Z, p.VX, p.VZ, 0f, cfg.players.sprintSpeedYdS, w.Dt);
-                    Momentum.Lean(ms, cfg.anim, out float fwd, out float side, out float plant);
+                    Momentum.Lean(ms, cfg.anim, cfg.players.sprintSpeedYdS, out float fwd, out float side, out float plant);
                     seen.TryGetValue(r.label, out var s);
                     s.maxFwd = Mathf.Max(s.maxFwd, fwd); s.minFwd = Mathf.Min(s.minFwd, fwd);
                     s.maxSide = Mathf.Max(s.maxSide, Mathf.Abs(side)); s.maxPlant = Mathf.Max(s.maxPlant, plant);
@@ -63,7 +63,7 @@ namespace PocketFootball.Tests.EditMode
         public void StandingStillDoesNotLean()
         {
             var s = Drive(out _)["stand"];
-            Assert.AreEqual(0f, s.maxFwd); Assert.AreEqual(0f, s.minFwd); Assert.AreEqual(0f, s.maxSide);
+            Assert.AreEqual(0f, s.maxFwd, "(standing: no speed lean either)"); Assert.AreEqual(0f, s.minFwd); Assert.AreEqual(0f, s.maxSide);
         }
 
         [Test]
@@ -72,7 +72,7 @@ namespace PocketFootball.Tests.EditMode
             var seen = Drive(out var cfg);
             var c = seen["cuts"];
             Assert.Greater(c.maxSide, 0f, "a cut leans into it");
-            Assert.LessOrEqual(c.maxSide, cfg.anim.leanMaxDeg * 0.45f, "but only a little");
+            Assert.LessOrEqual(c.maxSide, cfg.anim.sideCapDeg, "but only a little");
             Assert.AreEqual(0f, c.maxPlant, "no plant on a small cut");
             Assert.Greater(seen["start"].maxFwd, 0f, "speeding up leans forward");
         }
@@ -85,7 +85,8 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual(1f, r.maxPlant, "the lead leg digs in");
             Assert.LessOrEqual(r.minFwd, -cfg.anim.leanMaxDeg * 0.7f, "a big lean back, the new way");
             Assert.GreaterOrEqual(r.maxFwd, cfg.anim.leanMaxDeg * 0.5f, "then forward pushing off");
-            Assert.Greater(Mathf.Abs(r.minFwd), 2f * seen["cuts"].maxSide, "much bigger than a small cut");
+            Assert.Greater(Mathf.Abs(r.minFwd), 1.5f * seen["cuts"].maxSide, "much bigger than a small cut");
+            Assert.LessOrEqual(r.maxSide, cfg.anim.sideCapDeg, "mid turn-around he never tips over sideways");
         }
 
         [Test]
@@ -105,10 +106,10 @@ namespace PocketFootball.Tests.EditMode
             var ms = default(MomentumState);
             Momentum.Step(ref ms, cfg.anim, 0f, 0f, 8f, 0f, 0f, 8.5f, 1f / 30f);
             Momentum.Step(ref ms, cfg.anim, 0.27f, 0f, 0f, 0f, 0f, 8.5f, 1f / 30f);   // a hard stop: leans back
-            Momentum.Lean(ms, cfg.anim, out float fwd, out _, out _);
+            Momentum.Lean(ms, cfg.anim, 8.5f, out float fwd, out _, out _);
             Assert.Less(fwd, 0f);
             Momentum.Step(ref ms, cfg.anim, 20f, 5f, 0f, 0f, 180f, 8.5f, 1f / 30f);   // lined up somewhere else
-            Momentum.Lean(ms, cfg.anim, out fwd, out float side, out _);
+            Momentum.Lean(ms, cfg.anim, 8.5f, out fwd, out float side, out _);
             Assert.AreEqual(0f, fwd); Assert.AreEqual(0f, side);
             Assert.AreEqual(180f, Mathf.Abs(ms.Yaw), 0.01f, "facing his team's way");
         }
