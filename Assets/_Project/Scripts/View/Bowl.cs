@@ -518,7 +518,18 @@ namespace PocketFootball.View
         // ---- outside: the ground off into the haze, a car park round the stadium with painted bays, a ring of trees ----
         void Outside()
         {
-            Looks.Flat(root, "Ground", Vector3.down * 0.06f, new Vector2(bc.groundRadiusM * 2f, bc.groundRadiusM * 2f), Colors.Hex(bc.groundColor), mat);
+            // (cut into tiles: the haze is worked out per corner, so one huge quad would come out hazy all over)
+            var ground = new Blocks { Flag = Looks.Paint };
+            Color gc = Colors.Hex(bc.groundColor);
+            const float Tile = 60f;
+            int nTiles = Mathf.CeilToInt(bc.groundRadiusM / Tile);
+            for (int ix = -nTiles; ix < nTiles; ix++)
+                for (int iz = -nTiles; iz < nTiles; iz++)
+                {
+                    float x0 = ix * Tile, z0 = iz * Tile, y = -0.06f;
+                    ground.Quad(new Vector3(x0, y, z0), new Vector3(x0, y, z0 + Tile), new Vector3(x0 + Tile, y, z0 + Tile), new Vector3(x0 + Tile, y, z0), gc, Vector3.up);
+                }
+            ground.Build(root, "Ground", mat, false);
             // inside the bowl, past the field's own surround: the same grass right up to the wall
             float zc = (Path.ZFar + Path.ZNear) * 0.5f;
             Looks.Flat(root, "Apron", new Vector3(0, -0.03f, zc), new Vector2(Path.A * 2f, Path.ZFar - Path.ZNear), Colors.Hex(cfg.field.surroundColor), mat);
