@@ -165,7 +165,22 @@ namespace PocketFootball.Sim
         // a rigged Humanoid model under Resources worn instead of the figure built from code, and its colour map
         // (FEATURES.modelPlayers; empty: the figure)
         public string model, modelTexture;
+        // FEATURES.posModels: a position wearing its own model instead (e.g. the linebackers); first match wins
+        public List<PosModelConfig> posModels = new List<PosModelConfig>();
+
+        // The model and colour map a player at this position wears (empty: the figure built from code).
+        public void ModelFor(string pos, bool byPos, out string m, out string tex)
+        {
+            m = model; tex = modelTexture;
+            if (!byPos || posModels == null) return;
+            foreach (var pm in posModels)
+                if (pm != null && pm.pos == pos && !string.IsNullOrEmpty(pm.model)) { m = pm.model; tex = pm.modelTexture; return; }
+        }
     }
+
+    public sealed class PosModelConfig
+    {
+        public string pos, model, modelTexture;
 
     public sealed class NetConfig
     {

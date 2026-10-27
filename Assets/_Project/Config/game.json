@@ -237,7 +237,10 @@
       "name": "ROUGHRIDERS",
       "short": "SSK",
       "color": "#1f8a4c",
-      "color2": "#f6f1de"
+      "color2": "#f6f1de",
+      "posModels": [
+        { "pos": "LB", "model": "Models/LB46/LB46_Rigged", "modelTexture": "Models/LB46/LB46_BaseColor" }
+      ]
     }
   ],
   "net": {
@@ -648,6 +651,7 @@
     "throwStick": true,
     "snap": true,
     "botQuickCall": true,
-    "modelPlayers": true
+    "modelPlayers": true,
+    "posModels": true
   }
 }
