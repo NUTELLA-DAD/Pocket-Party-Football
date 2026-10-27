@@ -119,5 +119,36 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual("Models/Kicker/KickerRR_BaseColor", tex, "the Roughriders' kicker wears the green recolour");
             Assert.AreEqual("NO_KICKER_MODEL", ConfigLoader.EnvName("kickerModel"));
         }
+
+        [Test]
+        public void EveryFormationSpotWearsTheModelForItsPosition()
+        {
+            // the bulky #64 on the line both ways, the receivers' #81 on the TE and WRs, the #24 in the backfield and
+            // the secondary; a two-way player changes model with his spot (PlayersView rebuilds the body on a new position)
+            var cfg = Load();
+            var want = new Dictionary<string, string>
+            {
+                { "QB", "Models/QB/QB_Rigged" }, { "K", "Models/Kicker/Kicker_Rigged" },
+                { "OL", "Models/Linebacker/Linebacker_Rigged" }, { "DL", "Models/Linebacker/Linebacker_Rigged" },
+                { "LB", "Models/Linebacker/Linebacker_Rigged" },
+                { "WR", "Models/WR/WR_Rigged" }, { "TE", "Models/WR/WR_Rigged" },
+                { "RB", "Models/Chiefs24/Chiefs24_Rigged" }, { "CB", "Models/Chiefs24/Chiefs24_Rigged" }, { "S", "Models/Chiefs24/Chiefs24_Rigged" },
+            };
+            var spots = new List<SpotConfig>(cfg.formation.offense);
+            spots.AddRange(cfg.formation.defense);
+            foreach (var s in spots)
+            {
+                Assert.IsTrue(want.ContainsKey(s.pos), "a body is chosen for " + s.pos);
+                var tex = new List<string>();
+                foreach (var team in cfg.teams)
+                {
+                    team.ModelFor(s.pos, true, out string m, out string t);
+                    Assert.AreEqual(want[s.pos], m, team.@short + " " + s.pos);
+                    Assert.IsFalse(string.IsNullOrEmpty(t), team.@short + " " + s.pos + " has a colour map");
+                    tex.Add(t);
+                }
+                Assert.AreNotEqual(tex[0], tex[1], s.pos + ": each team wears its own colours");
+            }
+        }
     }
 }
