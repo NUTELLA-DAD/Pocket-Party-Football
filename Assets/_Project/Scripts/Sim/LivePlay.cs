@@ -50,7 +50,10 @@ namespace PocketFootball.Sim
         {
             // an interception return ends like any run, but it is still an interception (or a pick six)
             if (w.Intercepted) result = result == "TOUCHDOWN" ? "PICK SIX" : "INTERCEPTED";
-            w.Events.Push(w, EventKind.Whistle, Carrier(w), null, result);
+            // at the spot (FEATURES.hitAngle: a big hit is spotted where he was hit, not where he landed)
+            var held = Carrier(w);
+            if (held != null) w.Events.Push(w, EventKind.Whistle, held.Slot, held.Team, spotX, held.Z, -1, result);
+            else w.Events.Push(w, EventKind.Whistle, null, null, result);
             var f = w.Cfg.field;
             float lim = f.GoalLineX - f.lineEveryYd * 0.5f;
             w.Phase = Phase.Whistle;

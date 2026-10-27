@@ -105,13 +105,13 @@ namespace PocketFootball.View
         // A tackle that lands hard: the tackler going at least carrier.bigHitSpeedYdS (the same big hit that can
         // knock the ball loose, Sim/Fumbles.cs), or the carrier stopped at or behind the line of scrimmage. The speed
         // is the faster of now and last frame, because the TV can step a few ticks in a frame and he slows down after.
-        // (The line is still the one the play started from: the next huddle moves it.) FEATURES.hitAngle: the sim says
-        // which hits were big (a straight-on BIG HIT), so a fast tackler on a glancing trip is not one.
+        // (The line is still the one the play started from: the next huddle moves it.) FEATURES.hitAngle: the sim names
+        // how a tackle landed; a BIG HIT is big, a trip or a lost balance is not, however fast the tackler was.
         public bool BigTackle(World w, GameEvent e)
         {
             var tackler = w.Find(e.Slot);
-            if (HitAngle.On(w)) { if (e.Text == "BIG HIT") return true; }
-            else if (tackler != null)
+            if (e.Text == "BIG HIT") return true;
+            if (tackler != null && string.IsNullOrEmpty(e.Text))
             {
                 float speed = Math.Max(Speed(tackler), lastSpeed.TryGetValue(tackler.Slot, out float was) ? was : 0f);
                 float big = cfg.carrier.bigHitSpeedYdS;
