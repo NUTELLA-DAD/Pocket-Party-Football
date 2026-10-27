@@ -442,8 +442,16 @@ namespace PocketFootball.View
         public int CurrentFrame => currentFrame;
 
         // A football: brown, pointed, white laces. Rig units (cm), long axis along +z.
-        public static GameObject MakeBall(Transform parent, Material mat, float lengthM)
+        // The football, lengthM long, centred, its long axis along +z and the laces up. model (FEATURES.modelBall,
+        // NO_MODEL_BALL=1): Kenny's Hi3D football slimmed to 1,840 triangles and one colour map (Resources/Ball, its
+        // import settings in Editor/BallImport.cs); without it, or if it's missing, the one built from code.
+        public static GameObject MakeBall(Transform parent, Material mat, float lengthM, bool model = false)
         {
+            if (model)
+            {
+                var m = ModelBall(parent, mat, lengthM);
+                if (m != null) return m;
+            }
             var k = new FigureKit();
             k.Flag = FigureKit.Shiny;
             var r = new Vector3(8.5f, 8.5f, 14f);
@@ -454,6 +462,36 @@ namespace PocketFootball.View
             for (int i = -2; i <= 2; i++) k.Stroke(top, new[] { new Vector2(-1.8f, i * 2.2f), new Vector2(1.8f, i * 2.2f) }, new[] { 0.9f, 0.9f }, 0.35f, Color.white, 1, FigureKit.Paint);
             var go = Looks.Static(parent, "Ball", k, mat);
             go.transform.localScale = Vector3.one * lengthM / 28f;
+            return go;
+        }
+
+        public const string BallModel = "Ball/Football", BallTexture = "Ball/Football_BaseColor";
+        static Mesh ballMesh;
+        static Material ballMat, ballMatFrom;
+
+        static GameObject ModelBall(Transform parent, Material mat, float lengthM)
+        {
+            if (ballMesh == null)
+            {
+                var src = Resources.Load<GameObject>(BallModel);
+                var mf = src != null ? src.GetComponentInChildren<MeshFilter>() : null;
+                ballMesh = mf != null ? mf.sharedMesh : null;
+                if (ballMesh == null) { Debug.LogWarning("[model] no football at Resources/" + BallModel + "; the ball is built from code"); return null; }
+            }
+            if (ballMat == null || ballMatFrom != mat)
+            {
+                var tex = Resources.Load<Texture2D>(BallTexture);
+                if (tex == null) Debug.LogWarning("[model] no colour map at Resources/" + BallTexture + "; the football shows untextured");
+                ballMatFrom = mat;
+                ballMat = new Material(mat) { name = "Toon (football)" };
+                if (tex != null) ballMat.SetTexture("_MainTex", tex);
+                ballMat.SetColor("_PlayerColor", Color.white);
+            }
+            var go = new GameObject("Ball");
+            go.transform.SetParent(parent, false);
+            go.AddComponent<MeshFilter>().sharedMesh = ballMesh;
+            go.AddComponent<MeshRenderer>().sharedMaterial = ballMat;
+            go.transform.localScale = Vector3.one * lengthM / Mathf.Max(ballMesh.bounds.size.z, 1e-4f);
             return go;
         }
     }
