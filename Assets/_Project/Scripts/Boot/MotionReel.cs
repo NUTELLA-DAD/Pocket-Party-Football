@@ -76,7 +76,7 @@ namespace PocketFootball.Boot
         GameConfig cfg;
         string cam, dir;
         int every, t = -1;
-        readonly StringBuilder csv = new StringBuilder("tick,label,x,z,vx,vz,speed,yaw,lean_fwd,lean_side,plant,pose\n");
+        readonly StringBuilder csv = new StringBuilder("tick,label,x,z,vx,vz,speed,yaw,lean_fwd,lean_side,plant,pose,stride\n");
 
         public static bool Requested(out string cam)
         {
@@ -159,8 +159,8 @@ namespace PocketFootball.Boot
             if (host.Players.MomentumOf(p.Slot, out var ms)) { Momentum.Lean(ms, cfg.anim, out fwd, out side, out plant); yaw = ms.Yaw; }
             var fig = host.Players.Figure(p.Slot);
             float speed = Mathf.Sqrt(p.VX * p.VX + p.VZ * p.VZ);
-            csv.Append(string.Format(ic, "{0},{1},{2:0.00},{3:0.00},{4:0.00},{5:0.00},{6:0.00},{7:0.0},{8:0},{9:0},{10:0.0},{11}\n",
-                t, label, p.X, p.Z, p.VX, p.VZ, speed, yaw, fwd, side, plant, fig != null ? fig.Current.ToString() : ""));
+            csv.Append(string.Format(ic, "{0},{1},{2:0.00},{3:0.00},{4:0.00},{5:0.00},{6:0.00},{7:0.0},{8:0},{9:0},{10:0.0},{11},{12:0.000}\n",
+                t, label, p.X, p.Z, p.VX, p.VZ, speed, yaw, fwd, side, plant, fig != null ? fig.Current.ToString() : "", host.Players.StridePhaseOf(p.Slot)));
         }
 
         // A square around the runner (the TV camera: a third of the screen high; the close ones: most of it).

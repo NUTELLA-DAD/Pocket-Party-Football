@@ -65,6 +65,8 @@ namespace PocketFootball.View
 
         // The facing and lean state a player's figure carries (FEATURES.momentumLean), for the motion reel.
         public bool MomentumOf(int slot, out MomentumState s) => carry.TryGetValue(slot, out s);
+        // FEATURES.strideCycle: where a man is in his stride (0..1, the left foot down at 0), -1 if he hasn't run yet
+        public float StridePhaseOf(int slot) => stridePhase.TryGetValue(slot, out float ph) ? ph : -1f;
 
         // Call just before World.Step: remembers where everyone was, for the blend.
         public void BeforeStep(World w)
