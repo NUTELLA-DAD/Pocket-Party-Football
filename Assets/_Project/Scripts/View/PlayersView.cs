@@ -73,6 +73,8 @@ namespace PocketFootball.View
                 Vector2 now = new Vector2(p.X, p.Z);
                 Vector2 was = prev.TryGetValue(p.Slot, out var v) ? v : now;
                 Vector2 at = Vector2.Lerp(was, now, alpha);
+                Moves.LockOffset(p.Slot, alpha, out float ox, out float oz);   // a locked pair slides together (FEATURES.blockLock)
+                at += new Vector2(ox, oz);
                 var t = fig.transform;
                 var pos = new Vector3(at.x * yd, 0f, at.y * yd);
                 float moved = (pos - t.localPosition).magnitude;
@@ -81,8 +83,18 @@ namespace PocketFootball.View
                 float speed = Mathf.Sqrt(p.VX * p.VX + p.VZ * p.VZ);
                 float dir = w.Dir * (p.Team == w.Offense ? 1f : -1f);
                 Vector2 face = speed > 0.5f ? new Vector2(p.VX, p.VZ).normalized : new Vector2(dir, 0f);
+                float turn = TurnToCamera;
+                if (move.Kind == Move.Block && move.Locked && w.Find(move.Partner) is Player q)
+                {
+                    // locked arms: square up to him, turned only a little toward the camera so the hands meet
+                    Moves.LockOffset(q.Slot, alpha, out float qx, out float qz);
+                    var them = new Vector2(q.X + qx, q.Z + qz) - (now + new Vector2(ox, oz));
+                    if (them.sqrMagnitude > 1e-4f) { face = them.normalized; turn = cfg.anim.lockTurnDeg; }
+                }
                 float yaw = Mathf.Atan2(-face.y, face.x) * Mathf.Rad2Deg;
-                yaw = TowardCamera(yaw);
+                yaw = TowardCamera(yaw, turn);
+                fig.Look(0f, 0f, float.NaN);
+                if (!down && !PoseOverride.ContainsKey(p.Slot) && Moves.Watching(p.Slot)) yaw = WatchBall(w, p, fig, yaw);
                 if (down)
                 {
                     // stays where and how he went down
@@ -174,17 +186,36 @@ namespace PocketFootball.View
                     else kind = back ? FootballFigure.PoseKind.Supine : FootballFigure.PoseKind.Prone;
                     return true;
                 case Move.Celebrate: kind = FootballFigure.PoseKind.Celebrate; frame = m.Frame; return true;
-                case Move.Block: kind = FootballFigure.PoseKind.Block; frame = m.Frame % 2; return true;
+                case Move.Block: kind = m.Locked ? FootballFigure.PoseKind.Lock : FootballFigure.PoseKind.Block; frame = m.Frame % 2; return true;
             }
             return false;
         }
 
         // Turn a facing (degrees, Unity yaw) a little toward the camera on the -z sideline.
-        static float TowardCamera(float yaw)
+        static float TowardCamera(float yaw, float turn = TurnToCamera)
         {
-            // yaw 0 faces +x; +90 faces -z (the camera). Pull toward +90 by TurnToCamera.
+            // yaw 0 faces +x; +90 faces -z (the camera). Pull toward +90 by turn.
             float delta = Mathf.DeltaAngle(yaw, 90f);
-            return yaw + Mathf.Clamp(delta, -TurnToCamera, TurnToCamera);
+            return yaw + Mathf.Clamp(delta, -turn, turn);
+        }
+
+        // FEATURES.watchBall: a man following a pass in the air turns his shoulders toward the ball, then his head, then
+        // (if it's still behind him) his whole body; his head tips up to it. Angles in lookStepDeg steps, from the sim's
+        // tick (no blend), so it steps like the rest of the look. Returns the body's facing.
+        float WatchBall(World w, Player p, FootballFigure fig, float yaw)
+        {
+            var a = cfg.anim;
+            var b = w.Ball;
+            float dx = b.X - p.X, dz = b.Z - p.Z, flat = Mathf.Sqrt(dx * dx + dz * dz);
+            float step = Mathf.Max(1f, a.lookStepDeg);
+            float Step(float deg) => Mathf.Round(deg / step) * step;
+            float rel = flat > 0.05f ? Step(Mathf.DeltaAngle(yaw, Mathf.Atan2(-dz, dx) * Mathf.Rad2Deg)) : 0f;
+            float twist = Mathf.Clamp(rel, -a.lookTwistDeg, a.lookTwistDeg);
+            float head = Mathf.Clamp(rel - twist, -a.lookHeadDeg, a.lookHeadDeg);
+            float eyes = cfg.view.playerHeightM * 0.8f / cfg.field.yardM;   // his eyes, in yards off the grass
+            float up = Step(Mathf.Atan2(b.Y - eyes, Mathf.Max(flat, 0.3f)) * Mathf.Rad2Deg);
+            fig.Look(twist, head, up);
+            return yaw + rel - twist - head;
         }
 
         // The snap (Snap.cs): before the hike the ball lies on the grass at the center's hands, along the field; at the
