@@ -109,6 +109,10 @@ namespace PocketFootball.View
                 palm[side.Item1] = turn * down;
             }
 
+            // the model's own leg, for the stride's reach (FEATURES.strideCycle): the legs' turns are the figure's, so a
+            // foot lands where the model's leg puts it
+            fig.Legs = LegOf(holder, b["LeftUpperLeg"], b["LeftLowerLeg"], b["LeftFoot"]);
+
             var skin = inst.AddComponent<ModelSkin>();
             skin.fig = fig;
             skin.fixArms = fixArms;
@@ -205,6 +209,40 @@ namespace PocketFootball.View
                 Splay(5, fig.ArmR, fig.ForeR, -1f);
             }
             LevelFeet();
+            Point(0, fig.ToeL);
+            Point(1, fig.ToeR);
+        }
+
+        // The model's knee and elbow bends as drawn (degrees between the two bones, after every fix), for the motion
+        // reel's CSV: to check the figure's bends reach the model.
+        public void Bends(out float kneeL, out float kneeR, out float elbowL, out float elbowR)
+        {
+            float At(Transform a, Transform b, Transform c) => Vector3.Angle(b.position - a.position, c.position - b.position);
+            kneeL = At(to[7], to[8], feet[0]); kneeR = At(to[9], to[10], feet[1]);
+            elbowL = At(to[3], to[4], handL); elbowR = At(to[5], to[6], handR);
+        }
+
+        // The stride's push-off and heel strike: the foot pitched deg more (- = toes down), about its own crosswise axis.
+        void Point(int i, float deg)
+        {
+            if (deg == 0f) return;
+            Vector3 d = toes[i].position - feet[i].position;
+            Vector3 axis = Vector3.Cross(d, fig.transform.up);
+            if (axis.sqrMagnitude < 1e-12f) return;
+            feet[i].rotation = Quaternion.AngleAxis(deg, axis.normalized) * feet[i].rotation;
+        }
+
+        // A model's leg standing, in the figure's units (rig cm, +x forward): the hip's height, the bones' lengths and
+        // their angles from straight down, the ankle's height.
+        static StrideLegs LegOf(Transform holder, Transform hip, Transform knee, Transform ankle)
+        {
+            Vector3 h = holder.InverseTransformPoint(hip.position), k = holder.InverseTransformPoint(knee.position), a = holder.InverseTransformPoint(ankle.position);
+            float Down(Vector3 from, Vector3 to) => Mathf.Atan2(to.x - from.x, from.y - to.y) * Mathf.Rad2Deg;
+            return new StrideLegs
+            {
+                HipY = h.y, Thigh = Vector3.Distance(h, k), Shin = Vector3.Distance(k, a), Ankle = a.y,
+                ThighRest = Down(h, k), ShinRest = Down(k, a),
+            };
         }
 
         void LevelFeet()

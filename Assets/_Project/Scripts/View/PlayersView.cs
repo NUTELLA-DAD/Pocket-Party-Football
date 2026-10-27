@@ -8,7 +8,8 @@ namespace PocketFootball.View
     // Positions are blended between the last two sim ticks so 30 Hz data moves smoothly at 60 fps. A figure faces the
     // way it runs (standing: its team's direction of play), straight down the field (FEATURES.faceDownfield: turned
     // only anim.cameraTurnDeg toward the camera; off: 42 degrees, so faces and numbers show); running steps between
-    // two run frames by distance covered (stepped, no time-based wobble).
+    // two run frames by distance covered (stepped, no time-based wobble); FEATURES.strideCycle (Stride.cs): a whole
+    // stride instead, every in-between, its phase moved by the distance run.
     // On top of that, the moves (Moves.cs): throws, catches, jukes, tackles... A man on the grass after a tackle stays
     // where and how he fell until the next huddle, though the sim may already be walking him back.
     // FEATURES.momentumLean (Momentum.cs): the facing turns at a limited rate instead of snapping, and a running figure
@@ -25,6 +26,10 @@ namespace PocketFootball.View
         readonly Dictionary<int, string> kitOf = new Dictionary<int, string>();
         readonly Dictionary<int, Vector2> prev = new Dictionary<int, Vector2>();
         readonly Dictionary<int, float> travelled = new Dictionary<int, float>();
+        readonly Dictionary<int, float> stridePhase = new Dictionary<int, float>();
+        readonly Dictionary<int, int> strideLast = new Dictionary<int, int>();   // the last tick each man was striding
+        readonly Dictionary<int, (float speed, int tick)> strideShown = new Dictionary<int, (float, int)>();   // the speed his stride is drawn at
+        const float StrideShrinkTicks = 6f;   // a walk's stride shrinks to nothing over this many ticks at the most
         readonly Dictionary<int, MomentumState> carry = new Dictionary<int, MomentumState>();
         readonly Dictionary<int, int> carryTick = new Dictionary<int, int>();
         readonly List<int> gone = new List<int>();
@@ -62,6 +67,8 @@ namespace PocketFootball.View
 
         // The facing and lean state a player's figure carries (FEATURES.momentumLean), for the motion reel.
         public bool MomentumOf(int slot, out MomentumState s) => carry.TryGetValue(slot, out s);
+        // FEATURES.strideCycle: where a man is in his stride (0..1, the left foot down at 0), -1 if he hasn't run yet
+        public float StridePhaseOf(int slot) => stridePhase.TryGetValue(slot, out float ph) ? ph : -1f;
 
         // Call just before World.Step: remembers where everyone was, for the blend.
         public void BeforeStep(World w)
@@ -140,13 +147,17 @@ namespace PocketFootball.View
                 t.localPosition = pos;
                 t.localRotation = Quaternion.Euler(0f, yaw, 0f);
                 fig.Carry(0f, 0f, 0f, 0f, 0f);
+                fig.Stride(false, default); fig.Settle(0f);
 
                 if (PoseOverride.TryGetValue(p.Slot, out var held)) { fig.Idle(0f, 0f); fig.Pose(held, 0); continue; }
                 travelled[p.Slot] = (travelled.TryGetValue(p.Slot, out float d) ? d : 0f) + moved;
+                float strideMoved = moved;   // (the stride holds only in a plant slower than a walk: braking on the move, the feet keep stepping)
                 // (with the momentum lean a sprint takes longer strides than a jog)
                 float stride = momentum ? StrideM * (0.8f + 0.4f * Mathf.Clamp01(speed / cfg.players.sprintSpeedYdS)) : StrideM;
                 int frame = (int)(travelled[p.Slot] / stride) % 2;
                 bool carrier = w.Ball.State == BallState.Held && w.Ball.Carrier == p.Slot;
+                bool striding = cfg.Feature("strideCycle") && !down && speed > 0.5f;
+                float phase = stridePhase.TryGetValue(p.Slot, out float ph) ? ph : 0f;
                 var dk = FootballFigure.PoseKind.Ready; int df = 0;
                 bool defMove = !down && DefenseMovesView.PoseFor(w, p, out dk, out df);
                 // a man with nothing else on: his head follows the ball (FEATURES.headTrack), and standing he breathes
@@ -167,7 +178,7 @@ namespace PocketFootball.View
                     // the lean: leanFeetShare tips the whole body over its feet, the rest bends the chest
                     Momentum.Lean(ms, cfg.anim, out float fwd, out float side, out float plant);
                     // planted (or leaning hard nearly stopped): the feet stay put, no pedalling in place
-                    if (plant > 0f || (speed < 2f && Mathf.Abs(fwd) + Mathf.Abs(side) >= 8f)) frame = 0;
+                    if (plant > 0f || (speed < 2f && Mathf.Abs(fwd) + Mathf.Abs(side) >= 8f)) { frame = 0; moved = 0f; if (plant > 0f && speed < cfg.anim.strideWalkYdS) strideMoved = 0f; }
                     // the speed lean bends the spine (a sprint's silhouette), the rest of the lean tips him over his feet,
                     // less so in a plant, where the bent legs take it
                     float run = Mathf.Clamp01(speed / cfg.players.sprintSpeedYdS);
@@ -180,6 +191,26 @@ namespace PocketFootball.View
                     // planted in the middle of a turn-around: no stand-up pose for a tick
                     if (move.Kind == Move.None && speed <= 0.5f && plant > 0f)
                     { fig.Idle(0f, 0f); fig.Pose(carrier ? FootballFigure.PoseKind.Carry : FootballFigure.PoseKind.Run, frame); continue; }
+                }
+                // the stride (FEATURES.strideCycle): its phase moves with the distance run (held through a plant)
+                if (striding)
+                {
+                    phase = Stride.Advance(phase, cfg.anim, cfg.players, speed, strideMoved / yd);
+                    stridePhase[p.Slot] = phase;
+                    // braking hard (a stop takes a tick or two) a stride smaller than a walk's shrinks over StrideShrinkTicks, not at once,
+                    // so the last stride pose the stop eases from still has bent legs
+                    float shown = speed;
+                    if (strideShown.TryGetValue(p.Slot, out var drawn))
+                        shown = Mathf.Max(speed, Mathf.Min(drawn.speed, cfg.anim.strideWalkYdS) * (1f - (w.Tick - drawn.tick) / StrideShrinkTicks));
+                    if (drawn.tick != w.Tick) strideShown[p.Slot] = (shown, w.Tick);
+                    fig.Stride(true, Stride.Pose(cfg.anim, cfg.players, fig.Legs, phase, shown, yd * FootballFigure.RigHeight / cfg.view.playerHeightM));
+                    strideLast[p.Slot] = w.Tick;
+                }
+                else if (!down && move.Kind == Move.None && strideLast.TryGetValue(p.Slot, out int last))
+                {
+                    // just stopped: the last stride eases into the standing pose
+                    float left = 1f - (w.Tick - last - 1 + alpha) / Mathf.Max(1, cfg.anim.strideSettleTicks);
+                    if (left > 0f) fig.Settle(left * left * (3f - 2f * left)); else strideLast.Remove(p.Slot);
                 }
                 if (PoseFor(move, frame, out var kind, out int f)) fig.Pose(kind, f);
                 else if (speed > 0.5f) fig.Pose(carrier ? FootballFigure.PoseKind.Carry : FootballFigure.PoseKind.Run, frame);
@@ -226,7 +257,7 @@ namespace PocketFootball.View
             if (inAir) ballShadow.localPosition = new Vector3(bat.x * yd, 0.02f, bat.z * yd);
             gone.Clear();
             foreach (var kv in bodies) if (w.Find(kv.Key) == null) gone.Add(kv.Key);
-            foreach (int slot in gone) { Object.Destroy(bodies[slot].gameObject); bodies.Remove(slot); kitOf.Remove(slot); carry.Remove(slot); carryTick.Remove(slot); downStart.Remove(slot); downFrom.Remove(slot); }
+            foreach (int slot in gone) { Object.Destroy(bodies[slot].gameObject); bodies.Remove(slot); kitOf.Remove(slot); carry.Remove(slot); carryTick.Remove(slot); stridePhase.Remove(slot); strideLast.Remove(slot); strideShown.Remove(slot); downStart.Remove(slot); downFrom.Remove(slot); }
         }
 
         // A tackle that meets (Moves.TackleContact): the tackler goes down against the carrier, facing him; the carrier
