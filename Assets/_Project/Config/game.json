@@ -277,7 +277,9 @@
       "posModels": [
         { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerKC_BaseColor" },
         { "pos": "QB", "model": "Models/QB/QB_Rigged", "modelTexture": "Models/QB/QB_BaseColor" }
-      ]
+      ],
+      "cheerModel": "Models/Cheerleader/Cheerleader_Rigged",
+      "cheerTexture": "Models/Cheerleader/Cheerleader_BaseColor"
     },
     {
       "name": "ROUGHRIDERS",
@@ -289,7 +291,9 @@
       "posModels": [
         { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/Linebacker_BaseColor" },
         { "pos": "QB", "model": "Models/QB/QB_Rigged", "modelTexture": "Models/QB/QBRR_BaseColor" }
-      ]
+      ],
+      "cheerModel": "Models/Cheerleader/Cheerleader_Rigged",
+      "cheerTexture": "Models/Cheerleader/CheerleaderRR_BaseColor"
     }
   ],
   "net": {
@@ -596,6 +600,14 @@
     "nearPropShare": 0.1,
     "nearTentScale": 1,
     "nearRefsXM": [-30, 14],
+    "cheerPerTeam": 6,
+    "cheerScale": 0.7,
+    "cheerRowM": 0.3,
+    "cheerFromCentreM": 9,
+    "cheerGapM": 4.2,
+    "cheerFps": 2.5,
+    "cheerRoutine": [0, 1, 2, 1, 3, 4, 5, 4, 1, 6, 1, 6, 2, 3, 7, 3, 1, 0],
+    "cheerTeamOffset": 5,
     "crewScale": 0.8,
     "crewBackM": 0.38,
     "crewCapColor": "#f07a1a",
@@ -719,6 +731,7 @@
     "turfV2": true,
     "labFreeCam": true,
     "snapZoom": true,
-    "grassBlades": true
+    "grassBlades": true,
+    "cheerleaders": true
   }
 }

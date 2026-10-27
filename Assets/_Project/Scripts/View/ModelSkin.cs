@@ -40,16 +40,26 @@ namespace PocketFootball.View
         Quaternion[] footRest;
         Quaternion shoulderRestL, shoulderRestR;
 
+        bool fixArms = true;   // the helmeted players' arm fixes (Adapt, Splay); the cheerleaders have no helmet
+
         public static bool Wear(FootballFigure fig, TeamConfig team, string pos, GameConfig cfg, Material kit)
         {
             team.ModelFor(pos, cfg.Feature("posModels"), out string model, out string modelTexture);
             if (string.IsNullOrEmpty(model)) { Debug.LogError("[model] team " + team.@short + " has no \"model\" in game.json; its players don't show"); return false; }
+            return Wear(fig, model, modelTexture, kit, true) != null;
+        }
+
+        // Any rigged Humanoid model (Resources path) and colour map on the figure; null if it's missing (logged).
+        // fixArms: the arm fixes for a model with a big helmet and short arms.
+        public static ModelSkin Wear(FootballFigure fig, string model, string modelTexture, Material kit, bool fixArms)
+        {
+            if (string.IsNullOrEmpty(model)) return null;
             if (!prefabs.TryGetValue(model, out var prefab))
             {
                 prefabs[model] = prefab = Resources.Load<GameObject>(model);
                 if (prefab == null) Debug.LogWarning("[model] no model at Resources/" + model + "; the player doesn't show");
             }
-            if (prefab == null) return false;   // (logged once, above)
+            if (prefab == null) return null;   // (logged once, above)
 
             var holder = fig.transform;
             var pivot = new GameObject("Model").transform;
@@ -71,7 +81,7 @@ namespace PocketFootball.View
                 {
                     Debug.LogError("[model] " + prefab.name + " has no " + (smr == null ? "skinned mesh" : "bone " + kv.Key) + "; the player doesn't show");
                     DestroyNow(pivot.gameObject);
-                    return false;
+                    return null;
                 }
 
             // the figure at rest (every bone straight, hips at their own height) while the two are lined up
@@ -101,6 +111,7 @@ namespace PocketFootball.View
 
             var skin = inst.AddComponent<ModelSkin>();
             skin.fig = fig;
+            skin.fixArms = fixArms;
             skin.from = new[] { fig.Hips, fig.Torso, fig.Head, fig.ArmL, fig.ForeL, fig.ArmR, fig.ForeR, fig.ThighL, fig.ShinL, fig.ThighR, fig.ShinR };
             skin.to = new[]
             {
@@ -140,7 +151,7 @@ namespace PocketFootball.View
 
             fig.Pose(FootballFigure.PoseKind.Ready, 0);
             skin.Follow();
-            return true;
+            return skin;
         }
 
         void LateUpdate() => Follow();
@@ -176,7 +187,8 @@ namespace PocketFootball.View
             else DestroyImmediate(fig);
         }
 
-        void Follow()
+        // The model's bones copy the figure's pose (every frame; tests call it directly).
+        public void Follow()
         {
             if (fig == null) return;
             to[0].position = fig.Hips.TransformPoint(hipOffset);
@@ -185,10 +197,13 @@ namespace PocketFootball.View
             feet[0].localRotation = footRest[0];
             feet[1].localRotation = footRest[1];
             for (int i = 0; i < from.Length; i++) to[i].rotation = from[i].rotation * offset[i];
-            Adapt(to[3], to[4], handL, shoulderL, 1f);
-            Adapt(to[5], to[6], handR, shoulderR, -1f);
-            Splay(3, fig.ArmL, fig.ForeL, 1f);
-            Splay(5, fig.ArmR, fig.ForeR, -1f);
+            if (fixArms)
+            {
+                Adapt(to[3], to[4], handL, shoulderL, 1f);
+                Adapt(to[5], to[6], handR, shoulderR, -1f);
+                Splay(3, fig.ArmL, fig.ForeL, 1f);
+                Splay(5, fig.ArmR, fig.ForeR, -1f);
+            }
             LevelFeet();
         }
 
