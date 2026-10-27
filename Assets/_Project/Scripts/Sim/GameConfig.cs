@@ -165,6 +165,22 @@ namespace PocketFootball.Sim
         // a rigged Humanoid model under Resources worn instead of the figure built from code, and its colour map
         // (FEATURES.modelPlayers; empty: the figure)
         public string model, modelTexture;
+        // FEATURES.posModels: a position wearing its own model instead (e.g. the linebackers); first match wins
+        public List<PosModelConfig> posModels = new List<PosModelConfig>();
+
+        // The model and colour map a player at this position wears (empty: the figure built from code).
+        public void ModelFor(string pos, bool byPos, out string m, out string tex)
+        {
+            m = model; tex = modelTexture;
+            if (!byPos || posModels == null) return;
+            foreach (var pm in posModels)
+                if (pm != null && pm.pos == pos && !string.IsNullOrEmpty(pm.model)) { m = pm.model; tex = pm.modelTexture; return; }
+        }
+    }
+
+    public sealed class PosModelConfig
+    {
+        public string pos, model, modelTexture;
     }
 
     public sealed class NetConfig
@@ -177,12 +193,16 @@ namespace PocketFootball.Sim
     public sealed class ViewConfig
     {
         public float playerHeightM, playerRadiusM, findMeS, plateFontPx, joinPanelQrPx, ballLengthM, ballWidthM, meSendHz;
+        // FIND ME: the soft team-colour glow on the grass under the player (Markings.Beam): its size, how solid its middle
+        public float findMeRadiusM, findMeAlpha;
         // the players' own toon shade (gauntlet 3): a warmer, same-hue shade than the stadium's cool purple family,
         // so a green jersey shades dark green, not teal (View/FootballFigure.KitMaterial)
         public string playerShadeHue, playerBounce, playerShadeLift;
         public float playerShadeUnify, playerShadeSaturation;
         // and a bolder ink line than the stadium's (concept 01's outlines), a softer rim (less plastic)
         public float playerOutlinePx, playerOutlineTint, playerRim;
+        // how far apart (hips, metres) a tackler and the carrier go down, so the tackle meets (FEATURES.tackleContact)
+        public float tackleContactM;
     }
 
     // The players' moves on the TV (View/Moves.cs, FEATURES.moves): key frames per second (stepped, no wobble), how

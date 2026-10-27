@@ -6,7 +6,8 @@ namespace PocketFootball.View
 {
     // A rigged model worn over a FootballFigure (FEATURES.modelPlayers, NO_MODEL_PLAYERS=1 turns it off): a team with
     // "model" in game.json (a Humanoid FBX under Resources, Unity's own bone names) shows it instead of the figure
-    // built from code. The figure keeps its 11 bones and every pose (FootballFigure.Get, the moves, the celebrations);
+    // built from code; a position listed in the team's "posModels" wears its own model (FEATURES.posModels,
+    // NO_POS_MODELS=1: every position wears the team's model). The figure keeps its 11 bones and every pose (FootballFigure.Get, the moves, the celebrations);
     // only its mesh is hidden. Once a frame, after everything has posed the figure, the model's bones copy the
     // figure's bones' turns. The model's arms are first lowered to hang like the figure's at rest, so a pose reads
     // the same on both. HandL/HandR move onto the model's gloves, so the ball sits in its hands.
@@ -40,13 +41,15 @@ namespace PocketFootball.View
         Quaternion[] footRest;
         Quaternion shoulderRestL, shoulderRestR;
 
-        public static bool Wear(FootballFigure fig, TeamConfig team, GameConfig cfg, Material kit)
+        public static bool Wear(FootballFigure fig, TeamConfig team, string pos, GameConfig cfg, Material kit)
         {
-            if (!cfg.Feature("modelPlayers") || string.IsNullOrEmpty(team.model)) return false;
-            if (!prefabs.TryGetValue(team.model, out var prefab))
+            if (!cfg.Feature("modelPlayers")) return false;
+            team.ModelFor(pos, cfg.Feature("posModels"), out string model, out string modelTexture);
+            if (string.IsNullOrEmpty(model)) return false;
+            if (!prefabs.TryGetValue(model, out var prefab))
             {
-                prefabs[team.model] = prefab = Resources.Load<GameObject>(team.model);
-                if (prefab == null) Debug.LogWarning("[model] no model at Resources/" + team.model + "; the team keeps the figure built from code");
+                prefabs[model] = prefab = Resources.Load<GameObject>(model);
+                if (prefab == null) Debug.LogWarning("[model] no model at Resources/" + model + "; the player keeps the figure built from code");
             }
             if (prefab == null) return false;
 
@@ -124,11 +127,11 @@ namespace PocketFootball.View
             fig.HandL = Glove(b["LeftHand"], b["LeftLowerArm"], fig.HandL.rotation, palm["Left"]);
             fig.HandR = Glove(b["RightHand"], b["RightLowerArm"], fig.HandR.rotation, palm["Right"]);
 
-            string key = team.model + "/" + kit.GetInstanceID();
+            string key = model + "/" + modelTexture + "/" + kit.GetInstanceID();   // (two teams, or two positions, can share a model)
             if (!mats.TryGetValue(key, out var m))
             {
-                var tex = string.IsNullOrEmpty(team.modelTexture) ? null : Resources.Load<Texture2D>(team.modelTexture);
-                if (tex == null) Debug.LogWarning("[model] no colour map at Resources/" + team.modelTexture + "; the model shows untextured");
+                var tex = string.IsNullOrEmpty(modelTexture) ? null : Resources.Load<Texture2D>(modelTexture);
+                if (tex == null) Debug.LogWarning("[model] no colour map at Resources/" + modelTexture + "; the model shows untextured");
                 mats[key] = m = new Material(kit) { name = "Toon (" + prefab.name + ")" };
                 if (tex != null) m.SetTexture("_MainTex", tex);
                 m.SetColor("_PlayerColor", Color.white);
