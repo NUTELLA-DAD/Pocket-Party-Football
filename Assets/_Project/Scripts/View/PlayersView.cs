@@ -27,6 +27,7 @@ namespace PocketFootball.View
         readonly Dictionary<int, Vector2> prev = new Dictionary<int, Vector2>();
         readonly Dictionary<int, float> travelled = new Dictionary<int, float>();
         readonly Dictionary<int, float> stridePhase = new Dictionary<int, float>();
+        readonly Dictionary<int, int> strideLast = new Dictionary<int, int>();   // the last tick each man was striding
         readonly Dictionary<int, MomentumState> carry = new Dictionary<int, MomentumState>();
         readonly Dictionary<int, int> carryTick = new Dictionary<int, int>();
         readonly List<int> gone = new List<int>();
@@ -142,7 +143,7 @@ namespace PocketFootball.View
                 t.localPosition = pos;
                 t.localRotation = Quaternion.Euler(0f, yaw, 0f);
                 fig.Carry(0f, 0f, 0f, 0f, 0f);
-                fig.Stride(false, default);
+                fig.Stride(false, default); fig.Settle(0f);
 
                 if (PoseOverride.TryGetValue(p.Slot, out var held)) { fig.Idle(0f, 0f); fig.Pose(held, 0); continue; }
                 travelled[p.Slot] = (travelled.TryGetValue(p.Slot, out float d) ? d : 0f) + moved;
@@ -192,6 +193,13 @@ namespace PocketFootball.View
                     phase = Stride.Advance(phase, cfg.anim, cfg.players, speed, moved / yd);
                     stridePhase[p.Slot] = phase;
                     fig.Stride(true, Stride.Pose(cfg.anim, cfg.players, fig.Legs, phase, speed, yd * FootballFigure.RigHeight / cfg.view.playerHeightM));
+                    strideLast[p.Slot] = w.Tick;
+                }
+                else if (!down && move.Kind == Move.None && strideLast.TryGetValue(p.Slot, out int last))
+                {
+                    // just stopped: the last stride eases into the standing pose
+                    float left = 1f - (w.Tick - last - 1 + alpha) / Mathf.Max(1, cfg.anim.strideSettleTicks);
+                    if (left > 0f) fig.Settle(left * left * (3f - 2f * left)); else strideLast.Remove(p.Slot);
                 }
                 if (PoseFor(move, frame, out var kind, out int f)) fig.Pose(kind, f);
                 else if (speed > 0.5f) fig.Pose(carrier ? FootballFigure.PoseKind.Carry : FootballFigure.PoseKind.Run, frame);
@@ -238,7 +246,7 @@ namespace PocketFootball.View
             if (inAir) ballShadow.localPosition = new Vector3(bat.x * yd, 0.02f, bat.z * yd);
             gone.Clear();
             foreach (var kv in bodies) if (w.Find(kv.Key) == null) gone.Add(kv.Key);
-            foreach (int slot in gone) { Object.Destroy(bodies[slot].gameObject); bodies.Remove(slot); kitOf.Remove(slot); carry.Remove(slot); carryTick.Remove(slot); stridePhase.Remove(slot); downStart.Remove(slot); downFrom.Remove(slot); }
+            foreach (int slot in gone) { Object.Destroy(bodies[slot].gameObject); bodies.Remove(slot); kitOf.Remove(slot); carry.Remove(slot); carryTick.Remove(slot); stridePhase.Remove(slot); strideLast.Remove(slot); downStart.Remove(slot); downFrom.Remove(slot); }
         }
 
         // A tackle that meets (Moves.TackleContact): the tackler goes down against the carrier, facing him; the carrier

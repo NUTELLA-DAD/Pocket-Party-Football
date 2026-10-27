@@ -225,7 +225,7 @@ namespace PocketFootball.View
         public StrideLegs Legs = StrideLegs.Figure;
         // Each foot's pitch on top of the leg's (degrees, - = toes down): the stride's push-off and heel strike (ModelSkin).
         public float ToeL, ToeR;
-        const float CarryArmDeg = 10f, CarryArmSwing = 0.15f, CarryForeDeg = 80f;   // the ball arm tucked, barely swinging
+        const float CarryArmDeg = 10f, CarryArmSwing = 0.08f, CarryForeDeg = 80f;   // the ball arm tucked, barely swinging
 
         // The stride pose for the next Run, Carry, Reach and Secure poses (the legs only in a Reach or Secure).
         // Stride(false, default): the poses' own two frames.
@@ -234,6 +234,30 @@ namespace PocketFootball.View
             if (!on && !striding) return;
             striding = on; stride = s;
             carryDirty = true;
+        }
+
+        // Coming to a stop (PlayersView, anim.strideSettleTicks): the next poses still show share (1 down to 0) of the
+        // last stride pose, so the legs and arms ease into the standing pose instead of snapping to it.
+        public void Settle(float share)
+        {
+            share = Mathf.Clamp01(share);
+            if (share == settle) return;
+            settle = share; carryDirty = true;
+        }
+        float settle, strodeTwist, strodeToeL, strodeToeR;
+        P strode;
+
+        static P Mix(P a, P b, float t)
+        {
+            float L(float x, float y) => x + (y - x) * t;
+            return new P
+            {
+                drop = L(a.drop, b.drop), tilt = L(a.tilt, b.tilt), lean = L(a.lean, b.lean), head = L(a.head, b.head),
+                armL = L(a.armL, b.armL), armLx = L(a.armLx, b.armLx), foreL = L(a.foreL, b.foreL),
+                armR = L(a.armR, b.armR), armRx = L(a.armRx, b.armRx), foreR = L(a.foreR, b.foreR),
+                thighL = L(a.thighL, b.thighL), thighLx = L(a.thighLx, b.thighLx), shinL = L(a.shinL, b.shinL),
+                thighR = L(a.thighR, b.thighR), thighRx = L(a.thighRx, b.thighRx), shinR = L(a.shinR, b.shinR),
+            };
         }
 
         P Strode(P p)
@@ -297,7 +321,14 @@ namespace PocketFootball.View
             if (kind != current || frame != currentFrame || carryDirty)
             {
                 current = kind; currentFrame = frame; carryDirty = false;
-                var p = cur = Carried(Strode(Get(kind, frame)));
+                var p = Carried(Strode(Get(kind, frame)));
+                if (striding) { strode = p; strodeTwist = strideTwist; strodeToeL = ToeL; strodeToeR = ToeR; }
+                else if (settle > 0f)
+                {
+                    p = Mix(p, strode, settle);
+                    strideTwist = strodeTwist * settle; ToeL = strodeToeL * settle; ToeR = strodeToeR * settle;
+                }
+                cur = p;
                 ArmL.localRotation = Quaternion.Euler(-p.armLx, 0, p.armL);
                 ArmR.localRotation = Quaternion.Euler(p.armRx, 0, p.armR);
                 ForeL.localRotation = Quaternion.Euler(0, 0, p.foreL);

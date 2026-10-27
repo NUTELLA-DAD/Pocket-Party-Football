@@ -261,10 +261,12 @@ namespace PocketFootball.Sim
         // strideBobCm the hips' rise in the air; strideHeelCm and strideToeDeg the heel's rise and the foot's point at
         // push-off, strideHeelStrikeDeg the toes up landing; the arms swing strideArmFwdDeg to strideArmBackDeg, the
         // elbow bent strideElbowFrontDeg in front and strideElbowBackDeg behind; the shoulders turn strideTwistDeg.
+        // Coming to a stop, the last stride pose eases into the standing one over strideSettleTicks.
         public float strideWalkYdS;
         public float[] strideCadence, strideStance, strideReach, strideAhead, strideKneeLandDeg, strideKneeDeg, strideKneePushDeg;
         public float[] strideKneeFoldDeg, strideThighDriveDeg, strideBobCm, strideHeelCm, strideToeDeg, strideHeelStrikeDeg;
         public float[] strideArmFwdDeg, strideArmBackDeg, strideElbowFrontDeg, strideElbowBackDeg, strideTwistDeg;
+        public int strideSettleTicks;
     }
 
     // WS-07 the lobby (FEATURES.lobby): each person picks an offense spot and a defense spot before kickoff. The game

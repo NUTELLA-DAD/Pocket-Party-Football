@@ -45,11 +45,14 @@ namespace PocketFootball.View
         // the swing's keys (shares of the swing): the knee folded most at FoldAt, the thigh FoldDrive of the way to its
         // drive at FoldThighAt and all the way at DriveAt, the knee still UnfoldKeep of its fold there (it unfolds only
         // in the last of the swing, just before the foot lands)
-        const float FoldAt = 0.35f, FoldThighAt = 0.38f, FoldDrive = 0.55f, DriveAt = 0.72f, UnfoldKeep = 0.72f;
+        const float FoldAt = 0.35f, FoldThighAt = 0.38f, FoldDrive = 0.55f, DriveAt = 0.62f, UnfoldKeep = 0.85f;
         const float PushFrom = 0.45f;         // the heel comes up over the last part of the stance (the hip rolling over the toes)
         const float PointFrom = 0.62f;        // and the foot points over the last part of that
         const float ToeBackBy = 0.35f;        // the pointed foot comes back level by this share of the swing
         const float StrikeTo = 0.2f, StrikeFrom = 0.7f;   // the toes up (strideHeelStrikeDeg) landing: from this share of the swing to this of the stance
+        // a swing leg's say in the hips' height fades out while the other foot is down (it's in the air, it holds
+        // nothing): Release leg lengths higher at the middle of that, so the planted leg's own bend sets the hips
+        const float Release = 0.25f;
         const float ArmLead = 0.05f;          // the arms swing this share of a stride ahead of the legs
         const float Slope = 1e-3f;            // (a step along the stance, to measure how fast it moves at its ends)
 
@@ -194,6 +197,8 @@ namespace PocketFootball.View
                     // up in the air while both feet are off the grass (a run): the start of this swing, and the end
                     float f = air <= 0f ? -1f : l.s < air ? l.s / air : l.s > 1f - air ? (l.s - (1f - air)) / air : -1f;
                     l.hip = Mathf.Lerp(hOff, hOn, Smooth(l.s)) + (f >= 0f ? k.bob * 4f * f * (1f - f) : 0f);
+                    float down = Mathf.Max(air, 0f), held = 1f - 2f * down, m = held > 0f ? (l.s - down) / held : -1f;
+                    if (m > 0f && m < 1f) l.hip += Release * leg * 16f * m * m * (1f - m) * (1f - m);
                     l.toe = -point * (1f - Smooth(l.s / ToeBackBy)) + strike * Smooth((l.s - StrikeFrom) / (1f - StrikeFrom));
                 }
                 hip = Mathf.Min(hip, l.hip);   // (as high as the lower leg holds him: no foot ends up under the grass)
