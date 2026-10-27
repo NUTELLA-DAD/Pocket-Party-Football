@@ -232,7 +232,6 @@ namespace PocketFootball.View
         public void Stride(bool on, StridePose s)
         {
             if (!on && !striding) return;
-            if (on == striding && s.Equals(stride)) return;
             striding = on; stride = s;
             carryDirty = true;
         }

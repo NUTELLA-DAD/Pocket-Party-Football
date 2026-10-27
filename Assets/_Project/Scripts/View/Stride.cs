@@ -43,8 +43,9 @@ namespace PocketFootball.View
         // the stance's knee: its bend at touch-down, under load at LoadAt of the stance, and at toe-off
         const float LoadAt = 0.4f;
         // the swing's keys (shares of the swing): the knee folded most at FoldAt, the thigh FoldDrive of the way to its
-        // drive at FoldThighAt and all the way at DriveAt, the knee UnfoldKeep of its fold still at DriveKneeAt
-        const float FoldAt = 0.35f, FoldThighAt = 0.38f, FoldDrive = 0.45f, DriveAt = 0.72f, DriveKneeAt = 0.78f, UnfoldKeep = 0.3f;
+        // drive at FoldThighAt and all the way at DriveAt, the knee still UnfoldKeep of its fold there (it unfolds only
+        // in the last of the swing, just before the foot lands)
+        const float FoldAt = 0.35f, FoldThighAt = 0.38f, FoldDrive = 0.45f, DriveAt = 0.72f, UnfoldKeep = 0.72f;
         const float PushFrom = 0.45f;         // the heel comes up over the last part of the stance (the hip rolling over the toes)
         const float PointFrom = 0.62f;        // and the foot points over the last part of that
         const float ToeBackBy = 0.35f;        // the pointed foot comes back level by this share of the swing
@@ -169,6 +170,7 @@ namespace PocketFootball.View
             float kOffRate = PlantedRate(k, 1f, 0) * r, tOffRate = PlantedRate(k, 1f, 1) * r;
             float kOnRate = PlantedRate(k, 0f, 0) * r, tOnRate = PlantedRate(k, 0f, 1) * r;
 
+            float air = (0.5f - k.stance) / (1f - k.stance);   // the share of a swing both feet are up, at each end
             var legs = new Leg[2];
             float hip = float.MaxValue;
             for (int i = 0; i < 2; i++)
@@ -187,9 +189,11 @@ namespace PocketFootball.View
                     // the swing: heel up behind, the thigh driving through, the shin unfolding to land; the hips held
                     // by this leg go from toe-off to touch-down height, higher in the air
                     l.s = (u - k.stance) / (1f - k.stance);
-                    l.knee = Curve(l.s, new[] { 0f, FoldAt, DriveKneeAt, 1f }, new[] { kOff, k.fold, Mathf.Lerp(kOn, k.fold, UnfoldKeep), kOn }, kOffRate, kOnRate);
+                    l.knee = Curve(l.s, new[] { 0f, FoldAt, DriveAt, 1f }, new[] { kOff, k.fold, Mathf.Lerp(kOn, k.fold, UnfoldKeep), kOn }, kOffRate, kOnRate);
                     l.thigh = Curve(l.s, new[] { 0f, FoldThighAt, DriveAt, 1f }, new[] { tOff, Mathf.Lerp(tOff, k.drive, FoldDrive), k.drive, tOn }, tOffRate, tOnRate);
-                    l.hip = Mathf.Lerp(hOff, hOn, Smooth(l.s)) + k.bob * 4f * l.s * (1f - l.s);
+                    // up in the air while both feet are off the grass (a run): the start of this swing, and the end
+                    float f = air <= 0f ? -1f : l.s < air ? l.s / air : l.s > 1f - air ? (l.s - (1f - air)) / air : -1f;
+                    l.hip = Mathf.Lerp(hOff, hOn, Smooth(l.s)) + (f >= 0f ? k.bob * 4f * f * (1f - f) : 0f);
                     l.toe = -point * (1f - Smooth(l.s / ToeBackBy)) + strike * Smooth((l.s - StrikeFrom) / (1f - StrikeFrom));
                 }
                 hip = Mathf.Min(hip, l.hip);   // (as high as the lower leg holds him: no foot ends up under the grass)
