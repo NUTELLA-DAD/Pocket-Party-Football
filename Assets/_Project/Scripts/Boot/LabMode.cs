@@ -15,11 +15,13 @@ namespace PocketFootball.Boot
     // You play with the keyboard, or with a phone: the first phone that joins plays the drill (the keyboard still works).
     // Keys: WASD / arrows move, SHIFT sprint, SPACE hike, 1-5 throw (hold CTRL: lob), F tackle, E juke, G block;
     // TAB next drill (SHIFT+TAB back), R again, V hitboxes, P pause, N one tick while paused, [ ] slower / faster.
+    // The mouse moves the camera (LabCamera.cs): drag, right-drag, wheel, F1-F5, , . and C.
     public sealed class LabMode : MonoBehaviour
     {
         public static LabMode Instance { get; private set; }
         public Lab Lab { get; private set; }
         public LabOverlay Overlay { get; private set; }
+        public LabCamera FreeCam { get; private set; }   // null when FEATURES.labFreeCam is off
         public bool Paused { get; private set; }
         public float Speed => cfg.speeds.Count > 0 ? cfg.speeds[speedIndex] : 1f;
 
@@ -47,7 +49,7 @@ namespace PocketFootball.Boot
             return null;
         }
 
-        public static LabMode Create(GameObject on, GameConfig game, Material baseMat, PartyHost host, string configDir)
+        public static LabMode Create(GameObject on, GameConfig game, Material baseMat, PartyHost host, CameraRig rig, string configDir)
         {
             var m = on.AddComponent<LabMode>();
             Instance = m;
@@ -59,6 +61,7 @@ namespace PocketFootball.Boot
             m.Lab = new PocketFootball.Sim.Lab(host.World, m.cfg);
             m.Overlay = new LabOverlay(game, baseMat);
             host.DevKeys = false;
+            m.FreeCam = LabCamera.Attach(on, game, rig, Arg("-lab-cam"));
             host.BeforeTick += m.Feed;
             host.AfterTick += m.Lab.AfterTick;
             int first = m.Lab.FindDrill(Arg("-lab-drill") ?? "");
@@ -179,9 +182,11 @@ namespace PocketFootball.Boot
                  "<color=#9fe0ff>Throw</color> 1-5 (hold CTRL = lob)   <color=#9fe0ff>Tackle</color> F   <color=#9fe0ff>Juke</color> E   <color=#9fe0ff>Block</color> G (hold)\n" +
                  "<color=#9fe0ff>Next drill</color> TAB   <color=#9fe0ff>Again</color> R   <color=#9fe0ff>Hitboxes</color> V (" + (Overlay.Shown ? "on" : "off") + ")\n" +
                  "<color=#9fe0ff>Pause</color> P" + (Paused ? " <b>(PAUSED, N = one step)</b>" : "") + "   <color=#9fe0ff>Speed</color> [ ]  <b>" + SpeedText() + "</b>", small),
+                (CameraLine(), small),
                 (PhoneLine(), small),
                 (NowLine(w), body),
             };
+            lines.RemoveAll(l => l.text == "");
             if (Lab.Log.Count > 0) lines.Add(("<color=#c8c8c8>" + string.Join("\n", Lab.Log) + "</color>", small));
 
             float h = pad;
@@ -198,6 +203,8 @@ namespace PocketFootball.Boot
             }
             if (Overlay.Shown) Legend(x, y + h + pad + 8 * s, width, s);
         }
+
+        string CameraLine() => FreeCam != null ? FreeCam.HelpLine() : "";
 
         string SpeedText() => Speed >= 1f ? "normal" : Speed.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + "x";
 
