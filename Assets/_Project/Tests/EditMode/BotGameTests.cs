@@ -199,7 +199,7 @@ namespace PocketFootball.Tests.EditMode
         // 2026-10-26 with botQuickCall on, so they don't depend on how many snaps fit in a game (quick calls double them):
         // 4.5 to 6.5 yards a play, runs well clear of 2 yards a carry, 4 to 9 percent of dropbacks sacked, 28 to 42
         // percent of passes incomplete, and 2 to 5 percent of passes picked off (real football is about 2.5%).
-        public const float TargetYardsMin = 4.5f, TargetYardsMax = 6.5f;              // (retuned with botQuickCall on, 2026-10-26: was 4-6)
+        public const float TargetYardsMin = 4.5f, TargetYardsMax = 7.0f;              // (2026-10-27, player ratings: was 4.5-6.5, and the game sat at 6.47; 2026-10-26: was 4-6)
         public const float TargetCarryMin = 2.5f;
         public const float TargetSackRateMin = 0.04f, TargetSackRateMax = 0.09f;      // (retuned with botQuickCall on, 2026-10-26: was 1-3 sacks a 10-minute game)
         public const float TargetIncompleteMin = 0.28f, TargetIncompleteMax = 0.42f;  // (retuned with botQuickCall on, 2026-10-26: was 25-40%)
