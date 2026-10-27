@@ -231,7 +231,11 @@
       "color": "#d7263d",
       "color2": "#ffb612",
       "model": "Models/Chiefs24/Chiefs24_Rigged",
-      "modelTexture": "Models/Chiefs24/Chiefs24_BaseColor"
+      "modelTexture": "Models/Chiefs24/Chiefs24_BaseColor",
+      "posModels": [
+        { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerKC_BaseColor" },
+        { "pos": "QB", "model": "Models/QB/QB_Rigged", "modelTexture": "Models/QB/QB_BaseColor" }
+      ]
     },
     {
       "name": "ROUGHRIDERS",
@@ -239,7 +243,11 @@
       "color": "#1f8a4c",
       "color2": "#f6f1de",
       "model": "Models/Chiefs24/Chiefs24_Rigged",
-      "modelTexture": "Models/Roughriders/Roughriders_BaseColor"
+      "modelTexture": "Models/Roughriders/Roughriders_BaseColor",
+      "posModels": [
+        { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/Linebacker_BaseColor" },
+        { "pos": "QB", "model": "Models/QB/QB_Rigged", "modelTexture": "Models/QB/QBRR_BaseColor" }
+      ]
     }
   ],
   "net": {
@@ -254,7 +262,10 @@
   "view": {
     "playerHeightM": 2.85,
     "playerRadiusM": 0.45,
+    "tackleContactM": 1.0,
     "findMeS": 2,
+    "findMeRadiusM": 1.6,
+    "findMeAlpha": 0.8,
     "plateFontPx": 22,
     "joinPanelQrPx": 260,
     "ballLengthM": 0.5,
@@ -660,6 +671,8 @@
     "snap": true,
     "botQuickCall": true,
     "modelPlayers": true,
+    "tackleContact": true,
+    "posModels": true,
     "blockLock": true,
     "watchBall": true
   }

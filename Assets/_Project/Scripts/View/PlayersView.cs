@@ -27,6 +27,7 @@ namespace PocketFootball.View
         // a man on the grass: where he went down, his facing, which fall (slot -> start tick)
         readonly Dictionary<int, Vector3> downAt = new Dictionary<int, Vector3>();
         readonly Dictionary<int, float> downYaw = new Dictionary<int, float>();
+        readonly Dictionary<int, Vector3> downFrom = new Dictionary<int, Vector3>();
         readonly Dictionary<int, int> downStart = new Dictionary<int, int>();
         readonly Transform ball, ballShadow;
         Vector3 ballPrev;
@@ -100,9 +101,13 @@ namespace PocketFootball.View
                     // stays where and how he went down
                     if (!downStart.TryGetValue(p.Slot, out int st) || st != move.StartTick)
                     {
+                        downFrom[p.Slot] = pos;
+                        if (cfg.Feature("tackleContact") && move.HasPartner) Contact(w, move, at, alpha, ref pos, ref yaw);
                         downStart[p.Slot] = move.StartTick; downAt[p.Slot] = pos; downYaw[p.Slot] = yaw;
                     }
-                    pos = downAt[p.Slot]; yaw = downYaw[p.Slot]; moved = 0f;
+                    // the tackler's launch (the first key) is halfway in to the carrier, then he's on him
+                    pos = move.Kind == Move.Tackle && move.Frame == 0 && !move.GettingUp ? Vector3.Lerp(downFrom[p.Slot], downAt[p.Slot], 0.5f) : downAt[p.Slot];
+                    yaw = downYaw[p.Slot]; moved = 0f;
                 }
                 else downStart.Remove(p.Slot);
                 t.localPosition = pos;
@@ -149,7 +154,23 @@ namespace PocketFootball.View
             if (inAir) ballShadow.localPosition = new Vector3(bat.x * yd, 0.02f, bat.z * yd);
             gone.Clear();
             foreach (var kv in bodies) if (w.Find(kv.Key) == null) gone.Add(kv.Key);
-            foreach (int slot in gone) { Object.Destroy(bodies[slot].gameObject); bodies.Remove(slot); kitOf.Remove(slot); downStart.Remove(slot); }
+            foreach (int slot in gone) { Object.Destroy(bodies[slot].gameObject); bodies.Remove(slot); kitOf.Remove(slot); downStart.Remove(slot); downFrom.Remove(slot); }
+        }
+
+        // A tackle that meets (Moves.TackleContact): the tackler goes down against the carrier, facing him; the carrier
+        // goes down along the hit, over backwards toward the tackler's side or on his front away from it.
+        void Contact(World w, MoveNow move, Vector2 at, float alpha, ref Vector3 pos, ref float yaw)
+        {
+            var other = w.Find(move.Partner);
+            if (other == null) return;
+            Vector2 onow = new Vector2(other.X, other.Z);
+            Vector2 oat = Vector2.Lerp(prev.TryGetValue(other.Slot, out var ov) ? ov : onow, onow, alpha);
+            bool tackler = move.Kind == Move.Tackle;
+            Vector2 t = tackler ? at : oat, c = tackler ? oat : at;
+            float contactYd = cfg.view.tackleContactM / cfg.field.yardM;
+            if (!Moves.TackleContact(t.x, t.y, c.x, c.y, contactYd, out float x, out float z, out float ux, out float uz)) return;
+            if (tackler) { pos = new Vector3(x * cfg.field.yardM, 0f, z * cfg.field.yardM); yaw = Mathf.Atan2(-uz, ux) * Mathf.Rad2Deg; }
+            else yaw = move.OnBack ? Mathf.Atan2(uz, -ux) * Mathf.Rad2Deg : Mathf.Atan2(-uz, ux) * Mathf.Rad2Deg;
         }
 
         // The figure's pose for a move (false: none, run or stand as usual). stride: the run frame.
@@ -253,7 +274,7 @@ namespace PocketFootball.View
             if (fig != null) Object.Destroy(fig.gameObject);
             var team = cfg.teams[Mathf.Clamp(p.Team, 0, cfg.teams.Count - 1)];
             fig = FootballFigure.Create(root, team, p.Number, FootballFigure.BuildOf(p.Pos), p.Slot * 7 + p.Number, cfg.view.playerHeightM, mat, TeamMarks.HelmetFor(team));
-            ModelSkin.Wear(fig, team, cfg, mat);   // FEATURES.modelPlayers: a team's rigged model over the figure
+            ModelSkin.Wear(fig, team, p.Pos, cfg, mat);   // FEATURES.modelPlayers: a team's (or position's) rigged model over the figure
             fig.name = "Player " + p.Slot;
             bodies[p.Slot] = fig;
             kitOf[p.Slot] = kit;

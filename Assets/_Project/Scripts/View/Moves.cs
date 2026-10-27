@@ -21,18 +21,19 @@ namespace PocketFootball.View
         public bool GettingUp;    // Tackle / Tackled: the last part of the whistle
         public int UpFrame;       // key frame since he started getting up
         public int StartTick;     // tells one move from the next of the same kind
-        public bool Locked;       // Block (FEATURES.blockLock): arms locked with Partner, the man he's engaged with
-        public int Partner;
+        public bool HasPartner;   // Tackle / Tackled: the other man in the tackle is known
+        public int Partner;       // ... and his slot (Block: the man he's engaged with)
+        public bool Locked;       // Block (FEATURES.blockLock): arms locked with Partner
     }
 
     public sealed class Moves
     {
-        sealed class Rec { public Move Kind; public int Start, End; public bool Hold, OnBack; }
+        sealed class Rec { public Move Kind; public int Start, End; public bool Hold, OnBack; public int Partner = -1; }
 
         readonly SortedDictionary<int, Rec> bySlot = new SortedDictionary<int, Rec>();
         readonly HashSet<int> reaching = new HashSet<int>();
         readonly HashSet<int> watching = new HashSet<int>();
-        readonly SortedDictionary<int, int> partner = new SortedDictionary<int, int>();   // slot -> the man he's blocking / blocked by
+        readonly SortedDictionary<int, int> blockPartner = new SortedDictionary<int, int>();   // slot -> the man he's blocking / blocked by
         // a locked pair slides together (or apart) on the TV until their hands meet: slot -> offset in yards, this tick and the last
         readonly SortedDictionary<int, (float x, float z)> lockOff = new SortedDictionary<int, (float x, float z)>();
         readonly SortedDictionary<int, (float x, float z)> lockWas = new SortedDictionary<int, (float x, float z)>();
@@ -52,9 +53,9 @@ namespace PocketFootball.View
 
         int FrameOf(World w, int ticks) => ticks <= 0 ? 0 : (int)(ticks * w.Cfg.anim.fps / w.Cfg.sim.tickHz);
 
-        void Start(World w, int slot, Move kind, float seconds, bool hold = false, bool onBack = false)
+        void Start(World w, int slot, Move kind, float seconds, bool hold = false, bool onBack = false, int partner = -1)
         {
-            bySlot[slot] = new Rec { Kind = kind, Start = w.Tick, End = hold ? int.MaxValue : w.Tick + Math.Max(1, Ticks(w, seconds)), Hold = hold, OnBack = onBack };
+            bySlot[slot] = new Rec { Kind = kind, Start = w.Tick, End = hold ? int.MaxValue : w.Tick + Math.Max(1, Ticks(w, seconds)), Hold = hold, OnBack = onBack, Partner = partner };
         }
 
         // Call once the World has stepped (calling again on the same tick does nothing).
@@ -98,9 +99,9 @@ namespace PocketFootball.View
                             float fx = c.VX, fz = c.VZ;
                             if (fx * fx + fz * fz < 0.25f) { fx = w.Dir * (c.Team == w.Offense ? 1f : -1f); fz = 0f; }
                             onBack = (t.X - c.X) * fx + (t.Z - c.Z) * fz > 0f;
-                            Start(w, t.Slot, Move.Tackle, 0f, true);
+                            Start(w, t.Slot, Move.Tackle, 0f, true, false, c.Slot);
                         }
-                        Start(w, c.Slot, Move.Tackled, 0f, true, onBack);
+                        Start(w, c.Slot, Move.Tackled, 0f, true, onBack, t != null ? t.Slot : -1);
                     }
                     else if (c != null && (w.Result == "TOUCHDOWN" || w.Result == "PICK SIX")) Start(w, c.Slot, Move.Celebrate, 0f, true);
                 }
@@ -149,9 +150,16 @@ namespace PocketFootball.View
             foreach (int slot in done) bySlot.Remove(slot);
         }
 
-        // The tackler: the nearest man on the other team.
-        static Player Tackler(World w, Player c)
+        // The tackler: the man the sim says made it (this tick's Tackle or Sack on him), else the nearest man on the
+        // other team. (A person's tackle reaches further than a bot's, so the nearest man is not always the one.)
+        public static Player Tackler(World w, Player c)
         {
+            foreach (var e in w.Events.ThisTick)
+                if ((e.Kind == EventKind.Tackle || e.Kind == EventKind.Sack) && e.Other == c.Slot)
+                {
+                    var t = w.Find(e.Slot);
+                    if (t != null) return t;
+                }
             Player best = null; float bd = float.MaxValue;
             foreach (var p in w.Players)
             {
@@ -168,7 +176,7 @@ namespace PocketFootball.View
             var a = w.Cfg.anim;
             if (bySlot.TryGetValue(p.Slot, out var r))
             {
-                var m = new MoveNow { Kind = r.Kind, Frame = FrameOf(w, w.Tick - r.Start), OnBack = r.OnBack, StartTick = r.Start };
+                var m = new MoveNow { Kind = r.Kind, Frame = FrameOf(w, w.Tick - r.Start), OnBack = r.OnBack, StartTick = r.Start, HasPartner = r.Partner >= 0, Partner = r.Partner };
                 int upTicks = Ticks(w, a.getUpS);
                 if (r.Hold && w.Phase == Phase.Whistle && w.PhaseTicks <= upTicks && (r.Kind == Move.Tackle || r.Kind == Move.Tackled))
                 {
@@ -185,9 +193,23 @@ namespace PocketFootball.View
             var play = LivePlay.Called(w, w.Offense);
             if (p == LivePlay.Carrier(w) && p == LivePlay.Qb(w) && !w.Thrown && (play == null || play.runner < 0) && p.VX * p.VX + p.VZ * p.VZ <= 0.25f) return new MoveNow { Kind = Move.Aim };
             // a block: a defender held up, or a blocker with a man in front of him
-            if (partner.TryGetValue(p.Slot, out int q))
+            if (blockPartner.TryGetValue(p.Slot, out int q))
                 return new MoveNow { Kind = Move.Block, Frame = (int)(w.PlayTicks / Math.Max(1, Ticks(w, a.blockShoveS))), Locked = w.Cfg.Feature("blockLock"), Partner = q };
             return default;
+        }
+
+        // Where the tackler goes down so the two bodies meet (FEATURES.tackleContact, NO_TACKLE_CONTACT=1 turns it
+        // off): the sim calls a tackle from reach (tackleReachYd, half again for a person), which can leave a yard or
+        // more of grass between them. The tackler lands contactYd short of the carrier, on the line from where he
+        // was, facing him (ux, uz: tackler to carrier); the carrier stays on his spot, where the ball is marked.
+        // False: they stand on the same spot, no line to put him on.
+        public static bool TackleContact(float tx, float tz, float cx, float cz, float contactYd, out float x, out float z, out float ux, out float uz)
+        {
+            float dx = cx - tx, dz = cz - tz, d = (float)Math.Sqrt(dx * dx + dz * dz);
+            if (d < 0.01f) { x = tx; z = tz; ux = uz = 0f; return false; }
+            ux = dx / d; uz = dz / d;
+            x = cx - ux * contactYd; z = cz - uz * contactYd;
+            return true;
         }
 
         // FEATURES.watchBall: while a pass is in the air, the man of each team nearest where it's aimed (within watchYd)
@@ -219,7 +241,7 @@ namespace PocketFootball.View
         // on the TV they slide, at lockSlideYdS and by at most lockPullYd each, to lockGapYd apart, so their hands meet.
         void Engage(World w)
         {
-            partner.Clear();
+            blockPartner.Clear();
             if (On(w) && w.Phase == Phase.Live)
             {
                 float r = w.Cfg.bots.blockReachYd;
@@ -234,7 +256,7 @@ namespace PocketFootball.View
                         float dx = q.X - p.X, dz = q.Z - p.Z, d = dx * dx + dz * dz;
                         if (d <= bd) { best = q; bd = d; }
                     }
-                    if (best != null) partner[p.Slot] = best.Slot;
+                    if (best != null) blockPartner[p.Slot] = best.Slot;
                 }
             }
             var a = w.Cfg.anim;
@@ -244,12 +266,12 @@ namespace PocketFootball.View
             foreach (var kv in lockOff) lockWas[kv.Key] = kv.Value;
             keys.Clear();
             foreach (var kv in lockOff) keys.Add(kv.Key);
-            foreach (var kv in partner) if (!lockOff.ContainsKey(kv.Key)) keys.Add(kv.Key);
+            foreach (var kv in blockPartner) if (!lockOff.ContainsKey(kv.Key)) keys.Add(kv.Key);
             foreach (int slot in keys)
             {
                 float tx = 0f, tz = 0f;
                 var p = w.Find(slot);
-                if (p != null && lockOn && partner.TryGetValue(slot, out int qs) && partner.TryGetValue(qs, out int back) && back == slot)
+                if (p != null && lockOn && blockPartner.TryGetValue(slot, out int qs) && blockPartner.TryGetValue(qs, out int back) && back == slot)
                 {
                     var q = w.Find(qs);
                     float dx = q.X - p.X, dz = q.Z - p.Z, d = (float)Math.Sqrt(dx * dx + dz * dz);
