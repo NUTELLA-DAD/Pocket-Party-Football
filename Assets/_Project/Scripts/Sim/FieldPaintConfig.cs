@@ -10,7 +10,10 @@ namespace PocketFootball.Sim
     // camera squashes, so they look round on screen), that fade out before they would shimmer, then a warm grade: saturation, gain and lift,
     // linear RGB). Turf v2 (FEATURES.turfV2): stripes blended over stripeSoftYd either side of their edges; a watercolour
     // wash (washYd across, washStretch times longer along z, washEdge sharpens it, washStrength its depth); broad sunlight
-    // and cloud shade (lightYd, lightStrength); the near side up to nearShade darker. Scrimmage and first-down lines: their width and colours (View/Markings.cs).
+    // and cloud shade (lightYd, lightStrength); the near side up to nearShade darker. Blades (FEATURES.grassBlades, Art/Shaders/GrassShell.shader): bladeShells layers
+    // up to bladeHeightM, one blade per bladeSpacingM (m), bladeWidth its half-width (share of that), bladeFlat how flat, bladeLeanM
+    // its tip's curl, bladeSteps toon light steps from the root (bladeRootDark darker) to the tip (bladeTipLight lighter).
+    // Scrimmage and first-down lines: their width and colours (View/Markings.cs).
     public sealed class FieldPaintConfig
     {
         public float lineAlpha, lineSoftYd;
@@ -20,6 +23,8 @@ namespace PocketFootball.Sim
         public float detailM, detailAmount, detailFadePx;
         public float[] detailScale;
         public float stripeSoftYd, washYd, washStretch, washStrength, washEdge, lightYd, lightStrength, nearShade;
+        public float bladeHeightM, bladeSpacingM, bladeWidth, bladeFlat, bladeLeanM, bladeSteps, bladeRootDark, bladeTipLight;
+        public int bladeShells;
         public float gradeSaturation;
         public float[] gradeGain, gradeLift;
         public float scrimmageWidthYd;

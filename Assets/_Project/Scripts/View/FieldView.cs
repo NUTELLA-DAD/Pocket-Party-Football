@@ -31,7 +31,63 @@ namespace PocketFootball.View
             paint.SetTexture("_MainTex", Paint(cfg, hx, hz));
             var field = Looks.Flat(root.transform, "Paint", Vector3.zero, new Vector2(hx * 2 * m, hz * 2 * m), Color.white, paint);
             field.name = "Paint";
+            Blades(cfg, field, ground, paint);
             return root;
+        }
+
+        // FEATURES.grassBlades (NO_GRASS_BLADES=1): chunky toon blades standing on the painted field, drawn as
+        // bladeShells stacked copies of its quad (Art/Shaders/GrassShell.shader keeps only the blades on each). Needs the
+        // grass shader; the field and its surround draw first (queue Geometry-2), the shells next (Geometry-1, no depth
+        // writes), so lines, rings and shadows laid on the grass afterwards stay on top.
+        public static GameObject Blades(GameConfig cfg, GameObject field, Material ground, Material paint)
+        {
+            var pp = cfg.field.paint;
+            if (!cfg.Feature("grassBlades") || paint.shader == null || paint.shader.name != "PocketParty/Grass" || pp.bladeShells < 1) return null;
+            var shellMat = Resources.Load<Material>("GrassShell");
+            if (shellMat == null || shellMat.shader == null || !shellMat.shader.isSupported) return null;
+            var mat = new Material(shellMat) { name = "GrassBlades" };
+            mat.CopyPropertiesFromMaterial(paint);
+            mat.shader = shellMat.shader;
+            mat.SetFloat("_BladeHeightM", pp.bladeHeightM);
+            mat.SetFloat("_BladeSpacingM", pp.bladeSpacingM);
+            mat.SetFloat("_BladeWidth", pp.bladeWidth);
+            mat.SetFloat("_BladeFlat", pp.bladeFlat);
+            mat.SetFloat("_BladeLeanM", pp.bladeLeanM);
+            mat.SetFloat("_BladeSteps", pp.bladeSteps);
+            mat.SetFloat("_BladeRootDark", pp.bladeRootDark);
+            mat.SetFloat("_BladeTipLight", pp.bladeTipLight);
+            mat.renderQueue = 1999;
+            ground.renderQueue = paint.renderQueue = 1998;
+            ground.SetFloat("_GroundShade", 1f - pp.bladeRootDark);
+            paint.SetFloat("_GroundShade", 1f - pp.bladeRootDark);
+
+            // the field's quad, once per shell from the lowest up (each shell drawn over the one under it)
+            var src = field.GetComponent<MeshFilter>().sharedMesh;
+            var sv = src.vertices; var sn = src.normals; var su = src.uv; var sc = src.colors;
+            int n = pp.bladeShells, k = sv.Length;
+            var v = new Vector3[k * n]; var nm = new Vector3[k * n]; var uv = new Vector2[k * n]; var uv2 = new Vector2[k * n]; var col = new Color[k * n];
+            var tris = new int[6 * n];
+            for (int s = 0; s < n; s++)
+            {
+                float t = (s + 1) / (float)n;
+                for (int i = 0; i < k; i++)
+                {
+                    int j = s * k + i;
+                    v[j] = sv[i] + Vector3.up * (t * pp.bladeHeightM); nm[j] = sn[i]; uv[j] = su[i]; uv2[j] = new Vector2(t, 0); col[j] = sc[i];
+                }
+                int[] q = { 0, 1, 2, 0, 2, 3 };
+                for (int i = 0; i < 6; i++) tris[s * 6 + i] = s * k + q[i];
+            }
+            var mesh = new Mesh { name = "GrassBlades", vertices = v, normals = nm, uv = uv, uv2 = uv2, colors = col, triangles = tris };
+            mesh.RecalculateBounds();
+            var go = new GameObject("Blades");
+            go.transform.SetParent(field.transform, false);
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var r = go.AddComponent<MeshRenderer>();
+            r.sharedMaterial = mat;
+            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            r.receiveShadows = true;
+            return go;
         }
 
         // The ground's material: the grass shader (Resources/Grass.mat) with its numbers from game.json, or the plain toon

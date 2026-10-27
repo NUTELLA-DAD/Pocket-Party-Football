@@ -58,6 +58,15 @@
       "lightYd": 16,
       "lightStrength": 0.06,
       "nearShade": 0.05,
+      "bladeShells": 12,
+      "bladeHeightM": 0.22,
+      "bladeSpacingM": 0.2,
+      "bladeWidth": 0.55,
+      "bladeFlat": 2.0,
+      "bladeLeanM": 0.08,
+      "bladeSteps": 2,
+      "bladeRootDark": 0.15,
+      "bladeTipLight": 0.22,
       "gradeSaturation": 0.95,
       "gradeGain": [1.0, 1.04, 1.0],
       "gradeLift": [0.012, 0.014, 0.012],
@@ -701,6 +710,7 @@
     "blockLock": true,
     "watchBall": true,
     "turfV2": true,
-    "labFreeCam": true
+    "labFreeCam": true,
+    "grassBlades": true
   }
 }

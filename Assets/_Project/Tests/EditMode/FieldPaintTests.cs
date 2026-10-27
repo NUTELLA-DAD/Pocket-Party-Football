@@ -28,8 +28,10 @@ namespace PocketFootball.Tests.EditMode
             foreach (float v in new[] { pp.lineAlpha, pp.numberHeightYd, pp.numberStrokeYd, pp.numberAlpha, pp.arrowYd, pp.logoWidthYd, pp.logoHeightYd,
                          pp.logoAlpha, pp.logoSplit, pp.logoLightMix, pp.logoDarkMix, pp.logoDarkValue, pp.brushDabsPerSqYd, pp.patchYd, pp.patchStrength, pp.brushLenYd, pp.brushWidthYd,
                          pp.detailM, pp.detailFadePx, pp.gradeSaturation, pp.scrimmageWidthYd,
-                         pp.stripeSoftYd, pp.washYd, pp.washStretch, pp.washStrength, pp.washEdge, pp.lightYd, pp.lightStrength, pp.nearShade })
+                         pp.stripeSoftYd, pp.washYd, pp.washStretch, pp.washStrength, pp.washEdge, pp.lightYd, pp.lightStrength, pp.nearShade,
+                         pp.bladeHeightM, pp.bladeSpacingM, pp.bladeWidth, pp.bladeFlat, pp.bladeLeanM, pp.bladeSteps, pp.bladeRootDark, pp.bladeTipLight })
                 Assert.Greater(v, 0f);
+            Assert.Greater(pp.bladeShells, 0);
             Assert.AreEqual(2, pp.detailScale.Length);
             Assert.AreEqual(3, pp.gradeGain.Length);
             Assert.AreEqual(3, pp.gradeLift.Length);
@@ -79,6 +81,41 @@ namespace PocketFootball.Tests.EditMode
             {
                 Object.DestroyImmediate(root);
             }
+        }
+
+        // FEATURES.grassBlades: the blade shells stand on the field (one quad per shell, up to bladeHeightM) with the
+        // shell shader, drawn after the field; NO_GRASS_BLADES=1 leaves the flat field.
+        [Test]
+        public void GrassBladesStandOnTheFieldAndCanBeSwitchedOff()
+        {
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/_Project/Art/Shaders/GrassShell.shader");
+            Assert.IsNotNull(shader, "GrassShell.shader did not import");
+            Assert.IsFalse(ShaderUtil.ShaderHasError(shader), "GrassShell.shader has a compile error (see the Console)");
+            Assert.AreEqual(shader, Resources.Load<Material>("GrassShell").shader);
+
+            var cfg = ConfigTests.Load();
+            Assert.IsTrue(cfg.Feature("grassBlades"));
+            var root = FieldView.Build(cfg, null);
+            try
+            {
+                var paint = root.transform.Find("Paint");
+                var blades = paint.Find("Blades");
+                Assert.IsNotNull(blades, "no blades on the field");
+                var mesh = blades.GetComponent<MeshFilter>().sharedMesh;
+                Assert.AreEqual(4 * cfg.field.paint.bladeShells, mesh.vertexCount);
+                Assert.AreEqual(cfg.field.paint.bladeHeightM, mesh.bounds.max.y, 1e-4f);
+                var mat = blades.GetComponent<MeshRenderer>().sharedMaterial;
+                Assert.AreEqual("PocketParty/GrassShell", mat.shader.name);
+                Assert.Greater(mat.renderQueue, paint.GetComponent<MeshRenderer>().sharedMaterial.renderQueue, "the blades must draw after the field");
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+
+            var off = FieldView.Build(ConfigTests.Load(new Dictionary<string, string> { { "NO_GRASS_BLADES", "1" } }), null);
+            try { Assert.IsNull(off.transform.Find("Paint/Blades")); }
+            finally { Object.DestroyImmediate(off); }
         }
 
         // Turf v2 (FEATURES.turfV2): the near side of the field is painted darker than the far side, and NO_TURF_V2=1
