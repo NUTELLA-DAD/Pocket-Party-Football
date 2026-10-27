@@ -214,6 +214,12 @@ namespace PocketFootball.Sim
     {
         public float fps, throwS, handoffS, secureS, bobbleS, reachYd, reachS, getUpS, blockShoveS;
         public float snapAheadYd, snapSpeedYdS, snapMinS, snapArcYd, snapSecureS;
+        // FEATURES.blockLock (View/Moves.cs): a blocker and his man lock arms lockGapYd apart (each slides at most
+        // lockPullYd, at lockSlideYdS) and face each other, turned only lockTurnDeg toward the camera
+        public float lockGapYd, lockPullYd, lockSlideYdS, lockTurnDeg;
+        // FEATURES.watchBall (View/PlayersView.cs): with a pass in the air, the men within watchYd of where it's aimed
+        // turn to follow it: shoulders up to lookTwistDeg, the head lookHeadDeg more, the rest the whole body; in lookStepDeg steps
+        public float watchYd, lookTwistDeg, lookHeadDeg, lookStepDeg;
     }
 
     // WS-07 the lobby (FEATURES.lobby): each person picks an offense spot and a defense spot before kickoff. The game
