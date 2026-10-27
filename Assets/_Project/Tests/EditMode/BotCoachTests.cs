@@ -173,6 +173,7 @@ namespace PocketFootball.Tests.EditMode
             // nobody can get open: every receiver has a defender glued to him, so the QB tucks it and runs
             cfg.bots.deadlineOpenYd = cfg.field.lengthYd;
             cfg.bots.openYd = cfg.field.lengthYd;
+            cfg.features["ratings"] = false;   // the QB's choice, not the rush: with ratings on, the quicker LBs sack him in his drop
             var w = Snap(cfg, "slants", "cover3");
             var qb = LivePlay.Qb(w);
             float deepest = float.MinValue;
