@@ -10,7 +10,7 @@ namespace PocketFootball.View
     // with their numbers, staff in caps, a ref, coolers, tents behind). Chunky goal posts on both end lines.
     // Orange down markers on both sidelines. FEATURES.cheerleaders (NO_CHEERLEADERS=1): each team's cheer squad in
     // front of its half of the far sideline, Kenny's rigged cheerleader in the team's colours, cheering together in
-    // stepped poses. FEATURES.refModel (NO_REFMODEL=1): the sideline refs wear Kenny's rigged referee. Every number is
+    // stepped poses. FEATURES.refModel (NO_REF_MODEL=1): the sideline refs wear Kenny's rigged referee. Every number is
     // in game.json "stadium". Built once from code, seeded (the same stadium every run).
     //
     // The crowd: every fan is a flat card (shirt, head, cap, arms, sometimes a sign). The stands are cut into slices;
@@ -330,7 +330,7 @@ namespace PocketFootball.View
             Rand(); Rand(); Rand();   // (what the code-built player drew: number, build, skin; the rest of the seeded layout stays put)
         }
 
-        // A ref on the sideline. FEATURES.refModel (NO_REFMODEL=1): Kenny's rigged referee (stadium.refModel), standing,
+        // A ref on the sideline. FEATURES.refModel (NO_REF_MODEL=1): Kenny's rigged referee (stadium.refModel), standing,
         // baked still; otherwise, or if the model is missing, the code-built person in stripes.
         void Referee(Vector3 at, float yaw, float scale)
         {

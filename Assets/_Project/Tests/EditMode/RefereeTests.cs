@@ -6,7 +6,7 @@ using UnityEngine;
 namespace PocketFootball.Tests.EditMode
 {
     // FEATURES.refModel (Stadium.cs): the sideline refs wear Kenny's rigged referee (striped shirt, whistle, flag),
-    // standing still; NO_REFMODEL=1 brings back the code-built person in stripes.
+    // standing still; NO_REF_MODEL=1 brings back the code-built person in stripes.
     public sealed class RefereeTests
     {
         [Test]
@@ -14,8 +14,8 @@ namespace PocketFootball.Tests.EditMode
         {
             var cfg = ConfigTests.Load();
             Assert.IsTrue(cfg.Feature("refModel"), "FEATURES.refModel is on in game.json");
-            Assert.AreEqual("NO_REFMODEL", ConfigLoader.EnvName("refModel"));
-            ConfigLoader.ApplyEnvOverrides(cfg, k => k == "NO_REFMODEL" ? "1" : null);
+            Assert.AreEqual("NO_REF_MODEL", ConfigLoader.EnvName("refModel"));
+            ConfigLoader.ApplyEnvOverrides(cfg, k => k == "NO_REF_MODEL" ? "1" : null);
             Assert.IsFalse(cfg.Feature("refModel"));
         }
 
@@ -52,8 +52,18 @@ namespace PocketFootball.Tests.EditMode
                 Assert.Greater(head.position.y, hips.position.y, "standing up");
                 Assert.Greater(hips.position.y, footL.position.y);
                 Assert.Less(handL.position.y, head.position.y, "arms down at his sides, not a T-pose");
-                var b = smr.bounds;
-                Assert.That(b.size.y, Is.InRange(0.8f * cfg.view.playerHeightM, 1.2f * cfg.view.playerHeightM), "player height");
+                // (smr.bounds is padded for dives and falls: measure the posed mesh itself)
+                var baked = new Mesh();
+                smr.BakeMesh(baked, true);
+                float lo = float.MaxValue, hi = float.MinValue;
+                foreach (var v in baked.vertices)
+                {
+                    float y = smr.transform.TransformPoint(v).y;
+                    lo = Mathf.Min(lo, y); hi = Mathf.Max(hi, y);
+                }
+                Object.DestroyImmediate(baked);
+                Assert.That(hi - lo, Is.InRange(0.8f * cfg.view.playerHeightM, 1.2f * cfg.view.playerHeightM), "player height");
+                Assert.That(lo, Is.InRange(-0.05f, 0.05f), "feet on the grass");
             }
             finally { Object.DestroyImmediate(fig.gameObject); }
         }
