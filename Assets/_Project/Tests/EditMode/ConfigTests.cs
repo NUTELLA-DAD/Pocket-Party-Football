@@ -107,5 +107,17 @@ namespace PocketFootball.Tests.EditMode
             Load().teams[0].ModelFor("CB", true, out m, out _);
             Assert.AreEqual(Load().teams[0].model, m, "defensive backs keep the team's model");
         }
+
+        [Test]
+        public void KickersWearTheirOwnModel()
+        {
+            Load().teams[0].ModelFor("K", true, out string m, out string tex);
+            Assert.AreEqual("Models/Kicker/Kicker_Rigged", m);
+            Assert.AreEqual("Models/Kicker/Kicker_BaseColor", tex, "the Chiefs' kicker wears the model's own colours");
+            Load().teams[1].ModelFor("K", true, out m, out tex);
+            Assert.AreEqual("Models/Kicker/Kicker_Rigged", m);
+            Assert.AreEqual("Models/Kicker/KickerRR_BaseColor", tex, "the Roughriders' kicker wears the green recolour");
+            Assert.AreEqual("NO_KICKER_MODEL", ConfigLoader.EnvName("kickerModel"));
+        }
     }
 }

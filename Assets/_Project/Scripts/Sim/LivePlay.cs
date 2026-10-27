@@ -120,6 +120,7 @@ namespace PocketFootball.Sim
             float odds = c.tackleBase + speed * c.tackleSpeedBonus;
             // from behind: the carrier runs away from the tackler
             if ((carrier.X - tackler.X) * carrier.VX + (carrier.Z - tackler.Z) * carrier.VZ > 0f) odds += c.tackleFromBehindBonus;
+            odds += Ratings.TackleBonus(w, tackler, carrier);   // FEATURES.ratings: a big man brings a small one down
             odds = CarrierMoves.TackleOdds(w, tackler, carrier, odds);   // WS-04
             if (w.Rng.Value() < odds)
             {
@@ -171,7 +172,7 @@ namespace PocketFootball.Sim
                 {
                     w.CatchTried.Add(near.Slot);
                     bool offense = near.Team == w.Offense;
-                    if (w.Rng.Value() < Receiving.Chance(w, near, offense ? c.catchChanceOffense : c.catchChanceDefense))   // WS-05: CATCH timing
+                    if (w.Rng.Value() < Receiving.Chance(w, near, Ratings.Catch(w, near, offense ? c.catchChanceOffense : c.catchChanceDefense)))   // WS-05: CATCH timing
                     {
                         w.Ball.GiveTo(near, w.Cfg.ball);
                         w.Events.Push(w, offense ? EventKind.Catch : EventKind.Interception, near, qb);
