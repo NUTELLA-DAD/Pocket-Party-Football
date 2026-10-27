@@ -213,6 +213,15 @@ namespace PocketFootball.View
             Point(1, fig.ToeR);
         }
 
+        // The model's knee and elbow bends as drawn (degrees between the two bones, after every fix), for the motion
+        // reel's CSV: to check the figure's bends reach the model.
+        public void Bends(out float kneeL, out float kneeR, out float elbowL, out float elbowR)
+        {
+            float At(Transform a, Transform b, Transform c) => Vector3.Angle(b.position - a.position, c.position - b.position);
+            kneeL = At(to[7], to[8], feet[0]); kneeR = At(to[9], to[10], feet[1]);
+            elbowL = At(to[3], to[4], handL); elbowR = At(to[5], to[6], handR);
+        }
+
         // The stride's push-off and heel strike: the foot pitched deg more (- = toes down), about its own crosswise axis.
         void Point(int i, float deg)
         {

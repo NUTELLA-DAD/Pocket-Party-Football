@@ -367,6 +367,8 @@ namespace PocketFootball.View
         }
 
         public PoseKind Current => current;
+        // The pose's knee and elbow bends now (degrees, + = bent), for the motion reel's CSV.
+        public void Bends(out float kneeL, out float kneeR, out float elbowL, out float elbowR) { kneeL = -cur.shinL; kneeR = -cur.shinR; elbowL = cur.foreL; elbowR = cur.foreR; }
         public int CurrentFrame => currentFrame;
 
         // A football: brown, pointed, white laces. Rig units (cm), long axis along +z.
