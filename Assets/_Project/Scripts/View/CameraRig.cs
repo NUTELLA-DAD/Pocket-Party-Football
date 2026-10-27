@@ -23,6 +23,7 @@ namespace PocketFootball.View
             rig.Cam.tag = "MainCamera";
             rig.Cam.clearFlags = CameraClearFlags.SolidColor;
             rig.Cam.backgroundColor = Colors.Hex(cfg.field.skyColor);
+            SkyView.UseSkyBox(cfg, rig.Cam);   // the sunset sky box (FEATURES.sunsetSky)
             var extra = go.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
             extra.renderPostProcessing = true;   // the colour grade (ProjectSetup.LookVolume)
             extra.antialiasing = UnityEngine.Rendering.Universal.AntialiasingMode.SubpixelMorphologicalAntiAliasing;

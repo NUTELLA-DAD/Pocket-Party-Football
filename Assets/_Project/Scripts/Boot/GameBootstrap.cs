@@ -80,6 +80,7 @@ namespace PocketFootball.Boot
             sun.color = new Color(1f, 0.93f, 0.8f);   // late-afternoon warmth (concept 04)
             sun.shadows = LightShadows.Hard;
             go.transform.rotation = Quaternion.Euler(42f, 215f, 0f);   // from behind the far right: shadows fall toward the camera, to the left
+            if (SkyView.Apply(Config, sun)) return;   // the sunset: a low warm sun, the sky box, haze (FEATURES.sunsetSky)
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
             RenderSettings.ambientLight = new Color(0.55f, 0.58f, 0.62f);
         }

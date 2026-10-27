@@ -28,8 +28,9 @@ G block (hold). TAB next drill (SHIFT+TAB back), R run it again, V hitboxes on/o
 ## The camera (FEATURES.labFreeCam, NO_LAB_FREE_CAM=1 turns it off)
 
 The lab starts on the TV camera. The mouse takes over: drag to turn around the field, right-drag (or middle-drag) to
-slide, the wheel to come closer or go further. F1-F5 jump to set angles (`camera.free.presets` in game.json): F1 the
-TV camera, F2 the same view with a normal 35° lens, F3 low on the sideline, F4 behind the offense, F5 straight down.
+slide, the wheel to come closer or go further. F1-F7 jump to set angles (`camera.free.presets` in game.json): F1 the
+TV camera, F2 the same view with a normal 35° lens, F3 low on the sideline, F4 behind the offense, F5 straight down,
+F6 high over the whole stadium, F7 low on the grass looking into the sunset.
 `,` and `.` change the lens (longer = flatter, wider = deeper) while keeping the same framing, so you can see what
 the lens alone does. C goes back to the TV camera, which follows the ball again. The panel shows the angle and lens.
 `-lab-cam <n>` starts on preset n (screenshots). Code: `Scripts/Boot/LabCamera.cs`, `Scripts/View/OrbitCamera.cs`

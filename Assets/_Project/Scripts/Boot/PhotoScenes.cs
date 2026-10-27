@@ -37,6 +37,8 @@ namespace PocketFootball.Boot
                 case "concept01": return Concept01(w, view, rig);
                 case "concept04": return Concept04(w, view, rig);
                 case "moves": return MovesLineup(w, view, rig);
+                case "stadium": return StadiumShot(w, view, rig, new Vector3(-40f, 45f, -175f), new Vector3(0f, 25f, 0f), 50f);
+                case "sunset": return StadiumShot(w, view, rig, new Vector3(-25f, 3f, -18f), new Vector3(3.7f, 13.6f, 23f), 55f);
             }
             Debug.LogWarning("[photo] unknown scene " + name);
             return null;
@@ -54,6 +56,17 @@ namespace PocketFootball.Boot
             if (p == null) return;
             p.X = x; p.Z = z; p.VX = vx; p.VZ = vz;
             view.PoseOverride[p.Slot] = pose;
+        }
+
+        // The stadium and the sunset sky (stadium.bowl, sky): concept 04's moment on the field, seen from a held camera
+        // ("stadium": from high outside the near corner; "sunset": low on the field, looking into the sun). No HUD.
+        static PhotoState StadiumShot(World w, PlayersView view, CameraRig rig, Vector3 pos, Vector3 lookAt, float fovDeg)
+        {
+            var st = Concept04(w, view, rig);
+            st.Name = pos.y > 20f ? "stadium" : "sunset";
+            st.Hud = false;
+            rig.Hold(pos, lookAt, fovDeg);
+            return st;
         }
 
         // Every move pose side by side (View/Moves.cs), for checking the look: the front row the Chiefs, the back row

@@ -161,6 +161,7 @@ namespace PocketFootball.Boot
             if (Photo == null && !Downs.On(World)) firstX = World.LineOfScrimmageX + World.Dir * cfg.downs.firstDownYd;
             marks.SetLines(World.LineOfScrimmageX, firstX);
             stadium.SetMarkers(World.LineOfScrimmageX, firstX);
+            stadium.SetScore(Photo != null ? Photo.Score : World.Score);   // the big scoreboard over the end (stadium bowl)
             humanFeet.Clear();
             foreach (var p in World.Players) if (p.Human) humanFeet.Add(new KeyValuePair<int, Vector3>(p.Slot, Players.FeetPosition(p.Slot)));
             marks.Rings(humanFeet);
