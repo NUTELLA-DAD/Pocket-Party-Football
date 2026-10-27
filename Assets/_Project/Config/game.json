@@ -773,6 +773,24 @@
       "chime": 0.5
     }
   },
+  "ratings": {
+    "neutral": 5,
+    "speedPerPoint": 0.02,
+    "blockPerPoint": 0.06,
+    "tacklePerPoint": 0.02,
+    "handsPerPoint": 0.02,
+    "positions": {
+      "QB": { "speed": 5, "size": 4, "hands": 6 },
+      "RB": { "speed": 10, "size": 5, "hands": 5 },
+      "WR": { "speed": 8, "size": 3, "hands": 10 },
+      "TE": { "speed": 6, "size": 6, "hands": 7 },
+      "OL": { "speed": 2, "size": 10, "hands": 2 },
+      "DL": { "speed": 3, "size": 9, "hands": 2 },
+      "LB": { "speed": 7, "size": 7, "hands": 4 },
+      "CB": { "speed": 9, "size": 3, "hands": 6 },
+      "S": { "speed": 8, "size": 5, "hands": 5 }
+    }
+  },
   "sky": {
     "sunElevDeg": 26,
     "sunYawDeg": 35,
@@ -848,6 +866,7 @@
     "ballSpin": true,
     "stadiumBowl": true,
     "sunsetSky": true,
-    "refModel": true
+    "refModel": true,
+    "ratings": true
   }
 }
