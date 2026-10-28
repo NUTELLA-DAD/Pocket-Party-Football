@@ -90,6 +90,14 @@ namespace PocketFootball.Boot
             if (!args.LookX.HasValue) rig.SetLookAtX(h.World.LineOfScrimmageX);
             h.holdCamera = args.LookX.HasValue;
             if (args.ThrowDemo.HasValue) h.World.Throw(h.World.Ball.X + h.World.Dir * args.ThrowDemo.Value, h.World.Ball.Z, true);
+            if (args.FieldGoalDemo && Kicking.On(h.World))
+            {
+                var fw = h.World;
+                fw.Kick.Opened = true;   // (no opening kickoff)
+                fw.LineOfScrimmageX = fw.Dir * (cfg.field.GoalLineX - 25f);
+                fw.Down = cfg.downs.downsToGain;
+                fw.FirstDownX = fw.LineOfScrimmageX + fw.Dir * cfg.downs.firstDownYd;
+            }
             for (int i = 0; i < args.WarmupTicks; i++) h.StepOnce();
             if (args.CalledDemo)
             {
@@ -297,6 +305,7 @@ namespace PocketFootball.Boot
         // TV sees it go through or miss) the camera eases round behind the kicker, looking down the field at the
         // posts; then it eases back to the sideline. Not while a replay is on.
         float kickCamWeight, kickCamUntil;
+        bool kickCamSeen;
         Vector3 kickCamPos, kickCamLook;
         void KickCam(float dt)
         {
@@ -315,6 +324,8 @@ namespace PocketFootball.Boot
                 want = true;
             }
             else if (fg && World.Phase == Phase.Whistle && Time.unscaledTime < kickCamUntil) want = true;
+            if (!kickCamSeen) kickCamWeight = want ? 1f : 0f;   // (the first frame: already there, like camX)
+            kickCamSeen = true;
             kickCamWeight += ((want ? 1f : 0f) - kickCamWeight) * (1f - Mathf.Exp(-dt * kc.rate));
             if (kickCamWeight < 0.001f) kickCamWeight = 0f;
             rig.SetKickView(kickCamWeight, kickCamPos, kickCamLook, kc.fovDeg);
