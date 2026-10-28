@@ -46,12 +46,119 @@ CBUFFER_START(UnityPerMaterial)
     half _OutlineInner;
     float _OutlineZBias;
     half _DropShadow;
+    // FEATURES.jerseyNumbers / FEATURES.eyesLook (View/JerseyMarks.cs): the players' own numbers and moving eyes
+    half _Marks;
+    float4 _NumberDigits;   // the tens (or only) digit, the ones digit, how many digits (0: no number)
+    half4 _NumberFill;
+    half4 _NumberEdge;
+    float4 _NumberStyle;    // pen half-width, edge width, gap between the digits (glyph units)
+    float4 _EyeLook;        // the iris's offset (iris radii: x to his left, y up), the lid's close (0..1), mood (+1 happy, -1 wince)
+    half4 _IrisColor;
+    half4 _LidColor;
+    // FEATURES.grassStains (View/Reactions.cs): how much grass he has on him, the stains' scale and opacity, their colours
+    float4 _Stain;
+    float4 _StainLook;
+    half4 _StainGrass;
+    half4 _StainDirt;
 CBUFFER_END
+TEXTURE2D(_MarksTex); SAMPLER(sampler_MarksTex);
+TEXTURE2D(_DigitsTex); SAMPLER(sampler_DigitsTex);
+
+// ---- the marks map (tools/rig/marks.py): where a number or an eye goes on the model's colour map ----
+//   R, G = the texel's spot in its zone (number: -1.5..1.5 number heights; eye: -3..3 iris radii from the iris at rest),
+//   B = 0.5 number / 1 eye, A = inside the zone (an eye: inside its opening).
+// The digits (JerseyMarks.Digits): ten cells, each the glyph box (1 x 1.4) with 0.4 round it, the distance to the
+// glyph's centre line in R (0..0.6 glyph units).
+float MarkDigit(float digit, float gx, float gy)
+{
+    if (gx < -0.35 || gx > 1.35 || gy < -0.35 || gy > 1.75) return 9;
+    float2 at = float2((digit + (gx + 0.4) / 1.8) / 10.0, (gy + 0.4) / 2.2);
+    return SAMPLE_TEXTURE2D_LOD(_DigitsTex, sampler_DigitsTex, at, 0).r * 0.6;
+}
+
+half3 MarkNumber(half3 col, float2 q, float aa)
+{
+    float n = _NumberDigits.z;
+    if (n < 0.5) return col;
+    const float K = 1.0 / 1.4;   // a glyph's width in number heights
+    float gap = _NumberStyle.z;
+    float x = q.x + (n * K + (n - 1) * gap) * 0.5;
+    float gy = (q.y + 0.5) / K;
+    float d = MarkDigit(_NumberDigits.x, x / K, gy);
+    if (n > 1.5) d = min(d, MarkDigit(_NumberDigits.y, (x - K - gap) / K, gy));
+    float a = aa / K, pen = _NumberStyle.x;
+    col = lerp(col, _NumberEdge.rgb, saturate((pen + _NumberStyle.y - d) / a + 0.5));
+    return lerp(col, _NumberFill.rgb, saturate((pen - d) / a + 0.5));
+}
+
+half3 MarkEye(half3 col, float2 e, float aa)
+{
+    float2 p = e - _EyeLook.xy;
+    float r = length(p);
+    // the iris: darker under the lid, lighter low down, a dark rim; the pupil; two catch-lights (fixed, like painted ones)
+    half3 iris = _IrisColor.rgb * lerp(1.25, 0.55, saturate(p.y * 0.5 + 0.5));
+    iris = lerp(iris, _IrisColor.rgb * 0.35, saturate((r - 0.82) / aa + 0.5));
+    iris = lerp(iris, _IrisColor.rgb * 0.08, saturate((0.46 - r) / aa + 0.5));
+    iris = lerp(iris, half3(1, 1, 1), saturate((0.22 - length(p - float2(-0.32, 0.36))) / aa + 0.5));
+    iris = lerp(iris, half3(1, 1, 1), saturate((0.09 - length(p - float2(0.3, -0.36))) / aa + 0.5));
+    col = lerp(col, iris, saturate((1.0 - r) / aa + 0.5));
+    // a blink: the lid comes down from the top of the opening, a dark lash line along its edge
+    float lid = 2.0 - _EyeLook.z * 4.2;
+    // a reaction (FEATURES.faceReactions): happy, the lower lid rises in an arch (a squint); a wince, both lids meet in a
+    // shallow V, a dark lash line where they meet
+    float mood = _EyeLook.w;
+    float low = -2.2;
+    if (mood > 0.5) { lid = min(lid, 1.5); low = 0.45 - 0.3 * e.x * e.x; }
+    if (mood < -0.5) { lid = min(lid, -0.05 + 0.3 * abs(e.x)); low = lid - 0.22; }
+    col = lerp(col, _IrisColor.rgb * 0.15, step(0.01, _EyeLook.z + abs(mood)) * saturate((e.y - (lid - 0.22)) / aa + 0.5));
+    col = lerp(col, _IrisColor.rgb * 0.15, step(0.5, mood) * saturate(((low + 0.2) - e.y) / aa + 0.5));
+    col = lerp(col, _LidColor.rgb, saturate((low - e.y) / aa + 0.5) * step(0.5, abs(mood)));
+    return lerp(col, _LidColor.rgb, saturate((e.y - lid) / aa + 0.5));
+}
+
+// FEATURES.grassStains: blotches of grass and dirt where the marks map allows them (outside every number and eye zone,
+// its R: legs and knees most, the helmet and hands not at all), more of them the more he has been down
+float StainHash(float2 p)
+{
+    float3 q = frac(float3(p.xyx) * 0.1031);
+    q += dot(q, q.yzx + 33.33);
+    return frac((q.x + q.y) * q.z);
+}
+float StainNoise(float2 p)
+{
+    float2 i = floor(p), f = frac(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return lerp(lerp(StainHash(i), StainHash(i + float2(1, 0)), f.x), lerp(StainHash(i + float2(0, 1)), StainHash(i + float2(1, 1)), f.x), f.y);
+}
+half3 MarkStain(half3 col, float2 uv, float n, float aa, float allow)
+{
+    float sc = _StainLook.x;
+    float cover = _Stain.x * allow;
+    float k = saturate((cover * 0.75 - n) / aa + 0.5) * step(0.01, cover);
+    half3 tint = lerp(_StainGrass.rgb, _StainDirt.rgb, StainNoise(uv * sc * 0.5 + 5.0));
+    return lerp(col, col * tint * 1.5, k * _StainLook.y);
+}
+
+half3 Marks(half3 col, float2 uv)
+{
+    half3 outCol = col;
+    UNITY_BRANCH if (_Marks > 0.5)
+    {
+        half4 m = SAMPLE_TEXTURE2D(_MarksTex, sampler_MarksTex, uv);
+        float2 q = (m.rg - 0.5) * 3.0;
+        float aa = clamp(fwidth(q.x) + fwidth(q.y), 1e-3, 0.05);   // (worked out before any branch on the texel)
+        float sn = StainNoise(uv * _StainLook.x) * 0.65 + StainNoise(uv * _StainLook.x * 2.3 + 17.0) * 0.35;
+        float saa = max(fwidth(sn), 1e-3);
+        if (m.a >= 0.5) outCol = m.b < 0.75 ? MarkNumber(col, q, aa) : MarkEye(col, q * 2.0, aa * 2.0);
+        else outCol = MarkStain(col, uv, sn, saa, m.r * step(m.b, 0.25));
+    }
+    return outCol;
+}
 
 half3 ToonAlbedo(half4 vcol, float2 uv)
 {
     half4 tex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv);
-    return lerp(_PlayerColor.rgb, tex.rgb, tex.a) * vcol.rgb * _BaseColor.rgb;
+    return lerp(_PlayerColor.rgb, Marks(tex.rgb, uv), tex.a) * vcol.rgb * _BaseColor.rgb;
 }
 half FlagShiny(half a) { return (a > 0.375 && a < 0.875) ? 1 : 0; }
 half FlagOutline(half a) { return a > 0.625 ? 1 : 0; }

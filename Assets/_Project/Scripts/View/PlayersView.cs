@@ -24,6 +24,7 @@ namespace PocketFootball.View
         readonly Transform root;
         readonly Dictionary<int, FootballFigure> bodies = new Dictionary<int, FootballFigure>();
         readonly Dictionary<int, string> kitOf = new Dictionary<int, string>();
+        readonly Dictionary<int, ModelSkin> skins = new Dictionary<int, ModelSkin>();
         readonly Dictionary<int, Vector2> prev = new Dictionary<int, Vector2>();
         readonly Dictionary<int, float> travelled = new Dictionary<int, float>();
         readonly Dictionary<int, float> stridePhase = new Dictionary<int, float>();
@@ -216,6 +217,7 @@ namespace PocketFootball.View
                 else if (speed > 0.5f) fig.Pose(carrier ? FootballFigure.PoseKind.Carry : FootballFigure.PoseKind.Run, frame);
                 else fig.Pose(p.Pos == "OL" || p.Pos == "DL" ? FootballFigure.PoseKind.Stance : FootballFigure.PoseKind.Ready, 0);
             }
+            Eyes(w);
             // the ball: in the carrier's right hand, else where the sim has it, its long axis along its flight
             var b = w.Ball;
             Vector3 bnow = new Vector3(b.X, b.Y, b.Z);
@@ -261,7 +263,7 @@ namespace PocketFootball.View
             if (inAir) ballShadow.localPosition = new Vector3(bat.x * yd, 0.02f, bat.z * yd);
             gone.Clear();
             foreach (var kv in bodies) if (w.Find(kv.Key) == null) gone.Add(kv.Key);
-            foreach (int slot in gone) { Object.Destroy(bodies[slot].gameObject); bodies.Remove(slot); kitOf.Remove(slot); carry.Remove(slot); carryTick.Remove(slot); stridePhase.Remove(slot); strideLast.Remove(slot); strideShown.Remove(slot); downStart.Remove(slot); downFrom.Remove(slot); }
+            foreach (int slot in gone) { Object.Destroy(bodies[slot].gameObject); bodies.Remove(slot); kitOf.Remove(slot); skins.Remove(slot); carry.Remove(slot); carryTick.Remove(slot); stridePhase.Remove(slot); strideLast.Remove(slot); strideShown.Remove(slot); downStart.Remove(slot); downFrom.Remove(slot); }
         }
 
         // A tackle that meets (Moves.TackleContact): the tackler goes down against the carrier, facing him; the carrier
@@ -388,6 +390,38 @@ namespace PocketFootball.View
             if (k != null) { x = k.X; z = k.Z; y = w.Cfg.ball.carryHeightYd; }
         }
 
+        // FEATURES.eyesLook: each man's eyes follow the ball from where his head points now (the carrier looks
+        // where he's running), glance aside now and then and blink, in key frames (Alive.Eyes).
+        // Where each man's eyes look (FEATURES.eyesLook), his face after a big play (FEATURES.faceReactions) and the grass
+        // on his kit (FEATURES.grassStains), onto his renderer.
+        readonly Reactions reactions = new Reactions();
+        public Reactions Reactions => reactions;
+
+        void Eyes(World w)
+        {
+            reactions.Observe(w);
+            if (!cfg.Feature("eyesLook") && !cfg.Feature("faceReactions") && !cfg.Feature("grassStains")) return;
+            float yd = cfg.field.yardM;
+            BallAt(w, out float bx, out float by, out float bz);
+            var aim = root.TransformPoint(new Vector3(bx * yd, by * yd, bz * yd));
+            foreach (var p in w.Players)
+            {
+                if (!bodies.TryGetValue(p.Slot, out var fig) || !skins.TryGetValue(p.Slot, out var skin) || skin == null) continue;
+                float yaw = 0f, up = 0f;
+                bool carrier = w.Ball.State == BallState.Held && w.Ball.Carrier == p.Slot;
+                // the head's own frame: it faces its +x, its left is +z
+                var d = fig.Head.InverseTransformDirection(aim - fig.Head.position);
+                if (!carrier && d.sqrMagnitude > 1e-4f)
+                {
+                    yaw = Mathf.Atan2(d.z, d.x) * Mathf.Rad2Deg;
+                    up = Mathf.Atan2(d.y, new Vector2(d.x, d.z).magnitude) * Mathf.Rad2Deg;
+                }
+                Alive.Eyes(cfg, Alive.Key(cfg, w.Tick, p.Slot), p.Slot, yaw, up, out float x, out float y, out float blink);
+                skin.Eyes(x, y, blink, reactions.Mood(w, p.Slot));
+                skin.Stain(reactions.Stain(w, p.Slot));
+            }
+        }
+
         public Vector3 HeadPosition(int slot) =>
             bodies.TryGetValue(slot, out var f) ? f.Head.position + Vector3.up * cfg.view.playerHeightM * 0.22f : Vector3.zero;
 
@@ -403,6 +437,8 @@ namespace PocketFootball.View
             var team = cfg.teams[Mathf.Clamp(p.Team, 0, cfg.teams.Count - 1)];
             fig = FootballFigure.Create(root, "Player " + p.Slot, cfg.view.playerHeightM);
             ModelSkin.Wear(fig, team, pos, cfg, mat);   // the team's (or the position's) rigged model over the pose rig
+            JerseyMarks.SetNumber(fig.gameObject, cfg, p.Number);   // FEATURES.jerseyNumbers: his own number
+            skins[p.Slot] = fig.GetComponentInChildren<ModelSkin>();
             fig.SwayCm = cfg.anim.idleSwayCm; fig.RollDeg = cfg.anim.idleRollDeg; fig.KneeDeg = cfg.anim.idleKneeDeg;
             bodies[p.Slot] = fig;
             kitOf[p.Slot] = kit;

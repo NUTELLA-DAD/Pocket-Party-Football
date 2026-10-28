@@ -52,13 +52,18 @@ namespace PocketFootball.View
         bool[] fingerLeft;
         float[] curlOpen, curlRelaxed, curlShut;
 
-        bool fixArms = true;   // the helmeted players' arm fixes (Adapt, Splay); the cheerleaders have no helmet
+        bool fixArms = true;
+        SkinnedMeshRenderer body;
+
+        // FEATURES.eyesLook: where his eyes look (iris radii: x to his left, y up) and how shut his lids are (0..1)
+        public void Eyes(float x, float y, float blink, float mood = 0f) => JerseyMarks.SetEyes(body, x, y, blink, mood);
+        public void Stain(float amount) => JerseyMarks.SetStain(body, amount);   // the helmeted players' arm fixes (Adapt, Splay); the cheerleaders have no helmet
 
         public static bool Wear(FootballFigure fig, TeamConfig team, string pos, GameConfig cfg, Material kit)
         {
             team.ModelFor(pos, cfg.Feature("posModels"), out string model, out string modelTexture, out float bend);
             if (string.IsNullOrEmpty(model)) { Debug.LogError("[model] team " + team.@short + " has no \"model\" in game.json; its players don't show"); return false; }
-            var skin = Wear(fig, model, modelTexture, kit, true, cfg.Feature("narrowLegs"));
+            var skin = Wear(fig, model, modelTexture, kit, true, cfg.Feature("narrowLegs"), cfg, team);
             if (skin != null && cfg.Feature("handCurl")) skin.Hands(cfg.anim);
             if (skin != null) { var legs = fig.Legs; legs.Bend = bend; fig.Legs = legs; }
             return skin != null;
@@ -66,8 +71,10 @@ namespace PocketFootball.View
 
         // Any rigged Humanoid model (Resources path) and colour map on the figure; null if it's missing (logged).
         // fixArms: the arm fixes for a model with a big helmet and short arms. narrowLegs (FEATURES.narrowLegs,
-        // NO_NARROW_LEGS=1): the legs brought in under the hips (LegSplayDeg).
-        public static ModelSkin Wear(FootballFigure fig, string model, string modelTexture, Material kit, bool fixArms, bool narrowLegs = true)
+        // NO_NARROW_LEGS=1): the legs brought in under the hips (LegSplayDeg). cfg and team: the team's jersey numbers
+        // and the model's eyes (JerseyMarks), when the model has a marks map.
+        public static ModelSkin Wear(FootballFigure fig, string model, string modelTexture, Material kit, bool fixArms, bool narrowLegs = true,
+            GameConfig cfg = null, TeamConfig team = null)
         {
             if (string.IsNullOrEmpty(model)) return null;
             if (!prefabs.TryGetValue(model, out var prefab))
@@ -169,6 +176,7 @@ namespace PocketFootball.View
 
             var skin = inst.AddComponent<ModelSkin>();
             skin.fig = fig;
+            skin.body = smr;
             skin.fixArms = fixArms;
             skin.from = new[] { fig.Hips, fig.Torso, fig.Head, fig.ArmL, fig.ForeL, fig.ArmR, fig.ForeR, fig.ThighL, fig.ShinL, fig.ThighR, fig.ShinR };
             skin.to = new[]
@@ -199,7 +207,9 @@ namespace PocketFootball.View
             fig.HandL = Glove(b["LeftHand"], b["LeftLowerArm"], fig.HandL.rotation, palm["Left"]);
             fig.HandR = Glove(b["RightHand"], b["RightLowerArm"], fig.HandR.rotation, palm["Right"]);
 
+            bool marks = cfg != null && JerseyMarks.On(cfg) && cfg.marks.For(model) != null;
             string key = model + "/" + modelTexture + "/" + kit.GetInstanceID();   // (two teams, or two positions, can share a model)
+            if (marks) key += "/" + team?.@short + "/" + cfg.Feature("jerseyNumbers");
             if (!mats.TryGetValue(key, out var m))
             {
                 var tex = string.IsNullOrEmpty(modelTexture) ? null : Resources.Load<Texture2D>(modelTexture);
@@ -207,6 +217,7 @@ namespace PocketFootball.View
                 mats[key] = m = new Material(kit) { name = "Toon (" + prefab.name + ")" };
                 if (tex != null) m.SetTexture("_MainTex", tex);
                 m.SetColor("_PlayerColor", Color.white);
+                if (marks) JerseyMarks.Dress(m, cfg, team, model);
             }
             smr.sharedMaterial = m;
             smr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;

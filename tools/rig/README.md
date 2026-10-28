@@ -12,6 +12,12 @@ Blender as a Python module (`pip install bpy`), run with `python script.py -- ar
   squash/stretch triangle count. Env: ADAPT=1 FOOT_LEVEL=0.7 PALM_ALONG=0.55 PALM_IN=<0.45*forearm m> mirror the
   ModelSkin.cs arm/feet/ball fixes; CLOSE=1, LEGS=1, HAND=1 are close-up cameras; NORENDER=1 only scores.
 - `compare.py -- out.png dirA dirB view,view Pose,Pose`: side-by-side sheet for a reviewer.
+- Re-running rigfix on a finished model (after handfix): `"jointsFromRig": true` leaves the skeleton where it is and
+  reads the joints from its bones; `"keep": ["Hand","Thumb","ThumbTip","Fingers","FingersTip"]` keeps every hand
+  and finger vertex's old weights; `"newAbove": [z0, z1]` gives the new weights only above z1 (old below z0, blended
+  between). `soften/<Model>.json` are the sets that softened the shoulders and armpits of the Linebacker, QB, WR, TE and
+  Kicker (wider smoothing, a wider clavicle blend): arms-up poses lost about a third of their stretched triangles.
+  Chiefs #24 kept its weights (they already scored better).
 
 For another model (e.g. the linebacker): copy chiefs24.json, set the joints from slices of that mesh (shoulder at the
 sleeve/pad centre, elbow mid bare arm, wrist at the wristband, knee at the pants hem, ankle inside the shoe top), and
@@ -38,3 +44,16 @@ its right hand sits further back than the left).
 `gauntlet.py` env: `FINGERS=fingers,tips,thumb,thumbTip` bends those bones toward the palm (degrees, e.g.
 `45,40,25,15` for a hand closing on the ball); `HANDCAM=Left|Right` renders close-ups of that hand.
 The Cheerleader (pom-poms) has no finger bones.
+
+## Jersey numbers and eyes (`uvmap.py`, `marks.py`, `marks/*.json`)
+FEATURES.jerseyNumbers / FEATURES.eyesLook: the game draws every player's own number and his moving irises in the toon
+shader, so each model's baked number and irises are painted out of its colour maps and a marks map tells the shader
+where they go.
+- `python3.11 uvmap.py -- <Model_Rigged.fbx> <out.npz>`: the rest-pose point and normal under every texel of the
+  colour map (Blender space: +X the model's left, -Y forward, Z up).
+- `python3 marks.py <out.npz> marks/<Model>.json Assets/_Project/Resources/Models`: writes `<Model>_Marks.png` and
+  paints the old numbers and irises out of every colour map listed (in place, so run it on the original maps once).
+  Each zone in the JSON is a plane on the model: `c` centre, `n` facing, `up`, `w`/`h` half box, `depth`, `size`
+  (number height or iris radius, metres); an eye's `iris` (its centre on the plane) and `poly` (its opening, drawn
+  by hand from a raster of the zone). The first zone that claims a texel keeps it (chest and back before shoulders).
+  It prints each map's lid and iris colours for game.json "marks".

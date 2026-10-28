@@ -20,6 +20,17 @@ co = np.array([ob.matrix_world @ v.co for v in me.vertices])
 nv = len(co)
 
 # ---- 1. joints ----
+# "jointsFromRig": leave the skeleton where it is (a model already tuned and given finger bones) and read the joints
+# the weights blend at from its bones; the JSON then gives only what bones don't say (armpit, torso edge, pad top)
+FROM_RIG = P.get('jointsFromRig', False)
+if FROM_RIG:
+    hl = {b.name: ao.matrix_world @ b.head_local for b in ao.data.bones}
+    for k, (bn, ax_) in {'hipZ': ('Hips', 2), 'spineZ': ('Spine', 2), 'chestZ': ('Chest', 2),
+                         'upperChestZ': ('UpperChest', 2), 'neckZ': ('Neck', 2), 'clavicleX': ('LeftShoulder', 0),
+                         'shoulderX': ('LeftUpperArm', 0), 'elbowX': ('LeftLowerArm', 0), 'wristX': ('LeftHand', 0),
+                         'kneeZ': ('LeftLowerLeg', 2), 'ankleZ': ('LeftFoot', 2), 'toeY': ('LeftToes', 1)}.items():
+        J[k] = float(hl[bn][ax_])
+    print('RIGFIX joints from the rig', {k: round(v, 3) for k, v in J.items()})
 def V(*p): return Vector(p)
 ay, sy = J.get('armY', 0.02), J['shoulderX']
 B = {
@@ -46,9 +57,9 @@ bpy.ops.object.mode_set(mode='EDIT')
 inv = ao.matrix_world.inverted()
 eb = ao.data.edit_bones
 for b in eb: b.use_connect = False
-for n, (h, t) in B.items():
+for n, (h, t) in ({} if FROM_RIG else B).items():
     e = eb[n]; e.head = inv @ h; e.tail = inv @ t
-for n in B:
+for n in ({} if FROM_RIG else B):
     e = eb[n]
     e.align_roll(inv.to_3x3() @ (Vector((0, 0, 1)) if ('Arm' in n or 'Hand' in n or 'Shoulder' in n) else Vector((0, -1, 0))))
 bpy.ops.object.mode_set(mode='OBJECT')
@@ -74,6 +85,14 @@ for v in me.vertices:
     for g in v.groups:
         if g.group == hg: old_head[v.index] = g.weight
 rigid = old_head > P.get('headKeep', 0.5)
+# "keep": bones whose vertices keep all their old weights (a re-run after handfix.py keeps the hands and fingers)
+old_names = [g.name for g in ob.vertex_groups]
+OLD = np.zeros((nv, len(old_names)))
+for v in me.vertices:
+    for g in v.groups: OLD[v.index, g.group] = g.weight
+keep = np.zeros(nv, bool)
+for j, n in enumerate(old_names):
+    if any(n.endswith(k) for k in P.get('keep', [])): keep |= OLD[:, j] > 1e-4
 
 bw = P['blend']
 # legs: legness fades in below the hip line; the crotch splits between the legs
@@ -127,7 +146,16 @@ if k > 0:
     for j, n in enumerate(names): W[n] = M[:, j]
 
 # write: top 4, normalised
+for n in old_names: W.setdefault(n, np.zeros(nv))
 names = list(W); M = np.stack([W[n] for n in names], 1)
+# "newAbove": [z0, z1]: only the body above z1 takes the new weights, below z0 keeps its old ones, blended between
+if 'newAbove' in P:
+    t = ss(P['newAbove'][0], P['newAbove'][1], z)[:, None]
+    O = np.zeros_like(M)
+    for j, n in enumerate(old_names): O[:, names.index(n)] = OLD[:, j]
+    M = t * M + (1 - t) * O
+M[keep] = 0
+for j, n in enumerate(old_names): M[keep, names.index(n)] = OLD[keep, j]
 M[M < 1e-3] = 0
 order = np.argsort(-M, 1)
 for i in range(nv): M[i, order[i, 4:]] = 0
@@ -137,7 +165,7 @@ for j, n in enumerate(names):
     vg = ob.vertex_groups.new(name=n)
     nz = np.where(M[:, j] > 0)[0]
     for i in nz: vg.add([int(i)], float(M[i, j]), 'REPLACE')
-print('RIGFIX unweighted', int((M.sum(1) == 0).sum()), 'rigid head', int(rigid.sum()))
+print('RIGFIX unweighted', int((M.sum(1) == 0).sum()), 'rigid head', int(rigid.sum()), 'kept', int(keep.sum()))
 
 # ---- 3. export (as the original: Unity axes, Humanoid names, no leaf bones, texture not embedded) ----
 bpy.ops.export_scene.fbx(filepath=FBX_OUT, use_selection=False, object_types={'ARMATURE', 'MESH'},

@@ -39,6 +39,9 @@ namespace PocketFootball.Boot
                 case "moves": return MovesLineup(w, view, rig);
                 case "hands": return Hands(w, view, rig, "hands", new[] { Pose.Reach, Pose.Catch, Pose.Secure, Pose.Carry });
                 case "hands2": return Hands(w, view, rig, "hands2", new[] { Pose.Throw, Pose.Run, Pose.Block, Pose.Stand });
+                case "numbers": return Numbers(w, view, rig, false);
+                case "faces": return Numbers(w, view, rig, true);
+                case "grit": return Grit(w, view, rig);
                 case "stadium": return StadiumShot(w, view, rig, new Vector3(-40f, 45f, -175f), new Vector3(0f, 25f, 0f), 50f);
                 case "sunset": return StadiumShot(w, view, rig, new Vector3(-25f, 3f, -18f), new Vector3(3.7f, 13.6f, 23f), 55f);
             }
@@ -107,6 +110,60 @@ namespace PocketFootball.Boot
             float m = w.Cfg.field.yardM;
             rig.Hold(new Vector3(cx * m, 1.3f, z * m - 9f), new Vector3(cx * m, 1.3f, z * m), 30f);
             return new PhotoState { Name = name, Hud = false, FirstDownX = -35f };
+        }
+
+        // FEATURES.jerseyNumbers / eyesLook: four of each team, every model, each with his own number (one and two
+        // digits), standing in a row on plain grass with the ball in the middle of them; "faces" is close on the middle four.
+        static PhotoState Numbers(World w, PlayersView view, CameraRig rig, bool faces)
+        {
+            const int away = 0, home = 1;
+            w.Offense = away;
+            w.Dir = 1f;
+            w.LineOfScrimmageX = -45f;
+            w.LineUp();
+            foreach (var p in w.Players) { p.X = p.Team == away ? -90f : 90f; p.Z = 0f; p.VX = 0f; p.VZ = 0f; }
+            const float cx = 22.5f, z = -6f;
+            void Cast(int team, int spot, int number, string pos, float x)
+            {
+                var p = Spot(w, team, spot);
+                if (p == null) return;
+                p.Number = number; p.Pos = pos;
+                // facing the camera (a slow step toward it turns him), or for "numbers" every other man shows his back
+                bool back = !faces && (spot + team) % 2 == 1;
+                Put(w, view, team, spot, cx + x, z, Pose.Stand, 0f, back ? 0.6f : -0.6f);
+            }
+            Cast(away, 6, 64, "OL", -4.2f);
+            Cast(away, 2, 17, "WR", -3f);
+            Cast(away, 0, 9, "QB", -1.8f);
+            Cast(away, 1, 2, "RB", -0.6f);
+            Cast(home, 1, 33, "S", 0.6f);
+            Cast(home, 0, 5, "K", 1.8f);
+            Cast(home, 5, 88, "TE", 3f);
+            Cast(home, 7, 97, "DL", 4.2f);
+            w.Ball.X = cx; w.Ball.Z = z - 3f; w.Ball.Y = 0f;   // (in front of them, so the eyes have something to look at)
+            float m = w.Cfg.field.yardM;
+            if (faces) rig.Hold(new Vector3(cx * m, 2.2f, z * m - 5.5f), new Vector3(cx * m, 2.1f, z * m), 30f);
+            else rig.Hold(new Vector3(cx * m, 2f, z * m - 11f), new Vector3(cx * m, 1.4f, z * m), 34f);
+            return new PhotoState { Name = faces ? "faces" : "numbers", Hud = false, FirstDownX = -35f };
+        }
+
+        // FEATURES.faceReactions / grassStains: the "faces" line-up, each man held with a face (happy, wincing, as usual) and
+        // more grass on him from left to right.
+        static PhotoState Grit(World w, PlayersView view, CameraRig rig)
+        {
+            var st = Numbers(w, view, rig, true);
+            st.Name = "grit";
+            float[] moods = { 1f, -1f, 0f, 1f, -1f, 0f, 1f, -1f };
+            int i = 0;
+            foreach (var (team, spot) in new[] { (0, 6), (0, 2), (0, 0), (0, 1), (1, 1), (1, 0), (1, 5), (1, 7) })
+            {
+                var p = Spot(w, team, spot);
+                if (p != null) view.Reactions.Hold(p.Slot, moods[i], i / 7f);
+                i++;
+            }
+            float m = w.Cfg.field.yardM;
+            rig.Hold(new Vector3(22.5f * m, 1.3f, -6f * m - 9f), new Vector3(22.5f * m, 1.05f, -6f * m), 32f);
+            return st;
         }
 
         // Concept 01, the team lineup: three Chiefs (68 in his stance, QB 7 throwing, RB 24 carrying) facing three

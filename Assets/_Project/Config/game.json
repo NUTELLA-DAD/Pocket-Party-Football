@@ -287,7 +287,9 @@
         { "pos": "TE", "model": "Models/TE/TE_Rigged", "modelTexture": "Models/TE/TE_BaseColor" }
       ],
       "cheerModel": "Models/Cheerleader/Cheerleader_Rigged",
-      "cheerTexture": "Models/Cheerleader/Cheerleader_BaseColor"
+      "cheerTexture": "Models/Cheerleader/Cheerleader_BaseColor",
+      "numberFill": "#ffffff",
+      "numberEdge": "#ffb612"
     },
     {
       "name": "ROUGHRIDERS",
@@ -306,7 +308,9 @@
         { "pos": "TE", "model": "Models/TE/TE_Rigged", "modelTexture": "Models/TE/TERR_BaseColor" }
       ],
       "cheerModel": "Models/Cheerleader/Cheerleader_Rigged",
-      "cheerTexture": "Models/Cheerleader/CheerleaderRR_BaseColor"
+      "cheerTexture": "Models/Cheerleader/CheerleaderRR_BaseColor",
+      "numberFill": "#ffffff",
+      "numberEdge": "#14522f"
     }
   ],
   "net": {
@@ -893,6 +897,45 @@
     "gradeTint": 5,
     "gradeSaturation": 8
   },
+  "marks": {
+    "penHalf": 0.125,
+    "edge": 0.08,
+    "gap": 0.1,
+    "eyeMaxX": 0.55,
+    "eyeMaxY": 0.35,
+    "eyeFullDeg": 45,
+    "eyeStep": 0.1,
+    "glanceKeys": 12,
+    "glanceChance": 0.3,
+    "glanceDeg": 40,
+    "blinkEveryKeys": 28,
+    "blinkKeys": 2,
+    "models": [
+      { "model": "Models/Chiefs24/Chiefs24_Rigged", "map": "Models/Chiefs24/Chiefs24_Marks", "iris": "#6b3a1e", "lid": "#9f623a", "number": 24 },
+      { "model": "Models/Linebacker/Linebacker_Rigged", "map": "Models/Linebacker/Linebacker_Marks", "iris": "#5e3822", "lid": "#da8a54", "number": 64 },
+      { "model": "Models/QB/QB_Rigged", "map": "Models/QB/QB_Marks", "iris": "#8a5a22", "lid": "#c28146", "number": 7 },
+      { "model": "Models/WR/WR_Rigged", "map": "Models/WR/WR_Marks", "iris": "#94601c", "lid": "#ac6e49", "number": 81 },
+      { "model": "Models/Kicker/Kicker_Rigged", "map": "Models/Kicker/Kicker_Marks", "iris": "#8a5510", "lid": "#c7936b", "number": 3 },
+      { "model": "Models/TE/TE_Rigged", "map": "Models/TE/TE_Marks", "iris": "#885415", "lid": "#A46742", "number": 88 }
+    ]
+  },
+  "reactions": {
+    "touchdownS": 4,
+    "bigHitS": 1.5,
+    "sackS": 1.5,
+    "pickS": 2.5,
+    "stainTackled": 0.18,
+    "stainTackler": 0.1,
+    "stainBigHit": 0.08,
+    "stainMax": 1,
+    "stainGrass": "#557a2c",
+    "stainDirt": "#6e5233",
+    "stainScale": 34,
+    "stainOpacity": 0.85,
+    "barFontPx": 15,
+    "barLiveAlpha": 0.55,
+    "barAboveM": 0.9
+  },
   "title": {
     "minShotS": 3,
     "followRate": 3.5,
@@ -960,6 +1003,11 @@
     "strideCycle": true,
     "footFlex": true,
     "handCurl": true,
+    "jerseyNumbers": true,
+    "eyesLook": true,
+    "faceReactions": true,
+    "grassStains": true,
+    "nameBars": true,
     "narrowLegs": true,
     "idleMotion": true,
     "headTrack": true,

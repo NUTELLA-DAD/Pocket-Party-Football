@@ -586,14 +586,19 @@ namespace PocketFootball.Boot
             }
 
             // name plates only while FIND ME is on (with the beam and the ring flash), and a small OUT past the lines; the rest of
-            // the time the triangle is enough and the name would cover the play (Kenny's playtest note)
+            // the time the triangle is enough and the name would cover the play (Kenny's playtest note). FEATURES.nameBars:
+            // a slim bar with each person's name over his player, see-through during a live play.
             if (cam == null) return;
             float now = Time.unscaledTime;
             foreach (var p in World.Players)
             {
                 var seat = p.Human ? Roster[p.Slot] : null;
                 bool find = seat != null && findUntil.TryGetValue(p.Slot, out float until) && until > now;
-                if (!find && !p.OutOfBounds) continue;
+                if (!find && !p.OutOfBounds)
+                {
+                    if (seat != null && cfg.Feature("nameBars")) NameBar(p, seat, cam, s);
+                    continue;
+                }
                 Vector3 sp = cam.WorldToScreenPoint(Players.HeadPosition(p.Slot) + Vector3.up * 1.1f);
                 if (sp.z <= 0) continue;
                 string label = find ? seat.Name + (seat.Connected ? "" : " ...") : p.Number.ToString();
@@ -608,6 +613,29 @@ namespace PocketFootball.Boot
                 GUI.color = Color.white;
                 GUI.Label(r, label, plate);
             }
+        }
+
+        GUIStyle bar;
+
+        // FEATURES.nameBars: the person's name in a slim team-colour bar over his player's head.
+        void NameBar(Player p, Seat seat, Camera cam, float s)
+        {
+            var rc = cfg.reactions;
+            Vector3 sp = cam.WorldToScreenPoint(Players.HeadPosition(p.Slot) + Vector3.up * rc.barAboveM);
+            if (sp.z <= 0) return;
+            bar ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold };
+            bar.fontSize = Mathf.RoundToInt(rc.barFontPx * s);
+            string label = Reactions.BarLabel(seat.Name, seat.Connected, p.BotHelp);
+            var size = bar.CalcSize(new GUIContent(label));
+            var r = new Rect(sp.x - size.x * 0.5f - 6 * s, Screen.height - sp.y - size.y, size.x + 12 * s, size.y);
+            float a = Reactions.BarAlpha(cfg, World.Phase);
+            var team = p.Team >= 0 && p.Team < cfg.teams.Count ? cfg.teams[p.Team] : null;
+            var c = team != null ? Colors.Hex(team.color) : Color.grey;
+            GUI.color = new Color(c.r, c.g, c.b, a);
+            GUI.DrawTexture(r, Texture2D.whiteTexture);
+            GUI.color = new Color(1f, 1f, 1f, Mathf.Min(1f, a + 0.3f));
+            GUI.Label(r, label, bar);
+            GUI.color = Color.white;
         }
 
         string TeamLine()
