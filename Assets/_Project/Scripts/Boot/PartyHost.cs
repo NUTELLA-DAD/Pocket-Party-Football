@@ -493,6 +493,7 @@ namespace PocketFootball.Boot
 
         void OnGUI()
         {
+            if (TitleScreen.Showing) return;   // the title screen covers the TV (the bots' show game has no HUD)
             float s = Screen.height / 1080f;
             panelText ??= new GUIStyle(GUI.skin.label) { richText = true, wordWrap = true };
             plate ??= new GUIStyle(GUI.skin.box) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold };

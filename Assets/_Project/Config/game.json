@@ -892,6 +892,31 @@
     "gradeTint": 5,
     "gradeSaturation": 8
   },
+  "title": {
+    "minShotS": 3,
+    "followRate": 3.5,
+    "lookUpYd": 1,
+    "maxSideYd": 31,
+    "maxEndYd": 95,
+    "logoTopFrac": 0.025,
+    "logoHeightFrac": 0.47,
+    "playHeightFrac": 0.135,
+    "otherHeightFrac": 0.095,
+    "gapFrac": 0.012,
+    "hoverScale": 1.07,
+    "dimOthers": 0.8,
+    "tint": 0.2,
+    "fadeS": 0.375,
+    "volumeStep": 0.1,
+    "shots": [
+      { "name": "broadcast", "broadcast": true },
+      { "name": "behindQb", "backYd": 20, "sideYd": 0, "heightYd": 7, "aheadYd": 14, "fovDeg": 42 },
+      { "name": "lowSideline", "backYd": 4, "sideYd": 32, "heightYd": 2.2, "aheadYd": 2, "fovDeg": 28 },
+      { "name": "skyCam", "backYd": 14, "sideYd": 10, "heightYd": 26, "aheadYd": 8, "fovDeg": 45 },
+      { "name": "farSideline", "backYd": 2, "sideYd": -42, "heightYd": 7, "aheadYd": 3, "fovDeg": 30 },
+      { "name": "facingOffense", "backYd": -18, "sideYd": 6, "heightYd": 3, "aheadYd": -3, "fovDeg": 44 }
+    ]
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
@@ -942,6 +967,7 @@
     "stadiumBowl": true,
     "sunsetSky": true,
     "refModel": true,
-    "ratings": true
+    "ratings": true,
+    "titleScreen": true
   }
 }
