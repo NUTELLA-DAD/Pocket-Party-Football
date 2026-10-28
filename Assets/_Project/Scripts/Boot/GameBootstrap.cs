@@ -32,6 +32,7 @@ namespace PocketFootball.Boot
             TitleScreen.ApplySavedSettings(Config);   // the sound level, and the helpers switched off on the SETTINGS page
             bool title = TitleScreen.Requested(Config, Args);
             if (title) TitleScreen.PrepareAttract(Config, Args);   // the bots' show game behind the title
+            CupHost.Apply(Config, title);   // FEATURES.cup: the Pocket Cup's next game wears its two teams
 
             BuildLight();
             Field = FieldView.Build(Config, baseMaterial);

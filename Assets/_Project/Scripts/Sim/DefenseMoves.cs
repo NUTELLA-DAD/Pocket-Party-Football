@@ -15,7 +15,9 @@ namespace PocketFootball.Sim
     //    swatMaxHeightYd, he knocks it to the grass (incomplete): swatPerfectChance when the ball got there within
     //    swatPerfectS of the press, else swatChance. A whiff or a ball that never came: off balance for coverMissS.
     //  JUMP (coverage): the same, higher (jumpMaxHeightYd); he may pick it off (jumpPick*Chance) or knock it down
-    //    (jumpKnockChance), else he whiffs.
+    //    (jumpKnockChance), else he whiffs. FEATURES.jumpAnytime: the button always jumps (a hop of swatActiveS, drawn
+    //    jumpLiftYd high), with or without a pass in the air; without one it is a whiff. Off: only with a pass in the air.
+    //    FEATURES.oobIncomplete: a pick with his feet out of bounds is knocked down instead (incomplete).
     //  DIVE TACKLE (anyone on defense, at the ball carrier): a lunge at diveSpeedYdS for diveAirS. Contact within
     //    diveReachYd tackles him at diveChance, less diveStretchPenalty at full stretch, plus diveFromBehindBonus. A
     //    juke, a miss or a dive that lands short (too late, he's gone): the diver is down on the grass for diveDownS.
@@ -81,6 +83,8 @@ namespace PocketFootball.Sim
             Press(w, p.Slot, input.Def);
         }
 
+        public static bool JumpAnytime(World w) => w.Cfg.Feature("jumpAnytime");
+
         public static bool IsDown(World w, Player p) => On(w) && Of(w).BySlot.TryGetValue(p.Slot, out var d) && d.DownTicks > 0;
 
         public static void Step(World w)
@@ -110,6 +114,7 @@ namespace PocketFootball.Sim
                 {
                     // the whistle went (someone else's tackle, a catch out of bounds...): a diver still in the air lands
                     if (d.Move == DefMove.Dive) GoDown(w, p, d);
+                    else if (d.Move == DefMove.Jump) End(w, d);   // (a jumper lands)
                     d.Pressed = DefMove.None;
                     continue;
                 }
@@ -135,7 +140,14 @@ namespace PocketFootball.Sim
                     return;
                 case DefMove.Swat:
                 case DefMove.Jump:
-                    if (w.Ball.State != BallState.Flying) return;
+                    if (w.Ball.State != BallState.Flying)
+                    {
+                        if (m != DefMove.Jump || !JumpAnytime(w)) return;
+                        // FEATURES.jumpAnytime: no pass to go for, but he still jumps (and whiffs)
+                        d.Move = m; d.Ticks = 0;
+                        Show(d, m, false);
+                        return;
+                    }
                     Count(w, m, false);
                     d.Move = m; d.Ticks = 0;
                     Show(d, m, false);
@@ -162,10 +174,11 @@ namespace PocketFootball.Sim
             if (d.Move == DefMove.Swat || d.Move == DefMove.Jump)
             {
                 var b = w.Ball;
-                if (b.State != BallState.Flying) { End(w, d); return; }   // caught or down already
+                bool hop = d.Move == DefMove.Jump && JumpAnytime(w);   // a jump runs its full hop, ball or no ball
+                if (b.State != BallState.Flying && !hop) { End(w, d); return; }   // caught or down already
                 float dx = b.X - p.X, dz = b.Z - p.Z;
                 float top = d.Move == DefMove.Jump ? c.jumpMaxHeightYd : c.swatMaxHeightYd;
-                if (dx * dx + dz * dz <= c.swatReachYd * c.swatReachYd && b.Y <= top) { Cover(w, p, d, d.Ticks <= Huddle.Ticks(w, c.swatPerfectS)); return; }
+                if (b.State == BallState.Flying && dx * dx + dz * dz <= c.swatReachYd * c.swatReachYd && b.Y <= top) { Cover(w, p, d, d.Ticks <= Huddle.Ticks(w, c.swatPerfectS)); return; }
                 if (++d.Ticks > Huddle.Ticks(w, c.swatActiveS)) { d.MissTicks = Huddle.Ticks(w, c.coverMissS); End(w, d); }
                 return;
             }
@@ -271,7 +284,7 @@ namespace PocketFootball.Sim
             if (m == DefMove.Jump)
             {
                 float pick = (perfect ? c.jumpPickPerfectChance : c.jumpPickChance) + skill;
-                if (r < pick) { Won(w, p, d, m); PickOff(w, p); return; }
+                if (r < pick) { Won(w, p, d, m); if (p.OutOfBounds && w.Cfg.Feature("oobIncomplete")) KnockDown(w); else PickOff(w, p); return; }
                 if (r < pick + c.jumpKnockChance) { Won(w, p, d, m); KnockDown(w); return; }
             }
             else if (r < (perfect ? c.swatPerfectChance : c.swatChance) + skill) { Won(w, p, d, m); KnockDown(w); return; }
@@ -386,6 +399,7 @@ namespace PocketFootball.Sim
         public float bullSnapS, bullSnapChance, bullChance, bullPushYd, bullStunS, bullFreeS;
         public float swatReachYd, swatMaxHeightYd, swatActiveS, swatPerfectS, swatPerfectChance, swatChance, swatRollFrac;
         public float jumpMaxHeightYd, jumpPickPerfectChance, jumpPickChance, jumpKnockChance;
+        public float jumpLiftYd;   // how high the jumper's feet leave the grass on the TV (FEATURES.jumpAnytime; the view only)
         public float coverMissS, coverMissSpeedFrac;
         public float diveSpeedYdS, diveAirS, diveReachYd, diveChance, diveStretchPenalty, diveFromBehindBonus, diveDownS;
         public float cooldownS, shownS;

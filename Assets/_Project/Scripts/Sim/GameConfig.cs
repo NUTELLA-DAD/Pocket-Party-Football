@@ -46,6 +46,7 @@ namespace PocketFootball.Sim
         public MarksConfig marks = new MarksConfig();   // FEATURES.jerseyNumbers / eyesLook: the players' numbers and eyes (View/JerseyMarks.cs)
         public ReactionsConfig reactions = new ReactionsConfig();   // FEATURES.faceReactions / grassStains / nameBars (View/Reactions.cs)
         public BotsV3Config botsV3 = new BotsV3Config();   // bots v3: reactions, blocking assignments, kick lanes (BotsV3.cs, FEATURES.botsV3)
+        public CupConfig cup = new CupConfig();   // FEATURES.cup: the Pocket Cup bracket (Cup.cs, Boot/CupHost.cs)
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 
@@ -184,13 +185,14 @@ namespace PocketFootball.Sim
         // The model and colour map a player at this position wears.
         public void ModelFor(string pos, bool byPos, out string m, out string tex) => ModelFor(pos, byPos, out m, out tex, out _);
 
-        // bend: the position model's strideBend (1 for the team's own model, or none given)
-        public void ModelFor(string pos, bool byPos, out string m, out string tex, out float bend)
+        // bend: the position model's strideBend (1 for the team's own model, or none given). number: the player's jersey
+        // number (-1 unknown), for an entry that lists its numbers (the outside linebackers, not the middle one)
+        public void ModelFor(string pos, bool byPos, out string m, out string tex, out float bend, int number = -1)
         {
             m = model; tex = modelTexture; bend = 1f;
             if (!byPos || posModels == null) return;
             foreach (var pm in posModels)
-                if (pm != null && pm.pos == pos && !string.IsNullOrEmpty(pm.model))
+                if (pm != null && pm.pos == pos && !string.IsNullOrEmpty(pm.model) && (pm.numbers == null || pm.numbers.Count == 0 || pm.numbers.Contains(number)))
                 { m = pm.model; tex = pm.modelTexture; bend = pm.strideBend > 0f ? pm.strideBend : 1f; return; }
         }
     }
@@ -246,6 +248,8 @@ namespace PocketFootball.Sim
         // the running knee's bend on this model, a share of the stride's (strideKneeLandDeg, strideKneeDeg,
         // strideKneePushDeg): a big, short-legged build (the linebacker's) looks squatting running on a bent knee
         public float strideBend;
+        // only the players wearing these numbers at this position (none: every one)
+        public List<int> numbers = new List<int>();
     }
 
     public sealed class NetConfig
@@ -374,6 +378,7 @@ namespace PocketFootball.Sim
     public sealed class CameraConfig
     {
         public float visibleYards, fovDeg, pitchDeg, lookAtXYd, lookAtZYd;
+        public float nearSidelinePadYd;   // FEATURES.nearSideline: grass kept on screen past the near sideline border (CameraRig)
         public float sideline;   // -1: the camera stands on the -Z sideline
         public float leadYd, followRate;   // how far ahead of the ball it looks, how quickly it catches up (per second)
         public FreeCameraConfig free = new FreeCameraConfig();   // the practice lab's free camera (FEATURES.labFreeCam)

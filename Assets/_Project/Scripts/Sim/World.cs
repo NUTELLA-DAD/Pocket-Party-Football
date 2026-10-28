@@ -226,7 +226,8 @@ namespace PocketFootball.Sim
                 if (p.Human)
                 {
                     if (inputs != null) inputs.TryGetValue(p.Slot, out input);
-                    bool idle = input.MoveX == 0f && input.MoveZ == 0f && !input.Sprint && !input.Hike && !input.Juke && !input.Tackle && !input.Block && input.Throw == 0 && !input.ThrowAt;
+                    bool idle = input.MoveX == 0f && input.MoveZ == 0f && !input.Sprint && !input.Hike && !input.Juke && !input.Tackle && !input.Block && input.Throw == 0 && !input.ThrowAt
+                        && input.Def == DefMove.None && !input.Catch && !input.Call && input.Move == CarrierMove.None;   // (a move button is a touch too)
                     p.IdleTicks = idle ? p.IdleTicks + 1 : 0;
                     // a person who has put the phone down: a bot plays for them until they touch it again
                     if (Phase == Phase.Live && p.IdleTicks >= Cfg.bots.idleTakeoverS * Cfg.sim.tickHz) { input = Bots.Think(this, p); p.BotHelp = true; }

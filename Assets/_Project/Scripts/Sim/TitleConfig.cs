@@ -19,6 +19,7 @@ namespace PocketFootball.Sim
         public float minShotS, followRate, lookUpYd, maxSideYd, maxEndYd;
         public float logoTopFrac, logoHeightFrac, playHeightFrac, otherHeightFrac, gapFrac;
         public float hoverScale, dimOthers, tint, fadeS, volumeStep;
+        public float menuBottomFrac;   // the lowest the menu's buttons reach (a fourth button shrinks the logo to fit)
         public List<TitleShot> shots = new List<TitleShot>();
     }
 

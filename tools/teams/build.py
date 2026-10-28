@@ -5,6 +5,8 @@
 #   3. kit.py repaints the uniform in the team's colours, leaving the emblem's texels alone
 # usage: python3 tools/teams/build.py <work dir> [team ...]      (from the repo root; needs git for the source maps)
 # REUSE=1 keeps the work dir's emblem maps from a run before (rebrand.py takes minutes) and only repaints the kits.
+# MODELS=LeanLB,... builds only those models' maps. A model added after SRC_REV (in SRC_LATER) has no red map there: its
+# red map as marks.py left it (numbers and irises painted out, the old decal still on) goes in <work dir>/src/<folder>/.
 import sys, os, json, shutil, subprocess, numpy as np
 from PIL import Image
 
@@ -22,9 +24,12 @@ MAPS = [('Player24', 'Chiefs24_BaseColor', 'Player24{T}_BaseColor', False),
         ('WR', 'WR_BaseColor', 'WR{T}_BaseColor', False),
         ('TE', 'TE_BaseColor', 'TE{T}_BaseColor', False),
         ('Kicker', 'Kicker_BaseColor', 'Kicker{T}_BaseColor', False),
+        ('LeanLB', 'LeanLB_BaseColor', 'LeanLB{T}_BaseColor', False),
         ('Cheerleader', 'Cheerleader_BaseColor', 'Cheerleader{T}_BaseColor', True)]
 
 SRC_FOLDER = {'Player24': 'Chiefs24'}   # (the folder's name at SRC_REV, before the rename)
+SRC_LATER = {'LeanLB'}                   # (models added after SRC_REV: their red map comes from <work dir>/src)
+if os.environ.get('MODELS'): MAPS = [m for m in MAPS if m[0] in os.environ['MODELS'].split(',')]
 
 def run(*a):
     print('>', ' '.join(a)); subprocess.run(a, check=True)
@@ -46,8 +51,10 @@ for T in teams:
             fbx = os.path.join(r, m['fbx'])
             if not os.path.exists(fbx): shutil.copy(os.path.join(ROOT, m['fbx']), fbx)
             png = os.path.join(r, 'Models', folder, chiefs + '.png')
-            with open(png, 'wb') as f:
-                f.write(subprocess.run(['git', 'show', '%s:%s/Models/%s/%s.png' % (SRC_REV, ROOT, SRC_FOLDER.get(folder, folder), chiefs)], check=True, capture_output=True).stdout)
+            if folder in SRC_LATER: shutil.copy(os.path.join(work, 'src', folder, chiefs + '.png'), png)
+            else:
+                with open(png, 'wb') as f:
+                    f.write(subprocess.run(['git', 'show', '%s:%s/Models/%s/%s.png' % (SRC_REV, ROOT, SRC_FOLDER.get(folder, folder), chiefs)], check=True, capture_output=True).stdout)
             hue = next(t['hue'] for t in m['textures'] if t['emblem'] == 'ARR')
             models.append({'fbx': m['fbx'], 'zones': m['zones'],
                            'textures': [{'file': 'Models/%s/%s.png' % (folder, chiefs), 'hue': hue, 'emblem': T}]})
@@ -65,4 +72,5 @@ for T in teams:
         args = [sys.executable, os.path.join(HERE, 'kit.py'), os.path.join(work, T, 'emblem', 'Models', folder, chiefs + '.png'), npz,
                 os.path.join(HERE, 'kits.json'), T, out, 'keep=' + kp]
         if cheer: args.append('cheer')
+        if folder in kits['regions']: args.append('region=' + folder)   # (a model whose pads reach up past the usual helmet line)
         run(*args)

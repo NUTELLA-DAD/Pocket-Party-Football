@@ -101,6 +101,45 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual("INTERCEPTED", w.Result);
         }
 
+        // FEATURES.oobIncomplete: the pass comes down to a receiver standing past the sideline. With the rule on it is
+        // incomplete (no gain, back to the line); NO_OOB_INCOMPLETE=1 gives the old way (caught, then out of bounds there).
+        static World CatchOutOfBounds(bool rule)
+        {
+            var w = AtTheLine(tune: c => { c.play.catchChanceOffense = 1f; c.play.catchChanceDefense = 0f; c.features["oobIncomplete"] = rule; });
+            ClearDefense(w);
+            w.Step(Press(new PlayerInput { Hike = true }));
+            var target = LivePlay.Receiver(w, 1);
+            float oobZ = -(w.Cfg.field.HalfWidth + 1f);
+            target.X = w.LineOfScrimmageX + w.Dir * 12f; target.Z = oobZ; target.VX = target.VZ = 0f; target.HomeX = target.X; target.HomeZ = target.Z;
+            w.Step(Press(new PlayerInput { Throw = 1 }));
+            for (int i = 0; i < w.Cfg.sim.tickHz * 4 && w.Phase == Phase.Live && w.Ball.State == BallState.Flying; i++)
+            {
+                target.X = w.Ball.TargetX; target.Z = oobZ; target.VX = target.VZ = 0f;
+                w.Step(null);
+            }
+            return w;
+        }
+
+        [Test]
+        public void ACatchOutOfBoundsIsIncomplete()
+        {
+            var w = CatchOutOfBounds(true);
+            float los = w.LineOfScrimmageX;
+            Assert.AreEqual(Phase.Whistle, w.Phase);
+            Assert.AreEqual("INCOMPLETE", w.Result, "his feet were out: no catch");
+            Assert.AreEqual(los, w.NextLos, "back to the line, no gain");
+            Assert.AreNotEqual(BallState.Held, w.Ball.State);
+            Assert.AreEqual("NO_OOB_INCOMPLETE", ConfigLoader.EnvName("oobIncomplete"));
+            Assert.IsTrue(ConfigTests.Load().Feature("oobIncomplete"), "on in game.json");
+        }
+
+        [Test]
+        public void NoOobIncompleteKeepsTheOldCatch()
+        {
+            var w = CatchOutOfBounds(false);
+            Assert.AreEqual("OUT OF BOUNDS", w.Result, "caught, then whistled out where he stood");
+        }
+
         static void NoTackles(GameConfig c) { c.play.tackleBase = 0f; c.play.tackleSpeedBonus = 0f; c.play.tackleFromBehindBonus = 0f; }
 
         // Interception returns (FEATURES.intreturn): the defender who catches it runs until the whistle.

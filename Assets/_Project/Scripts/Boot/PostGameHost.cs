@@ -23,6 +23,7 @@ namespace PocketFootball.Boot
             bool preview = was != null && was.Preview;
             if (kb != null && h.DevKeys && kb.f8Key.wasPressedThisFrame) preview = !preview;
             var g = PostGame.Drive(h.gameObject, w, h.Players, preview || GameOver(w), s => h.Roster[s]?.Name);
+            CupHost.Drive(h, g);   // FEATURES.cup: a cup game's winner goes into the bracket
             if (g == null) return;
             g.Preview = preview;
             if (!g.Showing) { g.NextPhoneAt = 0f; return; }
