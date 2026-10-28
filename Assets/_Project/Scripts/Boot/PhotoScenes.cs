@@ -88,7 +88,7 @@ namespace PocketFootball.Boot
         }
 
         // The hands up close (FEATURES.handCurl): four Chiefs side by side in poses that open, shut or hold the hand (a
-        // ball in the carrier's and the thrower's right hands), seen square from the side at chest height. No HUD.
+        // ball in the right hands of the one securing it, the carrier and the thrower), seen square from the side at chest height. No HUD.
         static PhotoState Hands(World w, PlayersView view, CameraRig rig, string name, Pose[] poses)
         {
             const int team = 0;
@@ -102,7 +102,7 @@ namespace PocketFootball.Boot
             {
                 Put(w, view, team, i + 1, cx + (i - (poses.Length - 1) * 0.5f) * gap, z, poses[i]);
                 var p = Spot(w, team, i + 1);
-                if (p != null && (poses[i] == Pose.Carry || poses[i] == Pose.Throw)) view.PropBalls[p.Slot] = true;
+                if (p != null && (poses[i] == Pose.Carry || poses[i] == Pose.Throw || poses[i] == Pose.Secure)) view.PropBalls[p.Slot] = true;
             }
             float m = w.Cfg.field.yardM;
             rig.Hold(new Vector3(cx * m, 1.3f, z * m - 9f), new Vector3(cx * m, 1.3f, z * m), 30f);
