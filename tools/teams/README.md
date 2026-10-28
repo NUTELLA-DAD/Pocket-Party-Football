@@ -1,4 +1,4 @@
-# New teams (Cacti, Whales)
+# New teams (Cacti, Whales, Bats, Snowbirds)
 
 FEATURES.teamPick: the league is game.json's `teams` (the default match, away then home) and `moreTeams`; the title's
 SETTINGS page picks any two (AWAY / HOME rows, saved), and `PP_TEAMS=CAC,WHL` picks them for one run.
@@ -16,3 +16,7 @@ only: `python3 tools/teams/build.py <work dir> [CAC WHL]`.
   gloves, the facemask and the emblem are left alone. The cheerleader takes the team's `cheer` main and accent.
 - `splat.py <texels.npz> <map.png> <out.png>`: a quick front / side / back look at a map on its model (texel points
   from `tools/rebrand/fbxuv.py`).
+
+The Bats (`BAT`) and Snowbirds (`SNB`): marks from Kenny's mascot-only pictures (`emblems/BAT.png` the crimson-winged
+bat, `emblems/SNB.png` the owl helmet emblem); the pictures with the team name under them are the join screen's.
+Black helmets, crimson jerseys, black pants, white numbers; all white with ice-blue stripes and navy numbers.

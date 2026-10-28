@@ -22,11 +22,11 @@ namespace PocketFootball.Tests.EditMode
         }
 
         [Test]
-        public void TheLeagueIsFourTeamsWithTheirOwnCodes()
+        public void TheLeagueIsSixTeamsWithTheirOwnCodes()
         {
             var cfg = ConfigTests.Load();
             var league = TeamPick.League(cfg);
-            Assert.AreEqual(4, league.Count);
+            Assert.AreEqual(6, league.Count);
             Assert.AreEqual(2, cfg.teams.Count, "only two ever play");
             Assert.AreSame(cfg.teams[0], league[0]);
             Assert.AreSame(cfg.teams[1], league[1]);
@@ -40,6 +40,8 @@ namespace PocketFootball.Tests.EditMode
             }
             Assert.AreEqual(2, TeamPick.Find(cfg, "CAC"));
             Assert.AreEqual(3, TeamPick.Find(cfg, "whl"), "codes match whatever the case");
+            Assert.AreEqual(4, TeamPick.Find(cfg, "BAT"));
+            Assert.AreEqual(5, TeamPick.Find(cfg, "SNB"));
             Assert.AreEqual(-1, TeamPick.Find(cfg, "XYZ"));
         }
 
@@ -52,7 +54,7 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual(2, cfg.teams.Count);
             Assert.AreEqual("WHALES", cfg.teams[0].name, "away");
             Assert.AreEqual("CACTI", cfg.teams[1].name, "home");
-            Assert.AreEqual(4, TeamPick.League(cfg).Count, "the league stays whole after a pick");
+            Assert.AreEqual(6, TeamPick.League(cfg).Count, "the league stays whole after a pick");
             Assert.IsTrue(TeamPick.Apply(cfg, league[1].@short, league[2].@short), "a new team can play an old one");
             Assert.AreSame(league[1], cfg.teams[0]);
 
@@ -79,8 +81,8 @@ namespace PocketFootball.Tests.EditMode
         {
             var cfg = ConfigTests.Load();
             Assert.AreEqual(2, TeamPick.Step(cfg, 0, 1, +1), "away from 0 skips home's 1");
-            Assert.AreEqual(3, TeamPick.Step(cfg, 0, 1, -1), "and wraps round backwards");
-            Assert.AreEqual(0, TeamPick.Step(cfg, 3, 1, +1), "and forwards");
+            Assert.AreEqual(5, TeamPick.Step(cfg, 0, 1, -1), "and wraps round backwards");
+            Assert.AreEqual(0, TeamPick.Step(cfg, 5, 1, +1), "and forwards");
             Assert.IsTrue(TeamPick.ParsePair("CAC, WHL", out var a, out var h));
             Assert.AreEqual("CAC", a);
             Assert.AreEqual("WHL", h);
