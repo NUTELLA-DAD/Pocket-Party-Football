@@ -232,6 +232,7 @@ namespace PocketFootball.Sim
             Mover.Bump(this);
             Blocking.Step(this);
             Mover.Bounds(this);
+            Mover.Onside(this);   // FEATURES.stayOnside: nobody past the line before the snap
             Ball.Step(this, dt);
             DefenseMoves.Step(this);   // WS-03 defender moves (FEATURES.defmoves): before LivePlay.Step, so a swat beats the catch
             LivePlay.Step(this);

@@ -66,6 +66,24 @@ namespace PocketFootball.Sim
                 }
         }
 
+        // FEATURES.stayOnside (NO_STAY_ONSIDE=1): before the snap (the huddle and the line-up) nobody crosses the line of
+        // scrimmage. Each team can shuffle about on its own side but stops onsideGapYd short of the line until the hike.
+        public static bool OnsideOn(World w) => w.Cfg.Feature("stayOnside");
+
+        public static void Onside(World w)
+        {
+            if (!OnsideOn(w) || (w.Phase != Phase.Huddle && w.Phase != Phase.Set)) return;
+            float gap = w.Cfg.players.onsideGapYd;
+            foreach (var p in w.Players)
+            {
+                float own = p.Team == w.Offense ? -w.Dir : w.Dir;     // which way is "back" for this team
+                float limit = w.LineOfScrimmageX + own * gap;
+                if ((p.X - limit) * own >= 0f) continue;
+                p.X = limit;
+                if (p.VX * own < 0f) p.VX = 0f;
+            }
+        }
+
         // Out of bounds = past a sideline or an end line. Players can step a little way off (boundsMarginYd), no further.
         public static void Bounds(World w)
         {

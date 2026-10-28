@@ -122,6 +122,7 @@
     "radiusYd": 0.6,
     "bumpPushFrac": 0.5,
     "boundsMarginYd": 4,
+    "onsideGapYd": 0.5,
     "perTeam": 11
   },
   "bots": {
@@ -968,6 +969,7 @@
     "sunsetSky": true,
     "refModel": true,
     "ratings": true,
-    "titleScreen": true
+    "titleScreen": true,
+    "stayOnside": true
   }
 }
