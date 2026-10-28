@@ -368,8 +368,8 @@ namespace PocketFootball.View
                 case PoseKind.Throw: l = 0.3f; r = 1f; return;
                 case PoseKind.Release: l = 0.3f; r = frame == 0 ? -0.5f : 0f; return;   // (the ball rolls off the fingers)
                 case PoseKind.Handoff: l = r = -0.5f; return;
-                case PoseKind.Carry: l = 0.4f; r = 1f; return;
-                case PoseKind.Run: case PoseKind.Backpedal: case PoseKind.Juke: l = r = 0.4f; return;
+                case PoseKind.Carry: l = 0.7f; r = 1f; return;
+                case PoseKind.Run: case PoseKind.Backpedal: case PoseKind.Juke: l = r = 0.7f; return;   // (a runner's loose fist)
                 case PoseKind.Block: case PoseKind.Lock: case PoseKind.Stance: case PoseKind.Whiff: l = r = -0.4f; return;
                 case PoseKind.FallFront: case PoseKind.FallBack: case PoseKind.Stagger: l = r = -0.6f; return;
                 case PoseKind.Celebrate: l = r = 1f; return;

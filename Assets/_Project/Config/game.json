@@ -413,9 +413,9 @@
     "strideSettleTicks": 8,
     "strideToeBendShare": 0.9,
     "strideSwingToeUpDeg": [12, 8, 4],
-    "handCurlOpenDeg": [-12, -6, -18, -4],
-    "handCurlRelaxedDeg": [14, 12, 8, 6],
-    "handCurlShutDeg": [45, 40, 25, 15]
+    "handCurlOpenDeg": [-20, -10, -25, -5],
+    "handCurlRelaxedDeg": [25, 22, 10, 8],
+    "handCurlShutDeg": [60, 55, 32, 22]
   },
   "defense": {
     "swimEarlyS": 0.5,

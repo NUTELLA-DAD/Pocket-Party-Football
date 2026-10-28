@@ -97,7 +97,7 @@ namespace PocketFootball.Boot
             w.LineOfScrimmageX = -45f;
             w.LineUp();
             foreach (var p in w.Players) { p.X = p.Team == team ? -90f : 90f; p.Z = 0f; p.VX = 0f; p.VZ = 0f; }
-            const float cx = 22.5f, z = -6f, gap = 1.25f;   // (yards; spot 0, the QB with the game ball, stays off)
+            const float cx = 22.5f, z = -6f, gap = 1.8f;   // (yards; spot 0, the QB with the game ball, stays off)
             for (int i = 0; i < poses.Length; i++)
             {
                 Put(w, view, team, i + 1, cx + (i - (poses.Length - 1) * 0.5f) * gap, z, poses[i]);
@@ -105,7 +105,7 @@ namespace PocketFootball.Boot
                 if (p != null && (poses[i] == Pose.Carry || poses[i] == Pose.Throw)) view.PropBalls[p.Slot] = true;
             }
             float m = w.Cfg.field.yardM;
-            rig.Hold(new Vector3(cx * m, 1.4f, z * m - 6f), new Vector3(cx * m, 1.4f, z * m), 30f);
+            rig.Hold(new Vector3(cx * m, 1.3f, z * m - 9f), new Vector3(cx * m, 1.3f, z * m), 30f);
             return new PhotoState { Name = name, Hud = false, FirstDownX = -35f };
         }
 
