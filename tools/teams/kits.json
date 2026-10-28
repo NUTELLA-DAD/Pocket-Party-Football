@@ -1,7 +1,8 @@
 {
   "regions": {
     "player": { "helmet": 0.655, "helmetMaxX": 0.42, "pantsHigh": 0.42, "pantsLow": 0.17 },
-    "cheer":  { "helmet": 2.0,  "pantsHigh": 0.0,  "pantsLow": -1.0 }
+    "cheer":  { "helmet": 2.0,  "pantsHigh": 0.0,  "pantsLow": -1.0 },
+    "LeanLB": { "helmet": 0.72, "helmetMaxX": 0.31, "pantsHigh": 0.42, "pantsLow": 0.17 }
   },
   "teams": {
     "CAC": {

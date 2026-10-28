@@ -970,7 +970,8 @@
       { "model": "Models/QB/QB_Rigged", "map": "Models/QB/QB_Marks", "iris": "#8a5a22", "lid": "#c28146", "number": 7 , "skin": "#C78147" },
       { "model": "Models/WR/WR_Rigged", "map": "Models/WR/WR_Marks", "iris": "#94601c", "lid": "#ac6e49", "number": 81 , "skin": "#8E5839" },
       { "model": "Models/Kicker/Kicker_Rigged", "map": "Models/Kicker/Kicker_Marks", "iris": "#8a5510", "lid": "#c7936b", "number": 3 , "skin": "#CA966A" },
-      { "model": "Models/TE/TE_Rigged", "map": "Models/TE/TE_Marks", "iris": "#885415", "lid": "#A46742", "number": 88 , "skin": "#8F5938" }
+      { "model": "Models/TE/TE_Rigged", "map": "Models/TE/TE_Marks", "iris": "#885415", "lid": "#A46742", "number": 88 , "skin": "#8F5938" },
+      { "model": "Models/LeanLB/LeanLB_Rigged", "map": "Models/LeanLB/LeanLB_Marks", "iris": "#673B03", "lid": "#A6683E", "number": 52 , "skin": "#945D37" }
     ]
   },
   "reactions": {
