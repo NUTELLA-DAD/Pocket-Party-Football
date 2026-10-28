@@ -970,6 +970,7 @@
     "refModel": true,
     "ratings": true,
     "titleScreen": true,
-    "stayOnside": true
+    "stayOnside": true,
+    "huddleSwitch": true
   }
 }

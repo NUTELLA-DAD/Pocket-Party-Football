@@ -29,10 +29,17 @@
   </section>
 
   <section id="huddleView" class="view hidden">
-    <div class="hud"><div class="hudtext"><h2 id="hTitle">HUDDLE</h2><p class="sub" id="hSub">Only your team sees this</p></div><div class="clock" id="hClock">0:15</div></div>
+    <div class="hud"><div class="hudtext"><h2 id="hTitle">HUDDLE</h2><p class="sub" id="hSub">Only your team sees this</p></div><button class="btn small hswitch hidden" id="hSwitch" aria-label="Pick a new position for the next play">POSITION</button><div class="clock" id="hClock">0:15</div></div>
     <div class="plays" id="hPlays" role="listbox" aria-label="Your playbook"></div>
     <div class="preview" id="hPrev"></div>
     <div class="go"><p class="line" id="hLine" aria-live="polite"></p><button class="big" id="hGo" disabled aria-label="Lock in the chosen play">LOCK IN</button></div>
+    <div class="hpos hidden" id="hPos" role="dialog" aria-label="Pick a new position">
+      <div class="hpos-head"><h3 id="hPosTitle">PICK A NEW POSITION</h3><button class="btn small" id="hPosDone" aria-label="Close and go back to the plays">DONE</button></div>
+      <div class="card lask hidden" id="hAsk" role="alertdialog" aria-live="assertive"><p id="hAskText"></p>
+        <div class="lrow"><button class="btn main" id="hAskYes" aria-label="Yes, swap positions">SWAP</button><button class="btn" id="hAskNo" aria-label="No, keep my position">NO THANKS</button></div></div>
+      <div class="lspots" id="hSpots"></div>
+      <p class="line" id="hPosLine" aria-live="polite">Tap a bot's spot to take it. Tap a person to ask them to swap.</p>
+    </div>
   </section>
 
   <section id="playView" class="view hidden">

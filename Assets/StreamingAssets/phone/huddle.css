@@ -8,6 +8,8 @@
 .hud { grid-area: hud; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }
 .hudtext { min-width: 0; }
 .hudtext .sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hud .hswitch { margin-left: auto; flex: none; min-height: 36px; padding: 4px 10px; font-size: 13px; color: var(--chalk); border: 2px solid var(--team-2); }
+.hud .hswitch[aria-pressed="true"] { background: var(--team); color: var(--team-ink); }
 .clock { font-family: var(--display); font-size: 28px; font-variant-numeric: tabular-nums; color: var(--warn); }
 
 .plays {
@@ -39,6 +41,17 @@
 .go { grid-area: go; display: grid; gap: 6px; }
 .go .line { font-size: 13px; color: var(--muted); }
 
+/* the position picker (FEATURES.huddleSwitch): covers the plays; the spot buttons share lobby.css */
+.hpos {
+  grid-row: 2 / -1; grid-column: 1 / -1; z-index: 5; min-height: 0; background: var(--turf); border: 2px solid var(--turf-2); border-radius: 14px; padding: 10px;
+  display: grid; grid-template-rows: auto auto auto 1fr; align-content: start; gap: 8px; overflow-y: auto; touch-action: pan-y;
+}
+.hpos-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.hpos h3 { font-family: var(--display); font-weight: 400; font-size: 18px; margin: 0; }
+.hpos .lspots { align-content: start; }
+.hpos button { touch-action: manipulation; }
+.hpos .line { font-size: 13px; color: var(--muted); margin: 0; }
+
 /* sideways: the list on the left, the picture and LOCK IN on the right */
 @media (orientation: landscape) {
   #huddleView {
@@ -50,9 +63,16 @@
   .clock { font-size: 24px; }
   .go { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
   .go .big { padding: 10px 22px; font-size: 22px; }
+  .hpos .lspots { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .hpos .lask .btn { min-height: 44px; }
 }
 @media (orientation: landscape) and (max-height: 340px) {
   .play { min-height: 44px; padding: 5px 8px; }
   .play small { display: none; }
   .preview .pv-job { font-size: 12px; }
+  .hpos { padding: 6px 10px; gap: 5px; }
+  .hpos .lspot { min-height: 38px; padding: 2px; }
+  .hpos .lask { padding: 6px 10px; gap: 6px; }
+  .hpos .lask p { font-size: 14px; }
+  .hpos .lask .btn { min-height: 38px; }
 }
