@@ -207,7 +207,17 @@ namespace PocketFootball.Sim
         static PlayerInput TakeOn(World w, Player p, Player d, float bx, float bz)
         {
             var c = w.Cfg.botsV3;
-            Meet(w, p, d, bx, bz, out float mx, out float mz, out _);
+            float mx, mz;
+            if (LivePlay.Dist(p, d) <= c.engageYd)
+            {
+                // close: straight at him, a step on the ball's side (a meeting point out on his line to the ball swings
+                // away as the carrier runs wide, and he goes round it)
+                mx = d.X; mz = d.Z;
+                float lx = bx - d.X, lz = bz - d.Z, ll = (float)Math.Sqrt(lx * lx + lz * lz);
+                if (ll > 0f) { mx += lx / ll * w.Cfg.bots.arriveYd; mz += lz / ll * w.Cfg.bots.arriveYd; }
+                return To(w, p, mx, mz, Far(p, mx, mz) > c.sprintOverYd);
+            }
+            Meet(w, p, d, bx, bz, out mx, out mz, out _);
             float tx = d.X - mx, tz = d.Z - mz, tl = (float)Math.Sqrt(tx * tx + tz * tz);
             if (tl > 0f) { mx += tx / tl * w.Cfg.bots.arriveYd; mz += tz / tl * w.Cfg.bots.arriveYd; }
             return To(w, p, mx, mz, Far(p, mx, mz) > c.sprintOverYd);
@@ -312,6 +322,7 @@ namespace PocketFootball.Sim
         // meetLeadS of slack), between shieldYd from the ball and meetMaxYd up the field, interceptSteps points tried;
         // he sprints to anything further than sprintOverYd
         public float threatRangeYd, threatNearYd, threatMinSpeedYdS, blockRangeS, keepBonusS, meetLeadS, shieldYd, meetMaxYd, sprintOverYd;
+        public float engageYd;         // inside this of his man a blocker runs straight at him (a step on the ball's side) instead of to a meeting point
         public int interceptSteps;
         public float convoyAheadYd, convoyGapYd;   // the spare blockers ahead of a carrier on the move
         public float routeBlockYd;     // a route ending no further than this past the line is run to its end before its man blocks
