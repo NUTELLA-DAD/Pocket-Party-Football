@@ -33,6 +33,8 @@ namespace PocketFootball.View
         const float StrideShrinkTicks = 6f;   // a walk's stride shrinks to nothing over this many ticks at the most
         readonly Dictionary<int, MomentumState> carry = new Dictionary<int, MomentumState>();
         readonly Dictionary<int, int> carryTick = new Dictionary<int, int>();
+        // FEATURES.smoothMotion: the facing a tick ago, so a turn blends across the frames between ticks (NaN: none yet)
+        readonly Dictionary<int, float> yawWas = new Dictionary<int, float>();
         readonly List<int> gone = new List<int>();
         public readonly Moves Moves = new Moves();
         // a man on the grass: where he went down, his facing, which fall (slot -> start tick)
@@ -81,9 +83,18 @@ namespace PocketFootball.View
             ballPrev = new Vector3(w.Ball.X, w.Ball.Y, w.Ball.Z);
         }
 
+        // The blend the last Render drew at (0 = the previous tick, 1 = the latest), for the camera's follow.
+        public float Alpha { get; private set; } = 1f;
+
+        // Where a player is drawn this frame (yd), between the last two ticks like his figure.
+        public float ShownX(Player p) => prev.TryGetValue(p.Slot, out var v) ? Mathf.Lerp(v.x, p.X, Alpha) : p.X;
+        public float BallShownX(World w) => Mathf.Lerp(ballPrev.x, w.Ball.X, Alpha);
+
         // alpha: 0 = the previous tick, 1 = the latest.
         public void Render(World w, float alpha)
         {
+            Alpha = alpha;
+            bool smooth = cfg.Feature("smoothMotion");
             float yd = cfg.field.yardM;
             Moves.Observe(w);
             foreach (var p in w.Players)
@@ -113,10 +124,13 @@ namespace PocketFootball.View
                     carry.TryGetValue(p.Slot, out ms);
                     if (!carryTick.TryGetValue(p.Slot, out int seen) || seen != w.Tick)
                     {
+                        yawWas[p.Slot] = ms.Ready ? ms.Yaw : float.NaN;
                         Momentum.Step(ref ms, cfg.anim, p.X, p.Z, p.VX, p.VZ, Momentum.YawOf(dir, 0f), cfg.players.sprintSpeedYdS, w.Dt);
                         carry[p.Slot] = ms; carryTick[p.Slot] = w.Tick;
                     }
-                    float r = ms.Yaw * Mathf.Deg2Rad;
+                    // the facing turns once a tick (up to 30 degrees at a time); smoothMotion blends it across the frames between
+                    float shownYaw = smooth && yawWas.TryGetValue(p.Slot, out float yw) && !float.IsNaN(yw) ? Mathf.LerpAngle(yw, ms.Yaw, alpha) : ms.Yaw;
+                    float r = shownYaw * Mathf.Deg2Rad;
                     face = new Vector2(Mathf.Cos(r), -Mathf.Sin(r));
                 }
                 if (move.Kind == Move.Block && move.Locked && w.Find(move.Partner) is Player q)
@@ -264,7 +278,7 @@ namespace PocketFootball.View
             if (inAir) ballShadow.localPosition = new Vector3(bat.x * yd, 0.02f, bat.z * yd);
             gone.Clear();
             foreach (var kv in bodies) if (w.Find(kv.Key) == null) gone.Add(kv.Key);
-            foreach (int slot in gone) { Object.Destroy(bodies[slot].gameObject); bodies.Remove(slot); kitOf.Remove(slot); skins.Remove(slot); carry.Remove(slot); carryTick.Remove(slot); stridePhase.Remove(slot); strideLast.Remove(slot); strideShown.Remove(slot); downStart.Remove(slot); downFrom.Remove(slot); }
+            foreach (int slot in gone) { Object.Destroy(bodies[slot].gameObject); bodies.Remove(slot); kitOf.Remove(slot); skins.Remove(slot); carry.Remove(slot); carryTick.Remove(slot); yawWas.Remove(slot); stridePhase.Remove(slot); strideLast.Remove(slot); strideShown.Remove(slot); downStart.Remove(slot); downFrom.Remove(slot); }
         }
 
         // A tackle that meets (Moves.TackleContact): the tackler goes down against the carrier, facing him; the carrier

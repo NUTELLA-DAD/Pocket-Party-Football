@@ -1,4 +1,4 @@
-# New teams (Cacti, Whales)
+# New teams (Cacti, Whales, Bats, Snowbirds)
 
 FEATURES.teamPick: the league is game.json's `teams` (the default match, away then home) and `moreTeams`; the title's
 SETTINGS page picks any two (AWAY / HOME rows, saved), and `PP_TEAMS=CAC,WHL` picks them for one run.
@@ -20,3 +20,7 @@ only: `python3 tools/teams/build.py <work dir> [CAC WHL]`.
   (numbers and irises painted out, the old helmet decal still on) in `<work dir>/src/<folder>/`. `MODELS=LeanLB` builds
   only that model's maps. A `regions` entry named after a model folder overrides `player` for it (LeanLB's shoulder pads
   reach above the usual helmet line).
+
+The Bats (`BAT`) and Snowbirds (`SNB`): marks from Kenny's mascot-only pictures (`emblems/BAT.png` the crimson-winged
+bat, `emblems/SNB.png` the owl helmet emblem); the pictures with the team name under them are the join screen's.
+Black helmets, crimson jerseys, black pants, white numbers; all white with ice-blue stripes and navy numbers.

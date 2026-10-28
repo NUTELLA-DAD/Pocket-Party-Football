@@ -194,8 +194,8 @@ namespace PocketFootball.Tests.EditMode
             }
             Assert.AreEqual("Models/LeanLB/LeanLB_BaseColor", Tex(cfg.teams[0]), "the Arrows wear the model's own colours");
             Assert.AreEqual("Models/LeanLB/LeanLBGRN_BaseColor", Tex(cfg.teams[1]));
-            Assert.AreEqual("Models/LeanLB/LeanLBCAC_BaseColor", Tex(cfg.moreTeams[0]));
-            Assert.AreEqual("Models/LeanLB/LeanLBWHL_BaseColor", Tex(cfg.moreTeams[1]));
+            foreach (var team in cfg.moreTeams)
+                Assert.AreEqual("Models/LeanLB/LeanLB" + team.@short + "_BaseColor", Tex(team), "every team of the league wears its own colours");
         }
 
         static string Tex(TeamConfig team) { team.ModelFor("S", true, out _, out string t); return t; }

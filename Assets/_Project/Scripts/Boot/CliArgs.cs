@@ -22,6 +22,7 @@ namespace PocketFootball.Boot
         public int WarmupTicks;       // -warmup <ticks>: run the sim this many ticks before the first frame
         public bool Title;            // -title: show the title screen in a screenshot run too (TitleScreen.cs)
         public string TitlePage;      // -title-page howto | settings: open on that page (screenshots)
+        public bool Fps;              // -fps: show the frame meter from the start (F3 turns it on and off)
 
         public static CliArgs Parse(string[] args)
         {
@@ -37,6 +38,7 @@ namespace PocketFootball.Boot
                 else if (s == "-wander") a.Wander = true;
                 else if (s == "-called-demo") a.CalledDemo = true;
                 else if (s == "-title") a.Title = true;
+                else if (s == "-fps") a.Fps = true;
                 else if (s == "-title-page" && next != null) { a.TitlePage = next; i++; }
                 else if (s == "-photo" && next != null) { a.Photo = next; i++; }
                 else if (s == "-warmup" && next != null && int.TryParse(next, out int wu)) { a.WarmupTicks = wu; i++; }
