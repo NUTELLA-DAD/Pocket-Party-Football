@@ -34,7 +34,7 @@ namespace PocketFootball.Sim
         public static int Step(GameConfig cfg, int current, int other, int dir)
         {
             int n = League(cfg).Count;
-            if (n < 2) return current;
+            if (n <= 1) return current;
             int i = current;
             for (int k = 0; k < n; k++)
             {
@@ -53,8 +53,9 @@ namespace PocketFootball.Sim
             int a = Find(cfg, away), h = Find(cfg, home);
             if (a < 0) a = 0;
             if (h < 0) h = 1;
-            if (a == h || league.Count < 2) return false;
-            if (cfg.teams.Count == 2 && cfg.teams[0] == league[a] && cfg.teams[1] == league[h]) return false;
+            if (a == h) return false;
+            bool same = cfg.teams.Count > 1 && cfg.teams[0] == league[a] && cfg.teams[1] == league[h];
+            if (same) return false;
             cfg.teams = new List<TeamConfig> { league[a], league[h] };
             return true;
         }
@@ -64,10 +65,10 @@ namespace PocketFootball.Sim
         {
             away = home = null;
             if (string.IsNullOrEmpty(text)) return false;
-            var parts = text.Split(',');
-            if (parts.Length != 2) return false;
-            away = parts[0].Trim();
-            home = parts[1].Trim();
+            int comma = text.IndexOf(',');
+            if (comma < 0 || text.LastIndexOf(',') != comma) return false;
+            away = text.Substring(0, comma).Trim();
+            home = text.Substring(comma + 1).Trim();
             return away.Length > 0 && home.Length > 0;
         }
     }
