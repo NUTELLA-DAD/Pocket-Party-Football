@@ -225,6 +225,8 @@ namespace PocketFootball.View
         public StrideLegs Legs = StrideLegs.Figure;
         // Each foot's pitch on top of the leg's (degrees, - = toes down): the stride's push-off and heel strike (ModelSkin).
         public float ToeL, ToeR;
+        // FEATURES.footFlex: each foot's toes bent up at the ball of the foot (degrees; ModelSkin).
+        public float BallL, BallR;
         const float CarryArmDeg = 10f, CarryArmSwing = 0.08f, CarryForeDeg = 80f;   // the ball arm tucked, barely swinging
 
         // The stride pose for the next Run, Carry, Reach and Secure poses (the legs only in a Reach or Secure).
@@ -244,7 +246,7 @@ namespace PocketFootball.View
             if (share == settle) return;
             settle = share; carryDirty = true;
         }
-        float settle, strodeTwist, strodeToeL, strodeToeR;
+        float settle, strodeTwist, strodeToeL, strodeToeR, strodeBallL, strodeBallR;
         P strode;
 
         static P Mix(P a, P b, float t)
@@ -262,13 +264,13 @@ namespace PocketFootball.View
 
         P Strode(P p)
         {
-            strideTwist = 0f; ToeL = ToeR = 0f;
+            strideTwist = 0f; ToeL = ToeR = 0f; BallL = BallR = 0f;
             bool run = current == PoseKind.Run, carrier = current == PoseKind.Carry;
             if (!striding || !(run || carrier || current == PoseKind.Reach || current == PoseKind.Secure)) return p;
             var s = stride;
             p.drop = s.Drop;
             p.thighL = s.ThighL; p.shinL = s.ShinL; p.thighR = s.ThighR; p.shinR = s.ShinR;
-            ToeL = s.ToeL; ToeR = s.ToeR;
+            ToeL = s.ToeL; ToeR = s.ToeR; BallL = s.BallL; BallR = s.BallR;
             if (run) { p.armL = s.ArmL; p.foreL = s.ForeL; p.armR = s.ArmR; p.foreR = s.ForeR; }
             else if (carrier)
             {
@@ -302,7 +304,7 @@ namespace PocketFootball.View
                 { p.armR = Mathf.Lerp(p.armR, 62f, t); p.armRx = Mathf.Lerp(p.armRx, 38f, t); p.foreR = Mathf.Lerp(p.foreR, 30f, t); }
                 p.drop += 14f * t;
                 p.lean -= 10f * t;                 // and the chest sits back over the bent back leg
-                ToeL *= 1f - t; ToeR *= 1f - t;
+                ToeL *= 1f - t; ToeR *= 1f - t; BallL *= 1f - t; BallR *= 1f - t;
             }
             float all = Mathf.Abs(carryAll) + Mathf.Abs(carrySide);
             p.drop += 0.25f * all;                 // a lean sinks the hips a little
@@ -322,11 +324,12 @@ namespace PocketFootball.View
             {
                 current = kind; currentFrame = frame; carryDirty = false;
                 var p = Carried(Strode(Get(kind, frame)));
-                if (striding) { strode = p; strodeTwist = strideTwist; strodeToeL = ToeL; strodeToeR = ToeR; }
+                if (striding) { strode = p; strodeTwist = strideTwist; strodeToeL = ToeL; strodeToeR = ToeR; strodeBallL = BallL; strodeBallR = BallR; }
                 else if (settle > 0f)
                 {
                     p = Mix(p, strode, settle);
                     strideTwist = strodeTwist * settle; ToeL = strodeToeL * settle; ToeR = strodeToeR * settle;
+                    BallL = strodeBallL * settle; BallR = strodeBallR * settle;
                 }
                 cur = p;
                 ArmL.localRotation = Quaternion.Euler(-p.armLx, 0, p.armL);

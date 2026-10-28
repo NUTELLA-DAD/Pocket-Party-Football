@@ -267,6 +267,10 @@ namespace PocketFootball.Sim
         public float[] strideKneeFoldDeg, strideThighDriveDeg, strideBobCm, strideHeelCm, strideToeDeg, strideHeelStrikeDeg;
         public float[] strideArmFwdDeg, strideArmBackDeg, strideElbowFrontDeg, strideElbowBackDeg, strideTwistDeg;
         public int strideSettleTicks;
+        // FEATURES.footFlex: pushing off, the toes bend up strideToeBendShare of the foot's point (they stay flat on the
+        // grass); in the swing the foot lifts its toes strideSwingToeUpDeg (walk, jog, sprint) to clear the grass.
+        public float strideToeBendShare;
+        public float[] strideSwingToeUpDeg;
     }
 
     // WS-07 the lobby (FEATURES.lobby): each person picks an offense spot and a defense spot before kickoff. The game

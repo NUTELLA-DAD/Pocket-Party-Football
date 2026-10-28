@@ -8,7 +8,7 @@ namespace PocketFootball.View
     // man standing still holds his pose and a sprinter's legs keep pace with the grass. From the phase:
     // - each foot is on the grass for the stance share of the stride: it touches down a little ahead of the hip with
     //   the knee a little bent, the knee gives under the load, then straightens (a run) or starts to fold (a walk) as
-    //   the heel comes up and the toes push off; the thigh turns so the foot stays put under the passing body (on the
+    //   the heel comes up and the toes push off (FEATURES.footFlex: the foot bending at its ball, the toes flat); the thigh turns so the foot stays put under the passing body (on the
     //   model's own leg lengths), and the hips sit as high as the planted leg holds them;
     // - in the swing the knee folds the heel up behind, the thigh drives forward and the shin unfolds to land again,
     //   along eased curves that carry on from the stance's own motion at both ends;
@@ -24,6 +24,7 @@ namespace PocketFootball.View
         public float HipY;                 // the hip joint's height standing (rig cm, the figure's units)
         public float Thigh, Shin, Ankle;   // hip to knee, knee to ankle, the ankle's height standing (rig cm)
         public float ThighRest, ShinRest;  // each bone's angle from straight down standing (degrees, + forward)
+        public float Foot, FootDropDeg;    // ankle to the ball of the foot (rig cm; 0: no foot) and that line's slope below level
 
         // The figure's own legs, for a figure with no model on.
         public static StrideLegs Figure => new StrideLegs { HipY = 60f, Thigh = 29f, Shin = 31f, Ankle = 0f };
@@ -34,6 +35,7 @@ namespace PocketFootball.View
         public float Drop;                                   // the hips this far below standing (rig cm)
         public float ThighL, ShinL, ThighR, ShinR;           // the figure's leg angles (FootballFigure's thigh / shin)
         public float ToeL, ToeR;                             // each foot pitched this far (degrees, - = toes down)
+        public float BallL, BallR;                           // FEATURES.footFlex: the toes bent up at the ball of the foot (degrees)
         public float ArmL, ForeL, ArmR, ForeR;               // the arm swing and elbow bend (FootballFigure's arm / fore)
         public float Twist;                                  // the shoulders turned (degrees, + toward his right)
     }
@@ -46,9 +48,12 @@ namespace PocketFootball.View
         // drive at FoldThighAt and all the way at DriveAt, the knee still UnfoldKeep of its fold there (it unfolds only
         // in the last of the swing, just before the foot lands)
         const float FoldAt = 0.35f, FoldThighAt = 0.38f, FoldDrive = 0.55f, DriveAt = 0.62f, UnfoldKeep = 0.9f;
-        const float PushFrom = 0.45f;         // the heel comes up over the last part of the stance (the hip rolling over the toes)
-        const float PointFrom = 0.62f;        // and the foot points over the last part of that
-        const float ToeBackBy = 0.35f;        // the pointed foot comes back level by this share of the swing
+        const float PushFrom = 0.3f;          // the heel comes up over the last part of the stance (the hip rolling over the toes)
+        const float PointFrom = 0.25f;        // and the foot points over the last part of that
+        const float ToeBackBy = 0.45f;        // the pointed foot comes back level by this share of the swing
+        // the foot points most just after it leaves the grass (as a real one does): OffShare of the way there at toe-off,
+        // all the way at PeakAt of the swing, so a run's short touch on the grass doesn't snap it down in one frame
+        const float OffShare = 0.6f, PeakAt = 0.12f;
         const float StrikeTo = 0.2f, StrikeFrom = 0.7f;   // the toes up (strideHeelStrikeDeg) landing: from this share of the swing to this of the stance
         // a swing leg's say in the hips' height fades out while the other foot is down (it's in the air, it holds
         // nothing): Release leg lengths higher at the middle of that, so the planted leg's own bend sets the hips
@@ -115,7 +120,7 @@ namespace PocketFootball.View
         struct Step
         {
             public StrideLegs g;
-            public float stance, sweep, ahead, land, load, push, heel, fold, drive, bob;
+            public float stance, sweep, ahead, land, load, push, heel, fold, drive, bob, point;
         }
 
         // the planted leg at s (0..1 of the stance): its knee, the foot (x ahead of the hip, y up), the hips' height it
@@ -124,7 +129,15 @@ namespace PocketFootball.View
         {
             knee = Curve(s, new[] { 0f, LoadAt, 1f }, new[] { k.land, k.load, k.push }, 0f, (k.push - k.load) / (1f - LoadAt));
             x = k.ahead - s * k.sweep;
-            y = k.g.Ankle + k.heel * Smooth((s - PushFrom) / (1f - PushFrom));
+            // the pointing foot turns about its ball, which stays on the grass: the ankle rises with it (a figure with no
+            // foot measured: the heel just comes up strideHeelCm). The rise is the whole point's, though the foot shows only
+            // OffShare of it by toe-off (the ball just leaving the grass), so the hips ride the same as before
+            if (k.g.Foot > 0f)
+            {
+                float rest = k.g.FootDropDeg * Mathf.Deg2Rad, turn = k.point * Smooth((s - PointFrom) / (1f - PointFrom)) * Mathf.Deg2Rad;
+                y = k.g.Ankle + k.g.Foot * (Mathf.Sin(rest + turn) - Mathf.Sin(rest));
+            }
+            else y = k.g.Ankle + k.heel * Smooth((s - PushFrom) / (1f - PushFrom));
             float l = Span(k.g, knee), r = Mathf.Clamp(x / l, -0.999f, 0.999f);
             hip = y + l * Mathf.Sqrt(1f - r * r);
             thigh = Mathf.Asin(r) * Mathf.Rad2Deg + AtHip(k.g, l);
@@ -139,11 +152,11 @@ namespace PocketFootball.View
             return ((which == 0 ? kb - ka : tb - ta)) / (b - a);
         }
 
-        struct Leg { public bool planted; public float s, knee, thigh, hip, toe; }
+        struct Leg { public bool planted; public float s, knee, thigh, hip, toe, ball; }
 
         // The pose at phase (0..1, the left foot touching down at 0, the right at 0.5) and speed (yd/s). cmPerYd: rig
         // cm a yard on the grass (the figure's scale).
-        public static StridePose Pose(AnimConfig a, PlayersConfig pc, StrideLegs g, float phase, float speed, float cmPerYd)
+        public static StridePose Pose(AnimConfig a, PlayersConfig pc, StrideLegs g, float phase, float speed, float cmPerYd, bool footFlex = true)
         {
             float amp = Mathf.Clamp01(speed / Mathf.Max(0.01f, a.strideWalkYdS));   // slower than a walk: smaller
             float leg = g.Thigh + g.Shin;
@@ -163,8 +176,12 @@ namespace PocketFootball.View
             k.drive = Gait(a.strideThighDriveDeg, speed, a, pc) * amp;
             k.heel = Gait(a.strideHeelCm, speed, a, pc) * amp;
             k.bob = Gait(a.strideBobCm, speed, a, pc) * amp;
-            float point = Gait(a.strideToeDeg, speed, a, pc) * amp;
+            float point = k.point = Gait(a.strideToeDeg, speed, a, pc) * amp;
             float strike = Gait(a.strideHeelStrikeDeg, speed, a, pc) * amp;
+            // FEATURES.footFlex: the toes stay flat on the grass as the heel comes up (the foot bends at its ball), let go
+            // after toe-off, and the foot lifts its toes in the swing to clear the grass
+            float ball = footFlex ? point * Mathf.Clamp01(a.strideToeBendShare) : 0f;
+            float lift = footFlex ? Gait(a.strideSwingToeUpDeg, speed, a, pc) * amp : 0f;
 
             // the stance's two ends, for the swing to carry on from and land on
             Planted(k, 1f, out float kOff, out _, out _, out float hOff, out float tOff);
@@ -185,7 +202,11 @@ namespace PocketFootball.View
                     l.planted = true;
                     l.s = u / k.stance;
                     Planted(k, l.s, out l.knee, out _, out _, out l.hip, out l.thigh);
-                    l.toe = -point * Smooth((l.s - PointFrom) / (1f - PointFrom)) + strike * (1f - Smooth(l.s / StrikeTo));
+                    float push = Smooth((l.s - PointFrom) / (1f - PointFrom));
+                    // a toes-down landing (a sprint's) stays down and runs straight on into the push, never flat between
+                    l.toe = strike < 0f ? Mathf.Lerp(strike, -point * OffShare, push)
+                                        : -point * OffShare * push + strike * (1f - Smooth(l.s / StrikeTo));
+                    l.ball = ball * OffShare * push;
                 }
                 else
                 {
@@ -199,13 +220,17 @@ namespace PocketFootball.View
                     l.hip = Mathf.Lerp(hOff, hOn, Smooth(l.s)) + (f >= 0f ? k.bob * 4f * f * (1f - f) : 0f);
                     float down = Mathf.Max(air, 0f), held = 1f - 2f * down, m = held > 0f ? (l.s - down) / held : -1f;
                     if (m > 0f && m < 1f) l.hip += Release * leg * 16f * m * m * (1f - m) * (1f - m);
-                    l.toe = -point * (1f - Smooth(l.s / ToeBackBy)) + strike * Smooth((l.s - StrikeFrom) / (1f - StrikeFrom));
+                    float pointed = l.s < PeakAt ? Mathf.Lerp(OffShare, 1f, Smooth(l.s / PeakAt)) : 1f - Smooth((l.s - PeakAt) / (ToeBackBy - PeakAt));
+                    l.toe = -point * pointed + strike * Smooth((l.s - StrikeFrom) / (1f - StrikeFrom));
+                    float up = (l.s - ToeBackBy) / (StrikeFrom - ToeBackBy);
+                    if (up > 0f && up < 1f) l.toe += lift * 4f * up * (1f - up);
+                    l.ball = ball * pointed;
                 }
                 hip = Mathf.Min(hip, l.hip);   // (as high as the lower leg holds him: no foot ends up under the grass)
                 legs[i] = l;
             }
 
-            var p = new StridePose { Drop = g.HipY - hip, ToeL = legs[0].toe, ToeR = legs[1].toe };
+            var p = new StridePose { Drop = g.HipY - hip, ToeL = legs[0].toe, ToeR = legs[1].toe, BallL = legs[0].ball, BallR = legs[1].ball };
             Place(g, hip, legs[0], out p.ThighL, out p.ShinL);
             Place(g, hip, legs[1], out p.ThighR, out p.ShinR);
 
