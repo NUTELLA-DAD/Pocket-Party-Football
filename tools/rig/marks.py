@@ -1,6 +1,6 @@
 # Jersey numbers and eyes the game draws itself (FEATURES.jerseyNumbers, FEATURES.eyesLook): for one model, paints the
 # baked-in numbers and irises out of each of its colour maps (in place), and writes the model's marks map, which tells
-# the PocketParty/ToonPlayer shader where a number or an eye goes on each texel.
+# the PocketParty/Toon shader where a number or an eye goes on each texel.
 #   marks map RGBA: R, G = the texel's spot in its zone (number: in number heights, -1.5..1.5; eye: in iris radii, -3..3;
 #   both 0..1 in the PNG), B = 128 number / 255 eye, A = 255 inside the zone (an eye's: inside its opening only).
 # usage: python3 marks.py <uvmap.npz> <zones.json> <Models dir> [preview.png]
@@ -10,7 +10,7 @@
 #     "depth": m either side of the surface, "size": number height | iris radius m,
 #     an eye's "iris": its centre on the plane [s, t] m, "poly": its opening on the plane [[s, t], ...] m}]}
 #   Blender space throughout: +X the model's left, -Y forward, Z up (what uvmap.py writes).
-# Prints, per colour map, the iris and lid colours to copy into game.json "modelMarks".
+# Prints, per colour map, the iris and lid colours to copy into game.json "marks" "models".
 import sys, json, os, numpy as np
 from PIL import Image
 
