@@ -12,6 +12,12 @@ Blender as a Python module (`pip install bpy`), run with `python script.py -- ar
   squash/stretch triangle count. Env: ADAPT=1 FOOT_LEVEL=0.7 PALM_ALONG=0.55 PALM_IN=<0.45*forearm m> mirror the
   ModelSkin.cs arm/feet/ball fixes; CLOSE=1, LEGS=1, HAND=1 are close-up cameras; NORENDER=1 only scores.
 - `compare.py -- out.png dirA dirB view,view Pose,Pose`: side-by-side sheet for a reviewer.
+- Re-running rigfix on a finished model (after handfix): `"jointsFromRig": true` leaves the skeleton where it is and
+  reads the joints from its bones; `"keep": ["Hand","Thumb","ThumbTip","Fingers","FingersTip"]` keeps every hand
+  and finger vertex's old weights; `"newAbove": [z0, z1]` gives the new weights only above z1 (old below z0, blended
+  between). `soften/<Model>.json` are the sets that softened the shoulders and armpits of the Linebacker, QB, WR and
+  Kicker (wider smoothing, a wider clavicle blend): arms-up poses lost about a third of their stretched triangles.
+  Chiefs #24 kept its weights (they already scored better).
 
 For another model (e.g. the linebacker): copy chiefs24.json, set the joints from slices of that mesh (shoulder at the
 sleeve/pad centre, elbow mid bare arm, wrist at the wristband, knee at the pants hem, ankle inside the shoe top), and
