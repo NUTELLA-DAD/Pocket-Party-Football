@@ -206,6 +206,7 @@ namespace PocketFootball.Sim
         public int glanceKeys, blinkEveryKeys, blinkKeys;
         public float glanceChance, glanceDeg;
         public List<ModelMarksConfig> models = new List<ModelMarksConfig>();
+        public List<string> skinTones = new List<string>();   // FEATURES.skinTones: the skin colours players are given, light to dark
 
         public ModelMarksConfig For(string model)
         {
@@ -232,6 +233,7 @@ namespace PocketFootball.Sim
     public sealed class ModelMarksConfig
     {
         public string model, map, iris, lid;
+        public string skin;   // the model's own skin colour (marks.py prints it): each man's tone is drawn as a ratio of it
         public int number;
     }
 

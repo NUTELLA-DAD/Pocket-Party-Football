@@ -60,6 +60,8 @@ CBUFFER_START(UnityPerMaterial)
     float4 _StainLook;
     half4 _StainGrass;
     half4 _StainDirt;
+    // FEATURES.skinTones: this man's skin as a ratio of the model's own (1, 1, 1: as painted)
+    float4 _Skin;
 CBUFFER_END
 TEXTURE2D(_MarksTex); SAMPLER(sampler_MarksTex);
 TEXTURE2D(_DigitsTex); SAMPLER(sampler_DigitsTex);
@@ -105,14 +107,14 @@ half3 MarkEye(half3 col, float2 e, float aa)
     // a blink: the lid comes down from the top of the opening, a dark lash line along its edge
     float lid = 2.0 - _EyeLook.z * 4.2;
     col = lerp(col, _IrisColor.rgb * 0.15, step(0.01, _EyeLook.z) * saturate((e.y - (lid - 0.22)) / aa + 0.5));
-    col = lerp(col, _LidColor.rgb, saturate((e.y - lid) / aa + 0.5));
+    col = lerp(col, _LidColor.rgb * _Skin.rgb, saturate((e.y - lid) / aa + 0.5));
     // a reaction (FEATURES.faceReactions): the eye shut, drawn as one dark line on the lid: happy, an upturned arc (^);
     // a wince, a shallow V pressed shut
     float mood = _EyeLook.w;
     if (abs(mood) > 0.5)
     {
         float lidLine = mood > 0 ? 0.35 - 0.55 * e.x * e.x : -0.1 + 0.35 * abs(e.x);
-        col = lerp(_LidColor.rgb, _IrisColor.rgb * 0.12, saturate((0.2 - abs(e.y - lidLine)) / aa + 0.5));
+        col = lerp(_LidColor.rgb * _Skin.rgb, _IrisColor.rgb * 0.12, saturate((0.2 - abs(e.y - lidLine)) / aa + 0.5));
     }
     return col;
 }
@@ -153,8 +155,11 @@ half3 Marks(half3 col, float2 uv)
         float aa = clamp(fwidth(q.x) + fwidth(q.y), 1e-3, 0.05);   // (worked out before any branch on the texel)
         float sn = StainNoise(uv * _StainLook.x) * 0.65 + StainNoise(uv * _StainLook.x * 2.3 + 17.0) * 0.35;
         float saa = max(fwidth(sn), 1e-3);
+        // skin: the marks map's G outside the zones, and all of an eye zone round its opening (the lids and brows)
+        float skinW = (m.b < 0.25 ? m.g : (m.b > 0.75 ? 1.0 : 0.0)) * saturate(dot(col, half3(0.2126, 0.7152, 0.0722)) * 12.0 - 0.15);   // (not the dark brows and lashes)
+        half3 skin = col * lerp(half3(1, 1, 1), (half3)_Skin.rgb, skinW);
         if (m.a >= 0.5) outCol = m.b < 0.75 ? MarkNumber(col, q, aa) : MarkEye(col, q * 2.0, aa * 2.0);
-        else outCol = MarkStain(col, uv, sn, saa, m.r * step(m.b, 0.25));
+        else outCol = MarkStain(skin, uv, sn, saa, m.r * step(m.b, 0.25));
     }
     return outCol;
 }

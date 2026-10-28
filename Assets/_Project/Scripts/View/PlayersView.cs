@@ -438,6 +438,8 @@ namespace PocketFootball.View
             fig = FootballFigure.Create(root, "Player " + p.Slot, cfg.view.playerHeightM);
             ModelSkin.Wear(fig, team, pos, cfg, mat);   // the team's (or the position's) rigged model over the pose rig
             JerseyMarks.SetNumber(fig.gameObject, cfg, p.Number);   // FEATURES.jerseyNumbers: his own number
+            team.ModelFor(pos, cfg.Feature("posModels"), out string model, out _, out _);
+            JerseyMarks.SetSkin(fig.gameObject, cfg, model, JerseyMarks.SkinPick(p.Slot));   // FEATURES.skinTones: his own skin
             skins[p.Slot] = fig.GetComponentInChildren<ModelSkin>();
             fig.SwayCm = cfg.anim.idleSwayCm; fig.RollDeg = cfg.anim.idleRollDeg; fig.KneeDeg = cfg.anim.idleKneeDeg;
             bodies[p.Slot] = fig;

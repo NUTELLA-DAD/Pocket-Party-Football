@@ -18,7 +18,8 @@ namespace PocketFootball.View
             StyleId = Shader.PropertyToID("_NumberStyle"), LookId = Shader.PropertyToID("_EyeLook"),
             IrisId = Shader.PropertyToID("_IrisColor"), LidId = Shader.PropertyToID("_LidColor"),
             StainId = Shader.PropertyToID("_Stain"), StainLookId = Shader.PropertyToID("_StainLook"),
-            GrassId = Shader.PropertyToID("_StainGrass"), DirtId = Shader.PropertyToID("_StainDirt");
+            GrassId = Shader.PropertyToID("_StainGrass"), DirtId = Shader.PropertyToID("_StainDirt"),
+            SkinId = Shader.PropertyToID("_Skin");
 
         // The digit atlas: ten cells side by side, each the glyph's box (1 x 1.4) with Margin round it, CellPx pixels a
         // glyph unit; each pixel the distance to the glyph's centre line over MaxDist (the shader's 0.6).
@@ -28,7 +29,7 @@ namespace PocketFootball.View
         static readonly Dictionary<string, Texture2D> maps = new Dictionary<string, Texture2D>();
         static MaterialPropertyBlock block;
 
-        public static bool On(GameConfig cfg) => cfg.Feature("jerseyNumbers") || cfg.Feature("eyesLook") || cfg.Feature("faceReactions") || cfg.Feature("grassStains");
+        public static bool On(GameConfig cfg) => cfg.Feature("jerseyNumbers") || cfg.Feature("eyesLook") || cfg.Feature("faceReactions") || cfg.Feature("grassStains") || cfg.Feature("skinTones");
 
         public static Texture2D Digits()
         {
@@ -111,6 +112,29 @@ namespace PocketFootball.View
         // Where a player's eyes look (iris radii: x to his left, y up), how shut his lids are (0..1) and his mood (+1 a happy
         // squint, -1 a wince: FEATURES.faceReactions).
         public static void SetEyes(Renderer r, float x, float y, float blink, float mood = 0f) => Set(r, LookId, new Vector4(x, y, blink, mood));
+
+        // FEATURES.skinTones: a man's own skin colour, one of marks.skinTones picked by u (0..1), drawn as its ratio to the
+        // model's own skin (so the shading painted on the model stays), on every renderer under him.
+        public static void SetSkin(GameObject holder, GameConfig cfg, string model, float u)
+        {
+            if (holder == null || !cfg.Feature("skinTones")) return;
+            var r = SkinRatio(cfg, model, u);
+            foreach (var rend in holder.GetComponentsInChildren<Renderer>(true)) Set(rend, SkinId, r);
+        }
+
+        public static Vector4 SkinRatio(GameConfig cfg, string model, float u)
+        {
+            var mm = cfg.marks.For(model);
+            var tones = cfg.marks.skinTones;
+            if (mm == null || string.IsNullOrEmpty(mm.skin) || tones == null || tones.Count == 0) return Vector4.one;
+            var tone = Colors.Hex(tones[Mathf.Clamp((int)(Mathf.Repeat(u, 1f) * tones.Count), 0, tones.Count - 1)]);
+            var own = Colors.Hex(mm.skin);
+            float R(float a, float b) => Mathf.Clamp(a / Mathf.Max(b, 0.02f), 0.15f, 4f);
+            return new Vector4(R(tone.r, own.r), R(tone.g, own.g), R(tone.b, own.b), 1f);
+        }
+
+        // The pick for a player on the field: by his slot, spread round the tones (the golden ratio), so neighbours differ.
+        public static float SkinPick(int slot) => Mathf.Repeat(slot * 0.618034f + 0.31f, 1f);
 
         // How much grass and dirt a player has on him (0..reactions.stainMax: FEATURES.grassStains).
         public static void SetStain(Renderer r, float amount) => Set(r, StainId, new Vector4(amount, 0f, 0f, 0f));
