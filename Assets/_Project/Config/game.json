@@ -369,6 +369,7 @@
   "view": {
     "perfLogEveryS": 10,
     "perfSlowFrameMs": 25,
+    "frameRate": 60,
     "playerHeightM": 2.85,
     "playerRadiusM": 0.45,
     "tackleContactM": 1.0,

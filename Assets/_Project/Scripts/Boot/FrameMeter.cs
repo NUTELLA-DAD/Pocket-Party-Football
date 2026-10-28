@@ -15,6 +15,7 @@ namespace PocketFootball.Boot
         readonly Window corner = new Window(), log = new Window();
         string line = "";
         GUIStyle style;
+        bool started;   // (the first frame is the load, seconds long: not counted)
 
         // the frame times (ms) since a window last emptied
         sealed class Window { public readonly List<float> Ms = new List<float>(); public float S; }
@@ -31,6 +32,7 @@ namespace PocketFootball.Boot
         {
             var kb = Keyboard.current;
             if (kb != null && kb.f3Key.wasPressedThisFrame) shown = !shown;
+            if (!started) { started = true; return; }
             float dt = Time.unscaledDeltaTime;
             corner.Ms.Add(dt * 1000f); corner.S += dt;
             log.Ms.Add(dt * 1000f); log.S += dt;

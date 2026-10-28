@@ -28,7 +28,7 @@ namespace PocketFootball.Boot
             Args = CliArgs.FromEnvironment();
             Config = ConfigLoader.Parse(LoadConfigText(), Environment.GetEnvironmentVariable);
             ConfigLoader.AddPlays(Config, LoadPlays());
-            Application.targetFrameRate = 60;
+            PaceFrames(Config);
             TitleScreen.ApplySavedSettings(Config);   // the sound level, and the helpers switched off on the SETTINGS page
             bool title = TitleScreen.Requested(Config, Args);
             if (title) TitleScreen.PrepareAttract(Config, Args);   // the bots' show game behind the title
@@ -52,6 +52,22 @@ namespace PocketFootball.Boot
                 if (BotReel.Requested(out int reelEvery)) BotReel.Attach(gameObject, Host, Lab, Args.ShotsDir, reelEvery);   // the bots' film (tools/botreel.ps1)
             }
             Debug.Log($"[boot] Pocket Party Football up: field {Config.field.lengthYd} x {Config.field.widthYd} yd, camera {Config.camera.visibleYards} yd wide");
+        }
+
+        // A steady view.frameRate. Vsync on alone ran a 240 Hz laptop at an uneven 130-155 fps (Unity ignores
+        // targetFrameRate while vsync is on), so a frame stayed up for 1, 2 or 3 refreshes and running judders. When the
+        // screen's rate is a whole multiple of it, vsync every N refreshes (240 Hz: every 4th); otherwise vsync off and
+        // the frame rate capped. NO_SMOOTH_MOTION=1: vsync as the quality level has it, as before.
+        static void PaceFrames(GameConfig cfg)
+        {
+            int fps = cfg.view.frameRate > 0f ? Mathf.RoundToInt(cfg.view.frameRate) : 60;
+            Application.targetFrameRate = fps;
+            if (!cfg.Feature("smoothMotion")) return;
+            double hz = Screen.currentResolution.refreshRateRatio.value;
+            int every = hz > 0 ? (int)Math.Round(hz / fps) : 0;
+            bool whole = every >= 1 && every <= 4 && Math.Abs(hz / every - fps) < 1.5;
+            QualitySettings.vSyncCount = whole ? every : 0;
+            Debug.Log($"[boot] frame pacing: screen {hz:0.##} Hz, {fps} fps, " + (whole ? $"vsync every {every} refreshes" : "vsync off, capped"));
         }
 
         // The editor reads Assets/_Project/Config itself (never a stale copy). A build reads StreamingAssets/config

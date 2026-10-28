@@ -70,6 +70,7 @@ namespace PocketFootball.Tests.EditMode
             var cfg = ConfigTests.Load();
             Assert.Greater(cfg.view.perfLogEveryS, 0f, "the frame meter logs now and then");
             Assert.Greater(cfg.view.perfSlowFrameMs, 0f, "and knows a slow frame");
+            Assert.AreEqual(60f, cfg.view.frameRate, "the TV draws a steady 60");
         }
 
         [Test]
