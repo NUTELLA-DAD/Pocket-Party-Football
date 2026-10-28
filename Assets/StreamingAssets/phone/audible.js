@@ -12,7 +12,7 @@
   bar.id = 'audBar';
   bar.className = 'audbar hidden';
   var plate = $('me');
-  if (plate) plate.insertBefore(bar, $('meNum'));
+  if (plate) plate.appendChild(bar);   // after the player tag
 
   var sheet = document.createElement('div');
   sheet.id = 'audSheet';

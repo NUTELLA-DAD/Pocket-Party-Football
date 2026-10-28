@@ -48,6 +48,7 @@ Shader "PocketParty/Toon"
         _StainLook ("Stains: scale, opacity", Vector) = (34, 0.85, 0, 0)
         _StainGrass ("Stain grass", Color) = (0.33, 0.48, 0.17, 1)
         _StainDirt ("Stain dirt", Color) = (0.43, 0.32, 0.2, 1)
+        _Skin ("Skin tone (ratio to the model's)", Vector) = (1, 1, 1, 1)
     }
     SubShader
     {

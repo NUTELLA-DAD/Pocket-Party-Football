@@ -4,6 +4,7 @@ using System.Text;
 using NUnit.Framework;
 using PocketFootball.Input;
 using PocketFootball.Sim;
+using PocketFootball.View;
 
 namespace PocketFootball.Tests.EditMode
 {
@@ -239,6 +240,30 @@ namespace PocketFootball.Tests.EditMode
             Assert.IsTrue(w.Kick.Kickoff, "a kickoff after the field goal");
             Assert.AreEqual(Phase.Set, w.Phase);
             Assert.AreEqual(kicking, w.Offense, "the team that scored kicks off");
+        }
+
+        // FEATURES.kickMotion (View/Moves.cs): lined up for the kick the kicker stands over the ball; his kick swings his
+        // leg (not a throw's arm) and ends after kickS; switched off, the kick shows as before (a throw).
+        [TestCase(true)]
+        [TestCase(false)]
+        public void TheKickerSetsUpThenSwingsHisLeg(bool on)
+        {
+            var cfg = On();
+            cfg.features["kickMotion"] = on;
+            var w = At(cfg, 25f, cfg.downs.downsToGain, 35f);
+            var me = w.ReplaceBot(w.Offense, 500);
+            Assert.IsTrue(Huddle.Lock(w, 500, cfg.kicking.fgPlay));
+            var m = new Moves();
+            Assert.IsTrue(Run(w, 30, () => { m.Observe(w); return w.Phase == Phase.Set; }));
+            m.Observe(w);
+            if (on) Assert.AreEqual(Move.KickSet, m.Of(w, me).Kind, "over the ball");
+            if (on) Assert.AreEqual(0, m.Of(w, me).Frame, "a place kick");
+            Assert.IsTrue(Kicking.Kick(w, 500, 0.8f, 0f));
+            w.Step(null); m.Observe(w);
+            Assert.AreEqual(on ? Move.Kick : Move.Throw, m.Of(w, me).Kind, "the kick");
+            for (int i = 0; i < (int)(cfg.anim.kickS * cfg.sim.tickHz) + 1; i++) { w.Step(null); m.Observe(w); }
+            Assert.AreNotEqual(Move.Kick, m.Of(w, me).Kind, "the kick ends");
+            Assert.AreEqual("NO_KICK_MOTION", ConfigLoader.EnvName("kickMotion"));
         }
 
         // A person kicks with the meter: straight and hard enough is good, way off to the side is not.

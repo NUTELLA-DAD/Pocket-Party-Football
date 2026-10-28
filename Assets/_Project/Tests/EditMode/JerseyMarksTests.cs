@@ -117,5 +117,26 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual((0f, 0f, 0f), (ox, oy, ob));
             Assert.AreEqual("NO_EYES_LOOK", ConfigLoader.EnvName("eyesLook"));
         }
+
+        // FEATURES.skinTones: every player gets one of marks.skinTones, drawn as a ratio of his model's own skin; the 22 on
+        // the field spread over light to dark.
+        [Test]
+        public void PlayersHaveAMixOfSkinTones()
+        {
+            var cfg = ConfigTests.Load();
+            int n = cfg.marks.skinTones.Count;
+            Assert.GreaterOrEqual(n, 5, "a decent range");
+            foreach (var mm in cfg.marks.models) Assert.IsFalse(string.IsNullOrEmpty(mm.skin), mm.model + " has its own skin colour");
+            var seen = new HashSet<int>();
+            for (int slot = 0; slot < 22; slot++) seen.Add((int)(JerseyMarks.SkinPick(slot) * n));
+            Assert.AreEqual(n, seen.Count, "every tone on the field");
+            string model = cfg.marks.models[0].model;
+            var light = JerseyMarks.SkinRatio(cfg, model, 0f);
+            var dark = JerseyMarks.SkinRatio(cfg, model, 0.999f);
+            Assert.Greater(light.x, dark.x, "light to dark");
+            Assert.Greater(light.y, dark.y);
+            Assert.AreEqual(Vector4.one, JerseyMarks.SkinRatio(cfg, "Models/None", 0.5f), "an unknown model stays as painted");
+            Assert.AreEqual("NO_SKIN_TONES", ConfigLoader.EnvName("skinTones"));
+        }
     }
 }

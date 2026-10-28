@@ -346,6 +346,7 @@
   "anim": {
     "fps": 8,
     "throwS": 0.5,
+    "kickS": 0.75,
     "handoffS": 0.4,
     "secureS": 0.4,
     "bobbleS": 0.6,
@@ -910,13 +911,14 @@
     "glanceDeg": 40,
     "blinkEveryKeys": 28,
     "blinkKeys": 2,
+    "skinTones": ["#f3d0b0", "#e2b48a", "#c98e5e", "#a86e44", "#8a5432", "#6b3f24", "#4a2a17"],
     "models": [
-      { "model": "Models/Chiefs24/Chiefs24_Rigged", "map": "Models/Chiefs24/Chiefs24_Marks", "iris": "#6b3a1e", "lid": "#9f623a", "number": 24 },
-      { "model": "Models/Linebacker/Linebacker_Rigged", "map": "Models/Linebacker/Linebacker_Marks", "iris": "#5e3822", "lid": "#da8a54", "number": 64 },
-      { "model": "Models/QB/QB_Rigged", "map": "Models/QB/QB_Marks", "iris": "#8a5a22", "lid": "#c28146", "number": 7 },
-      { "model": "Models/WR/WR_Rigged", "map": "Models/WR/WR_Marks", "iris": "#94601c", "lid": "#ac6e49", "number": 81 },
-      { "model": "Models/Kicker/Kicker_Rigged", "map": "Models/Kicker/Kicker_Marks", "iris": "#8a5510", "lid": "#c7936b", "number": 3 },
-      { "model": "Models/TE/TE_Rigged", "map": "Models/TE/TE_Marks", "iris": "#885415", "lid": "#A46742", "number": 88 }
+      { "model": "Models/Chiefs24/Chiefs24_Rigged", "map": "Models/Chiefs24/Chiefs24_Marks", "iris": "#6b3a1e", "lid": "#9f623a", "number": 24 , "skin": "#9C5E34" },
+      { "model": "Models/Linebacker/Linebacker_Rigged", "map": "Models/Linebacker/Linebacker_Marks", "iris": "#5e3822", "lid": "#da8a54", "number": 64 , "skin": "#BD7546" },
+      { "model": "Models/QB/QB_Rigged", "map": "Models/QB/QB_Marks", "iris": "#8a5a22", "lid": "#c28146", "number": 7 , "skin": "#C78147" },
+      { "model": "Models/WR/WR_Rigged", "map": "Models/WR/WR_Marks", "iris": "#94601c", "lid": "#ac6e49", "number": 81 , "skin": "#8E5839" },
+      { "model": "Models/Kicker/Kicker_Rigged", "map": "Models/Kicker/Kicker_Marks", "iris": "#8a5510", "lid": "#c7936b", "number": 3 , "skin": "#CA966A" },
+      { "model": "Models/TE/TE_Rigged", "map": "Models/TE/TE_Marks", "iris": "#885415", "lid": "#A46742", "number": 88 , "skin": "#8F5938" }
     ]
   },
   "reactions": {
@@ -928,10 +930,10 @@
     "stainTackler": 0.1,
     "stainBigHit": 0.08,
     "stainMax": 1,
-    "stainGrass": "#557a2c",
-    "stainDirt": "#6e5233",
+    "stainGrass": "#5f8f2e",
+    "stainDirt": "#7d5b36",
     "stainScale": 34,
-    "stainOpacity": 0.85,
+    "stainOpacity": 0.9,
     "barFontPx": 15,
     "barLiveAlpha": 0.55,
     "barAboveM": 0.9
@@ -1005,10 +1007,13 @@
     "handCurl": true,
     "jerseyNumbers": true,
     "eyesLook": true,
+    "skinTones": true,
     "faceReactions": true,
     "grassStains": true,
     "nameBars": true,
     "narrowLegs": true,
+    "throwMotion": true,
+    "kickMotion": true,
     "idleMotion": true,
     "headTrack": true,
     "ballSpin": true,

@@ -57,18 +57,31 @@ const ME = { offense: 2, defense: 1 };   // a wide receiver; a cornerback
       send({ t: 'ui', layout: 'huddle', aid: 'h1' });
       send({ t: 'huddle', side, secs: 15, caller: true, callerNumber: 15, locked: false, mine: '', plays, spots, opp, me, thumbs: {} });
       await page.waitForTimeout(80);
-      for (let i = 0; i < plays.length; i++) {
-        await page.locator('#hPlays .play').nth(i).click();
+      // every tab, every card: the picture fills the card's grass box
+      const tabs = Math.max(1, (await page.$$('#hTabs .htab')).length);
+      let seen = 0;
+      for (let t = 0; t < tabs; t++) {
+        if (await page.isVisible('#hTabs')) await page.locator('#hTabs .htab').nth(t).click();
         await page.waitForTimeout(60);
-        const fit = await page.evaluate(() => {
-          const f = document.querySelector('#hPrev .pv-field'), s = f && f.querySelector('svg');
-          if (!s) return 'no picture';
-          const a = f.getBoundingClientRect(), b = s.getBoundingClientRect();
-          return Math.abs(a.width - b.width) <= 2 && Math.abs(a.height - b.height) <= 2 ? '' : 'box ' + Math.round(a.width) + 'x' + Math.round(a.height) + ' picture ' + Math.round(b.width) + 'x' + Math.round(b.height);
-        });
-        ok(!fit, tag + ' ' + plays[i].id + ' preview does not fill its box: ' + fit);
-        await page.locator('#hPrev').screenshot({ path: path.join(SHOTS, 'playbook-' + tag + '-' + plays[i].id + '.png') });
+        const cards = page.locator('#hPlays .play');
+        const n = await cards.count();
+        for (let i = 0; i < n; i++) {
+          const id = await cards.nth(i).getAttribute('data-id');
+          await cards.nth(i).click();
+          await page.waitForTimeout(40);
+          const fit = await cards.nth(i).evaluate(c => {
+            const f = c.querySelector('.pf'), s = f && f.querySelector('svg');
+            if (!s) return 'no picture';
+            const a = f.getBoundingClientRect(), b = s.getBoundingClientRect();
+            return Math.abs(a.width - b.width) <= 2 && Math.abs(a.height - b.height) <= 2 ? '' : 'box ' + Math.round(a.width) + 'x' + Math.round(a.height) + ' picture ' + Math.round(b.width) + 'x' + Math.round(b.height);
+          });
+          ok(!fit, tag + ' ' + id + ' card picture does not fill its box: ' + fit);
+          await cards.nth(i).screenshot({ path: path.join(SHOTS, 'playbook-' + tag + '-' + id + '.png') });
+          seen++;
+        }
       }
+      ok(seen === plays.length, tag + ' ' + side + ': ' + seen + ' of ' + plays.length + ' plays on the tabs');
+      await page.screenshot({ path: path.join(SHOTS, 'playbook-' + tag + '-huddle-' + side + '.png') });
       send({ t: 'job', side, play: plays[0], spots, opp, me });
       send({ t: 'ui', layout: 'wait', aid: 'r1' });   // the job card shows before the snap
       await page.waitForTimeout(80);
@@ -79,5 +92,5 @@ const ME = { offense: 2, defense: 1 };   // a wide receiver; a cornerback
   }
   await browser.close();
   if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }
-  console.log('PASS: ' + all.length + ' plays at ' + SIZES.length + ' sizes, every preview fills its box, no page errors');
+  console.log('PASS: ' + all.length + ' plays at ' + SIZES.length + ' sizes, every card picture fills its box, no page errors');
 })();
