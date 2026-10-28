@@ -374,6 +374,7 @@ namespace PocketFootball.Sim
             if (kind == KickKind.FieldGoal || p == kicker) return default(PlayerInput);
             var b = w.Ball;
             float tx = k.Landed ? b.X : b.TargetX, tz = k.Landed ? b.Z : b.TargetZ;
+            if (BotsV3.On(w)) return BotsV3.KickThink(w, p, tx, tz, Returner(w, tx, tz));   // bots v3: lanes, the return wall, real blocks
             // the kicking team covers: everyone to where it comes down
             if (p.Team == w.Offense) return To(p, tx, tz, true, 0f);
             // the receiving team: the man nearest the spot goes for the ball, the rest block for him
@@ -393,6 +394,15 @@ namespace PocketFootball.Sim
             var i = To(p, gx, gz, false, 0f);
             i.Block = true;
             return i;
+        }
+
+        // The returner right now: the receiving man nearest where a kick in the air comes down (or lies); null when
+        // there is no kick in the air, or it has been caught.
+        public static Player ReturnerNow(World w)
+        {
+            if (Mode(w) == KickKind.None || !w.Kick.Kicked || w.Kick.Returned || Mode(w) == KickKind.FieldGoal) return null;
+            var b = w.Ball;
+            return Returner(w, w.Kick.Landed ? b.X : b.TargetX, w.Kick.Landed ? b.Z : b.TargetZ);
         }
 
         static Player Returner(World w, float x, float z)

@@ -16,7 +16,8 @@ namespace PocketFootball.Sim
             float dt = w.Dt;
             var ball = LivePlay.Carrier(w);
             float bx = ball != null ? ball.X : w.Ball.X, bz = ball != null ? ball.Z : w.Ball.Z;
-            int blockers = ball != null ? ball.Team : w.Offense;
+            // bots v3: under a kick in the air the receiving team blocks for the man who will field it
+            int blockers = ball != null ? ball.Team : BotsV3.On(w) && Kicking.ReturnerNow(w) != null ? w.Defense : w.Offense;
             foreach (var d in w.Players)
             {
                 if (d.Team == blockers || d == ball) continue;

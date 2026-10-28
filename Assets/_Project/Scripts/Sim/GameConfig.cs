@@ -41,6 +41,7 @@ namespace PocketFootball.Sim
         public HitConfig hit = new HitConfig();   // FEATURES.hitAngle: straight-on hits and glancing blows (HitAngle.cs)
         public RatingsConfig ratings = new RatingsConfig();   // player ratings by position (Ratings.cs, FEATURES.ratings)
         public TitleConfig title = new TitleConfig();   // the title screen and its attract mode (TitleConfig.cs, Boot/TitleScreen.cs)
+        public BotsV3Config botsV3 = new BotsV3Config();   // bots v3: reactions, blocking assignments, kick lanes (BotsV3.cs, FEATURES.botsV3)
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 

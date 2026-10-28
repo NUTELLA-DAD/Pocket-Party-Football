@@ -918,6 +918,31 @@
       { "name": "facingOffense", "backYd": -18, "sideYd": 6, "heightYd": 3, "aheadYd": -3, "fovDeg": 44 }
     ]
   },
+  "botsV3": {
+    "reactMinS": 0.1,
+    "reactMaxS": 0.45,
+    "reactFarYd": 25,
+    "reactJitterS": 0.15,
+    "reactQuickFrac": 0.5,
+    "reactNearYd": 2.5,
+    "pursuitLeadVar": 0.5,
+    "threatRangeYd": 25,
+    "threatNearYd": 4,
+    "threatMinSpeedYdS": 2,
+    "blockRangeS": 2.5,
+    "keepBonusS": 0.4,
+    "meetLeadS": 0.1,
+    "shieldYd": 1.5,
+    "meetMaxYd": 15,
+    "sprintOverYd": 3,
+    "interceptSteps": 8,
+    "convoyAheadYd": 4,
+    "convoyGapYd": 3,
+    "laneGapYd": 5,
+    "laneUntilYd": 8,
+    "wallAheadYd": 12,
+    "wallGapYd": 4
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
@@ -973,6 +998,7 @@
     "flightLine": true,
     "landingRing": true,
     "reachRing": true,
-    "stayOnside": true
+    "stayOnside": true,
+    "botsV3": true
   }
 }
