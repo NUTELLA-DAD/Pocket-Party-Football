@@ -377,6 +377,7 @@ namespace PocketFootball.Sim
     public sealed class CameraConfig
     {
         public float visibleYards, fovDeg, pitchDeg, lookAtXYd, lookAtZYd;
+        public float nearSidelinePadYd;   // FEATURES.nearSideline: grass kept on screen past the near sideline border (CameraRig)
         public float sideline;   // -1: the camera stands on the -Z sideline
         public float leadYd, followRate;   // how far ahead of the ball it looks, how quickly it catches up (per second)
         public FreeCameraConfig free = new FreeCameraConfig();   // the practice lab's free camera (FEATURES.labFreeCam)
