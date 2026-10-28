@@ -71,8 +71,8 @@ namespace PocketFootball.View
                 if ((g & 0x20000) != 0) upDeg -= m.glanceDeg * 0.3f;
             }
             float full = Mathf.Max(1f, m.eyeFullDeg), step = Mathf.Max(0.01f, m.eyeStep);
-            x = Mathf.Round(Mathf.Clamp(yawDeg / full, -1f, 1f) * m.eyeMaxX / step) * step;
-            y = Mathf.Round(Mathf.Clamp(upDeg / full, -1f, 1f) * m.eyeMaxY / step) * step;
+            x = Mathf.Clamp(Mathf.Round(Mathf.Clamp(yawDeg / full, -1f, 1f) * m.eyeMaxX / step) * step, -m.eyeMaxX, m.eyeMaxX);
+            y = Mathf.Clamp(Mathf.Round(Mathf.Clamp(upDeg / full, -1f, 1f) * m.eyeMaxY / step) * step, -m.eyeMaxY, m.eyeMaxY);
             int bk = Mathf.Max(2, m.blinkEveryKeys);
             int window = FloorDiv(key, bk);
             int into = key - window * bk - (int)(Hash(slot + 977, window) % (uint)Mathf.Max(1, bk - m.blinkKeys + 1));   // (inside its window)

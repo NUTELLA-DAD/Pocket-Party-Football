@@ -127,7 +127,9 @@ namespace PocketFootball.Boot
                 var p = Spot(w, team, spot);
                 if (p == null) return;
                 p.Number = number; p.Pos = pos;
-                Put(w, view, team, spot, cx + x, z, Pose.Stand);
+                // facing the camera (a slow step toward it turns him), or for "numbers" every other man shows his back
+                bool back = !faces && (spot + team) % 2 == 1;
+                Put(w, view, team, spot, cx + x, z, Pose.Stand, 0f, back ? 0.6f : -0.6f);
             }
             Cast(away, 6, 64, "OL", -4.2f);
             Cast(away, 2, 17, "WR", -3f);

@@ -105,12 +105,15 @@ half3 MarkEye(half3 col, float2 e, float aa)
 
 half3 Marks(half3 col, float2 uv)
 {
-    UNITY_BRANCH if (_Marks < 0.5) return col;
-    half4 m = SAMPLE_TEXTURE2D(_MarksTex, sampler_MarksTex, uv);
-    float2 q = (m.rg - 0.5) * 3.0;
-    float aa = clamp(fwidth(q.x) + fwidth(q.y), 1e-3, 0.05);   // (worked out before any branch on the texel)
-    if (m.a < 0.5) return col;
-    return m.b < 0.75 ? MarkNumber(col, q, aa) : MarkEye(col, q * 2.0, aa * 2.0);
+    half3 outCol = col;
+    UNITY_BRANCH if (_Marks > 0.5)
+    {
+        half4 m = SAMPLE_TEXTURE2D(_MarksTex, sampler_MarksTex, uv);
+        float2 q = (m.rg - 0.5) * 3.0;
+        float aa = clamp(fwidth(q.x) + fwidth(q.y), 1e-3, 0.05);   // (worked out before any branch on the texel)
+        if (m.a >= 0.5) outCol = m.b < 0.75 ? MarkNumber(col, q, aa) : MarkEye(col, q * 2.0, aa * 2.0);
+    }
+    return outCol;
 }
 
 half3 ToonAlbedo(half4 vcol, float2 uv)
