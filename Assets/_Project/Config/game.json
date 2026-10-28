@@ -928,10 +928,10 @@
     "stainTackler": 0.1,
     "stainBigHit": 0.08,
     "stainMax": 1,
-    "stainGrass": "#557a2c",
-    "stainDirt": "#6e5233",
+    "stainGrass": "#5f8f2e",
+    "stainDirt": "#7d5b36",
     "stainScale": 34,
-    "stainOpacity": 0.85,
+    "stainOpacity": 0.75,
     "barFontPx": 15,
     "barLiveAlpha": 0.55,
     "barAboveM": 0.9

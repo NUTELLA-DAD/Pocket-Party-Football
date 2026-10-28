@@ -126,11 +126,13 @@ H = P[ok][:, 2].max(); X = np.abs(P[ok][:, 0]).max()
 zn = P[..., 2] / H; ax = np.abs(P[..., 0]) / H; fwd = P[..., 1] < 0
 def band(v, a, b, soft=0.03): return np.clip((v - a) / soft + 0.5, 0, 1) * np.clip((b - v) / soft + 0.5, 0, 1)
 st = np.zeros((N, N), np.float32)
-leg = band(zn, 0.05, 0.31); torso = band(zn, 0.31, 0.6) * (ax < 0.17)
-st += leg * (0.7 + 0.3 * band(zn, 0.14, 0.27) * fwd)
-st += torso * np.where(fwd, 0.45, 0.3)
-arm = (ax >= 0.17) * band(zn, 0.4, 0.7)
-st += arm * 0.45
+leg = band(zn, 0.05, 0.31); mid = ax < 0.17
+st += leg * 0.35                                          # the legs a little all over
+st += band(zn, 0.13, 0.25) * fwd                          # the knees most
+st += band(zn, 0.06, 0.15) * fwd * 0.35                   # the shins
+st += band(zn, 0.27, 0.4) * ~fwd * mid * 0.4              # the seat
+st += band(zn, 0.31, 0.55) * fwd * mid * 0.3              # the belly (sliding)
+st += (ax >= 0.2) * (ax < 0.34) * band(zn, 0.45, 0.7) * 0.3   # the elbows
 st *= (np.abs(P[..., 0]) < 0.78 * X)                     # not the hands
 st *= ~((zn > 0.6) & (ax < 0.17))                         # not the head
 st *= ~((zn < 0.06))                                      # hardly the shoes

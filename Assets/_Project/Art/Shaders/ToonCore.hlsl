@@ -104,16 +104,17 @@ half3 MarkEye(half3 col, float2 e, float aa)
     col = lerp(col, iris, saturate((1.0 - r) / aa + 0.5));
     // a blink: the lid comes down from the top of the opening, a dark lash line along its edge
     float lid = 2.0 - _EyeLook.z * 4.2;
-    // a reaction (FEATURES.faceReactions): happy, the lower lid rises in an arch (a squint); a wince, both lids meet in a
-    // shallow V, a dark lash line where they meet
+    col = lerp(col, _IrisColor.rgb * 0.15, step(0.01, _EyeLook.z) * saturate((e.y - (lid - 0.22)) / aa + 0.5));
+    col = lerp(col, _LidColor.rgb, saturate((e.y - lid) / aa + 0.5));
+    // a reaction (FEATURES.faceReactions): the eye shut, drawn as one dark line on the lid: happy, an upturned arc (^);
+    // a wince, a shallow V pressed shut
     float mood = _EyeLook.w;
-    float low = -2.2;
-    if (mood > 0.5) { lid = min(lid, 1.5); low = 0.45 - 0.3 * e.x * e.x; }
-    if (mood < -0.5) { lid = min(lid, -0.05 + 0.3 * abs(e.x)); low = lid - 0.22; }
-    col = lerp(col, _IrisColor.rgb * 0.15, step(0.01, _EyeLook.z + abs(mood)) * saturate((e.y - (lid - 0.22)) / aa + 0.5));
-    col = lerp(col, _IrisColor.rgb * 0.15, step(0.5, mood) * saturate(((low + 0.2) - e.y) / aa + 0.5));
-    col = lerp(col, _LidColor.rgb, saturate((low - e.y) / aa + 0.5) * step(0.5, abs(mood)));
-    return lerp(col, _LidColor.rgb, saturate((e.y - lid) / aa + 0.5));
+    if (abs(mood) > 0.5)
+    {
+        float line = mood > 0 ? 0.35 - 0.55 * e.x * e.x : -0.1 + 0.35 * abs(e.x);
+        col = lerp(_LidColor.rgb, _IrisColor.rgb * 0.12, saturate((0.2 - abs(e.y - line)) / aa + 0.5));
+    }
+    return col;
 }
 
 // FEATURES.grassStains: blotches of grass and dirt where the marks map allows them (outside every number and eye zone,
@@ -134,9 +135,12 @@ half3 MarkStain(half3 col, float2 uv, float n, float aa, float allow)
 {
     float sc = _StainLook.x;
     float cover = _Stain.x * allow;
-    float k = saturate((cover * 0.75 - n) / aa + 0.5) * step(0.01, cover);
-    half3 tint = lerp(_StainGrass.rgb, _StainDirt.rgb, StainNoise(uv * sc * 0.5 + 5.0));
-    return lerp(col, col * tint * 1.5, k * _StainLook.y);
+    // a soft edge (a smear, not a cut-out); grass green or dirt brown by patch, laid over the cloth's own shading
+    float k = saturate((cover * 0.8 - n) / max(aa, 0.07) + 0.5) * step(0.01, cover);
+    k *= 0.55 + 0.45 * StainNoise(uv * sc * 5.0 + 9.0);   // (rubbed in, not painted flat)
+    half3 tint = lerp(_StainGrass.rgb, _StainDirt.rgb, saturate((StainNoise(uv * sc * 0.4 + 5.0) - 0.5) * 6.0 + 0.5));
+    half3 over = tint * lerp(0.75, 1.15, dot(col, half3(0.2126, 0.7152, 0.0722)));
+    return lerp(col, over, k * _StainLook.y);
 }
 
 half3 Marks(half3 col, float2 uv)
