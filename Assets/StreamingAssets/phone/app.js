@@ -164,10 +164,31 @@
     teams.forEach(function (t, i) {
       var b = document.createElement('button');
       b.className = 'team';
-      b.style.background = t.color;
+      b.style.setProperty('--tc', t.color);
+      b.style.setProperty('--tc2', t.color2);
       b.setAttribute('aria-pressed', String(i === myTeam));
       b.setAttribute('aria-label', 'Join the ' + t.name);
-      b.textContent = t.name;
+      // the team's emblem (emblems/<SHORT>.png, its name drawn in); without one, the name in big letters
+      var name = document.createElement('span');
+      name.className = 'tname';
+      name.textContent = t.name;
+      if (t.short) {
+        var img = document.createElement('img');
+        img.className = 'emblem';
+        img.alt = '';
+        img.draggable = false;
+        img.addEventListener('load', function () { b.classList.add('has-emblem'); });
+        img.addEventListener('error', function () { img.remove(); });
+        img.src = '/emblems/' + encodeURIComponent(t.short) + '.png';
+        b.appendChild(img);
+      }
+      b.appendChild(name);
+      if (i === myTeam) {
+        var you = document.createElement('span');
+        you.className = 'you';
+        you.textContent = 'YOUR SIDE';
+        b.appendChild(you);
+      }
       var s = document.createElement('div');
       s.className = 'sub';
       s.textContent = t.people + (t.people === 1 ? ' person' : ' people') + ' · ' + Math.max(0, t.players - t.people) + ' bots';
