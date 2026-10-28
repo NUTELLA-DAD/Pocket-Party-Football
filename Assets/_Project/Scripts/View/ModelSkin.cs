@@ -56,10 +56,11 @@ namespace PocketFootball.View
 
         public static bool Wear(FootballFigure fig, TeamConfig team, string pos, GameConfig cfg, Material kit)
         {
-            team.ModelFor(pos, cfg.Feature("posModels"), out string model, out string modelTexture);
+            team.ModelFor(pos, cfg.Feature("posModels"), out string model, out string modelTexture, out float bend);
             if (string.IsNullOrEmpty(model)) { Debug.LogError("[model] team " + team.@short + " has no \"model\" in game.json; its players don't show"); return false; }
             var skin = Wear(fig, model, modelTexture, kit, true, cfg.Feature("narrowLegs"));
             if (skin != null && cfg.Feature("handCurl")) skin.Hands(cfg.anim);
+            if (skin != null) { var legs = fig.Legs; legs.Bend = bend; fig.Legs = legs; }
             return skin != null;
         }
 
