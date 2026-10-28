@@ -36,3 +36,4 @@ sysinfo.txt
 
 # local node tools (Playwright for tools/phone/*.js)
 node_modules/
+__pycache__/

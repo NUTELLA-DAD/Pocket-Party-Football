@@ -284,7 +284,7 @@
         { "pos": "QB", "model": "Models/QB/QB_Rigged", "modelTexture": "Models/QB/QB_BaseColor" },
         { "pos": "K", "model": "Models/Kicker/Kicker_Rigged", "modelTexture": "Models/Kicker/Kicker_BaseColor" },
         { "pos": "WR", "model": "Models/WR/WR_Rigged", "modelTexture": "Models/WR/WR_BaseColor" },
-        { "pos": "TE", "model": "Models/WR/WR_Rigged", "modelTexture": "Models/WR/WR_BaseColor" }
+        { "pos": "TE", "model": "Models/TE/TE_Rigged", "modelTexture": "Models/TE/TE_BaseColor" }
       ],
       "cheerModel": "Models/Cheerleader/Cheerleader_Rigged",
       "cheerTexture": "Models/Cheerleader/Cheerleader_BaseColor",
@@ -305,7 +305,7 @@
         { "pos": "QB", "model": "Models/QB/QB_Rigged", "modelTexture": "Models/QB/QBRR_BaseColor" },
         { "pos": "K", "model": "Models/Kicker/Kicker_Rigged", "modelTexture": "Models/Kicker/KickerRR_BaseColor" },
         { "pos": "WR", "model": "Models/WR/WR_Rigged", "modelTexture": "Models/WR/WRRR_BaseColor" },
-        { "pos": "TE", "model": "Models/WR/WR_Rigged", "modelTexture": "Models/WR/WRRR_BaseColor" }
+        { "pos": "TE", "model": "Models/TE/TE_Rigged", "modelTexture": "Models/TE/TERR_BaseColor" }
       ],
       "cheerModel": "Models/Cheerleader/Cheerleader_Rigged",
       "cheerTexture": "Models/Cheerleader/CheerleaderRR_BaseColor",
@@ -1000,6 +1000,7 @@
     "flightLine": true,
     "landingRing": true,
     "reachRing": true,
-    "stayOnside": true
+    "stayOnside": true,
+    "huddleSwitch": true
   }
 }
