@@ -9,7 +9,8 @@ namespace PocketFootball.Boot
     // once a pass is in the air, its flight to the grass as the same soft ribbon as the aim (ArcRibbon), the ring where
     // it is aimed (the aim spot's yellow, so the ring the QB aimed simply stays put) and a white catch circle under the
     // ball once it is low enough to catch; and a red ring under each person on defense as wide as his TACKLE reaches,
-    // bold while the carrier is inside it. Drawing only. The lab draws its own (LabOverlay), so this stays off there.
+    // bold while the carrier is inside it. Drawing only. The lab draws its own (LabOverlay), so this stays off there;
+    // and all of it hides while a replay plays.
     public sealed class FlightView : MonoBehaviour
     {
         const int Segments = 40;
@@ -22,6 +23,7 @@ namespace PocketFootball.Boot
         Material mat;
         Transform root, landing, catchNow;
         ArcRibbon arc;
+        Replay replay;
         readonly float[] px = new float[ArcRibbon.Max], py = new float[ArcRibbon.Max], pz = new float[ArcRibbon.Max];
         readonly Dictionary<int, Transform> reachOut = new Dictionary<int, Transform>(), reachIn = new Dictionary<int, Transform>();
         readonly HashSet<int> seen = new HashSet<int>();
@@ -46,7 +48,8 @@ namespace PocketFootball.Boot
         {
             var w = host != null ? host.World : null;
             bool lab = LabMode.Instance != null && LabMode.Instance.Lab != null;
-            if (w == null || lab)
+            if (replay == null) replay = GetComponent<Replay>();
+            if (w == null || lab || (replay != null && replay.Showing))   // (nothing of the live play over a replay)
             {
                 landing.gameObject.SetActive(false);
                 catchNow.gameObject.SetActive(false);
