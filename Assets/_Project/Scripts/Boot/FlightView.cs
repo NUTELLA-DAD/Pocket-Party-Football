@@ -23,7 +23,6 @@ namespace PocketFootball.Boot
         Material mat;
         Transform root, landing, catchNow;
         ArcRibbon arc;
-        Replay replay;
         readonly float[] px = new float[ArcRibbon.Max], py = new float[ArcRibbon.Max], pz = new float[ArcRibbon.Max];
         readonly Dictionary<int, Transform> reachOut = new Dictionary<int, Transform>(), reachIn = new Dictionary<int, Transform>();
         readonly HashSet<int> seen = new HashSet<int>();
@@ -48,8 +47,7 @@ namespace PocketFootball.Boot
         {
             var w = host != null ? host.World : null;
             bool lab = LabMode.Instance != null && LabMode.Instance.Lab != null;
-            if (replay == null) replay = GetComponent<Replay>();
-            if (w == null || lab || (replay != null && replay.Showing))   // (nothing of the live play over a replay)
+            if (w == null || lab || Replay.OnScreen)   // (nothing of the live play over a replay)
             {
                 landing.gameObject.SetActive(false);
                 catchNow.gameObject.SetActive(false);
