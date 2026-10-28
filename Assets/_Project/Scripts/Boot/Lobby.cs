@@ -522,14 +522,20 @@ namespace PocketFootball.Boot
                 cards[side] = r;
                 TeamCard(side, r, s, pick);
             }
-            Text(new Rect(areaX + cw, qc.center.y - 60 * s, vs, 120 * s), "<i>VS</i>", big, 64 * s, GoldText);
+            // (level with the middle of the emblems)
+            float vsY = qc.y + 5 * s + 60 * s + 22 * s + Mathf.Min(sh * lc.emblemFrac, qc.height * 0.45f) * 0.5f;
+            Text(new Rect(areaX + cw, vsY - 60 * s, vs, 120 * s), "<i>VS</i>", big, 64 * s, GoldText, true);
 
             // kick off, bottom
             var ko = new Rect(sw * 0.5f - 430 * s, sh - bottom + 34 * s, 860 * s, 70 * s);
             Box(ko, Gold, 35 * s);
             Text(ko, "ANY PHONE TAPS  <b>KICK OFF</b>  TO START", big, 34 * s, NavyInk);
             string keys = pick ? "TV keyboard: ◄ ► change team  ·  ▲ ▼ away or home  ·  K kick off      Mouse: click the arrows" : "TV keyboard: K kick off";
-            Text(new Rect(0, ko.yMax + 6 * s, sw, 34 * s), keys, small, 21 * s, Muted);
+            small.fontSize = Mathf.RoundToInt(23 * s);
+            float kw = small.CalcSize(new GUIContent(keys)).x + 40 * s;
+            var kr = new Rect((sw - kw) * 0.5f, ko.yMax + 6 * s, kw, 34 * s);
+            Box(kr, new Color(0f, 0f, 0f, 0.7f), 17 * s);   // (a dark strip: readable over the field)
+            Text(kr, keys, small, 23 * s, Color.white);
         }
 
         void TeamCard(int side, Rect r, float s, bool pick)
@@ -590,7 +596,7 @@ namespace PocketFootball.Boot
             int rows = Mathf.Max(1, lc.listRows);
             float lh = 34 * s;
             if (lines.Count == 0)
-                Text(new Rect(x, y, w, 64 * s), "Nobody yet. Bots play every spot.\nPick this side on your phone!", small, 22 * s, Muted);
+                Text(new Rect(x, y, w, 64 * s), "Nobody yet. Bots play every spot.\nPick this side on your phone!", small, 26 * s, new Color(0.88f, 0.91f, 1f));
             for (int i = 0; i < lines.Count && i < rows; i++)
             {
                 bool more = i == rows - 1 && lines.Count > rows;
