@@ -5,7 +5,7 @@ Blender as a Python module (`pip install bpy`), run with `python script.py -- ar
 - `rigfix.py -- in.fbx params.json out.fbx`: re-places the 22 Humanoid joints and rebuilds every skin weight from
   the T-pose shape (arms along X, legs down Z, model faces -Y, its left +X). Only the helmet keeps its old rigid
   Head weights (`headKeep`: old Head weight above this stays rigid). All mesh-specific numbers live in the JSON:
-  `chiefs24.json` is the tuned set for Arrows #24 (joint heights/widths in metres, blend widths).
+  `player24.json` is the tuned set for Arrows #24 (joint heights/widths in metres, blend widths).
   Exports with the same FBX settings as the original (Unity axes, no leaf bones, texture not embedded).
 - `gauntlet.py model.fbx texture.png outdir [Pose,Pose]`: poses the model exactly the way the game's ModelSkin does
   (FootballFigure pose angles, arms lowered 12 deg, raised arms splayed) and renders each pose; prints a
@@ -19,7 +19,7 @@ Blender as a Python module (`pip install bpy`), run with `python script.py -- ar
   Kicker (wider smoothing, a wider clavicle blend): arms-up poses lost about a third of their stretched triangles.
   Arrows #24 kept its weights (they already scored better).
 
-For another model (e.g. the linebacker): copy chiefs24.json, set the joints from slices of that mesh (shoulder at the
+For another model (e.g. the linebacker): copy player24.json, set the joints from slices of that mesh (shoulder at the
 sleeve/pad centre, elbow mid bare arm, wrist at the wristband, knee at the pants hem, ankle inside the shoe top), and
 check `headKeep` keeps the helmet and facemask rigid.
 
@@ -32,7 +32,7 @@ files under models/te/scripts; after rigfix it goes through handfix.py (`TE` in 
 its right hand sits further back than the left).
 
 ## Hands (`handfix.py`, `fcore.py`, `hands.json`)
-`python handfix.py -- in.fbx hands.json <Model> out.fbx` (QB, WR, TE, Kicker, Chiefs24, Referee, Linebacker):
+`python handfix.py -- in.fbx hands.json <Model> out.fbx` (QB, WR, TE, Kicker, Player24, Referee, Linebacker):
 - pulls a sixth finger (`extra`: its outline seen from above, metres on the model's left side; `base`: where it
   meets the palm) back into the palm. Only the QB, WR, TE and Kicker have one. A `Left`/`Right` entry inside a model overrides its numbers for that hand.
 - adds four bones per hand, children of `<Side>Hand`: `<Side>Thumb` > `<Side>ThumbTip` and `<Side>Fingers` >

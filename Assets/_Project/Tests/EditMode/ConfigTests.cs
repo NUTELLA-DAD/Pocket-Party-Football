@@ -72,7 +72,7 @@ namespace PocketFootball.Tests.EditMode
             var arr = Load().teams[0];
             arr.ModelFor("LB", true, out string m, out string tex);
             Assert.AreEqual("Models/Linebacker/Linebacker_Rigged", m);
-            Assert.AreEqual("Models/Linebacker/LinebackerKC_BaseColor", tex, "the Arrows' linebackers wear their own colours");
+            Assert.AreEqual("Models/Linebacker/LinebackerARR_BaseColor", tex, "the Arrows' linebackers wear their own colours");
             var grn = Load().teams[1];
             grn.ModelFor("LB", true, out m, out tex);
             Assert.AreEqual("Models/Linebacker/Linebacker_Rigged", m);
@@ -92,7 +92,7 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual("Models/QB/QB_BaseColor", tex, "the Arrows' QB wears the model's own colours");
             Load().teams[1].ModelFor("QB", true, out m, out tex);
             Assert.AreEqual("Models/QB/QB_Rigged", m);
-            Assert.AreEqual("Models/QB/QBRR_BaseColor", tex, "the Grains' QB wears the green recolour");
+            Assert.AreEqual("Models/QB/QBGRN_BaseColor", tex, "the Grains' QB wears the green recolour");
         }
 
         [Test]
@@ -103,7 +103,7 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual("Models/WR/WR_BaseColor", tex, "the Arrows' WR wears the model's own colours");
             Load().teams[1].ModelFor("WR", true, out m, out tex);
             Assert.AreEqual("Models/WR/WR_Rigged", m);
-            Assert.AreEqual("Models/WR/WRRR_BaseColor", tex, "the Grains' WR wears the green recolour");
+            Assert.AreEqual("Models/WR/WRGRN_BaseColor", tex, "the Grains' WR wears the green recolour");
             Load().teams[0].ModelFor("CB", true, out m, out _);
             Assert.AreEqual(Load().teams[0].model, m, "defensive backs keep the team's model");
         }
@@ -116,7 +116,7 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual("Models/TE/TE_BaseColor", tex, "the Arrows' TE wears the model's own colours");
             Load().teams[1].ModelFor("TE", true, out m, out tex);
             Assert.AreEqual("Models/TE/TE_Rigged", m);
-            Assert.AreEqual("Models/TE/TERR_BaseColor", tex, "the Grains' TE wears the green recolour");
+            Assert.AreEqual("Models/TE/TEGRN_BaseColor", tex, "the Grains' TE wears the green recolour");
         }
 
         [Test]
@@ -127,7 +127,7 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual("Models/Kicker/Kicker_BaseColor", tex, "the Arrows' kicker wears the model's own colours");
             Load().teams[1].ModelFor("K", true, out m, out tex);
             Assert.AreEqual("Models/Kicker/Kicker_Rigged", m);
-            Assert.AreEqual("Models/Kicker/KickerRR_BaseColor", tex, "the Grains' kicker wears the green recolour");
+            Assert.AreEqual("Models/Kicker/KickerGRN_BaseColor", tex, "the Grains' kicker wears the green recolour");
             Assert.AreEqual("NO_KICKER_MODEL", ConfigLoader.EnvName("kickerModel"));
         }
 
@@ -143,7 +143,7 @@ namespace PocketFootball.Tests.EditMode
                 { "OL", "Models/Linebacker/Linebacker_Rigged" }, { "DL", "Models/Linebacker/Linebacker_Rigged" },
                 { "LB", "Models/Linebacker/Linebacker_Rigged" },
                 { "WR", "Models/WR/WR_Rigged" }, { "TE", "Models/TE/TE_Rigged" },
-                { "RB", "Models/Chiefs24/Chiefs24_Rigged" }, { "CB", "Models/Chiefs24/Chiefs24_Rigged" }, { "S", "Models/Chiefs24/Chiefs24_Rigged" },
+                { "RB", "Models/Player24/Player24_Rigged" }, { "CB", "Models/Player24/Player24_Rigged" }, { "S", "Models/Player24/Player24_Rigged" },
             };
             var spots = new List<SpotConfig>(cfg.formation.offense);
             spots.AddRange(cfg.formation.defense);

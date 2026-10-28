@@ -1,4 +1,4 @@
-{"marks": "Linebacker/Linebacker_Marks.png", "textures": [{"file": "Linebacker/Linebacker_BaseColor.png", "hue": 150}, {"file": "Linebacker/LinebackerKC_BaseColor.png", "hue": 355}], "zones": [
+{"marks": "Linebacker/Linebacker_Marks.png", "textures": [{"file": "Linebacker/Linebacker_BaseColor.png", "hue": 150}, {"file": "Linebacker/LinebackerARR_BaseColor.png", "hue": 355}], "zones": [
     {"kind": "number", "c": [0, -0.3, 0.925], "n": [0, -1, 0], "up": [0, 0, 1], "w": 0.266, "h": 0.17, "depth": 0.15, "size": 0.28}, 
     {"kind": "number", "c": [0, 0.3, 1.0], "n": [0, 1, 0], "up": [0, 0, 1], "w": 0.25, "h": 0.24, "depth": 0.15, "size": 0.24}, 
     {"kind": "number", "c": [0.35, 0.0, 1.3], "n": [0.45, 0, 0.9], "up": [-1, 0, 0], "w": 0.38, "h": 0.13, "depth": 0.26, "size": 0.13, "facing": -0.4}, 

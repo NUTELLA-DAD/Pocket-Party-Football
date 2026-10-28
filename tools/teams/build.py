@@ -15,14 +15,16 @@ work = os.path.abspath(sys.argv[1])
 kits = json.load(open(os.path.join(HERE, 'kits.json')))
 teams = sys.argv[2:] or list(kits['teams'])
 spec = json.load(open('tools/rebrand/rebrand.json'))
-# (model folder, the Chiefs map, the new map's name with {T} for the team, cheer?)
-MAPS = [('Chiefs24', 'Chiefs24_BaseColor', 'Chiefs24{T}_BaseColor', False),
+# (model folder, the red map as it was at SRC_REV, the new map's name with {T} for the team, cheer?)
+MAPS = [('Player24', 'Chiefs24_BaseColor', 'Player24{T}_BaseColor', False),
         ('Linebacker', 'LinebackerKC_BaseColor', 'Linebacker{T}_BaseColor', False),
         ('QB', 'QB_BaseColor', 'QB{T}_BaseColor', False),
         ('WR', 'WR_BaseColor', 'WR{T}_BaseColor', False),
         ('TE', 'TE_BaseColor', 'TE{T}_BaseColor', False),
         ('Kicker', 'Kicker_BaseColor', 'Kicker{T}_BaseColor', False),
         ('Cheerleader', 'Cheerleader_BaseColor', 'Cheerleader{T}_BaseColor', True)]
+
+SRC_FOLDER = {'Player24': 'Chiefs24'}   # (the folder's name at SRC_REV, before the rename)
 
 def run(*a):
     print('>', ' '.join(a)); subprocess.run(a, check=True)
@@ -45,7 +47,7 @@ for T in teams:
             if not os.path.exists(fbx): shutil.copy(os.path.join(ROOT, m['fbx']), fbx)
             png = os.path.join(r, 'Models', folder, chiefs + '.png')
             with open(png, 'wb') as f:
-                f.write(subprocess.run(['git', 'show', '%s:%s/Models/%s/%s.png' % (SRC_REV, ROOT, folder, chiefs)], check=True, capture_output=True).stdout)
+                f.write(subprocess.run(['git', 'show', '%s:%s/Models/%s/%s.png' % (SRC_REV, ROOT, SRC_FOLDER.get(folder, folder), chiefs)], check=True, capture_output=True).stdout)
             hue = next(t['hue'] for t in m['textures'] if t['emblem'] == 'ARR')
             models.append({'fbx': m['fbx'], 'zones': m['zones'],
                            'textures': [{'file': 'Models/%s/%s.png' % (folder, chiefs), 'hue': hue, 'emblem': T}]})
