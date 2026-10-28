@@ -26,9 +26,15 @@ namespace PocketFootball.Boot
         static readonly string[] AttractOff = { "lobby", "clock", "replay", "gamelog", "gamepad" };
 
         const string VolumeKey = "pp.volume", HelperKey = "pp.";   // (a helper switch saves as pp.<name>: 1 on, 0 off)
+        const string AwayKey = "pp.team.away", HomeKey = "pp.team.home";   // FEATURES.teamPick: the two teams' short codes
         static readonly string[] HelperNames = { "FLIGHT LINE", "LANDING RING", "TACKLE RING" };   // FlightMarks.Switches, in order
-        const int HelperRow = 2;   // settings rows: 0 sound, 1 full screen, 2-4 the helpers, 5 back
-        static int SettingsRows => HelperRow + FlightMarks.Switches.Length + 1;
+        // settings rows: 0 sound, then (FEATURES.teamPick, more than two teams) away and home, full screen, the
+        // helpers, back
+        int TeamRows => cfg.Feature("teamPick") && TeamPick.League(cfg).Count > 2 ? 2 : 0;
+        int ScreenRow => 1 + TeamRows;
+        int HelperRow => ScreenRow + 1;
+        int SettingsRows => HelperRow + FlightMarks.Switches.Length + 1;
+        int away, home;   // the picked teams, as league indexes (saved at once; the game after PLAY wears them)
 
         enum Page { Menu, HowTo, Settings }
 
@@ -75,6 +81,9 @@ namespace PocketFootball.Boot
             t.buttons = new[] { Resources.Load<Texture2D>("Title/ButtonPlay"), Resources.Load<Texture2D>("Title/ButtonHowToPlay"), Resources.Load<Texture2D>("Title/ButtonSettings") };
             t.black = Texture2D.whiteTexture;
             host.DevKeys = false;   // (W/A/S/D and the arrows move the highlight here, not the dev keys)
+            t.away = Mathf.Max(0, TeamPick.Find(cfg, cfg.teams.Count > 0 ? cfg.teams[0].@short : null));
+            t.home = Mathf.Max(0, TeamPick.Find(cfg, cfg.teams.Count > 1 ? cfg.teams[1].@short : null));
+            if (t.home == t.away) t.home = TeamPick.Step(cfg, t.home, t.away, +1);
             if (startPage == "howto") t.page = Page.HowTo;
             else if (startPage == "settings") t.page = Page.Settings;
             Instance = t;
@@ -84,12 +93,16 @@ namespace PocketFootball.Boot
 
         void OnDestroy() { if (Instance == this) Instance = null; }
 
-        // The saved sound level and helper switches, for every boot (the title's settings page changes them).
+        // The saved sound level, helper switches and teams, for every boot (the title's settings page changes them).
+        // PP_TEAMS=CAC,WHL (away, home) picks the teams for a run; the tests (batch mode) keep game.json's two.
         public static void ApplySavedSettings(GameConfig cfg)
         {
             AudioListener.volume = Mathf.Clamp01(PlayerPrefs.GetFloat(VolumeKey, 1f));
             FlightMarks.ApplySaved(cfg, n => PlayerPrefs.HasKey(HelperKey + n) ? PlayerPrefs.GetInt(HelperKey + n) != 0 : (bool?)null,
                 System.Environment.GetEnvironmentVariable);
+            if (TeamPick.ParsePair(System.Environment.GetEnvironmentVariable("PP_TEAMS"), out string a, out string h)) TeamPick.Apply(cfg, a, h);
+            else if (!Application.isBatchMode) TeamPick.Apply(cfg, PlayerPrefs.GetString(AwayKey, ""), PlayerPrefs.GetString(HomeKey, ""));
+            if (cfg.teams.Count >= 2) Debug.Log("[title] teams: " + cfg.teams[0].name + " at " + cfg.teams[1].name);
         }
 
         // GameBootstrap quits on Esc; not while a page is open here, nor on the frame Esc closed one.
@@ -142,7 +155,7 @@ namespace PocketFootball.Boot
                 return;
             }
 
-            // settings: 0 sound, 1 full screen, 2-4 the helpers, 5 back
+            // settings: 0 sound, the teams, full screen, the helpers, back
             int n = SettingsRows;
             if (up) pick = (pick + n - 1) % n;
             if (down) pick = (pick + 1) % n;
@@ -154,7 +167,13 @@ namespace PocketFootball.Boot
                 if (left || (clickRow && mp.x < rows[0].center.x)) Volume(-1);
                 if (right || ok || (clickRow && mp.x >= rows[0].center.x)) Volume(+1);
             }
-            else if (pick == 1 && (ok || left || right || (click && rows[1].Contains(mp)))) Screen.fullScreen = !Screen.fullScreen;
+            else if (pick >= 1 && pick < ScreenRow)
+            {
+                bool clickRow = click && rows[pick].Contains(mp);
+                if (left || (clickRow && mp.x < rows[pick].center.x)) PickTeam(pick == 1, -1);
+                if (right || ok || (clickRow && mp.x >= rows[pick].center.x)) PickTeam(pick == 1, +1);
+            }
+            else if (pick == ScreenRow && (ok || left || right || (click && rows[pick].Contains(mp)))) Screen.fullScreen = !Screen.fullScreen;
             else if (pick >= HelperRow && pick < n - 1 && (ok || left || right || (click && rows[pick].Contains(mp)))) Toggle(pick - HelperRow);
             else if (pick == n - 1 && (ok || (click && rows[n - 1].Contains(mp)))) Open(Page.Menu);
         }
@@ -183,6 +202,17 @@ namespace PocketFootball.Boot
             float v = Mathf.Clamp01(Mathf.Round((AudioListener.volume + dir * step) / step) * step);
             AudioListener.volume = v;
             PlayerPrefs.SetFloat(VolumeKey, v);
+            PlayerPrefs.Save();
+        }
+
+        // The next or last team for one side (never the other side's team), saved for the game after PLAY.
+        void PickTeam(bool awaySide, int dir)
+        {
+            if (awaySide) away = TeamPick.Step(cfg, away, home, dir);
+            else home = TeamPick.Step(cfg, home, away, dir);
+            var league = TeamPick.League(cfg);
+            PlayerPrefs.SetString(AwayKey, league[away].@short);
+            PlayerPrefs.SetString(HomeKey, league[home].@short);
             PlayerPrefs.Save();
         }
 
@@ -235,7 +265,7 @@ namespace PocketFootball.Boot
 
         // ---- the TV ----
         GUIStyle head, body, row, hint;
-        readonly Rect[] rows = new Rect[6];
+        readonly Rect[] rows = new Rect[8];
 
         void OnGUI()
         {
@@ -312,7 +342,7 @@ namespace PocketFootball.Boot
         static readonly string[] HowTo =
         {
             "<b>1. Join.</b> Press PLAY. Everyone scans the QR code on the TV with their phone (same Wi-Fi as the TV).",
-            "<b>2. Pick a side.</b> Arrows or Grains. Bots play every spot nobody took.",
+            "<b>2. Pick a side.</b> The two teams on the TV (choose them under SETTINGS). Bots play every spot nobody took.",
             "<b>3. Lobby.</b> Pick your offense spot and your defense spot. Any phone taps KICK OFF to start.",
             "<b>4. Huddle.</b> Call a play on your phone in secret. The TV only shows CALLED, never which play.",
             "<b>5. Offense.</b> QB: tap HIKE, then a receiver's shape to throw (tap = bullet, hold = lob). With the ball: SPRINT, JUKE, SPIN, STIFF ARM.",
@@ -339,19 +369,34 @@ namespace PocketFootball.Boot
             var r = Panel(W, H, s, "SETTINGS");
             var text = new string[SettingsRows];
             text[0] = "SOUND   ◄  " + Mathf.RoundToInt(AudioListener.volume * 100f) + "%  ►";
-            text[1] = "FULL SCREEN   " + (Screen.fullScreen ? "ON" : "OFF");
+            var league = TeamPick.League(cfg);
+            if (TeamRows > 0)
+            {
+                text[1] = "AWAY   ◄  " + league[away].name + "  ►";
+                text[2] = "HOME   ◄  " + league[home].name + "  ►";
+            }
+            text[ScreenRow] = "FULL SCREEN   " + (Screen.fullScreen ? "ON" : "OFF");
             for (int i = 0; i < HelperNames.Length; i++) text[HelperRow + i] = HelperNames[i] + "   " + (cfg.Feature(FlightMarks.Switches[i]) ? "ON" : "OFF");
             text[text.Length - 1] = "BACK";
-            float rw = Mathf.Min(r.width - 120 * s, 760 * s), rh = 70 * s, y = r.y + 150 * s;
+            bool tight = text.Length > 6;   // (the team rows: a little less room each, so all fit above the hint)
+            float rw = Mathf.Min(r.width - 120 * s, 760 * s), rh = (tight ? 62 : 70) * s, gap = (tight ? 10 : 14) * s, y = r.y + 150 * s;
             for (int i = 0; i < text.Length; i++)
             {
                 var rr = new Rect((W - rw) * 0.5f, y, rw, rh);
                 rows[i] = rr;
                 bool on = i == pick;
                 Fill(rr, on ? new Color(1f, 0.78f, 0.12f, 1f) : new Color(1f, 1f, 1f, 0.08f));
+                if (i >= 1 && i < ScreenRow)
+                {
+                    // the team's two colours, a stripe each at the row's left end
+                    var t = league[i == 1 ? away : home];
+                    float sw = 18 * s, sx = rr.x + 14 * s, sy = rr.y + 10 * s, sh = rh - 20 * s;
+                    Fill(new Rect(sx, sy, sw, sh), Colors.Hex(t.color));
+                    Fill(new Rect(sx + sw, sy, sw, sh), Colors.Hex(t.color2));
+                }
                 row.normal.textColor = on ? new Color(0.04f, 0.09f, 0.22f) : Color.white;
                 GUI.Label(rr, text[i], row);
-                y += rh + 14 * s;
+                y += rh + gap;
             }
             Shadowed(new Rect(r.x, r.yMax - 70 * s, r.width, 40 * s), "Up / Down to pick, Left / Right to change, Esc or (B) to go back", hint);
         }

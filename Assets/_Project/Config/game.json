@@ -313,6 +313,50 @@
       "numberEdge": "#14522f"
     }
   ],
+  "moreTeams": [
+    {
+      "name": "CACTI",
+      "short": "CAC",
+      "color": "#287a4b",
+      "color2": "#f47a35",
+      "model": "Models/Chiefs24/Chiefs24_Rigged",
+      "modelTexture": "Models/Chiefs24/Chiefs24CAC_BaseColor",
+      "posModels": [
+        { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerCAC_BaseColor", "strideBend": 0.7 },
+        { "pos": "OL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerCAC_BaseColor", "strideBend": 0.7 },
+        { "pos": "DL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerCAC_BaseColor", "strideBend": 0.7 },
+        { "pos": "QB", "model": "Models/QB/QB_Rigged", "modelTexture": "Models/QB/QBCAC_BaseColor" },
+        { "pos": "K", "model": "Models/Kicker/Kicker_Rigged", "modelTexture": "Models/Kicker/KickerCAC_BaseColor" },
+        { "pos": "WR", "model": "Models/WR/WR_Rigged", "modelTexture": "Models/WR/WRCAC_BaseColor" },
+        { "pos": "TE", "model": "Models/TE/TE_Rigged", "modelTexture": "Models/TE/TECAC_BaseColor" }
+      ],
+      "cheerModel": "Models/Cheerleader/Cheerleader_Rigged",
+      "cheerTexture": "Models/Cheerleader/CheerleaderCAC_BaseColor",
+      "numberFill": "#ffffff",
+      "numberEdge": "#f47a35"
+    },
+    {
+      "name": "WHALES",
+      "short": "WHL",
+      "color": "#1976c9",
+      "color2": "#55d6be",
+      "model": "Models/Chiefs24/Chiefs24_Rigged",
+      "modelTexture": "Models/Chiefs24/Chiefs24WHL_BaseColor",
+      "posModels": [
+        { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerWHL_BaseColor", "strideBend": 0.7 },
+        { "pos": "OL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerWHL_BaseColor", "strideBend": 0.7 },
+        { "pos": "DL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerWHL_BaseColor", "strideBend": 0.7 },
+        { "pos": "QB", "model": "Models/QB/QB_Rigged", "modelTexture": "Models/QB/QBWHL_BaseColor" },
+        { "pos": "K", "model": "Models/Kicker/Kicker_Rigged", "modelTexture": "Models/Kicker/KickerWHL_BaseColor" },
+        { "pos": "WR", "model": "Models/WR/WR_Rigged", "modelTexture": "Models/WR/WRWHL_BaseColor" },
+        { "pos": "TE", "model": "Models/TE/TE_Rigged", "modelTexture": "Models/TE/TEWHL_BaseColor" }
+      ],
+      "cheerModel": "Models/Cheerleader/Cheerleader_Rigged",
+      "cheerTexture": "Models/Cheerleader/CheerleaderWHL_BaseColor",
+      "numberFill": "#ffffff",
+      "numberEdge": "#10243a"
+    }
+  ],
   "net": {
     "port": 8080,
     "portTries": 10,
@@ -1027,6 +1071,7 @@
     "landingRing": true,
     "reachRing": true,
     "stayOnside": true,
-    "huddleSwitch": true
+    "huddleSwitch": true,
+    "teamPick": true
   }
 }

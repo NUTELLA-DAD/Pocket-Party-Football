@@ -20,7 +20,9 @@ namespace PocketFootball.Sim
         // Loaded from Config/plays/*.json (not game.json) by ConfigLoader.AddPlays, sorted by id.
         [Newtonsoft.Json.JsonIgnore] public List<PlayConfig> plays = new List<PlayConfig>();
         public BaselineConfig baseline = new BaselineConfig();
-        public List<TeamConfig> teams = new List<TeamConfig>();
+        public List<TeamConfig> teams = new List<TeamConfig>();   // the two that play: away, home (TeamPick may swap them)
+        public List<TeamConfig> moreTeams = new List<TeamConfig>();   // FEATURES.teamPick: the other teams of the league (TeamPick.cs)
+        [Newtonsoft.Json.JsonIgnore] public List<TeamConfig> league;   // teams + moreTeams as loaded (TeamPick.League)
         public NetConfig net = new NetConfig();
         public ViewConfig view = new ViewConfig();
         public AnimConfig anim = new AnimConfig();

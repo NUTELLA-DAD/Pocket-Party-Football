@@ -12,6 +12,7 @@ namespace PocketFootball.Sim
         {
             var cfg = JsonConvert.DeserializeObject<GameConfig>(json) ?? new GameConfig();
             if (env != null) ApplyEnvOverrides(cfg, env);
+            TeamPick.League(cfg);   // (the league as loaded, before any pick replaces cfg.teams)
             return cfg;
         }
 

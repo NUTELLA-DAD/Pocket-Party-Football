@@ -216,8 +216,8 @@ namespace PocketFootball.Boot
             cm.normals = new[] { Vector3.forward, Vector3.forward, Vector3.forward, Vector3.forward };
             var st = new PhotoState { Name = "concept01", Hud = false, FirstDownX = -35f };
             // the picture's wordmarks over each team's half
-            st.Titles.Add(("ARROWS", w.Cfg.teams[away].color, 0.3f));
-            st.Titles.Add(("GRAINS", w.Cfg.teams[home].color, 0.7f));
+            st.Titles.Add((w.Cfg.teams[away].name, w.Cfg.teams[away].color, 0.3f));
+            st.Titles.Add((w.Cfg.teams[home].name, w.Cfg.teams[home].color, 0.7f));
             return st;
         }
 
