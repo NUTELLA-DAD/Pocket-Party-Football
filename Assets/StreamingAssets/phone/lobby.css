@@ -4,21 +4,25 @@
 .lhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .lyou { display: grid; gap: 4px; font-family: var(--display); font-size: 18px; text-align: right; white-space: nowrap; }
 .lyou span { font-size: 11px; letter-spacing: .08em; color: var(--muted); }
-.lobby h3 { font-family: var(--display); font-weight: 400; font-size: 16px; margin: 0 0 6px; color: var(--muted); letter-spacing: .04em; }
+.lobby h3 { font-family: var(--display); font-weight: 900; font-size: 15px; margin: 0 0 6px; color: var(--gold); letter-spacing: .04em; }
+.lobby .card, .lask { border-radius: 16px; padding: 10px 12px; }
+.lobby .lhead { border: 3px solid transparent; background: linear-gradient(#1b3478, #0d1d55) padding-box, var(--rim) border-box; box-shadow: 0 0 0 2px var(--edge); }
 .lcols { display: grid; gap: 12px; }
 .lspots { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .lspot {
-  border: 3px solid transparent; border-radius: 12px; padding: 6px 4px; min-height: 52px; background: var(--ink); color: var(--chalk);
+  border: 2px solid rgba(255,201,40,.35); border-radius: 12px; padding: 6px 4px; min-height: 52px; color: var(--chalk);
+  background: linear-gradient(#16296a, #0b1846); box-shadow: 0 0 0 2px var(--edge), 0 3px 0 2px var(--edge);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
 }
-.lspot b { font-family: var(--display); font-weight: 400; font-size: 15px; white-space: nowrap; }
+.lspot b { font-family: var(--display); font-weight: 900; font-size: 15px; white-space: nowrap; }
 .lspot i { font-style: normal; font-size: 11px; color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lspot.person { background: var(--turf-2); }
+.lspot.person { background: linear-gradient(#2a4aa0, #18306e); }
 .lspot.person i { color: var(--chalk); }
 .lspot.away { opacity: .6; }
-.lspot.me { background: var(--team); color: var(--team-ink); border-color: var(--team-2); }
-.lspot.me i { color: var(--team-ink); }
-.lask { display: grid; gap: 10px; border: 3px solid var(--warn); }
+.lspot.me { grid-area: auto; color: var(--ink); border: 3px solid transparent; background: linear-gradient(#fff08a, #ffd02e 50%, #e09a00) padding-box, var(--rim) border-box; }
+.lspot.me b { color: var(--ink); }
+.lspot.me i { color: var(--ink); }
+.lask { display: grid; gap: 10px; border: 3px solid var(--warn); background: var(--ink); }
 .lask p { margin: 0; font-size: 17px; font-weight: 800; }
 .lrow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch; }
 .lrow .btn { min-height: 56px; }

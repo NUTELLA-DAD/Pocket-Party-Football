@@ -51,6 +51,27 @@ namespace PocketFootball.Tests.EditMode
             PoseOf(new MoveNow { Kind = Move.Throw, Frame = 3 }, out int b);
             Assert.AreEqual(0, a);
             Assert.AreEqual(1, b);
+            // FEATURES.throwMotion: wound up, then four keys from the release, held on the last
+            PoseOf(new MoveNow { Kind = Move.Aim, Full = true }, out int up);
+            Assert.AreEqual(1, up);
+            for (int k = 0; k < 6; k++)
+            {
+                Assert.AreEqual(Pose.Release, PoseOf(new MoveNow { Kind = Move.Throw, Frame = k, Full = true }, out int f));
+                Assert.AreEqual(2 + System.Math.Min(3, k), f);
+            }
+        }
+
+        // FEATURES.kickMotion: set over the ball (a place kick or a punt), then the leg's five keys, held on the landing
+        [Test]
+        public void TheKickerSetsThenSwingsThrough()
+        {
+            Assert.AreEqual(Pose.KickSet, PoseOf(new MoveNow { Kind = Move.KickSet, Frame = 1 }, out int punt));
+            Assert.AreEqual(1, punt);
+            for (int k = 0; k < 8; k++)
+            {
+                Assert.AreEqual(Pose.Kick, PoseOf(new MoveNow { Kind = Move.Kick, Frame = k }, out int f));
+                Assert.AreEqual(System.Math.Min(4, k), f);
+            }
         }
     }
 }

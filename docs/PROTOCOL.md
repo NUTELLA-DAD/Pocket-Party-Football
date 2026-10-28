@@ -185,6 +185,9 @@ The final card, once the game clock ends the game (or F8 on the TV previews it).
 ### `thumbs` (team only, SECRET)
 `{counts: {playId: count}, mine, locked}`. After any suggest or lock on that team.
 
+### Switching position in the huddle (FEATURES.huddleSwitch, NO_HUDDLE_SWITCH=1)
+After kickoff, each huddle screen also gets the team's `lineup` (from `Boot/Lobby.cs`, same shape as in the lobby, with `switch: true`). The huddle's POSITION button lists the spots on the side the team plays this down. Tapping one sends the lobby's `spot {side, spot, aid}`, and a swap question is answered with `swap {yes, aid}`, both with the huddle screen's aid and only while the phase is the huddle. A bot's spot is yours at once; a person's spot asks them. After a change the spots are relabelled and every phone of the team gets its `huddle` and `ui` again. Proved by `LobbyTests.SwitchPositionFromTheHuddle`.
+
 ### `job` (team only, SECRET)
 `{side, play, spots, opp, me}`. The called play and this player's spot, for the job diagram. Sent when the huddle ends, only if the team has a call.
 

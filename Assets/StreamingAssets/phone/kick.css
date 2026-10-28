@@ -2,14 +2,15 @@
 .kickmeter {
   position: fixed; inset: 0; z-index: 40; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 10px;
   padding: max(12px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 14px max(16px, env(safe-area-inset-left, 0px));
-  background: var(--turf); touch-action: none;
+  background: radial-gradient(ellipse 70% 60% at 50% 40%, #1d3a8a, rgba(16,33,90,0) 70%), var(--turf); touch-action: none;
 }
 .kickmeter .khead { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-.kickmeter .ktitle { font-size: 30px; color: var(--warn); }
+.kickmeter .ktitle { font-size: 30px; color: var(--gold, #ffc928); text-shadow: 0 3px 0 var(--edge, #060d2b); }
 .kickmeter .kfield {
   position: relative; overflow: hidden; border-radius: 18px; touch-action: none; min-height: 180px;
-  background: repeating-linear-gradient(0deg, var(--turf-2) 0 34px, #17462f 34px 68px);
-  border: 3px solid rgba(255, 255, 255, .5);
+  border: 4px solid transparent;
+  background: repeating-linear-gradient(0deg, #2a8a3e 0 34px, #237a35 34px 68px) padding-box, var(--rim, #ffc928) border-box;
+  box-shadow: 0 0 0 2px var(--edge, #060d2b), 0 5px 0 2px var(--edge, #060d2b);
 }
 .kickmeter .kposts {
   position: absolute; left: 50%; top: 18px; width: 96px; height: 64px; margin-left: -48px; pointer-events: none;

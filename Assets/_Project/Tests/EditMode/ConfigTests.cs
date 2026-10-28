@@ -109,6 +109,17 @@ namespace PocketFootball.Tests.EditMode
         }
 
         [Test]
+        public void TightEndsWearTheirOwnModel()
+        {
+            Load().teams[0].ModelFor("TE", true, out string m, out string tex);
+            Assert.AreEqual("Models/TE/TE_Rigged", m);
+            Assert.AreEqual("Models/TE/TE_BaseColor", tex, "the Chiefs' TE wears the model's own colours");
+            Load().teams[1].ModelFor("TE", true, out m, out tex);
+            Assert.AreEqual("Models/TE/TE_Rigged", m);
+            Assert.AreEqual("Models/TE/TERR_BaseColor", tex, "the Roughriders' TE wears the green recolour");
+        }
+
+        [Test]
         public void KickersWearTheirOwnModel()
         {
             Load().teams[0].ModelFor("K", true, out string m, out string tex);
@@ -123,7 +134,7 @@ namespace PocketFootball.Tests.EditMode
         [Test]
         public void EveryFormationSpotWearsTheModelForItsPosition()
         {
-            // the bulky #64 on the line both ways, the receivers' #81 on the TE and WRs, the #24 in the backfield and
+            // the bulky #64 on the line both ways, the receivers' #81 on the WRs, the tight end's #88 on the TE, the #24 in the backfield and
             // the secondary; a two-way player changes model with his spot (PlayersView rebuilds the body on a new position)
             var cfg = Load();
             var want = new Dictionary<string, string>
@@ -131,7 +142,7 @@ namespace PocketFootball.Tests.EditMode
                 { "QB", "Models/QB/QB_Rigged" }, { "K", "Models/Kicker/Kicker_Rigged" },
                 { "OL", "Models/Linebacker/Linebacker_Rigged" }, { "DL", "Models/Linebacker/Linebacker_Rigged" },
                 { "LB", "Models/Linebacker/Linebacker_Rigged" },
-                { "WR", "Models/WR/WR_Rigged" }, { "TE", "Models/WR/WR_Rigged" },
+                { "WR", "Models/WR/WR_Rigged" }, { "TE", "Models/TE/TE_Rigged" },
                 { "RB", "Models/Chiefs24/Chiefs24_Rigged" }, { "CB", "Models/Chiefs24/Chiefs24_Rigged" }, { "S", "Models/Chiefs24/Chiefs24_Rigged" },
             };
             var spots = new List<SpotConfig>(cfg.formation.offense);

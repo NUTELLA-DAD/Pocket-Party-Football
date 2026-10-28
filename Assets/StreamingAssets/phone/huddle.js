@@ -4,7 +4,8 @@
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
   var SVG = 'http' + '://www.w3.org/2000/svg';   // the SVG namespace name (not a download)
-  var H = { plays: [], spots: [], opp: [], me: 0, caller: false, locked: false, mine: '', pick: '', thumbs: {}, side: '', ends: 0 };
+  var H = { plays: [], spots: [], opp: [], me: 0, caller: false, locked: false, mine: '', pick: '', thumbs: {}, side: '', ends: 0, tab: '' };
+  var P = { lineup: null, open: false, asked: -1 };   // FEATURES.huddleSwitch: the team's spots, and the position picker
   var clockTimer = null;
 
   // ---- the playbook picture: a coach's chalkboard on grass. Offense = cream O's, defense = red X's, jobs = yellow arrows. ----
@@ -173,9 +174,11 @@
     if (!H.plays.some(function (p) { return p.id === H.pick; })) H.pick = '';
     H.ends = Date.now() + msg.secs * 1000;
     var me = H.spots[H.me] || {};
-    $('hTitle').textContent = (H.side === 'offense' ? 'OFFENSE' : 'DEFENSE') + ' HUDDLE';
-    $('hSub').textContent = 'You are ' + (me.pos || '') + ' #' + (me.number || '') + ' · only your team sees this';
-    $('hGo').textContent = H.caller ? 'LOCK IN' : 'SUGGEST';
+    $('hTitle').textContent = H.caller ? 'CHOOSE YOUR PLAY' : 'SUGGEST A PLAY';
+    $('hSub').textContent = (H.side === 'offense' ? 'OFFENSE' : 'DEFENSE') + ' · ' + (me.pos || '') + ' #' + (me.number || '');
+    $('hGo').textContent = H.caller ? 'LOCK IN \u2713' : 'SUGGEST';
+    var g = H.pick ? groupOf(playById(H.pick)) : '';
+    H.tab = g || (groups().indexOf(H.tab) >= 0 ? H.tab : groups()[0] || '');
     $('hGo').setAttribute('aria-label', H.caller ? 'Lock in the chosen play' : 'Suggest the chosen play to your caller');
     drawPlays();
     tick();
@@ -189,67 +192,181 @@
     if (s === 0) clearInterval(clockTimer);
   }
 
-  // the list: names only, so it reads at a glance; the picture of the tapped play goes in the preview
+  // ---- the playbook: tabs (PASS / RUN / SPECIAL), a row of play cards with the whole play drawn, LOCK IN ----
+  // The kind of play comes from the play itself (who runs it, its name), so a new play file needs nothing extra.
+  function groupOf(p) {
+    if (!p) return '';
+    var n = (p.id + ' ' + p.name).toLowerCase();
+    if (H.side === 'defense') return /blitz/.test(n) ? 'BLITZ' : /goal|prevent/.test(n) ? 'SPECIAL' : 'COVER';
+    if (/\bfg\b|field goal|punt|kick/.test(n)) return 'SPECIAL';
+    if (p.runner != null || /dive|sneak|sweep|toss|draw|run/.test(n)) return 'RUN';
+    return 'PASS';
+  }
+  function groups() {
+    var order = H.side === 'defense' ? ['COVER', 'BLITZ', 'SPECIAL'] : ['PASS', 'RUN', 'SPECIAL'];
+    return order.filter(function (g) { return H.plays.some(function (p) { return groupOf(p) === g; }); });
+  }
+  function playById(id) { var f = null; H.plays.forEach(function (p) { if (p.id === id) f = p; }); return f; }
+
+  function drawTabs() {
+    var box = $('hTabs'), gs = groups();
+    box.innerHTML = '';
+    box.classList.toggle('hidden', gs.length < 2);
+    gs.forEach(function (g) {
+      var b = document.createElement('button');
+      b.className = 'htab';
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', String(g === H.tab));
+      var n = 0;
+      H.plays.forEach(function (p) { if (groupOf(p) === g) n += H.thumbs[p.id] || 0; });
+      b.setAttribute('aria-label', 'Show the ' + g.toLowerCase() + ' plays' + (n ? ', ' + n + ' teammate picks' : ''));
+      b.textContent = g;
+      if (n > 0) { var th = document.createElement('span'); th.className = 'thumbs'; th.textContent = '👍 ' + n; b.appendChild(th); }
+      b.addEventListener('click', function () { H.tab = g; drawPlays(); });
+      box.appendChild(b);
+    });
+  }
+
   function drawPlays() {
+    drawTabs();
     var box = $('hPlays');
     box.innerHTML = '';
-    H.plays.forEach(function (p) {
+    var shown = H.plays.filter(function (p) { return groups().length < 2 || groupOf(p) === H.tab; });
+    shown.forEach(function (p) {
       var b = document.createElement('button');
       b.className = 'play';
       b.setAttribute('role', 'option');
-      b.setAttribute('aria-pressed', String(p.id === H.pick));
-      b.setAttribute('aria-selected', String(p.id === H.pick));
+      b.setAttribute('data-id', p.id);
       b.setAttribute('aria-label', 'Choose ' + p.name + (p.desc ? ': ' + p.desc : ''));
       b.disabled = H.locked;
+      var f = document.createElement('div'); f.className = 'pf'; b.appendChild(f);
+      var t = document.createElement('b'); t.textContent = p.name; b.appendChild(t);
       var n = H.thumbs[p.id] || 0;
       if (n > 0) { var th = document.createElement('span'); th.className = 'thumbs'; th.textContent = '👍 ' + n; b.appendChild(th); }
-      var t = document.createElement('b'); t.textContent = p.name; b.appendChild(t);
-      var d = document.createElement('small'); d.textContent = p.desc || ''; b.appendChild(d);
-      b.addEventListener('click', function () { if (!H.locked) { H.pick = p.id; drawPlays(); } });
+      var ck = document.createElement('span'); ck.className = 'ck'; ck.textContent = '✓'; b.appendChild(ck);
+      b.addEventListener('click', function () { if (!H.locked) { H.pick = p.id; markPick(); } });
       box.appendChild(b);
     });
+    drawPictures();
+    markPick();
+  }
+  // every card's picture, fitted to the card (all cards are the same size, so measure the first)
+  var lastSize = '';
+  function drawPictures() {
+    var fs = $('hPlays').querySelectorAll('.pf');
+    if (!fs.length) return;
+    var r = fs[0].getBoundingClientRect();
+    lastSize = Math.round(r.width) + 'x' + Math.round(r.height);
+    var aspect = r.height > 0 ? r.width / r.height : 0;
+    for (var i = 0; i < fs.length; i++) {
+      var p = playById(fs[i].parentNode.getAttribute('data-id'));
+      fs[i].innerHTML = '';
+      if (p) fs[i].appendChild(diagram(p, H.spots, H.opp, H.me, true, H.side, aspect));
+    }
+  }
+  // a tap only moves the gold rim and the check; the pictures stay
+  function markPick() {
+    var cards = $('hPlays').querySelectorAll('.play');
+    for (var i = 0; i < cards.length; i++) {
+      var on = cards[i].getAttribute('data-id') === H.pick;
+      cards[i].setAttribute('aria-pressed', String(on));
+      cards[i].setAttribute('aria-selected', String(on));
+    }
     drawPreview();
     var go = $('hGo');
     go.disabled = H.locked || !H.pick || (!H.caller && H.pick === H.mine);
     $('hLine').textContent = H.locked ? 'Locked in. Waiting for the other team...'
-      : H.caller ? 'You call it. Tap a play, then LOCK IN. 👍 = teammates\u2019 picks.'
+      : H.caller ? 'You call it. Tap a play, then LOCK IN. 👍 = teammates’ picks.'
       : H.mine ? 'You suggested it. Your caller decides.'
       : 'Tap a play and SUGGEST it to your caller.';
   }
 
+  // under the cards: the picked play's name and what YOU do in it
   function drawPreview() {
     var pv = $('hPrev');
     pv.innerHTML = '';
-    var p = null;
-    H.plays.forEach(function (q) { if (q.id === H.pick) p = q; });
+    var p = playById(H.pick);
     pv.classList.toggle('empty', !p);
-    if (!p) { pv.textContent = 'Tap a play to see it here'; return; }
-    var h = document.createElement('h3'); h.textContent = p.name;
-    if (p.desc) { var d = document.createElement('small'); d.textContent = ' \u00b7 ' + p.desc; h.appendChild(d); }
-    pv.appendChild(h);
-    var f = document.createElement('div'); f.className = 'pv-field'; pv.appendChild(f);
+    if (!p) { pv.textContent = 'Tap a play to see your job'; return; }
     var job = p.jobs ? p.jobs[H.me] : null;
-    var j = document.createElement('p'); j.className = 'pv-job';
-    var you = document.createElement('span'); you.textContent = 'You: '; j.appendChild(you);
-    j.appendChild(document.createTextNode(job ? job.text : ''));
-    pv.appendChild(j);
-    // measured after the text is in, so the picture fills exactly the space that is left
-    var r = f.getBoundingClientRect();
-    f.appendChild(diagram(p, H.spots, H.opp, H.me, true, H.side, r.height > 0 ? r.width / r.height : 0));
+    var you = document.createElement('span'); you.textContent = p.name + ' · You: '; pv.appendChild(you);
+    pv.appendChild(document.createTextNode(job ? job.text : (p.desc || '')));
   }
-  // redraw when the box changes size (turning the phone, or the huddle screen appearing after the plays arrived)
-  var lastSize = '';
+  // redraw the pictures when the cards change size (turning the phone, or the huddle screen appearing after the plays arrived)
   function refit() {
-    var r = $('hPrev').getBoundingClientRect(), sz = Math.round(r.width) + 'x' + Math.round(r.height);
-    if (sz !== lastSize) { lastSize = sz; if (r.width > 0 && H.pick) drawPreview(); }
+    var f = $('hPlays').querySelector('.pf');
+    if (!f) return;
+    var r = f.getBoundingClientRect(), sz = Math.round(r.width) + 'x' + Math.round(r.height);
+    if (sz !== lastSize && r.width > 0) drawPictures();
   }
-  if (window.ResizeObserver) new ResizeObserver(refit).observe($('hPrev'));
+  if (window.ResizeObserver) new ResizeObserver(refit).observe($('hPlays'));
   else window.addEventListener('resize', refit);
 
   $('hGo').addEventListener('click', function () {
     if (!H.pick || H.locked) return;
     window.PP.send({ t: H.caller ? 'lock' : 'suggest', id: H.pick, aid: window.PP.aid() });
   });
+
+  // ---- a new position between plays (FEATURES.huddleSwitch): the same spot and swap presses as the lobby ----
+  function posSide() { return H.side === 'defense' ? 'd' : 'o'; }
+  function onLineup(msg) {
+    P.lineup = msg;
+    var on = !!msg.switch;
+    $('hSwitch').classList.toggle('hidden', !on);
+    if (!on) { openPos(false); return; }
+    var you = msg.you ? msg.you[posSide()] : -1;
+    if (msg.line) $('hPosLine').textContent = msg.line;
+    if (msg.ask) openPos(true);
+    else if (P.open && P.asked >= 0 && you === P.asked) {   // you got the spot you tapped: back to the plays
+      openPos(false);
+      $('hPosLine').textContent = 'Tap a bot\u2019s spot to take it. Tap a person to ask them to swap.';
+    }
+    drawSpots();
+  }
+  function openPos(open) {
+    P.open = open;
+    if (!open) P.asked = -1;
+    $('hPos').classList.toggle('hidden', !open);
+    $('hSwitch').setAttribute('aria-pressed', String(open));
+    if (open) drawSpots();
+  }
+  function drawSpots() {
+    var m = P.lineup, box = $('hSpots');
+    if (!m || !P.open) return;
+    var side = posSide(), list = (side === 'o' ? m.offense : m.defense) || [];
+    $('hPosTitle').textContent = 'NEW POSITION ON ' + (side === 'o' ? 'OFFENSE' : 'DEFENSE');
+    box.innerHTML = '';
+    list.forEach(function (s, i) {
+      var b = document.createElement('button');
+      b.className = 'lspot' + (s.me ? ' me' : '') + (s.person && !s.me ? ' person' : '') + (s.away ? ' away' : '');
+      b.setAttribute('aria-pressed', String(!!s.me));
+      b.setAttribute('aria-label', s.me ? 'Your position now: ' + s.pos + ' number ' + s.number
+        : s.person ? 'Ask ' + s.who + ' to swap for ' + s.pos + ' number ' + s.number
+        : 'Switch to ' + s.pos + ' number ' + s.number + ' (a bot plays it now)');
+      var pos = document.createElement('b'); pos.textContent = s.pos + ' ' + s.number;
+      var who = document.createElement('i'); who.textContent = s.me ? 'YOU' : s.away ? s.who + ' (away)' : s.who;
+      b.appendChild(pos); b.appendChild(who);
+      b.addEventListener('click', function () {
+        if (s.me) return;
+        P.asked = i;
+        window.PP.send({ t: 'spot', side: side, spot: i, aid: window.PP.aid() });
+        if (!s.person) $('hPosLine').textContent = 'Switching to ' + s.pos + ' #' + s.number + '...';
+      });
+      box.appendChild(b);
+    });
+    var ask = m.ask;
+    $('hAsk').classList.toggle('hidden', !ask);
+    if (ask) $('hAskText').textContent = ask.from + ' wants your ' + ask.give + ' spot. You would get ' + ask.get + '.';
+  }
+  $('hSwitch').addEventListener('click', function () { openPos(!P.open); });
+  $('hPosDone').addEventListener('click', function () { openPos(false); });
+  function answer(yes) {
+    window.PP.send({ t: 'swap', yes: yes, aid: window.PP.aid() });
+    $('hAsk').classList.add('hidden');
+    if (P.lineup) P.lineup.ask = null;
+  }
+  $('hAskYes').addEventListener('click', function () { answer(true); });
+  $('hAskNo').addEventListener('click', function () { answer(false); });
 
   function onThumbs(msg) {
     H.thumbs = msg.counts || {}; H.mine = msg.mine || ''; H.locked = !!msg.locked;
@@ -258,9 +375,12 @@
 
   // ---- your job, shown above the stick once the plays are called ----
   function onJob(msg) {
+    openPos(false);   // the plays are called: the position picker is done until the next huddle
+    $('hSwitch').classList.add('hidden');
     var me = (msg.spots || [])[msg.me] || {};
     var job = msg.play && msg.play.jobs ? msg.play.jobs[msg.me] : null;
     $('job').classList.remove('hidden');
+    $('playView').classList.add('hasjob');   // the play card takes the logo's place in the middle of the pad
     $('jobPlay').textContent = msg.play.name + ' · you are ' + (me.pos || '') + ' #' + (me.number || '');
     $('jobText').textContent = job ? job.text : '';
     var f = $('jobField');
@@ -269,6 +389,7 @@
   }
 
   function onStatus(msg) {
+    if (msg.down) $('hDown').textContent = msg.down;
     if (msg.phase === 'huddle') { H.ends = Date.now() + msg.secs * 1000; tick(); }
   }
 
@@ -278,6 +399,7 @@
       else if (msg.t === 'thumbs') onThumbs(msg);
       else if (msg.t === 'job') onJob(msg);
       else if (msg.t === 'status') onStatus(msg);
+      else if (msg.t === 'lineup') onLineup(msg);
     }
   };
 })();

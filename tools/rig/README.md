@@ -21,10 +21,14 @@ check `headKeep` keeps the helmet and facemask rigid.
 rigid above 1.245 m before rigfix) and `padShift` is 0. Its import/prep/rig scripts are in the project files under
 models/referee/scripts.
 
+`te.json`: the tight end (Resources/Models/TE, Kenny's Chiefs #88). Its import/prep/rig scripts are in the project
+files under models/te/scripts; after rigfix it goes through handfix.py (`TE` in hands.json, with a `Right` override:
+its right hand sits further back than the left).
+
 ## Hands (`handfix.py`, `fcore.py`, `hands.json`)
-`python handfix.py -- in.fbx hands.json <Model> out.fbx` (QB, WR, Kicker, Chiefs24, Referee, Linebacker):
+`python handfix.py -- in.fbx hands.json <Model> out.fbx` (QB, WR, TE, Kicker, Chiefs24, Referee, Linebacker):
 - pulls a sixth finger (`extra`: its outline seen from above, metres on the model's left side; `base`: where it
-  meets the palm) back into the palm. Only the QB, WR and Kicker have one.
+  meets the palm) back into the palm. Only the QB, WR, TE and Kicker have one. A `Left`/`Right` entry inside a model overrides its numbers for that hand.
 - adds four bones per hand, children of `<Side>Hand`: `<Side>Thumb` > `<Side>ThumbTip` and `<Side>Fingers` >
   `<Side>FingersTip` (the four fingers bend together). `kline`: the knuckle line seen from above, `midOff`: how far
   past it the fingers' middle joint is, `thumb`/`thumbX`/`thumbXmax`: the line the thumb lies below and its reach

@@ -1,63 +1,99 @@
-/* Phone layouts (layouts.js). Uses the tokens from style.css; offline only. */
+/* Phone layouts (layouts.js). Uses the tokens and the gem look from style.css; offline only. */
 .btns[class*="layout-"] { grid-template-columns: 1fr 1fr; }
-.layout-wait, .layout-block { grid-template-columns: 1fr; }
 .layout-kick { grid-template-columns: 1fr; }
-.btn.alt { background: var(--team-2); color: var(--ink); }
-.btn.rcv { font-size: 16px; }
-.btn.rcv .shape { display: block; font-size: 26px; line-height: 1; margin-bottom: 2px; }
-.btn.rcv.open { outline: 3px solid #5fd38a; outline-offset: -3px; }
-.layout-qb .btn[data-act="scramble"] { grid-column: 1 / -1; min-height: 48px; }
-.layout-carrier .btn[data-act="divein"] { grid-column: 1 / -1; }   /* WS-04: the fifth carrier button spans the row */
-.kickpad {
-  position: relative; height: min(240px, 100%); min-height: 160px; border-radius: 16px; overflow: hidden; touch-action: none;
-  background: linear-gradient(var(--ink), var(--turf-2));
-}
-.kickpad .posts {
-  position: absolute; left: 50%; top: 14px; width: 80px; height: 50px; margin-left: -40px;
-  border: 5px solid var(--warn); border-top: 0; border-bottom: 0;
-}
-.kickpad .kball {
-  position: absolute; left: 50%; bottom: 16px; width: 26px; height: 16px; margin-left: -13px; border-radius: 50%;
-  background: #8b4a22;
-}
-.kickpad .kline {
-  position: absolute; left: 50%; bottom: 24px; width: 6px; height: 0; margin-left: -3px; border-radius: 3px;
-  background: var(--warn); transform-origin: 50% 100%; pointer-events: none;
-}
-.kickpad .khint { position: absolute; left: 0; right: 0; bottom: 52px; text-align: center; color: var(--muted); font-size: 14px; }
-.kickpad.done { opacity: .6; }
+.dot.off { background: #e8333a; }
 
-/* the QB's two sticks: a narrow column of receiver shapes, then the throw stick */
-.btns.layout-qb.ts { grid-template-columns: auto minmax(0, 1fr); grid-auto-rows: auto; align-items: end; }
-.rcvs { display: grid; gap: 6px; align-content: end; }
-.rcvs .btn.rcv { min-height: 0; height: auto; width: 54px; padding: 4px 2px; font-size: 11px; border-radius: 12px; }
-.rcvs .btn.rcv .shape { font-size: 20px; margin: 0; }
-.tstick {
-  position: relative; justify-self: end; width: 100%; max-width: var(--stick); aspect-ratio: 1; border-radius: 50%;
-  background: radial-gradient(circle, #3a2a10 0 55%, var(--ink) 56%); touch-action: none;
+/* ---- the ring of gems: like a game pad. s0 is the big one under the right thumb, s1..s4 curve round it ----
+   The box keeps a 1.25 : 1 shape; spots are in % of it so every phone size gets the same picture. */
+.btns.cluster {
+  display: block; position: relative; aspect-ratio: 1.25 / 1; width: min(100%, calc(var(--stick) * 1.25)); height: auto; max-height: none;
+  container-type: size; margin-left: auto;
 }
+@media (orientation: portrait) {
+  .btns.cluster { width: min(100%, 420px, calc((100dvh - 470px) * 1.25)); }
+  .btns.layout-qb.ts .tstick { max-width: min(var(--stick), calc(100dvh - 520px)); }
+}
+.cluster .gem {
+  position: absolute; border-radius: 50%; padding: 0; min-height: 0; border-width: 5px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+  font-size: 13px; font-size: clamp(10px, 7cqh, 20px); line-height: 1; letter-spacing: 0;
+}
+.cluster .gem .lb { display: block; max-width: 90%; }
+.cluster .gem .ic { width: 1.9em; height: 1.9em; margin-bottom: .15em; }
+.cluster .gem .k { display: none; }
+.cluster .gem .hk { display: block; font-size: .62em; margin-top: .25em; letter-spacing: .08em; opacity: .85; }
+.cluster .s0 { left: 52.8%; top: 43%; width: 44.8%; height: 56%; font-size: 16px; font-size: clamp(12px, 9.5cqh, 26px); }
+.cluster .s1 { left: 66.4%; top: 1%;  width: 32%;   height: 40%; }
+.cluster .s2 { left: 28.8%; top: 10%; width: 32%;   height: 40%; }
+.cluster .s3 { left: 12.8%; top: 54%; width: 32%;   height: 40%; }
+.cluster .s4 { left: 0.8%;  top: 11%; width: 24%;   height: 30%; font-size: 11px; font-size: clamp(9px, 5.6cqh, 16px); }
+/* one or two gems: a bigger pair, still under the thumb */
+.cluster.n1 .s0 { left: 35%; top: 15%; width: 56%; height: 70%; }
+.cluster.n2 .s0 { left: 50%; top: 36%; width: 49%; height: 61%; }
+.cluster.n2 .s1 { left: 14%; top: 8%; width: 38%; height: 47.5%; }
+
+/* ---- the QB: receiver gems with the shape that floats over each man on the TV ---- */
+.btn.g-ivory { --g: #f4e9cc; --g-hi: #fffdf4; --g-lo: #d2bd8f; --g-ink: #0a1640; }
+.btn.rcv { font-size: 13px; border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.btn.rcv .shape { display: block; font-size: 26px; line-height: 1; margin-bottom: 2px; }
+.btn.rcv.open { box-shadow: 0 0 0 2px var(--edge), 0 0 0 6px #2fd36b, 0 5px 0 6px var(--edge); }
+.layout-qb:not(.ts) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.layout-qb .btn[data-act="scramble"] { grid-column: 1 / -1; min-height: 48px; flex-direction: row; gap: 8px; }
+.layout-qb .btn[data-act="scramble"] .ic { margin: 0; width: 1.3em; height: 1.3em; }
+.layout-qb .btn .k { display: none; }
+
+/* the QB's two sticks: a narrow column of receiver gems, then the gold throw stick */
+.btns.layout-qb.ts { grid-template-columns: auto minmax(0, 1fr); grid-auto-rows: auto; align-items: end; }
+.rcvs { display: grid; gap: 7px; align-content: end; padding: 3px; }
+.rcvs .btn.rcv { min-height: 0; height: auto; width: 56px; padding: 3px 2px; font-size: 10px; border-radius: 14px; border-width: 3px; }
+.rcvs .btn.rcv .shape { font-size: 20px; margin: 0; }
+.tstick { justify-self: end; width: 100%; max-width: var(--stick); aspect-ratio: 1; }
 .tstick .tring {
   --arc: 0; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
-  background: conic-gradient(var(--team-2) calc(var(--arc) * 360deg), transparent 0);
-  -webkit-mask: radial-gradient(circle, transparent 0 62%, #000 63% 70%, transparent 71%);
-          mask: radial-gradient(circle, transparent 0 62%, #000 63% 70%, transparent 71%);
+  background: conic-gradient(var(--gold) calc(var(--arc) * 360deg), transparent 0);
+  -webkit-mask: radial-gradient(circle, transparent 0 60%, #000 61% 70%, transparent 71%);
+          mask: radial-gradient(circle, transparent 0 60%, #000 61% 70%, transparent 71%);
 }
 .tstick .tknob {
-  position: absolute; left: 50%; top: 50%; width: 40%; height: 40%; margin: -20% 0 0 -20%; border-radius: 50%;
-  background: var(--team-2); box-shadow: 0 4px 0 rgba(0,0,0,.35); pointer-events: none;
+  background:
+    radial-gradient(70% 40% at 42% 18%, rgba(255,255,255,.6), rgba(255,255,255,0) 70%) padding-box,
+    radial-gradient(circle at 40% 32%, #fff3a0, #ffd02e 55%, #e08f00) padding-box,
+    var(--rim) border-box;
 }
 .tstick .ttag {
-  position: absolute; left: 0; right: 0; bottom: 8%; text-align: center; font-family: var(--display); font-size: 13px;
+  position: absolute; left: 0; right: 0; bottom: 7%; text-align: center; font-family: var(--display); font-weight: 900; font-size: 13px;
   letter-spacing: .06em; color: var(--chalk); pointer-events: none;
 }
-.tstick.on .ttag { color: var(--team-2); }
+.tstick.on .ttag { color: var(--gold); }
 @media (orientation: landscape) {
   .btns.layout-qb.ts { height: var(--stick); grid-template-rows: minmax(0, 1fr); }
   .rcvs { grid-auto-rows: minmax(0, 1fr); height: 100%; min-height: 0; overflow: hidden; }
-  .rcvs .btn.rcv { padding: 1px 2px; font-size: 10px; box-shadow: 0 3px 0 rgba(0,0,0,.35); }
+  .rcvs .btn.rcv { padding: 1px 2px; font-size: 10px; box-shadow: 0 0 0 2px var(--edge), 0 3px 0 2px var(--edge); }
   .layout-kick .kickpad { height: 100%; }
 }
 @media (orientation: landscape) and (max-height: 340px) {
-  .rcvs .btn.rcv { width: 46px; font-size: 0; }
+  .rcvs .btn.rcv { width: 46px; }
+  .rcvs .btn.rcv .lb { display: none; }
   .rcvs .btn.rcv .shape { font-size: 18px; }
 }
+
+/* ---- the kick pad (the full kick meter is kick.js) ---- */
+.kickpad {
+  position: relative; height: min(240px, 100%); min-height: 160px; border-radius: 18px; overflow: hidden; touch-action: none;
+  border: 4px solid transparent; background: linear-gradient(#0d1d55, #1b3478) padding-box, var(--rim) border-box;
+  box-shadow: 0 0 0 2px var(--edge);
+}
+.kickpad .posts {
+  position: absolute; left: 50%; top: 14px; width: 80px; height: 50px; margin-left: -40px;
+  border: 5px solid var(--gold); border-top: 0; border-bottom: 0;
+}
+.kickpad .kball {
+  position: absolute; left: 50%; bottom: 16px; width: 26px; height: 16px; margin-left: -13px; border-radius: 50%;
+  background: #8a3d17; box-shadow: 0 0 0 2px var(--edge);
+}
+.kickpad .kline {
+  position: absolute; left: 50%; bottom: 24px; width: 6px; height: 0; margin-left: -3px; border-radius: 3px;
+  background: var(--gold); transform-origin: 50% 100%; pointer-events: none;
+}
+.kickpad .khint { position: absolute; left: 0; right: 0; bottom: 52px; text-align: center; color: var(--muted); font-size: 14px; }
+.kickpad.done { opacity: .6; }

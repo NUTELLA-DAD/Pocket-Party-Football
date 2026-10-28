@@ -7,7 +7,7 @@
   var last = '', hiddenFor = '';
 
   var css = [
-    '#postgame { position: fixed; inset: 0; z-index: 50; background: rgba(9, 26, 20, .97); color: var(--chalk, #f6f1de);',
+    '#postgame { position: fixed; inset: 0; z-index: 50; background: rgba(6, 13, 43, .97); color: var(--chalk, #f6f1de);',
     '  display: flex; align-items: center; justify-content: center; padding: 12px; touch-action: none; overflow: hidden; }',
     '#postgame .card { width: 100%; max-width: 640px; max-height: 100%; display: grid; gap: 10px; align-content: center; min-height: 0; }',
     '#postgame .final { font-family: var(--display, system-ui); font-size: 15px; letter-spacing: .14em; color: var(--muted, #a8c4b4); margin: 0; text-align: center; }',

@@ -78,20 +78,83 @@ const LAYOUTS = ['wait', 'qbpre', 'qb', 'carrier', 'route', 'block', 'rush', 'lb
     sendIn({ t: 'huddle', side: 'offense', secs: 15, caller: true, callerNumber: 15, locked: false, mine: '', plays, spots: OFF, opp: DEF, me: 0, thumbs: { slants: 2 } });
     sendIn({ t: 'ui', layout: 'huddle', aid: 'h1' });
     await check('huddle');
+    // FEATURES.huddleSwitch: POSITION opens the team's offense spots; a bot's spot sends a spot press with the huddle aid
+    const lineup = (you, extra) => sendIn(Object.assign({ t: 'lineup', held: false, switch: true, team: 0, teamName: 'CHIEFS', people: 2, players: 11,
+      offense: OFF.map((s, i) => ({ pos: s.pos, number: s.number, who: i === you ? 'KENNY' : i === 4 ? 'RAY' : 'BOT', person: i === you || i === 4, me: i === you, away: false })),
+      defense: DEF.map((s, i) => ({ pos: s.pos, number: s.number, who: i === 1 ? 'KENNY' : 'BOT', person: i === 1, me: i === 1, away: false })),
+      you: { o: you, d: 1 } }, extra || {}));
+    ok(!(await page.isVisible('#hSwitch')), tag + ' no POSITION button before the game says switching is on');
+    lineup(0);
+    await page.waitForTimeout(50);
+    ok(await page.isVisible('#hSwitch'), tag + ' POSITION button shows in the huddle');
+    await check('huddle-switch');
+    await page.click('#hSwitch');
+    await check('huddle-position');
+    ok((await page.$$('#hSpots .lspot')).length === 11, tag + ' 11 offense spots to pick from');
+    got.length = 0;
+    await page.locator('#hSpots .lspot').nth(3).click();
+    await page.locator('#hSpots .lspot').nth(0).click();
+    await page.waitForTimeout(50);
+    const spots = got.filter(m => m.t === 'spot');
+    ok(spots.length === 1 && spots[0].side === 'o' && spots[0].spot === 3 && spots[0].aid === 'h1', tag + ' spot press (and none for your own): ' + JSON.stringify(got));
+    lineup(3);
+    await page.waitForTimeout(50);
+    ok(!(await page.isVisible('#hPos')), tag + ' the picker closes once you have the new spot');
+    // a teammate asks to swap: the picker opens with the question, SWAP answers
+    lineup(3, { ask: { from: 'RAY', side: 'o', give: 'WR #17', get: 'WR #19' } });
+    await check('huddle-position-ask');
+    ok(await page.isVisible('#hAsk'), tag + ' the swap question shows in the huddle');
+    got.length = 0;
+    await page.click('#hAskYes');
+    await page.waitForTimeout(50);
+    ok(got.some(m => m.t === 'swap' && m.yes === true && m.aid === 'h1'), tag + ' swap answer: ' + JSON.stringify(got));
+    await page.click('#hPosDone');
+    await page.waitForTimeout(30);
+    ok(!(await page.isVisible('#hPos')), tag + ' DONE closes the picker');
     // pick a play and lock it in
+    // the cards sit under PASS / RUN / SPECIAL tabs: every tab shows only its own plays, and every play is on one tab
+    const tabs = await page.$$eval('#hTabs .htab', els => els.map(e => e.textContent.replace(/[^A-Z]/g, '')));
+    ok(tabs.join(',') === 'PASS,RUN,SPECIAL', tag + ' offense tabs: ' + tabs.join(','));
+    let seen = 0;
+    for (let i = 0; i < tabs.length; i++) {
+      await page.locator('#hTabs .htab').nth(i).click();
+      seen += (await page.$$('#hPlays .play')).length;
+      ok((await page.$$('#hPlays .play .pf svg')).length === (await page.$$('#hPlays .play')).length, tag + ' every card has its picture on ' + tabs[i]);
+    }
+    ok(seen === plays.length, tag + ' every play on a tab: ' + seen + ' of ' + plays.length);
+    await page.locator('#hTabs .htab').first().click();
     const second = page.locator('#hPlays .play').nth(1);
+    const secondId = await second.getAttribute('data-id');
     await second.click();
     await check('huddle-picked');
     got.length = 0;
     await page.click('#hGo');
     await page.waitForTimeout(80);
-    ok(got.some(m => m.t === 'lock' && m.id === plays[1].id && m.aid === 'h1'), tag + ' lock message: ' + JSON.stringify(got));
+    ok(got.some(m => m.t === 'lock' && m.id === secondId && m.aid === 'h1'), tag + ' lock message: ' + JSON.stringify(got));
     sendIn({ t: 'job', side: 'offense', play: plays[1], spots: OFF, opp: DEF, me: 0 });
     for (const L of LAYOUTS) {
       sendIn({ t: 'ui', layout: L, aid: L + '1', receivers: L === 'qb' ? RECEIVERS : undefined, throwStick: L === 'qb' ? true : undefined });
       sendIn({ t: 'status', phase: 'set', secs: 0, called: [true, true], score: [6, 0], down: '2ND & 6', tv: 'TACKLED! FIRST DOWN' });
       await check(L);
     }
+    // between plays (walk): SPRINT and FIND ME gems; the QB without the throw stick: a receiver gem for each man
+    sendIn({ t: 'ui', layout: 'walk', aid: 'w1' });
+    await check('walk');
+    ok(await page.isVisible('#sprintBtn') && await page.isVisible('#findBtn'), tag + ' walking gems show');
+    sendIn({ t: 'ui', layout: 'qb', aid: 'q2', receivers: RECEIVERS });
+    await check('qb-buttons');
+    ok((await page.$$('#btnBox .btn.rcv')).length === RECEIVERS.length, tag + ' a receiver gem for each man');
+    // PAUSE: a menu on this phone only. FIND ME from it sends the find press with the aid; BACK closes it
+    await page.click('#menuBtn');
+    await check('menu');
+    ok(await page.isVisible('#menu'), tag + ' PAUSE opens the menu');
+    got.length = 0;
+    await page.click('#menuFind');
+    await page.waitForTimeout(30);
+    ok(got.some(m => m.t === 'btn' && m.b === 'find' && m.d === 1 && m.aid === 'q2') && !(await page.isVisible('#menu')), tag + ' menu FIND ME: ' + JSON.stringify(got));
+    await page.click('#menuBtn');
+    await page.click('#menuBack');
+    ok(!(await page.isVisible('#menu')), tag + ' BACK closes the menu');
     // the throw stick: a quick flick is a bullet, a long hold a lob, letting go in the middle cancels
     sendIn({ t: 'ui', layout: 'qb', aid: 'q9', receivers: RECEIVERS, throwStick: true });
     await page.waitForTimeout(50);
@@ -117,5 +180,5 @@ const LAYOUTS = ['wait', 'qbpre', 'qb', 'carrier', 'route', 'block', 'rush', 'lb
   }
   await browser.close();
   if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }
-  console.log('PASS: ' + SIZES.length + ' sizes, join, pick, huddle, lock in, ' + LAYOUTS.length + ' layouts, nothing off screen, throw stick flick/lob/cancel');
+  console.log('PASS: ' + SIZES.length + ' sizes, join, pick, huddle, position switch, lock in, ' + LAYOUTS.length + ' layouts, walk, PAUSE menu, nothing off screen, throw stick flick/lob/cancel');
 })();
