@@ -134,8 +134,9 @@ namespace PocketFootball.Tests.EditMode
         [Test]
         public void EveryFormationSpotWearsTheModelForItsPosition()
         {
-            // the bulky #64 on the line both ways, the receivers' #81 on the WRs, the tight end's #88 on the TE, the #24 in the backfield and
-            // the secondary; a two-way player changes model with his spot (PlayersView rebuilds the body on a new position)
+            // the bulky #64 on the line both ways and at middle linebacker, the leaner linebacker on the outside linebackers and the
+            // safeties, the receivers' #81 on the WRs, the tight end's #88 on the TE, the #24 at running back and corner; a two-way
+            // player changes model with his spot (PlayersView rebuilds the body on a new position)
             var cfg = Load();
             var want = new Dictionary<string, string>
             {
@@ -143,8 +144,10 @@ namespace PocketFootball.Tests.EditMode
                 { "OL", "Models/Linebacker/Linebacker_Rigged" }, { "DL", "Models/Linebacker/Linebacker_Rigged" },
                 { "LB", "Models/Linebacker/Linebacker_Rigged" },
                 { "WR", "Models/WR/WR_Rigged" }, { "TE", "Models/TE/TE_Rigged" },
-                { "RB", "Models/Player24/Player24_Rigged" }, { "CB", "Models/Player24/Player24_Rigged" }, { "S", "Models/Player24/Player24_Rigged" },
+                { "RB", "Models/Player24/Player24_Rigged" }, { "CB", "Models/Player24/Player24_Rigged" }, { "S", "Models/LeanLB/LeanLB_Rigged" },
             };
+            const string lean = "Models/LeanLB/LeanLB_Rigged";
+            int outsideBackers = 0;
             var spots = new List<SpotConfig>(cfg.formation.offense);
             spots.AddRange(cfg.formation.defense);
             foreach (var s in spots)
@@ -153,13 +156,48 @@ namespace PocketFootball.Tests.EditMode
                 var tex = new List<string>();
                 foreach (var team in cfg.teams)
                 {
-                    team.ModelFor(s.pos, true, out string m, out string t);
-                    Assert.AreEqual(want[s.pos], m, team.@short + " " + s.pos);
+                    team.ModelFor(s.pos, true, out string m, out string t, out _, s.number);
+                    bool outside = s.pos == "LB" && s.z != 0f;   // (the middle linebacker lines up on the ball)
+                    Assert.AreEqual(outside ? lean : want[s.pos], m, team.@short + " " + s.pos + " #" + s.number);
+                    if (outside) outsideBackers++;
                     Assert.IsFalse(string.IsNullOrEmpty(t), team.@short + " " + s.pos + " has a colour map");
                     tex.Add(t);
                 }
                 Assert.AreNotEqual(tex[0], tex[1], s.pos + ": each team wears its own colours");
             }
+            Assert.AreEqual(2 * cfg.teams.Count, outsideBackers, "both outside linebackers wear the leaner model");
         }
+
+        [Test]
+        public void TheLeanerLinebackerPlaysOutsideLinebackerAndSafety()
+        {
+            var cfg = Load();
+            var all = new List<TeamConfig>(cfg.teams);
+            all.AddRange(cfg.moreTeams);
+            foreach (var team in all)
+            {
+                foreach (int n in new[] { 50, 58 })
+                {
+                    team.ModelFor("LB", true, out string m, out string tex, out float bend, n);
+                    Assert.AreEqual("Models/LeanLB/LeanLB_Rigged", m, team.@short + " LB #" + n);
+                    StringAssert.StartsWith("Models/LeanLB/LeanLB", tex);
+                    Assert.AreEqual(1f, bend, "the leaner build runs on a full knee bend");
+                }
+                team.ModelFor("LB", true, out string mid, out _, out _, 54);
+                Assert.AreEqual("Models/Linebacker/Linebacker_Rigged", mid, team.@short + ": the middle linebacker keeps the bulky model");
+                team.ModelFor("LB", true, out mid, out _);
+                Assert.AreEqual("Models/Linebacker/Linebacker_Rigged", mid, "no number given: the bulky model");
+                team.ModelFor("S", true, out string sm, out _);
+                Assert.AreEqual("Models/LeanLB/LeanLB_Rigged", sm, team.@short + " S");
+                team.ModelFor("LB", false, out string off, out _, out _, 50);
+                Assert.AreEqual(team.model, off, "NO_POS_MODELS=1: the team's model");
+            }
+            Assert.AreEqual("Models/LeanLB/LeanLB_BaseColor", Tex(cfg.teams[0]), "the Arrows wear the model's own colours");
+            Assert.AreEqual("Models/LeanLB/LeanLBGRN_BaseColor", Tex(cfg.teams[1]));
+            Assert.AreEqual("Models/LeanLB/LeanLBCAC_BaseColor", Tex(cfg.moreTeams[0]));
+            Assert.AreEqual("Models/LeanLB/LeanLBWHL_BaseColor", Tex(cfg.moreTeams[1]));
+        }
+
+        static string Tex(TeamConfig team) { team.ModelFor("S", true, out _, out string t); return t; }
     }
 }

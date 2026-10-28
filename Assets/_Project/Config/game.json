@@ -278,6 +278,8 @@
       "model": "Models/Player24/Player24_Rigged",
       "modelTexture": "Models/Player24/Player24_BaseColor",
       "posModels": [
+        { "pos": "LB", "numbers": [50, 58], "model": "Models/LeanLB/LeanLB_Rigged", "modelTexture": "Models/LeanLB/LeanLB_BaseColor" },
+        { "pos": "S", "model": "Models/LeanLB/LeanLB_Rigged", "modelTexture": "Models/LeanLB/LeanLB_BaseColor" },
         { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerARR_BaseColor", "strideBend": 0.7 },
         { "pos": "OL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerARR_BaseColor", "strideBend": 0.7 },
         { "pos": "DL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerARR_BaseColor", "strideBend": 0.7 },
@@ -299,6 +301,8 @@
       "model": "Models/Player24/Player24_Rigged",
       "modelTexture": "Models/Player24/Player24GRN_BaseColor",
       "posModels": [
+        { "pos": "LB", "numbers": [50, 58], "model": "Models/LeanLB/LeanLB_Rigged", "modelTexture": "Models/LeanLB/LeanLBGRN_BaseColor" },
+        { "pos": "S", "model": "Models/LeanLB/LeanLB_Rigged", "modelTexture": "Models/LeanLB/LeanLBGRN_BaseColor" },
         { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/Linebacker_BaseColor", "strideBend": 0.7 },
         { "pos": "OL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/Linebacker_BaseColor", "strideBend": 0.7 },
         { "pos": "DL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/Linebacker_BaseColor", "strideBend": 0.7 },
@@ -322,6 +326,8 @@
       "model": "Models/Player24/Player24_Rigged",
       "modelTexture": "Models/Player24/Player24CAC_BaseColor",
       "posModels": [
+        { "pos": "LB", "numbers": [50, 58], "model": "Models/LeanLB/LeanLB_Rigged", "modelTexture": "Models/LeanLB/LeanLBCAC_BaseColor" },
+        { "pos": "S", "model": "Models/LeanLB/LeanLB_Rigged", "modelTexture": "Models/LeanLB/LeanLBCAC_BaseColor" },
         { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerCAC_BaseColor", "strideBend": 0.7 },
         { "pos": "OL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerCAC_BaseColor", "strideBend": 0.7 },
         { "pos": "DL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerCAC_BaseColor", "strideBend": 0.7 },
@@ -343,6 +349,8 @@
       "model": "Models/Player24/Player24_Rigged",
       "modelTexture": "Models/Player24/Player24WHL_BaseColor",
       "posModels": [
+        { "pos": "LB", "numbers": [50, 58], "model": "Models/LeanLB/LeanLB_Rigged", "modelTexture": "Models/LeanLB/LeanLBWHL_BaseColor" },
+        { "pos": "S", "model": "Models/LeanLB/LeanLB_Rigged", "modelTexture": "Models/LeanLB/LeanLBWHL_BaseColor" },
         { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerWHL_BaseColor", "strideBend": 0.7 },
         { "pos": "OL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerWHL_BaseColor", "strideBend": 0.7 },
         { "pos": "DL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerWHL_BaseColor", "strideBend": 0.7 },
