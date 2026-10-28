@@ -1,0 +1,20 @@
+{
+  "regions": {
+    "player": { "helmet": 0.74, "pantsHigh": 0.42, "pantsLow": 0.17 },
+    "cheer":  { "helmet": 2.0,  "pantsHigh": 0.0,  "pantsLow": -1.0 }
+  },
+  "teams": {
+    "SAG": {
+      "helmet": "#F47A35", "helmetTrim": "#FFFFFF",
+      "jersey": "#287A4B", "trim": "#FFFFFF",
+      "pants": "#F2D6A2", "pantsStripe": "#287A4B", "socks": "#287A4B",
+      "cheer": { "main": "#287A4B", "accent": "#F47A35" }
+    },
+    "WHL": {
+      "helmet": "#10243A", "helmetTrim": "#55D6BE",
+      "jersey": "#1976C9", "trim": "#55D6BE",
+      "pants": "#FFFFFF", "pantsStripe": "#10243A", "socks": "#10243A",
+      "cheer": { "main": "#1976C9", "accent": "#55D6BE" }
+    }
+  }
+}
