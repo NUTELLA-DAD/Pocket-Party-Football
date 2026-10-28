@@ -42,6 +42,7 @@ namespace PocketFootball.Sim
         public RatingsConfig ratings = new RatingsConfig();   // player ratings by position (Ratings.cs, FEATURES.ratings)
         public TitleConfig title = new TitleConfig();   // the title screen and its attract mode (TitleConfig.cs, Boot/TitleScreen.cs)
         public MarksConfig marks = new MarksConfig();   // FEATURES.jerseyNumbers / eyesLook: the players' numbers and eyes (View/JerseyMarks.cs)
+        public ReactionsConfig reactions = new ReactionsConfig();   // FEATURES.faceReactions / grassStains / nameBars (View/Reactions.cs)
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 
@@ -212,6 +213,18 @@ namespace PocketFootball.Sim
             foreach (var m in models) if (m != null && m.model == model) return m;
             return null;
         }
+    }
+
+    // FEATURES.faceReactions: how long a face stays happy or wincing after a play (seconds of sim time). FEATURES.grassStains:
+    // how much grass a man picks up going down (0..stainMax) and how the stains look. FEATURES.nameBars: the slim name bar
+    // over each person's player (font px at 1080p, how see-through it is during a live play, how far over his head).
+    public sealed class ReactionsConfig
+    {
+        public float touchdownS, bigHitS, sackS, pickS;
+        public float stainTackled, stainTackler, stainBigHit, stainMax;
+        public string stainGrass, stainDirt;
+        public float stainScale, stainOpacity;
+        public float barFontPx, barLiveAlpha, barAboveM;
     }
 
     // One model's marks map (under Resources), its iris and eyelid colours, and the number painted on it at first (worn

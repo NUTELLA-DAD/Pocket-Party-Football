@@ -16,7 +16,9 @@ namespace PocketFootball.View
             DigitsTexId = Shader.PropertyToID("_DigitsTex"), DigitsId = Shader.PropertyToID("_NumberDigits"),
             FillId = Shader.PropertyToID("_NumberFill"), EdgeId = Shader.PropertyToID("_NumberEdge"),
             StyleId = Shader.PropertyToID("_NumberStyle"), LookId = Shader.PropertyToID("_EyeLook"),
-            IrisId = Shader.PropertyToID("_IrisColor"), LidId = Shader.PropertyToID("_LidColor");
+            IrisId = Shader.PropertyToID("_IrisColor"), LidId = Shader.PropertyToID("_LidColor"),
+            StainId = Shader.PropertyToID("_Stain"), StainLookId = Shader.PropertyToID("_StainLook"),
+            GrassId = Shader.PropertyToID("_StainGrass"), DirtId = Shader.PropertyToID("_StainDirt");
 
         // The digit atlas: ten cells side by side, each the glyph's box (1 x 1.4) with Margin round it, CellPx pixels a
         // glyph unit; each pixel the distance to the glyph's centre line over MaxDist (the shader's 0.6).
@@ -26,7 +28,7 @@ namespace PocketFootball.View
         static readonly Dictionary<string, Texture2D> maps = new Dictionary<string, Texture2D>();
         static MaterialPropertyBlock block;
 
-        public static bool On(GameConfig cfg) => cfg.Feature("jerseyNumbers") || cfg.Feature("eyesLook");
+        public static bool On(GameConfig cfg) => cfg.Feature("jerseyNumbers") || cfg.Feature("eyesLook") || cfg.Feature("faceReactions") || cfg.Feature("grassStains");
 
         public static Texture2D Digits()
         {
@@ -80,6 +82,11 @@ namespace PocketFootball.View
             m.SetColor(EdgeId, Hex(team?.numberEdge, Color.white));
             m.SetColor(IrisId, Hex(mm.iris, new Color(0.4f, 0.22f, 0.1f)));
             m.SetColor(LidId, Hex(mm.lid, new Color(0.6f, 0.38f, 0.22f)));
+            // FEATURES.grassStains: the stains' colours and look (each man's amount is on his renderer)
+            var rc = cfg.reactions;
+            m.SetColor(GrassId, Hex(rc.stainGrass, new Color(0.33f, 0.48f, 0.17f)));
+            m.SetColor(DirtId, Hex(rc.stainDirt, new Color(0.43f, 0.32f, 0.2f)));
+            m.SetVector(StainLookId, new Vector4(rc.stainScale, rc.stainOpacity, 0f, 0f));
             // jerseyNumbers off: everyone on this model wears the number first painted on it
             m.SetVector(DigitsId, cfg.Feature("jerseyNumbers") ? Vector4.zero : Digits(mm.number));
             return true;
@@ -101,8 +108,12 @@ namespace PocketFootball.View
             foreach (var r in holder.GetComponentsInChildren<Renderer>(true)) Set(r, DigitsId, Digits(number));
         }
 
-        // Where a player's eyes look (iris radii: x to his left, y up) and how shut his lids are (0..1).
-        public static void SetEyes(Renderer r, float x, float y, float blink) => Set(r, LookId, new Vector4(x, y, blink, 0f));
+        // Where a player's eyes look (iris radii: x to his left, y up), how shut his lids are (0..1) and his mood (+1 a happy
+        // squint, -1 a wince: FEATURES.faceReactions).
+        public static void SetEyes(Renderer r, float x, float y, float blink, float mood = 0f) => Set(r, LookId, new Vector4(x, y, blink, mood));
+
+        // How much grass and dirt a player has on him (0..reactions.stainMax: FEATURES.grassStains).
+        public static void SetStain(Renderer r, float amount) => Set(r, StainId, new Vector4(amount, 0f, 0f, 0f));
 
         static void Set(Renderer r, int id, Vector4 v)
         {

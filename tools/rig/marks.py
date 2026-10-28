@@ -2,7 +2,8 @@
 # baked-in numbers and irises out of each of its colour maps (in place), and writes the model's marks map, which tells
 # the PocketParty/Toon shader where a number or an eye goes on each texel.
 #   marks map RGBA: R, G = the texel's spot in its zone (number: in number heights, -1.5..1.5; eye: in iris radii, -3..3;
-#   both 0..1 in the PNG), B = 128 number / 255 eye, A = 255 inside the zone (an eye's: inside its opening only).
+#   both 0..1 in the PNG), B = 128 number / 255 eye, A = 255 inside the zone (an eye's: inside its opening only);
+#   outside every zone R = where grass stains may go (0..1), G, B, A = 0.
 # usage: [MARKS_ONLY=1] python3 marks.py <uvmap.npz> <zones.json> <Models dir> [preview.png]
 #   uvmap.npz from uvmap.py (the rest-pose point and normal under every texel of the colour map).
 #   zones.json: {"marks": "Chiefs24/Chiefs24_Marks.png", "textures": [{"file": ..., "hue": jersey hue in degrees}],
@@ -119,6 +120,23 @@ for zi, z in enumerate(spec['zones']):
         e = inz & eye_open
         marks[inz, 0] = np.clip(local[inz, 0] / 6 + 0.5, 0, 1); marks[inz, 1] = np.clip(local[inz, 1] / 6 + 0.5, 0, 1)
         marks[inz, 2] = 1; marks[e, 3] = 1
+# outside every zone, R = how much grass a stain may leave there (FEATURES.grassStains; B and A stay 0): the legs and
+# knees most, the arms and body some, the helmet, face and hands none (from the rest pose, in model heights)
+H = P[ok][:, 2].max(); X = np.abs(P[ok][:, 0]).max()
+zn = P[..., 2] / H; ax = np.abs(P[..., 0]) / H; fwd = P[..., 1] < 0
+def band(v, a, b, soft=0.03): return np.clip((v - a) / soft + 0.5, 0, 1) * np.clip((b - v) / soft + 0.5, 0, 1)
+st = np.zeros((N, N), np.float32)
+leg = band(zn, 0.05, 0.31); torso = band(zn, 0.31, 0.6) * (ax < 0.17)
+st += leg * (0.7 + 0.3 * band(zn, 0.14, 0.27) * fwd)
+st += torso * np.where(fwd, 0.45, 0.3)
+arm = (ax >= 0.17) * band(zn, 0.4, 0.7)
+st += arm * 0.45
+st *= (np.abs(P[..., 0]) < 0.78 * X)                     # not the hands
+st *= ~((zn > 0.6) & (ax < 0.17))                         # not the head
+st *= ~((zn < 0.06))                                      # hardly the shoes
+free = ok & (zone_of < 0)
+marks[free, 0] = np.clip(st[free], 0, 1)
+print('stain texels', int((free & (st > 0)).sum()))
 # pad 3 texels into the empty texture around each zone (bilinear filtering reads a texel past the edge)
 filled = marks[..., 3] > 0
 for _ in range(3):

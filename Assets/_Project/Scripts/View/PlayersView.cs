@@ -392,9 +392,15 @@ namespace PocketFootball.View
 
         // FEATURES.eyesLook: each man's eyes follow the ball from where his head points now (the carrier looks
         // where he's running), glance aside now and then and blink, in key frames (Alive.Eyes).
+        // Where each man's eyes look (FEATURES.eyesLook), his face after a big play (FEATURES.faceReactions) and the grass
+        // on his kit (FEATURES.grassStains), onto his renderer.
+        readonly Reactions reactions = new Reactions();
+        public Reactions Reactions => reactions;
+
         void Eyes(World w)
         {
-            if (!cfg.Feature("eyesLook")) return;
+            reactions.Observe(w);
+            if (!cfg.Feature("eyesLook") && !cfg.Feature("faceReactions") && !cfg.Feature("grassStains")) return;
             float yd = cfg.field.yardM;
             BallAt(w, out float bx, out float by, out float bz);
             var aim = root.TransformPoint(new Vector3(bx * yd, by * yd, bz * yd));
@@ -411,7 +417,8 @@ namespace PocketFootball.View
                     up = Mathf.Atan2(d.y, new Vector2(d.x, d.z).magnitude) * Mathf.Rad2Deg;
                 }
                 Alive.Eyes(cfg, Alive.Key(cfg, w.Tick, p.Slot), p.Slot, yaw, up, out float x, out float y, out float blink);
-                skin.Eyes(x, y, blink);
+                skin.Eyes(x, y, blink, reactions.Mood(w, p.Slot));
+                skin.Stain(reactions.Stain(w, p.Slot));
             }
         }
 

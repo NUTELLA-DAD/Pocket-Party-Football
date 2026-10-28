@@ -52,9 +52,14 @@ CBUFFER_START(UnityPerMaterial)
     half4 _NumberFill;
     half4 _NumberEdge;
     float4 _NumberStyle;    // pen half-width, edge width, gap between the digits (glyph units)
-    float4 _EyeLook;        // the iris's offset (iris radii: x to his left, y up), the lid's close (0..1)
+    float4 _EyeLook;        // the iris's offset (iris radii: x to his left, y up), the lid's close (0..1), mood (+1 happy, -1 wince)
     half4 _IrisColor;
     half4 _LidColor;
+    // FEATURES.grassStains (View/Reactions.cs): how much grass he has on him, the stains' scale and opacity, their colours
+    float4 _Stain;
+    float4 _StainLook;
+    half4 _StainGrass;
+    half4 _StainDirt;
 CBUFFER_END
 TEXTURE2D(_MarksTex); SAMPLER(sampler_MarksTex);
 TEXTURE2D(_DigitsTex); SAMPLER(sampler_DigitsTex);
@@ -99,8 +104,39 @@ half3 MarkEye(half3 col, float2 e, float aa)
     col = lerp(col, iris, saturate((1.0 - r) / aa + 0.5));
     // a blink: the lid comes down from the top of the opening, a dark lash line along its edge
     float lid = 2.0 - _EyeLook.z * 4.2;
-    col = lerp(col, _IrisColor.rgb * 0.15, step(0.01, _EyeLook.z) * saturate((e.y - (lid - 0.22)) / aa + 0.5));
+    // a reaction (FEATURES.faceReactions): happy, the lower lid rises in an arch (a squint); a wince, both lids meet in a
+    // shallow V, a dark lash line where they meet
+    float mood = _EyeLook.w;
+    float low = -2.2;
+    if (mood > 0.5) { lid = min(lid, 1.5); low = 0.45 - 0.3 * e.x * e.x; }
+    if (mood < -0.5) { lid = min(lid, -0.05 + 0.3 * abs(e.x)); low = lid - 0.22; }
+    col = lerp(col, _IrisColor.rgb * 0.15, step(0.01, _EyeLook.z + abs(mood)) * saturate((e.y - (lid - 0.22)) / aa + 0.5));
+    col = lerp(col, _IrisColor.rgb * 0.15, step(0.5, mood) * saturate(((low + 0.2) - e.y) / aa + 0.5));
+    col = lerp(col, _LidColor.rgb, saturate((low - e.y) / aa + 0.5) * step(0.5, abs(mood)));
     return lerp(col, _LidColor.rgb, saturate((e.y - lid) / aa + 0.5));
+}
+
+// FEATURES.grassStains: blotches of grass and dirt where the marks map allows them (outside every number and eye zone,
+// its R: legs and knees most, the helmet and hands not at all), more of them the more he has been down
+float StainHash(float2 p)
+{
+    float3 q = frac(float3(p.xyx) * 0.1031);
+    q += dot(q, q.yzx + 33.33);
+    return frac((q.x + q.y) * q.z);
+}
+float StainNoise(float2 p)
+{
+    float2 i = floor(p), f = frac(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return lerp(lerp(StainHash(i), StainHash(i + float2(1, 0)), f.x), lerp(StainHash(i + float2(0, 1)), StainHash(i + float2(1, 1)), f.x), f.y);
+}
+half3 MarkStain(half3 col, float2 uv, float n, float aa, float allow)
+{
+    float sc = _StainLook.x;
+    float cover = _Stain.x * allow;
+    float k = saturate((cover * 0.75 - n) / aa + 0.5) * step(0.01, cover);
+    half3 tint = lerp(_StainGrass.rgb, _StainDirt.rgb, StainNoise(uv * sc * 0.5 + 5.0));
+    return lerp(col, col * tint * 1.5, k * _StainLook.y);
 }
 
 half3 Marks(half3 col, float2 uv)
@@ -111,7 +147,10 @@ half3 Marks(half3 col, float2 uv)
         half4 m = SAMPLE_TEXTURE2D(_MarksTex, sampler_MarksTex, uv);
         float2 q = (m.rg - 0.5) * 3.0;
         float aa = clamp(fwidth(q.x) + fwidth(q.y), 1e-3, 0.05);   // (worked out before any branch on the texel)
+        float sn = StainNoise(uv * _StainLook.x) * 0.65 + StainNoise(uv * _StainLook.x * 2.3 + 17.0) * 0.35;
+        float saa = max(fwidth(sn), 1e-3);
         if (m.a >= 0.5) outCol = m.b < 0.75 ? MarkNumber(col, q, aa) : MarkEye(col, q * 2.0, aa * 2.0);
+        else outCol = MarkStain(col, uv, sn, saa, m.r * step(m.b, 0.25));
     }
     return outCol;
 }

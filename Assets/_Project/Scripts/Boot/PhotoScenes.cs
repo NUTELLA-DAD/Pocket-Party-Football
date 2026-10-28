@@ -41,6 +41,7 @@ namespace PocketFootball.Boot
                 case "hands2": return Hands(w, view, rig, "hands2", new[] { Pose.Throw, Pose.Run, Pose.Block, Pose.Stand });
                 case "numbers": return Numbers(w, view, rig, false);
                 case "faces": return Numbers(w, view, rig, true);
+                case "grit": return Grit(w, view, rig);
                 case "stadium": return StadiumShot(w, view, rig, new Vector3(-40f, 45f, -175f), new Vector3(0f, 25f, 0f), 50f);
                 case "sunset": return StadiumShot(w, view, rig, new Vector3(-25f, 3f, -18f), new Vector3(3.7f, 13.6f, 23f), 55f);
             }
@@ -144,6 +145,25 @@ namespace PocketFootball.Boot
             if (faces) rig.Hold(new Vector3(cx * m, 2.2f, z * m - 5.5f), new Vector3(cx * m, 2.1f, z * m), 30f);
             else rig.Hold(new Vector3(cx * m, 2f, z * m - 11f), new Vector3(cx * m, 1.4f, z * m), 34f);
             return new PhotoState { Name = faces ? "faces" : "numbers", Hud = false, FirstDownX = -35f };
+        }
+
+        // FEATURES.faceReactions / grassStains: the "faces" line-up, each man held with a face (happy, wincing, as usual) and
+        // more grass on him from left to right.
+        static PhotoState Grit(World w, PlayersView view, CameraRig rig)
+        {
+            var st = Numbers(w, view, rig, true);
+            st.Name = "grit";
+            float[] moods = { 1f, -1f, 0f, 1f, -1f, 0f, 1f, -1f };
+            int i = 0;
+            foreach (var (team, spot) in new[] { (0, 6), (0, 2), (0, 0), (0, 1), (1, 1), (1, 0), (1, 5), (1, 7) })
+            {
+                var p = Spot(w, team, spot);
+                if (p != null) view.Reactions.Hold(p.Slot, moods[i], i / 7f);
+                i++;
+            }
+            float m = w.Cfg.field.yardM;
+            rig.Hold(new Vector3(22.5f * m, 1.3f, -6f * m - 9f), new Vector3(22.5f * m, 1.05f, -6f * m), 32f);
+            return st;
         }
 
         // Concept 01, the team lineup: three Chiefs (68 in his stance, QB 7 throwing, RB 24 carrying) facing three

@@ -919,6 +919,23 @@
       { "model": "Models/TE/TE_Rigged", "map": "Models/TE/TE_Marks", "iris": "#885415", "lid": "#A46742", "number": 88 }
     ]
   },
+  "reactions": {
+    "touchdownS": 4,
+    "bigHitS": 1.5,
+    "sackS": 1.5,
+    "pickS": 2.5,
+    "stainTackled": 0.18,
+    "stainTackler": 0.1,
+    "stainBigHit": 0.08,
+    "stainMax": 1,
+    "stainGrass": "#557a2c",
+    "stainDirt": "#6e5233",
+    "stainScale": 34,
+    "stainOpacity": 0.85,
+    "barFontPx": 15,
+    "barLiveAlpha": 0.55,
+    "barAboveM": 0.9
+  },
   "title": {
     "minShotS": 3,
     "followRate": 3.5,
@@ -988,6 +1005,9 @@
     "handCurl": true,
     "jerseyNumbers": true,
     "eyesLook": true,
+    "faceReactions": true,
+    "grassStains": true,
+    "nameBars": true,
     "narrowLegs": true,
     "idleMotion": true,
     "headTrack": true,

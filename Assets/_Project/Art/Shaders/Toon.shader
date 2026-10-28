@@ -44,6 +44,10 @@ Shader "PocketParty/Toon"
         _EyeLook ("Eyes: look x, y, blink", Vector) = (0, 0, 0, 0)
         _IrisColor ("Iris", Color) = (0.4, 0.22, 0.1, 1)
         _LidColor ("Eyelid", Color) = (0.6, 0.38, 0.22, 1)
+        _Stain ("Grass on him (0..1)", Vector) = (0, 0, 0, 0)
+        _StainLook ("Stains: scale, opacity", Vector) = (34, 0.85, 0, 0)
+        _StainGrass ("Stain grass", Color) = (0.33, 0.48, 0.17, 1)
+        _StainDirt ("Stain dirt", Color) = (0.43, 0.32, 0.2, 1)
     }
     SubShader
     {

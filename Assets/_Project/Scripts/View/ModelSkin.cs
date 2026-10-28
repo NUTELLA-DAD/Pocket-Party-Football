@@ -56,7 +56,8 @@ namespace PocketFootball.View
         SkinnedMeshRenderer body;
 
         // FEATURES.eyesLook: where his eyes look (iris radii: x to his left, y up) and how shut his lids are (0..1)
-        public void Eyes(float x, float y, float blink) => JerseyMarks.SetEyes(body, x, y, blink);   // the helmeted players' arm fixes (Adapt, Splay); the cheerleaders have no helmet
+        public void Eyes(float x, float y, float blink, float mood = 0f) => JerseyMarks.SetEyes(body, x, y, blink, mood);
+        public void Stain(float amount) => JerseyMarks.SetStain(body, amount);   // the helmeted players' arm fixes (Adapt, Splay); the cheerleaders have no helmet
 
         public static bool Wear(FootballFigure fig, TeamConfig team, string pos, GameConfig cfg, Material kit)
         {
