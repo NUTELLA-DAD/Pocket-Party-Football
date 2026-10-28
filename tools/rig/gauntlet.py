@@ -220,6 +220,17 @@ def pose(name):
         b = pb[arm]; h = b.matrix.translation.copy()
         b.matrix = Matrix.Translation(h) @ q.to_matrix().to_4x4() @ Matrix.Translation(-h) @ b.matrix
         bpy.context.view_layer.update()
+    # FINGERS="fingers,tips,thumb,thumbTip" (degrees): curl the hand bones (handfix.py) toward the palm
+    if os.environ.get('FINGERS'):
+        ang = [float(a) for a in os.environ['FINGERS'].split(',')]
+        for side in ('Left', 'Right'):
+            for bn, a in zip(('Fingers', 'FingersTip', 'Thumb', 'ThumbTip'), ang):
+                if side + bn not in pb: continue
+                rest = pb[side + bn].bone.matrix_local.to_3x3()
+                axis = (rest @ Vector((0, 1, 0))).cross(Vector((0, 0, -1)))   # the T-pose palm faces down
+                pb[side + bn].rotation_mode = 'QUATERNION'
+                pb[side + bn].rotation_quaternion = Quaternion((rest.inverted() @ axis).normalized(), math.radians(a))
+        bpy.context.view_layer.update()
     # the ball in the right glove
     hand, lower = pb['RightHand'], pb['RightLowerArm']
     if name in BALL:
@@ -246,7 +257,13 @@ if os.environ.get('HAND'):
 if os.environ.get('LEGS'):
     VIEWS = {'legside': (Vector((4.0, -1.0, 1.2)), 's'), 'leg34': (Vector((2.6, -3.6, 1.2)), '34'), 'legback': (Vector((-2.0, 3.6, 1.3)), 'b')}
     cam.data.ortho_scale = 1.0
+if os.environ.get('HANDCAM'):   # HANDCAM=Left|Right: tight views of that hand, the camera aimed at the glove
+    VIEWS = {'hc_side': (Vector((1.0, 0.0, 0.25)), 's'), 'hc_front': (Vector((0.15, -1.0, 0.2)), 'f'), 'hc_back': (Vector((-0.3, 1.0, 0.3)), 'b')}
+    cam.data.ortho_scale = 0.38
 def look(loc, target=None):
+    if os.environ.get('HANDCAM') and target is None:
+        hb = pb[os.environ['HANDCAM'] + 'Hand']
+        target = ao.matrix_world @ (hb.head + (hb.tail - hb.head) * 0.6); loc = target + loc
     if target is None: target = Vector((-0.05, -0.1, 0.8)) if os.environ.get("HAND") else Vector((0, 0, 0.32 if os.environ.get("LEGS") else 0.75 if not os.environ.get("CLOSE") else 0.8))
     cam.location = loc
     cam.rotation_euler = (target - loc).to_track_quat('-Z', 'Y').to_euler()
