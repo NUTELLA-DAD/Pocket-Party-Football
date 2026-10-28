@@ -121,7 +121,7 @@ namespace PocketFootball.View
                 // away from the target, the weight back on the bent back leg, the front arm pointing the way
                 case PoseKind.Throw: return frame == 0
                         ? new P { drop = 4, lean = -6, head = 0, armL = 62, armLx = 20, foreL = 30, armR = -150, armRx = 22, foreR = 70, thighL = 24, thighLx = 6, shinL = -18, thighR = -18, thighRx = 8, shinR = -12 }
-                        : new P { drop = 7, lean = -4, head = 0, twist = 30, armL = 70, armLx = 25, foreL = 25, armR = -150, armRx = 22, foreR = 75, thighL = 18, thighLx = 6, shinL = -12, thighR = -12, thighRx = 8, shinR = -28 };
+                        : new P { drop = 7, lean = -4, head = 0, twist = 25, armL = 70, armLx = 25, foreL = 25, armR = -150, armRx = 22, foreR = 75, thighL = 18, thighLx = 6, shinL = -12, thighR = -12, thighRx = 8, shinR = -28 };
                 case PoseKind.Carry: return frame % 2 == 0
                         ? new P { drop = 6, lean = 20, head = -10, armL = 30, armLx = 8, foreL = 100, armR = -30, armRx = 12, foreR = 70, thighL = 48, thighLx = 4, shinL = -70, thighR = -28, thighRx = 4, shinR = -40 }
                         : new P { drop = 6, lean = 20, head = -10, armL = 30, armLx = 8, foreL = 100, armR = 35, armRx = 12, foreR = 70, thighL = -28, thighLx = 4, shinL = -40, thighR = 48, thighRx = 4, shinR = -70 };
@@ -140,10 +140,10 @@ namespace PocketFootball.View
                     {
                         case 0: return new P { drop = 6, lean = 18, head = -8, armL = -30, armLx = 20, foreL = 40, armR = 150, armRx = 15, foreR = 20, thighL = 30, thighLx = 6, shinL = -20, thighR = -25, thighRx = 8, shinR = -15 };
                         case 1: return new P { drop = 10, lean = 32, head = -14, armL = -40, armLx = 20, foreL = 60, armR = 50, armRx = 30, foreR = 30, thighL = 35, thighLx = 6, shinL = -30, thighR = -30, thighRx = 8, shinR = -40 };
-                        case 2: return new P { drop = 6, lean = 10, head = -4, twist = -5, armL = -10, armLx = 25, foreL = 70, armR = 165, armRx = 12, foreR = 15, thighL = 28, thighLx = 6, shinL = -18, thighR = -28, thighRx = 8, shinR = -22 };
-                        case 3: return new P { drop = 8, lean = 22, head = -8, twist = -25, armL = -30, armLx = 22, foreL = 70, armR = 105, armRx = 20, foreR = 10, thighL = 30, thighLx = 6, shinL = -26, thighR = -32, thighRx = 8, shinR = -45 };
-                        case 4: return new P { drop = 10, lean = 30, head = -12, twist = -35, armL = -35, armLx = 20, foreL = 65, armR = 45, armRx = 35, foreR = 30, thighL = 32, thighLx = 6, shinL = -32, thighR = -20, thighRx = 8, shinR = -70 };
-                        default: return new P { drop = 8, lean = 20, head = -8, twist = -15, armL = 0, armLx = 18, foreL = 50, armR = 25, armRx = 20, foreR = 45, thighL = 10, thighLx = 6, shinL = -20, thighR = 25, thighRx = 8, shinR = -45 };
+                        case 2: return new P { drop = 6, lean = 14, head = -4, twist = 0, armL = -10, armLx = 25, foreL = 70, armR = 135, armRx = 10, foreR = 30, thighL = 28, thighLx = 6, shinL = -18, thighR = -28, thighRx = 8, shinR = -22 };
+                        case 3: return new P { drop = 8, lean = 22, head = -8, twist = -12, armL = -30, armLx = 22, foreL = 70, armR = 95, armRx = 4, foreR = 10, thighL = 30, thighLx = 6, shinL = -26, thighR = -32, thighRx = 8, shinR = -45 };
+                        case 4: return new P { drop = 10, lean = 30, head = -12, twist = -18, armL = -35, armLx = 20, foreL = 65, armR = 40, armRx = -25, foreR = 55, thighL = 32, thighLx = 6, shinL = -32, thighR = -20, thighRx = 8, shinR = -70 };
+                        default: return new P { drop = 8, lean = 20, head = -8, twist = -6, armL = 0, armLx = 18, foreL = 50, armR = 25, armRx = 5, foreR = 50, thighL = 10, thighLx = 6, shinL = -20, thighR = 25, thighRx = 8, shinR = -45 };
                     }
                 case PoseKind.Handoff: return new P { drop = 10, lean = 22, head = -10, armL = 60, armLx = 25, foreL = 40, armR = 70, armRx = 25, foreR = 30, thighL = 24, thighLx = 9, shinL = -30, thighR = 10, thighRx = 9, shinR = -28 };
                 // hands up for a pass coming in, on the run
@@ -197,9 +197,9 @@ namespace PocketFootball.View
                     switch (frame)
                     {
                         case 0: return new P { drop = 8, lean = -8, head = -20, armL = 80, armLx = 45, foreL = 15, armR = -20, armRx = 35, foreR = 20, thighL = 8, thighLx = 6, shinL = -28, thighR = 35, thighRx = 4, shinR = -15 };
-                        case 1: return new P { drop = 6, lean = -16, head = -12, armL = 90, armLx = 50, foreL = 15, armR = -35, armRx = 40, foreR = 20, thighL = 0, thighLx = 6, shinL = -18, thighR = 75, thighRx = 4, shinR = -6 };
-                        case 2: return new P { drop = 2, lean = -22, head = -5, armL = 95, armLx = 50, foreL = 15, armR = -40, armRx = 40, foreR = 20, thighL = -8, thighLx = 6, shinL = -8, thighR = 100, thighRx = 4, shinR = -8 };
-                        case 3: return new P { drop = 4, lean = -12, head = -8, armL = 60, armLx = 40, foreL = 20, armR = -10, armRx = 30, foreR = 25, thighL = -5, thighLx = 6, shinL = -15, thighR = 55, thighRx = 4, shinR = -30 };
+                        case 1: return new P { drop = 6, lean = -16, head = -12, armL = 90, armLx = 50, foreL = 15, armR = -35, armRx = 40, foreR = 20, thighL = 0, thighLx = 6, shinL = -18, thighR = 90, thighRx = 4, shinR = -6 };
+                        case 2: return new P { drop = 2, lean = -22, head = -5, armL = 95, armLx = 50, foreL = 15, armR = -40, armRx = 40, foreR = 20, thighL = -8, thighLx = 6, shinL = -8, thighR = 125, thighRx = 4, shinR = -8 };
+                        case 3: return new P { drop = 4, lean = -12, head = -8, armL = 60, armLx = 40, foreL = 20, armR = -10, armRx = 30, foreR = 25, thighL = -5, thighLx = 6, shinL = -15, thighR = 65, thighRx = 4, shinR = -30 };
                         default: return new P { drop = 8, lean = 0, head = -10, armL = 35, armLx = 30, foreL = 25, armR = 20, armRx = 25, foreR = 25, thighL = -15, thighLx = 6, shinL = -20, thighR = 15, thighRx = 4, shinR = -25 };
                     }
             }
