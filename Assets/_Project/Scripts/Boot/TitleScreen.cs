@@ -25,7 +25,10 @@ namespace PocketFootball.Boot
         // The attract game leaves these off; the reloaded scene reads game.json again, so the real game has them all.
         static readonly string[] AttractOff = { "lobby", "clock", "replay", "gamelog", "gamepad" };
 
-        const string VolumeKey = "pp.volume";
+        const string VolumeKey = "pp.volume", HelperKey = "pp.";   // (a helper switch saves as pp.<name>: 1 on, 0 off)
+        static readonly string[] HelperNames = { "FLIGHT LINE", "LANDING RING", "TACKLE RING" };   // FlightMarks.Switches, in order
+        const int HelperRow = 2;   // settings rows: 0 sound, 1 full screen, 2-4 the helpers, 5 back
+        static int SettingsRows => HelperRow + FlightMarks.Switches.Length + 1;
 
         enum Page { Menu, HowTo, Settings }
 
@@ -81,10 +84,12 @@ namespace PocketFootball.Boot
 
         void OnDestroy() { if (Instance == this) Instance = null; }
 
-        // The saved sound level, for every boot (the title's settings page changes it).
-        public static void ApplySavedSettings()
+        // The saved sound level and helper switches, for every boot (the title's settings page changes them).
+        public static void ApplySavedSettings(GameConfig cfg)
         {
             AudioListener.volume = Mathf.Clamp01(PlayerPrefs.GetFloat(VolumeKey, 1f));
+            FlightMarks.ApplySaved(cfg, n => PlayerPrefs.HasKey(HelperKey + n) ? PlayerPrefs.GetInt(HelperKey + n) != 0 : (bool?)null,
+                System.Environment.GetEnvironmentVariable);
         }
 
         // GameBootstrap quits on Esc; not while a page is open here, nor on the frame Esc closed one.
@@ -137,9 +142,10 @@ namespace PocketFootball.Boot
                 return;
             }
 
-            // settings: 0 sound, 1 full screen, 2 back
-            if (up) pick = (pick + 2) % 3;
-            if (down) pick = (pick + 1) % 3;
+            // settings: 0 sound, 1 full screen, 2-4 the helpers, 5 back
+            int n = SettingsRows;
+            if (up) pick = (pick + n - 1) % n;
+            if (down) pick = (pick + 1) % n;
             for (int i = 0; i < rows.Length; i++)
                 if ((moved || click) && rows[i].Contains(mp)) pick = i;
             if (pick == 0)
@@ -149,7 +155,8 @@ namespace PocketFootball.Boot
                 if (right || ok || (clickRow && mp.x >= rows[0].center.x)) Volume(+1);
             }
             else if (pick == 1 && (ok || left || right || (click && rows[1].Contains(mp)))) Screen.fullScreen = !Screen.fullScreen;
-            else if (pick == 2 && (ok || (click && rows[2].Contains(mp)))) Open(Page.Menu);
+            else if (pick >= HelperRow && pick < n - 1 && (ok || left || right || (click && rows[pick].Contains(mp)))) Toggle(pick - HelperRow);
+            else if (pick == n - 1 && (ok || (click && rows[n - 1].Contains(mp)))) Open(Page.Menu);
         }
 
         bool Over(Vector2 mp)
@@ -176,6 +183,16 @@ namespace PocketFootball.Boot
             float v = Mathf.Clamp01(Mathf.Round((AudioListener.volume + dir * step) / step) * step);
             AudioListener.volume = v;
             PlayerPrefs.SetFloat(VolumeKey, v);
+            PlayerPrefs.Save();
+        }
+
+        // One helper on or off: saved for every later game (the show game behind the title switches it right away too).
+        void Toggle(int i)
+        {
+            string name = FlightMarks.Switches[i];
+            bool on = !cfg.Feature(name);
+            cfg.features[name] = on;
+            PlayerPrefs.SetInt(HelperKey + name, on ? 1 : 0);
             PlayerPrefs.Save();
         }
 
@@ -218,7 +235,7 @@ namespace PocketFootball.Boot
 
         // ---- the TV ----
         GUIStyle head, body, row, hint;
-        readonly Rect[] rows = new Rect[3];
+        readonly Rect[] rows = new Rect[6];
 
         void OnGUI()
         {
@@ -320,13 +337,12 @@ namespace PocketFootball.Boot
         void DrawSettings(float W, float H, float s)
         {
             var r = Panel(W, H, s, "SETTINGS");
-            string[] text =
-            {
-                "SOUND   ◄  " + Mathf.RoundToInt(AudioListener.volume * 100f) + "%  ►",
-                "FULL SCREEN   " + (Screen.fullScreen ? "ON" : "OFF"),
-                "BACK",
-            };
-            float rw = Mathf.Min(r.width - 120 * s, 760 * s), rh = 84 * s, y = r.y + 170 * s;
+            var text = new string[SettingsRows];
+            text[0] = "SOUND   ◄  " + Mathf.RoundToInt(AudioListener.volume * 100f) + "%  ►";
+            text[1] = "FULL SCREEN   " + (Screen.fullScreen ? "ON" : "OFF");
+            for (int i = 0; i < HelperNames.Length; i++) text[HelperRow + i] = HelperNames[i] + "   " + (cfg.Feature(FlightMarks.Switches[i]) ? "ON" : "OFF");
+            text[text.Length - 1] = "BACK";
+            float rw = Mathf.Min(r.width - 120 * s, 760 * s), rh = 70 * s, y = r.y + 150 * s;
             for (int i = 0; i < text.Length; i++)
             {
                 var rr = new Rect((W - rw) * 0.5f, y, rw, rh);
@@ -335,7 +351,7 @@ namespace PocketFootball.Boot
                 Fill(rr, on ? new Color(1f, 0.78f, 0.12f, 1f) : new Color(1f, 1f, 1f, 0.08f));
                 row.normal.textColor = on ? new Color(0.04f, 0.09f, 0.22f) : Color.white;
                 GUI.Label(rr, text[i], row);
-                y += rh + 22 * s;
+                y += rh + 14 * s;
             }
             Shadowed(new Rect(r.x, r.yMax - 70 * s, r.width, 40 * s), "Up / Down to pick, Left / Right to change, Esc or (B) to go back", hint);
         }

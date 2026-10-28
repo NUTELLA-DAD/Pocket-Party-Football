@@ -136,6 +136,23 @@ namespace PocketFootball.Tests.EditMode
             Assert.Contains(true, seen, "catchable before it lands");
         }
 
+        [Test]
+        public void TheSettingsPageChoicesAreRememberedAndNoStillWins()
+        {
+            CollectionAssert.AreEqual(Switches, FlightMarks.Switches, "the SETTINGS page lists the three switches");
+            var cfg = Cfg();
+            var saved = new Dictionary<string, bool> { { "flightLine", false }, { "reachRing", true } };
+            FlightMarks.ApplySaved(cfg, n => saved.TryGetValue(n, out bool v) ? v : (bool?)null, k => null);
+            Assert.IsFalse(cfg.Feature("flightLine"), "saved off");
+            Assert.IsTrue(cfg.Feature("landingRing"), "never set: game.json's value");
+            Assert.IsTrue(cfg.Feature("reachRing"), "saved on");
+
+            var off = Cfg(on: false);
+            FlightMarks.ApplySaved(off, n => true, k => k == "NO_REACH_RING" ? "1" : null);
+            Assert.IsTrue(off.Feature("flightLine") && off.Feature("landingRing"), "saved on beats game.json off");
+            Assert.IsFalse(off.Feature("reachRing"), "NO_REACH_RING=1 beats a saved on");
+        }
+
         const int ArcRibbonMax = 160;
     }
 }

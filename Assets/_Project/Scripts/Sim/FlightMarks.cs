@@ -7,9 +7,25 @@ namespace PocketFootball.Sim
     //                                             once it is low enough to catch.
     //   FEATURES.reachRing   (NO_REACH_RING=1):   a red ring under each person on defense, as wide as his TACKLE
     //                                             reaches; bolder while the ball carrier is inside it.
+    // The title's SETTINGS page turns each on or off and remembers it (TitleScreen, ApplySaved); NO_...=1 still wins.
     public static class FlightMarks
     {
         public enum Reach { None, Out, In }
+
+        // The three switches, in the order the SETTINGS page lists them.
+        public static readonly string[] Switches = { "flightLine", "landingRing", "reachRing" };
+
+        // The person's saved choices on top of game.json: saved(name) is true / false, or null for never set.
+        // An NO_<NAME>=1 environment override still turns a switch off, whatever was saved.
+        public static void ApplySaved(GameConfig cfg, System.Func<string, bool?> saved, System.Func<string, string> env)
+        {
+            foreach (var name in Switches)
+            {
+                bool? on = saved(name);
+                if (on.HasValue) cfg.features[name] = on.Value;
+                if (env != null && env(ConfigLoader.EnvName(name)) == "1") cfg.features[name] = false;
+            }
+        }
 
         public static bool LineOn(World w) => w.Cfg.Feature("flightLine");
         public static bool LandingOn(World w) => w.Cfg.Feature("landingRing");
