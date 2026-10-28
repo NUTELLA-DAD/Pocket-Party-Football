@@ -227,6 +227,10 @@ namespace PocketFootball.View
         public float ToeL, ToeR;
         // FEATURES.footFlex: each foot's toes bent up at the ball of the foot (degrees; ModelSkin).
         public float BallL, BallR;
+        // FEATURES.handCurl: how far each hand's fingers close (-1 spread open to take the ball, 0 relaxed, 1 shut round
+        // it), the pose's own; HoldL/HoldR (PlayersView: the hand with the ball in it) shut it whatever the pose (ModelSkin).
+        public float GripL, GripR;
+        public bool HoldL, HoldR;
         const float CarryArmDeg = 10f, CarryArmSwing = 0.08f, CarryForeDeg = 80f;   // the ball arm tucked, barely swinging
 
         // The stride pose for the next Run, Carry, Reach and Secure poses (the legs only in a Reach or Secure).
@@ -332,6 +336,7 @@ namespace PocketFootball.View
                     BallL = strodeBallL * settle; BallR = strodeBallR * settle;
                 }
                 cur = p;
+                Grip(kind, frame, out GripL, out GripR);
                 ArmL.localRotation = Quaternion.Euler(-p.armLx, 0, p.armL);
                 ArmR.localRotation = Quaternion.Euler(p.armRx, 0, p.armR);
                 ForeL.localRotation = Quaternion.Euler(0, 0, p.foreL);
@@ -350,6 +355,26 @@ namespace PocketFootball.View
             Torso.localRotation = Quaternion.Euler(0, twist + carryTwist + strideTwist, 0) * Quaternion.Euler(carrySide - roll, 0, 0) * Quaternion.Euler(0, 0, -(cur.lean - breath));
             float head = looking ? Mathf.Clamp(-headUp - cur.lean - cur.tilt, -60f, 35f) : cur.head - headTip;
             Head.localRotation = Quaternion.Euler(0, headYaw + carryTwist - strideTwist, 0) * Quaternion.Euler(0, 0, -head);
+        }
+
+        // Each hand's grip in a pose (see GripL): open reaching for the ball, shut pulling it in, a loose fist running.
+        static void Grip(PoseKind kind, int frame, out float l, out float r)
+        {
+            switch (kind)
+            {
+                case PoseKind.Catch: case PoseKind.Reach: case PoseKind.Dive: l = r = -1f; return;
+                case PoseKind.Bobble: l = r = frame == 0 ? -0.6f : -1f; return;   // (it squirts out: the fingers fly open)
+                case PoseKind.Secure: l = r = 1f; return;
+                case PoseKind.Throw: l = 0.3f; r = 1f; return;
+                case PoseKind.Release: l = 0.3f; r = frame == 0 ? -0.5f : 0f; return;   // (the ball rolls off the fingers)
+                case PoseKind.Handoff: l = r = -0.5f; return;
+                case PoseKind.Carry: l = 0.7f; r = 1f; return;
+                case PoseKind.Run: case PoseKind.Backpedal: case PoseKind.Juke: l = r = 0.7f; return;   // (a runner's loose fist)
+                case PoseKind.Block: case PoseKind.Lock: case PoseKind.Stance: case PoseKind.Whiff: l = r = -0.4f; return;
+                case PoseKind.FallFront: case PoseKind.FallBack: case PoseKind.Stagger: l = r = -0.6f; return;
+                case PoseKind.Celebrate: l = r = 1f; return;
+                default: l = r = 0f; return;
+            }
         }
 
         // Turn the chest twistDeg and the head yawDeg more about the spine (+ = toward his right), the head tipped to look

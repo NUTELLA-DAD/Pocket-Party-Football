@@ -272,6 +272,10 @@ namespace PocketFootball.Sim
         // grass); in the swing the foot lifts its toes strideSwingToeUpDeg (walk, jog, sprint) to clear the grass.
         public float strideToeBendShare;
         public float[] strideSwingToeUpDeg;
+        // FEATURES.handCurl: each finger bone's curl toward the palm (degrees: fingers, fingertips, thumb, thumb tip) with
+        // the hand spread open (handCurlOpenDeg, - bends back), relaxed (handCurlRelaxedDeg) and shut on the ball
+        // (handCurlShutDeg); a grip between them blends them.
+        public float[] handCurlOpenDeg, handCurlRelaxedDeg, handCurlShutDeg;
     }
 
     // WS-07 the lobby (FEATURES.lobby): each person picks an offense spot and a defense spot before kickoff. The game
