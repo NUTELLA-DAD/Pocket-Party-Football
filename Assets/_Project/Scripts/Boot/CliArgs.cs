@@ -5,7 +5,7 @@ namespace PocketFootball.Boot
 {
     // Command-line switches for the built game:
     // -shots <dir> -quit-after-shots -fixture <name> (saves <dir>/<fixture>.png after a fixed number of frames)
-    // -title (screenshots of the title screen, which tool runs skip otherwise)
+    // -title [-title-page howto|settings] (screenshots of the title screen, which tool runs skip otherwise)
     // -seed <n> -wander -warmup <ticks> -throw-demo <yards> -bind <ip> (127.0.0.1 for tools, so no firewall prompt) -look-x <yards> (camera look-at along the field)
     public sealed class CliArgs
     {
@@ -21,6 +21,7 @@ namespace PocketFootball.Boot
         public bool CalledDemo;       // -called-demo: the offense has already called its play (screenshots of the TV banner)
         public int WarmupTicks;       // -warmup <ticks>: run the sim this many ticks before the first frame
         public bool Title;            // -title: show the title screen in a screenshot run too (TitleScreen.cs)
+        public string TitlePage;      // -title-page howto | settings: open on that page (screenshots)
 
         public static CliArgs Parse(string[] args)
         {
@@ -36,6 +37,7 @@ namespace PocketFootball.Boot
                 else if (s == "-wander") a.Wander = true;
                 else if (s == "-called-demo") a.CalledDemo = true;
                 else if (s == "-title") a.Title = true;
+                else if (s == "-title-page" && next != null) { a.TitlePage = next; i++; }
                 else if (s == "-photo" && next != null) { a.Photo = next; i++; }
                 else if (s == "-warmup" && next != null && int.TryParse(next, out int wu)) { a.WarmupTicks = wu; i++; }
                 else if (s == "-throw-demo" && next != null && float.TryParse(next, NumberStyles.Float, CultureInfo.InvariantCulture, out float td)) { a.ThrowDemo = td; i++; }

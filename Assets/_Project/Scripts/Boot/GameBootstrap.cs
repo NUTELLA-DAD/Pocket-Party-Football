@@ -39,7 +39,7 @@ namespace PocketFootball.Boot
             if (Args.LookX.HasValue) Rig.SetLookAtX(Args.LookX.Value);
             Host = PartyHost.Create(gameObject, Config, baseMaterial, Rig, Args);
             if (LabMode.Requested()) Lab = LabMode.Create(gameObject, Config, baseMaterial, Host, Rig, ConfigDir);
-            if (title) Title = TitleScreen.Attach(gameObject, Config, Host, Rig);
+            if (title) Title = TitleScreen.Attach(gameObject, Config, Host, Rig, Args.TitlePage);
 
             if (!string.IsNullOrEmpty(Args.ShotsDir))
             {

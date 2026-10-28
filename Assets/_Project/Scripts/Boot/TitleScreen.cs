@@ -62,7 +62,7 @@ namespace PocketFootball.Boot
             if (!args.Title) args.Seed = System.Environment.TickCount & 0x7fffffff;
         }
 
-        public static TitleScreen Attach(GameObject on, GameConfig cfg, PartyHost host, CameraRig rig)
+        public static TitleScreen Attach(GameObject on, GameConfig cfg, PartyHost host, CameraRig rig, string startPage = null)
         {
             var t = on.AddComponent<TitleScreen>();
             t.cfg = cfg;
@@ -72,6 +72,8 @@ namespace PocketFootball.Boot
             t.buttons = new[] { Resources.Load<Texture2D>("Title/ButtonPlay"), Resources.Load<Texture2D>("Title/ButtonHowToPlay"), Resources.Load<Texture2D>("Title/ButtonSettings") };
             t.black = Texture2D.whiteTexture;
             host.DevKeys = false;   // (W/A/S/D and the arrows move the highlight here, not the dev keys)
+            if (startPage == "howto") t.page = Page.HowTo;
+            else if (startPage == "settings") t.page = Page.Settings;
             Instance = t;
             Debug.Log("[title] title screen up (attract mode behind it)");
             return t;
