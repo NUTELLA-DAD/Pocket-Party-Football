@@ -934,6 +934,7 @@
     "strideCycle": true,
     "footFlex": true,
     "handCurl": true,
+    "narrowLegs": true,
     "idleMotion": true,
     "headTrack": true,
     "ballSpin": true,
