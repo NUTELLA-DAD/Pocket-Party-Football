@@ -56,7 +56,7 @@ namespace PocketFootball.Tests.PlayMode
             string token = (string)joined["token"];
             int slot = (int)joined["slot"];
 
-            // pick the Roughriders
+            // pick the Grains
             phone.Send(new JObject { ["t"] = "pick", ["team"] = 1 });
             yield return phone.Expect("picked", m => picked = m);
             yield return phone.Expect("ui", m => ui = m);

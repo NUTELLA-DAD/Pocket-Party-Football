@@ -80,8 +80,8 @@ namespace PocketFootball.Boot
             return st;
         }
 
-        // Every move pose side by side (View/Moves.cs), for checking the look: the front row the Chiefs, the back row
-        // the Roughriders, each facing his own way of play.
+        // Every move pose side by side (View/Moves.cs), for checking the look: the front row the Arrows, the back row
+        // the Grains, each facing his own way of play.
         static PhotoState MovesLineup(World w, PlayersView view, CameraRig rig)
         {
             w.Offense = 0;
@@ -95,7 +95,7 @@ namespace PocketFootball.Boot
             return new PhotoState { Name = "moves", Hud = false, FirstDownX = 10f };
         }
 
-        // The hands up close (FEATURES.handCurl): four Chiefs side by side in poses that open, shut or hold the hand (a
+        // The hands up close (FEATURES.handCurl): four Arrows side by side in poses that open, shut or hold the hand (a
         // ball in the right hands of the one securing it, the carrier and the thrower), seen square from the side at chest height. No HUD.
         static PhotoState Hands(World w, PlayersView view, CameraRig rig, string name, Pose[] poses, int[] frames = null)
         {
@@ -173,13 +173,13 @@ namespace PocketFootball.Boot
             return st;
         }
 
-        // Concept 01, the team lineup: three Chiefs (68 in his stance, QB 7 throwing, RB 24 carrying) facing three
-        // Roughriders (QB 9, RB 21, 64), close up on the grass, no HUD. Everyone else stands far off, out of the shot.
+        // Concept 01, the team lineup: three Arrows (68 in his stance, QB 7 throwing, RB 24 carrying) facing three
+        // Grains (QB 9, RB 21, 64), close up on the grass, no HUD. Everyone else stands far off, out of the shot.
         static PhotoState Concept01(World w, PlayersView view, CameraRig rig)
         {
             const int home = 1, away = 0;
             w.Offense = away;
-            w.Dir = 1f;   // the Chiefs face right, the Roughriders left (each turned toward the camera)
+            w.Dir = 1f;   // the Arrows face right, the Grains left (each turned toward the camera)
             w.LineOfScrimmageX = -45f;
             w.LineUp();
             foreach (var p in w.Players) { p.X = p.Team == away ? -90f : 90f; p.Z = 0f; p.VX = 0f; p.VZ = 0f; }
@@ -200,7 +200,7 @@ namespace PocketFootball.Boot
             Cast(home, 0, 9, "QB", 1.45f, Pose.Handoff);   // (ball held out in front, as concept 01's 9: the throw hides it)
             Cast(home, 1, 21, "RB", 2.85f, Pose.Carry);
             Cast(home, 7, 64, "DL", 4.4f, Pose.Stance);
-            // a football each for the QBs and backs (the Chiefs' QB already holds the game ball, right hand)
+            // a football each for the QBs and backs (the Arrows' QB already holds the game ball, right hand)
             foreach (var (team, spot, right) in new[] { (away, 1, false), (home, 0, true), (home, 1, false) })
             {
                 var p = Spot(w, team, spot);
@@ -216,12 +216,12 @@ namespace PocketFootball.Boot
             cm.normals = new[] { Vector3.forward, Vector3.forward, Vector3.forward, Vector3.forward };
             var st = new PhotoState { Name = "concept01", Hud = false, FirstDownX = -35f };
             // the picture's wordmarks over each team's half
-            st.Titles.Add(("CHIEFS", w.Cfg.teams[away].color, 0.3f));
-            st.Titles.Add(("ROUGHRIDERS", w.Cfg.teams[home].color, 0.7f));
+            st.Titles.Add(("ARROWS", w.Cfg.teams[away].color, 0.3f));
+            st.Titles.Add(("GRAINS", w.Cfg.teams[home].color, 0.7f));
             return st;
         }
 
-        // Concept 04, the in-game camera: the Roughriders' QB drops back to throw from their own 40 (offense going right),
+        // Concept 04, the in-game camera: the Grains' QB drops back to throw from their own 40 (offense going right),
         // the lines engaged, receivers A and B out in their routes, the defence reading; 3RD 2:18, 2ND & 10.
         static PhotoState Concept04(World w, PlayersView view, CameraRig rig)
         {
@@ -230,7 +230,7 @@ namespace PocketFootball.Boot
             w.LineOfScrimmageX = -10f;
             w.LineUp();
             float los = w.LineOfScrimmageX;
-            // offense (Roughriders): QB throwing, RB in protection, the line engaged, receivers on their routes
+            // offense (Grains): QB throwing, RB in protection, the line engaged, receivers on their routes
             Put(w, view, home, 0, los - 7.2f, 4.2f, Pose.Throw);
             Put(w, view, home, 1, los - 5.6f, -5.4f, Pose.Ready);
             Put(w, view, home, 2, los + 18.5f, -13.5f, Pose.Run, 6, 0);        // B
@@ -239,7 +239,7 @@ namespace PocketFootball.Boot
             Put(w, view, home, 5, los + 18.5f, -2.5f, Pose.Run, 5, -1);
             float[] olZ = { 0f, -2.6f, 2.6f, -5.2f, 5.2f };
             for (int i = 0; i < 5; i++) Put(w, view, home, 6 + i, los - 2.1f - (i % 2) * 0.5f + olZ[i] * 0.18f, olZ[i] * 1.5f - 1f, Pose.Block);
-            // defence (Chiefs): the line engaged, linebackers and backs reading
+            // defence (Arrows): the line engaged, linebackers and backs reading
             float[] dlZ = { -1.5f, 1.5f, -4.5f, 4.5f };
             for (int i = 0; i < 4; i++) Put(w, view, away, 7 + i, los + 0.6f + (i % 2) * 0.5f + dlZ[i] * 0.18f, dlZ[i] * 1.5f - 1f, Pose.Block);
             Put(w, view, away, 0, los + 21.5f, -2.5f, Pose.Ready);          // on the TE

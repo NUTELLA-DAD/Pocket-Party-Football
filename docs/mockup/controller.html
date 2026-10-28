@@ -12,7 +12,7 @@
   --body:"Nunito","Segoe UI",system-ui,sans-serif;
   color-scheme:dark;
 }
-.riders{ --team:#1f8a4c; --team-2:#f6f1de; --team-ink:#ffffff; }
+.grains{ --team:#1f8a4c; --team-2:#f6f1de; --team-ink:#ffffff; }
 html,body{height:100%}
 body{background:var(--turf);color:var(--chalk);font-family:var(--body);font-weight:600;
   background-image:repeating-linear-gradient(90deg,transparent 0 46px,rgba(255,255,255,.035) 46px 92px);
@@ -41,7 +41,7 @@ button:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
 /* join */
 .pick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .team{border:3px solid transparent;border-radius:14px;padding:14px 10px;font-family:var(--display);font-size:22px;background:var(--ink)}
-.team.chiefs{color:#ffb612}.team.rr{color:#5fd38a}
+.team.arrows{color:#ffb612}.team.rr{color:#5fd38a}
 .team[aria-pressed="true"]{border-color:var(--chalk)}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{border:2px solid var(--muted);background:transparent;border-radius:10px;padding:8px 12px;font-weight:800}
@@ -93,18 +93,18 @@ button:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
 
 <div class="app" id="app">
   <nav class="steps" id="steps" aria-label="Mockup steps"></nav>
-  <div class="tv" aria-live="polite"><span class="tag">ON THE TV</span><span class="msg" id="tv">Scan the code to join: KEEL</span><span class="score" id="score">KC 0 · SSK 0</span></div>
+  <div class="tv" aria-live="polite"><span class="tag">ON THE TV</span><span class="msg" id="tv">Scan the code to join: KEEL</span><span class="score" id="score">ARR 0 · GRN 0</span></div>
   <main id="screen"></main>
 </div>
 
 <script>
 const $ = s => document.querySelector(s);
-const S = { step:'join', team:'chiefs', off:'QB', def:'LB', name:'Kenny', caller:true, side:'offense',
+const S = { step:'join', team:'arrows', off:'QB', def:'LB', name:'Kenny', caller:true, side:'offense',
   call:null, locked:false, oppLocked:false, clock:15, role:null, score:[0,0], stamina:1 };
 const STEPS = [['join','1 Join'],['huddle','2 Huddle'],['job','3 Your job'],['live','4 Live play'],['kick','5 Kick'],['result','6 Whistle']];
 const OFF_POS = ['QB','RB','WR','TE','OL'], DEF_POS = ['DL','LB','CB','S'];
-const TEAM = { chiefs:{name:'CHIEFS',short:'KC'}, rr:{name:'ROUGHRIDERS',short:'SSK'} };
-const other = () => S.team==='chiefs' ? 'rr' : 'chiefs';
+const TEAM = { arrows:{name:'ARROWS',short:'ARR'}, rr:{name:'GRAINS',short:'GRN'} };
+const other = () => S.team==='arrows' ? 'rr' : 'arrows';
 
 /* Plays as data: same shape the Unity game will read from plays/*.json. Field: offense attacks right, line of scrimmage x=120. */
 const SPOT = { QB:[104,80], RB:[86,80], WR:[118,22], WR2:[118,138], TE:[118,106], OL:[116,80],
@@ -168,7 +168,7 @@ const plays = () => S.side==='offense' ? OPLAYS : DPLAYS;
 const myPos = () => S.side==='offense' ? S.off : S.def;
 const playById = id => [...OPLAYS,...DPLAYS].find(p=>p.id===id);
 function tv(t){ $('#tv').textContent = t; }
-function score(){ $('#score').textContent = `KC ${S.score[0]} · SSK ${S.score[1]}`; }
+function score(){ $('#score').textContent = `ARR ${S.score[0]} · GRN ${S.score[1]}`; }
 
 function nav(){
   $('#steps').innerHTML = STEPS.map(([k,l])=>`<button data-go="${k}" aria-current="${S.step===k}">${l}</button>`).join('');
@@ -177,7 +177,7 @@ let timer = null;
 function go(step){ S.step = step; clearInterval(timer); timer=null; nav(); render(); }
 
 function render(){
-  document.body.classList.toggle('riders', S.team==='rr');
+  document.body.classList.toggle('grains', S.team==='rr');
   const el = $('#screen');
   const T = TEAM[S.team];
   if (S.step==='join'){
@@ -185,8 +185,8 @@ function render(){
     el.innerHTML = `<div class="card" style="display:grid;gap:14px">
       <h2>Pick your side, ${S.name}</h2>
       <div class="pick">
-        <button class="team chiefs" data-team="chiefs" aria-pressed="${S.team==='chiefs'}">CHIEFS<div class="sub">3 people · 8 bots</div></button>
-        <button class="team rr" data-team="rr" aria-pressed="${S.team==='rr'}">ROUGHRIDERS<div class="sub">3 people · 8 bots</div></button>
+        <button class="team arrows" data-team="arrows" aria-pressed="${S.team==='arrows'}">ARROWS<div class="sub">3 people · 8 bots</div></button>
+        <button class="team rr" data-team="rr" aria-pressed="${S.team==='rr'}">GRAINS<div class="sub">3 people · 8 bots</div></button>
       </div>
       <div><h3>On offense you play</h3><div class="sub">You play both ways while there are fewer than 22 people. Taken spots are greyed (example).</div></div>
       <div class="chips">${OFF_POS.map(p=>`<button class="chip" data-off="${p}" aria-pressed="${S.off===p}" ${p==='TE'?'disabled':''}>${p}</button>`).join('')}</div>
@@ -198,7 +198,7 @@ function render(){
   if (S.step==='huddle'){
     if (S.clock<=0) S.clock = 15;
     const list = plays();
-    tv(`HUDDLE · ${TEAM.chiefs.name} ${S.team==='chiefs'&&S.locked?'CALLED ✓':'…'}   ${TEAM.rr.name} ${(S.team==='rr'&&S.locked)||S.oppLocked?'CALLED ✓':'…'}`);
+    tv(`HUDDLE · ${TEAM.arrows.name} ${S.team==='arrows'&&S.locked?'CALLED ✓':'…'}   ${TEAM.rr.name} ${(S.team==='rr'&&S.locked)||S.oppLocked?'CALLED ✓':'…'}`);
     el.innerHTML = `<div style="display:grid;gap:12px">
       <div class="card hud"><div><h2>${T.name} ${S.side==='offense'?'OFFENSE':'DEFENSE'}</h2><div class="sub">2nd & 7 on the 38 · only your team sees this</div></div><div class="clock" id="clock">0:${String(S.clock).padStart(2,'0')}</div></div>
       <div class="toggle"><span class="sub">Mockup:</span>
@@ -219,7 +219,7 @@ function render(){
   if (S.step==='job'){
     const p = playById(S.call || (S.side==='offense'?'slants':'c3'));
     const pos = myPos(); const j = p.job[pos];
-    tv(`${TEAM.chiefs.name} CALLED ✓   ${TEAM.rr.name} CALLED ✓   · lining up`);
+    tv(`${TEAM.arrows.name} CALLED ✓   ${TEAM.rr.name} CALLED ✓   · lining up`);
     el.innerHTML = `<div style="display:grid;gap:12px">
       <div class="card" style="display:grid;gap:10px">
         <div class="hud"><div><div class="sub">${p.name} · you are ${pos}</div><h2>${j?j.t:'Kick team: the play caller kicks'}</h2></div></div>
@@ -324,7 +324,7 @@ function renderKick(el){
     const good = pw>.62 && Math.abs(aim)<.22;
     const res = good?'IT\'S GOOD! +3':pw<=.62?'Short! No good':(aim<0?'Wide left! No good':'Wide right! No good');
     $('#kres').textContent=`${Math.round(pw*100)}% power, aim ${aim<-.05?'left':aim>.05?'right':'straight'} · ${res}`; tv(res);
-    if(good){ const i=S.team==='chiefs'?0:1; S.score[i]+=3; score(); }
+    if(good){ const i=S.team==='arrows'?0:1; S.score[i]+=3; score(); }
     p0=null; setTimeout(()=>{ const a=$('#karrow'); if(a) a.innerHTML=''; },700); });
 }
 
