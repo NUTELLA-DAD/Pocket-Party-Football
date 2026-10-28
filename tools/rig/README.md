@@ -15,7 +15,7 @@ Blender as a Python module (`pip install bpy`), run with `python script.py -- ar
 - Re-running rigfix on a finished model (after handfix): `"jointsFromRig": true` leaves the skeleton where it is and
   reads the joints from its bones; `"keep": ["Hand","Thumb","ThumbTip","Fingers","FingersTip"]` keeps every hand
   and finger vertex's old weights; `"newAbove": [z0, z1]` gives the new weights only above z1 (old below z0, blended
-  between). `soften/<Model>.json` are the sets that softened the shoulders and armpits of the Linebacker, QB, WR and
+  between). `soften/<Model>.json` are the sets that softened the shoulders and armpits of the Linebacker, QB, WR, TE and
   Kicker (wider smoothing, a wider clavicle blend): arms-up poses lost about a third of their stretched triangles.
   Chiefs #24 kept its weights (they already scored better).
 

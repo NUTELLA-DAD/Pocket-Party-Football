@@ -915,7 +915,8 @@
       { "model": "Models/Linebacker/Linebacker_Rigged", "map": "Models/Linebacker/Linebacker_Marks", "iris": "#5e3822", "lid": "#da8a54", "number": 64 },
       { "model": "Models/QB/QB_Rigged", "map": "Models/QB/QB_Marks", "iris": "#8a5a22", "lid": "#c28146", "number": 7 },
       { "model": "Models/WR/WR_Rigged", "map": "Models/WR/WR_Marks", "iris": "#94601c", "lid": "#ac6e49", "number": 81 },
-      { "model": "Models/Kicker/Kicker_Rigged", "map": "Models/Kicker/Kicker_Marks", "iris": "#8a5510", "lid": "#c7936b", "number": 3 }
+      { "model": "Models/Kicker/Kicker_Rigged", "map": "Models/Kicker/Kicker_Marks", "iris": "#8a5510", "lid": "#c7936b", "number": 3 },
+      { "model": "Models/TE/TE_Rigged", "map": "Models/TE/TE_Marks", "iris": "#885415", "lid": "#A46742", "number": 88 }
     ]
   },
   "title": {
