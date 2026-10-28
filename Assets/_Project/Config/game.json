@@ -315,23 +315,23 @@
   ],
   "moreTeams": [
     {
-      "name": "SAGUAROS",
-      "short": "SAG",
+      "name": "CACTI",
+      "short": "CAC",
       "color": "#287a4b",
       "color2": "#f47a35",
       "model": "Models/Chiefs24/Chiefs24_Rigged",
-      "modelTexture": "Models/Chiefs24/Chiefs24SAG_BaseColor",
+      "modelTexture": "Models/Chiefs24/Chiefs24CAC_BaseColor",
       "posModels": [
-        { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerSAG_BaseColor", "strideBend": 0.7 },
-        { "pos": "OL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerSAG_BaseColor", "strideBend": 0.7 },
-        { "pos": "DL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerSAG_BaseColor", "strideBend": 0.7 },
-        { "pos": "QB", "model": "Models/QB/QB_Rigged", "modelTexture": "Models/QB/QBSAG_BaseColor" },
-        { "pos": "K", "model": "Models/Kicker/Kicker_Rigged", "modelTexture": "Models/Kicker/KickerSAG_BaseColor" },
-        { "pos": "WR", "model": "Models/WR/WR_Rigged", "modelTexture": "Models/WR/WRSAG_BaseColor" },
-        { "pos": "TE", "model": "Models/TE/TE_Rigged", "modelTexture": "Models/TE/TESAG_BaseColor" }
+        { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerCAC_BaseColor", "strideBend": 0.7 },
+        { "pos": "OL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerCAC_BaseColor", "strideBend": 0.7 },
+        { "pos": "DL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerCAC_BaseColor", "strideBend": 0.7 },
+        { "pos": "QB", "model": "Models/QB/QB_Rigged", "modelTexture": "Models/QB/QBCAC_BaseColor" },
+        { "pos": "K", "model": "Models/Kicker/Kicker_Rigged", "modelTexture": "Models/Kicker/KickerCAC_BaseColor" },
+        { "pos": "WR", "model": "Models/WR/WR_Rigged", "modelTexture": "Models/WR/WRCAC_BaseColor" },
+        { "pos": "TE", "model": "Models/TE/TE_Rigged", "modelTexture": "Models/TE/TECAC_BaseColor" }
       ],
       "cheerModel": "Models/Cheerleader/Cheerleader_Rigged",
-      "cheerTexture": "Models/Cheerleader/CheerleaderSAG_BaseColor",
+      "cheerTexture": "Models/Cheerleader/CheerleaderCAC_BaseColor",
       "numberFill": "#ffffff",
       "numberEdge": "#f47a35"
     },

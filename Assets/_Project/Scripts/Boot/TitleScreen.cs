@@ -94,7 +94,7 @@ namespace PocketFootball.Boot
         void OnDestroy() { if (Instance == this) Instance = null; }
 
         // The saved sound level, helper switches and teams, for every boot (the title's settings page changes them).
-        // PP_TEAMS=SAG,WHL (away, home) picks the teams for a run; the tests (batch mode) keep game.json's two.
+        // PP_TEAMS=CAC,WHL (away, home) picks the teams for a run; the tests (batch mode) keep game.json's two.
         public static void ApplySavedSettings(GameConfig cfg)
         {
             AudioListener.volume = Mathf.Clamp01(PlayerPrefs.GetFloat(VolumeKey, 1f));

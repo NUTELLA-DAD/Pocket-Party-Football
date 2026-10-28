@@ -2,14 +2,16 @@
 # own colours, region by region (helmet, jersey, pants), keeping the map's baked shading. Skin, eyes, shoes, gloves
 # and the facemask are left alone. The helmet's old decal is painted out and the team's emblem laid on afterwards by
 # tools/rebrand (rebrand.py), so run this first.
-# usage: python3 kit.py <in_BaseColor.png> <texels.npz> <kits.json> <team> <out.png> [cheer]
+# usage: python3 kit.py <in_BaseColor.png> <texels.npz> <kits.json> <team> <out.png> [cheer] [keep=<mask.png>]
+#   keep: a grey mask of texels left exactly as they are (the team's emblem, already laid on by build.py)
 #   texels.npz: the rest-pose point under every texel (tools/rebrand/fbxuv.py; NaN where no triangle)
 #   kits.json:  per team the helmet, jersey, pants, stripe and trim colours (and the cheer squad's), see README.md
 import sys, json, numpy as np
 from PIL import Image, ImageFilter
 
 src, texels, kits, team, out = sys.argv[1:6]
-cheer = len(sys.argv) > 6 and sys.argv[6] == 'cheer'
+cheer = 'cheer' in sys.argv[6:]
+keepPath = next((a[5:] for a in sys.argv[6:] if a.startswith('keep=')), None)
 K = json.load(open(kits))
 kit = K['teams'][team]
 rgb = np.asarray(Image.open(src).convert('RGB')).astype(np.float32) / 255
@@ -44,7 +46,8 @@ zs = Z[ok]; z0, z1 = np.percentile(zs, 0.2), np.percentile(zs, 99.8)
 hz = (Z - z0) / max(z1 - z0, 1e-6)   # 0 at the soles, 1 at the top of the helmet
 R = K['regions'].get('cheer' if cheer else 'player')
 def soft_above(x, edge, w=0.01): return np.clip((x - edge) / w + 0.5, 0, 1)
-helmet = soft_above(hz, R['helmet']) * ok
+Xa = np.abs(np.nan_to_num(pos[..., 0]))
+helmet = soft_above(hz, R['helmet']) * (Xa < R.get('helmetMaxX', 9)) * ok   # (not the T-posed arms beside it)
 pants = soft_above(hz, R['pantsLow']) * (1 - soft_above(hz, R['pantsHigh'])) * ok
 jersey = np.clip(ok - helmet - pants, 0, 1)
 socks = (1 - soft_above(hz, R['pantsLow'])) * ok
@@ -60,7 +63,7 @@ helmet, pants, socks = bleed(helmet), bleed(pants), bleed(socks)
 jersey = np.clip(1 - helmet - pants - socks, 0, 1)
 
 # ---- repaint, keeping the shading: each class's brightness over its median brightness scales the new colour ----
-def shade(mask, ref):
+def shade(mask, ref):   # (mask: which class's reference this is; only ref is used)
     return np.clip(v / ref, 0, 1.35)[..., None]
 def paint(col, sh):
     c = hexrgb(col)[None, None, :] * np.minimum(sh, 1.0)
@@ -75,14 +78,15 @@ shR, shG, shW = shade(red, RED_V), shade(gold, GOLD_V), shade(white, WHITE_V)
 frac = np.clip(s / 0.9, 0, 1)[..., None]
 
 res = rgb.copy()
+keep = np.asarray(Image.open(keepPath).convert('L').resize((W, H))).astype(np.float32) / 255 if keepPath else np.zeros((H, W), np.float32)
 def lay(mask, px):
     global res
-    m = np.clip(mask, 0, 1)[..., None]
+    m = (np.clip(mask, 0, 1) * (1 - keep))[..., None]
     res = res * (1 - m) + px * m
 
 if cheer:
     C = kit['cheer']
-    lay(red, paint(C['main'], shR) * frac + rgb * (1 - frac) * 0 + (1 - frac) * np.minimum(v, 1)[..., None])
+    lay(red, paint(C['main'], shR) * frac + (1 - frac) * np.minimum(v, 1)[..., None])
     lay(gold, paint(C['accent'], shG))
 else:
     redFor = helmet[..., None] * hexrgb(kit['helmet']) + jersey[..., None] * hexrgb(kit['jersey']) + pants[..., None] * hexrgb(kit['pantsStripe']) + socks[..., None] * hexrgb(kit['socks'])

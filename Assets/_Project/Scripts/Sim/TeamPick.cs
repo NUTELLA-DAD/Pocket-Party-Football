@@ -59,7 +59,7 @@ namespace PocketFootball.Sim
             return true;
         }
 
-        // "SAG,WHL" (away, home), e.g. from PP_TEAMS: the two codes, or false when it isn't two codes.
+        // "CAC,WHL" (away, home), e.g. from PP_TEAMS: the two codes, or false when it isn't two codes.
         public static bool ParsePair(string text, out string away, out string home)
         {
             away = home = null;

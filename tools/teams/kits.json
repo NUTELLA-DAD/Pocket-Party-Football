@@ -1,10 +1,10 @@
 {
   "regions": {
-    "player": { "helmet": 0.74, "pantsHigh": 0.42, "pantsLow": 0.17 },
+    "player": { "helmet": 0.655, "helmetMaxX": 0.42, "pantsHigh": 0.42, "pantsLow": 0.17 },
     "cheer":  { "helmet": 2.0,  "pantsHigh": 0.0,  "pantsLow": -1.0 }
   },
   "teams": {
-    "SAG": {
+    "CAC": {
       "helmet": "#F47A35", "helmetTrim": "#FFFFFF",
       "jersey": "#287A4B", "trim": "#FFFFFF",
       "pants": "#F2D6A2", "pantsStripe": "#287A4B", "socks": "#287A4B",
