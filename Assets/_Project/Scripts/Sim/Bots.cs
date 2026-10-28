@@ -68,9 +68,10 @@ namespace PocketFootball.Sim
                 // a throw-stick pass names a spot, not a man: whoever is nearest it runs there (v1 or v2), not off to block
                 if (w.StickThrow && w.Ball.State == BallState.Flying && p == Intended(w)) return To(p, w.Ball.TargetX, w.Ball.TargetZ, 1f, true);
                 if (V2(w) && w.Ball.State == BallState.Flying && p == Intended(w)) return MeetThePass(w, p);
-                // bots v3: a man on a route finishes it before he blocks (the pulling guard leads the sweep, a go route
-                // runs its corner off); v2 dropped everything to block the moment the ball left the QB
-                if (ballOut && BotsV3.On(w) && job != null && job.kind == "route" && job.pts.Count > 0) { var on = FollowRoute(w, p, job, true); if (on.HasValue) return on.Value; }
+                // bots v3: a man on a short route (the pulling guard, the QB's fake) finishes it before he blocks; a deep
+                // route (a go route run to clear its corner) turns and blocks as soon as the ball is out, as in v2
+                if (ballOut && BotsV3.On(w) && job != null && job.kind == "route" && job.pts.Count > 0 && job.pts[job.pts.Count - 1][0] <= w.Cfg.botsV3.routeBlockYd)
+                { var on = FollowRoute(w, p, job, true); if (on.HasValue) return on.Value; }
                 if (ballOut || job == null || job.kind == "block") return Block(w, p, carrier);
                 if (job.kind == "route" && job.pts.Count > 0)
                 {

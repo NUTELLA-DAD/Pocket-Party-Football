@@ -109,11 +109,17 @@ namespace PocketFootball.Tests.EditMode
             foreach (var p in w.Players) Assert.Less(Dist(p.X, p.Z, p.HomeX, p.HomeZ), cfg.bots.arriveYd + 0.01f);
 
             w.BotsWander = true;
-            for (int t = 0; t < cfg.sim.tickHz * 20; t++) w.Step(null);
+            // the furthest each bot got from his spot (the huddle lines everyone up again every play, so the last tick alone can catch them all just put back)
+            var furthest = new Dictionary<int, float>();
+            for (int t = 0; t < cfg.sim.tickHz * 20; t++)
+            {
+                w.Step(null);
+                foreach (var p in w.Players) { float d = Dist(p.X, p.Z, p.HomeX, p.HomeZ); if (!furthest.TryGetValue(p.Slot, out float f) || d > f) furthest[p.Slot] = d; }
+            }
             int moved = 0;
             foreach (var p in w.Players)
             {
-                if (Dist(p.X, p.Z, p.HomeX, p.HomeZ) > 2f) moved++;
+                if (furthest[p.Slot] > 2f) moved++;
                 Assert.LessOrEqual(Math.Abs(p.X), cfg.field.HalfLength + cfg.players.radiusYd * 4f);
                 Assert.LessOrEqual(Math.Abs(p.Z), cfg.field.HalfWidth + cfg.players.radiusYd * 4f);
             }

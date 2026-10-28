@@ -314,6 +314,7 @@ namespace PocketFootball.Sim
         public float threatRangeYd, threatNearYd, threatMinSpeedYdS, blockRangeS, keepBonusS, meetLeadS, shieldYd, meetMaxYd, sprintOverYd;
         public int interceptSteps;
         public float convoyAheadYd, convoyGapYd;   // the spare blockers ahead of a carrier on the move
+        public float routeBlockYd;     // a route ending no further than this past the line is run to its end before its man blocks
         // kicks: coverage lanes laneGapYd apart, closing on the ball inside laneUntilYd; the return wall wallAheadYd in
         // front of where it comes down, wallGapYd apart
         public float laneGapYd, laneUntilYd, wallAheadYd, wallGapYd;
