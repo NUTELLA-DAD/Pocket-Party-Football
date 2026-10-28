@@ -205,6 +205,40 @@ namespace PocketFootball.Tests.EditMode
             Assert.Greater(spread, 25f, "the coverage keeps its lanes instead of bunching on the ball");
         }
 
+        // Yards a play by the play called, v3 on and off, over seeded 10-minute games with every switch on: the tuning
+        // numbers (printed, nothing asserted).
+        [Test]
+        public void YardsByPlayCalled()
+        {
+            foreach (bool v3 in new[] { true, false })
+            {
+                var plays = new SortedDictionary<string, int>(System.StringComparer.Ordinal);
+                var yards = new SortedDictionary<string, int>(System.StringComparer.Ordinal);
+                for (int seed = 1; seed <= 12; seed++)
+                {
+                    var w = Game(v3, seed);
+                    bool was = false; string call = null; int at = 0;
+                    for (int i = 0; i < 10 * 60 * w.Cfg.sim.tickHz; i++)
+                    {
+                        w.Step(null);
+                        bool live = w.Phase == Phase.Live;
+                        if (live && !was) { call = Kicking.Mode(w) != KickKind.None ? null : w.Calls[w.Offense]; at = w.YardsGained; }
+                        if (!live && was && call != null)
+                        {
+                            plays[call] = (plays.TryGetValue(call, out int n) ? n : 0) + 1;
+                            yards[call] = (yards.TryGetValue(call, out int y) ? y : 0) + (w.YardsGained - at);
+                        }
+                        was = live;
+                    }
+                }
+                var sb = new StringBuilder(v3 ? "bots v3 on:  " : "bots v3 off: ");
+                int allP = 0, allY = 0;
+                foreach (var kv in plays) { sb.Append(kv.Key).Append(' ').Append(kv.Value).Append(" plays ").Append((yards[kv.Key] / (float)kv.Value).ToString("0.0")).Append(" yd, "); allP += kv.Value; allY += yards[kv.Key]; }
+                sb.Append("all ").Append(allP).Append(" plays ").Append((allY / (float)System.Math.Max(1, allP)).ToString("0.0")).Append(" yd");
+                TestContext.WriteLine(sb.ToString());
+            }
+        }
+
         [Test]
         public void SameSeedSameGameWithV3()
         {
