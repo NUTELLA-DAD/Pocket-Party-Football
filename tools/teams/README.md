@@ -16,6 +16,10 @@ only: `python3 tools/teams/build.py <work dir> [CAC WHL]`.
   gloves, the facemask and the emblem are left alone. The cheerleader takes the team's `cheer` main and accent.
 - `splat.py <texels.npz> <map.png> <out.png>`: a quick front / side / back look at a map on its model (texel points
   from `tools/rebrand/fbxuv.py`).
+- A model added after the source revision (`SRC_LATER` in build.py, e.g. LeanLB): put its red map as `marks.py` left it
+  (numbers and irises painted out, the old helmet decal still on) in `<work dir>/src/<folder>/`. `MODELS=LeanLB` builds
+  only that model's maps. A `regions` entry named after a model folder overrides `player` for it (LeanLB's shoulder pads
+  reach above the usual helmet line).
 
 The Bats (`BAT`) and Snowbirds (`SNB`): marks from Kenny's mascot-only pictures (`emblems/BAT.png` the crimson-winged
 bat, `emblems/SNB.png` the owl helmet emblem); the pictures with the team name under them are the join screen's.

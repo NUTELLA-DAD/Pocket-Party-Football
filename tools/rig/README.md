@@ -31,6 +31,11 @@ models/referee/scripts.
 files under models/te/scripts; after rigfix it goes through handfix.py (`TE` in hands.json, with a `Right` override:
 its right hand sits further back than the left).
 
+`leanlb.json`: the leaner linebacker (Resources/Models/LeanLB, from Hi3D_Untitled_allparts_20261028_084912.fbx, a #52 with
+long arms out to 1.11 m and legs set wide). Its import/prep/rig scripts are in the project files under models/leanlb/scripts;
+after rigfix it goes through handfix.py (`LeanLB`) and `soften/LeanLB.json` (wider hip, knee and clavicle blends too:
+gauntlet 7917 -> 5823). Its gloves have four fingers and a thumb, no sixth finger.
+
 ## Hands (`handfix.py`, `fcore.py`, `hands.json`)
 `python handfix.py -- in.fbx hands.json <Model> out.fbx` (QB, WR, TE, Kicker, Player24, Referee, Linebacker):
 - pulls a sixth finger (`extra`: its outline seen from above, metres on the model's left side; `base`: where it
@@ -38,7 +43,8 @@ its right hand sits further back than the left).
 - adds four bones per hand, children of `<Side>Hand`: `<Side>Thumb` > `<Side>ThumbTip` and `<Side>Fingers` >
   `<Side>FingersTip` (the four fingers bend together). `kline`: the knuckle line seen from above, `midOff`: how far
   past it the fingers' middle joint is, `thumb`/`thumbX`/`thumbXmax`: the line the thumb lies below and its reach
-  along the arm. The hand's old weight is split between the hand and the new bones; nothing else changes (the
+  along the arm; `thumbZ` (optional): a second line, seen from the front (x, z), the thumb also lies below, for a thumb
+  hanging under the fingers rather than beside them (LeanLB). The hand's old weight is split between the hand and the new bones; nothing else changes (the
   gauntlet's numbers are the same before and after with the fingers straight).
 
 `gauntlet.py` env: `FINGERS=fingers,tips,thumb,thumbTip` bends those bones toward the palm (degrees, e.g.

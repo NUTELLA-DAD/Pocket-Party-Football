@@ -20,6 +20,8 @@ def rig(co,h,s,p,side):
     x=co[:,0]*s; y=co[:,1]; hand=h>0
     (xa,ya),(xb,yb)=p['thumb']; ly=ya+(yb-ya)*(x-xa)/(xb-xa)
     t=ramp((ly-y)/0.008+0.5)*ramp((x-p['thumbX'])/0.015)*ramp((p['thumbXmax']-x)/0.01)
+    if 'thumbZ' in p:   # (a thumb hanging below the fingers: it also lies under this line seen from the front, x and z)
+        (xa,za),(xb,zb)=p['thumbZ']; lz=za+(zb-za)*(x-xa)/(xb-xa); t=t*ramp((lz-co[:,2])/0.008+0.5)
     A,B=np.array(p['kline'][0]),np.array(p['kline'][1]); d=B-A; n=np.array([d[1],-d[0]])/np.linalg.norm(d)
     if n[0]<0: n=-n
     sd=(x-A[0])*n[0]+(y-A[1])*n[1]

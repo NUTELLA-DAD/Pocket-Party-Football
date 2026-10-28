@@ -109,7 +109,7 @@ namespace PocketFootball.View
                 at += new Vector2(ox, oz);
                 var t = fig.transform;
                 var pos = new Vector3(at.x * yd, 0f, at.y * yd);
-                float moved = (pos - t.localPosition).magnitude;
+                float moved = (pos - new Vector3(t.localPosition.x, 0f, t.localPosition.z)).magnitude;   // (along the grass: a jump is no stride)
 
                 // facing: the way it runs, else its team's direction of play; turned toward the camera by turn
                 float speed = Mathf.Sqrt(p.VX * p.VX + p.VZ * p.VZ);
@@ -159,7 +159,11 @@ namespace PocketFootball.View
                     pos += new Vector3(move.KnockX * yd, 0f, move.KnockZ * yd);   // FEATURES.hitAngle: a big hit drives them back
                     yaw = downYaw[p.Slot]; moved = 0f;
                 }
-                else downStart.Remove(p.Slot);
+                else
+                {
+                    downStart.Remove(p.Slot);
+                    pos.y += DefenseMovesView.LiftYd(w, p) * yd;   // a defender's JUMP leaves the grass
+                }
                 t.localPosition = pos;
                 t.localRotation = Quaternion.Euler(0f, yaw, 0f);
                 fig.Carry(0f, 0f, 0f, 0f, 0f);
@@ -454,9 +458,9 @@ namespace PocketFootball.View
             if (fig != null) Object.Destroy(fig.gameObject);
             var team = cfg.teams[Mathf.Clamp(p.Team, 0, cfg.teams.Count - 1)];
             fig = FootballFigure.Create(root, "Player " + p.Slot, cfg.view.playerHeightM);
-            ModelSkin.Wear(fig, team, pos, cfg, mat);   // the team's (or the position's) rigged model over the pose rig
+            ModelSkin.Wear(fig, team, pos, cfg, mat, p.Number);   // the team's (or the position's) rigged model over the pose rig
             JerseyMarks.SetNumber(fig.gameObject, cfg, p.Number);   // FEATURES.jerseyNumbers: his own number
-            team.ModelFor(pos, cfg.Feature("posModels"), out string model, out _, out _);
+            team.ModelFor(pos, cfg.Feature("posModels"), out string model, out _, out _, p.Number);
             JerseyMarks.SetSkin(fig.gameObject, cfg, model, JerseyMarks.SkinPick(p.Slot));   // FEATURES.skinTones: his own skin
             skins[p.Slot] = fig.GetComponentInChildren<ModelSkin>();
             fig.SwayCm = cfg.anim.idleSwayCm; fig.RollDeg = cfg.anim.idleRollDeg; fig.KneeDeg = cfg.anim.idleKneeDeg;

@@ -59,9 +59,9 @@ namespace PocketFootball.View
         public void Eyes(float x, float y, float blink, float mood = 0f) => JerseyMarks.SetEyes(body, x, y, blink, mood);
         public void Stain(float amount) => JerseyMarks.SetStain(body, amount);   // the helmeted players' arm fixes (Adapt, Splay); the cheerleaders have no helmet
 
-        public static bool Wear(FootballFigure fig, TeamConfig team, string pos, GameConfig cfg, Material kit)
+        public static bool Wear(FootballFigure fig, TeamConfig team, string pos, GameConfig cfg, Material kit, int number = -1)
         {
-            team.ModelFor(pos, cfg.Feature("posModels"), out string model, out string modelTexture, out float bend);
+            team.ModelFor(pos, cfg.Feature("posModels"), out string model, out string modelTexture, out float bend, number);
             if (string.IsNullOrEmpty(model)) { Debug.LogError("[model] team " + team.@short + " has no \"model\" in game.json; its players don't show"); return false; }
             var skin = Wear(fig, model, modelTexture, kit, true, cfg.Feature("narrowLegs"), cfg, team);
             if (skin != null && cfg.Feature("handCurl")) skin.Hands(cfg.anim);

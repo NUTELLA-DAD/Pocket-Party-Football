@@ -15,8 +15,7 @@ namespace PocketFootball.Tests.EditMode
         {
             var cfg = ConfigTests.Load();
             var p = CameraRig.Pose(cfg, Aspect, 10f);
-            var target = new Vector3(10f * cfg.field.yardM, 0f, cfg.camera.lookAtZYd * cfg.field.yardM);
-            var o = OrbitCamera.From(p.position, p.rotation, target, cfg.camera.fovDeg);
+            var o = OrbitCamera.From(p.position, p.rotation, p.target, cfg.camera.fovDeg);   // (the lab takes over at rig.LookTarget, which is p.target)
             Assert.Less(Vector3.Distance(p.position, o.Position), 0.01f);
             Assert.Less(Quaternion.Angle(p.rotation, o.Rotation), 0.1f);
         }
@@ -26,7 +25,7 @@ namespace PocketFootball.Tests.EditMode
         {
             var cfg = ConfigTests.Load();
             var p = CameraRig.Pose(cfg, Aspect, 0f);
-            var o = OrbitCamera.Preset(cfg.camera.free.presets[0], new Vector3(0f, 0f, cfg.camera.lookAtZYd * cfg.field.yardM), Aspect, cfg.field.yardM);
+            var o = OrbitCamera.Preset(cfg.camera.free.presets[0], p.target, Aspect, cfg.field.yardM);
             Assert.Less(Vector3.Distance(p.position, o.Position), 0.05f);
             Assert.AreEqual(cfg.camera.fovDeg, o.fovDeg, 1e-4f);
         }
@@ -80,6 +79,35 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual(0f, live.rotation.eulerAngles.z, 1e-3f);
             Assert.IsTrue(cfg.Feature("snapZoom"));
             Assert.AreEqual("NO_SNAP_ZOOM", ConfigLoader.EnvName("snapZoom"));
+        }
+
+        // FEATURES.nearSideline: the bottom of the TV picture is past the near sideline's border, before the snap and in a
+        // live play, so the near border is never cut off; the far side of the field still fits.
+        [Test]
+        public void TheNearSidelineIsOnScreen()
+        {
+            var cfg = ConfigTests.Load();
+            Assert.IsTrue(cfg.Feature("nearSideline"));
+            Assert.AreEqual("NO_NEAR_SIDELINE", ConfigLoader.EnvName("nearSideline"));
+            float m = cfg.field.yardM;
+            float near = -(cfg.field.HalfWidth + cfg.field.sidelineBorderYd) * m;   // the camera stands on the -Z side
+            float far = cfg.field.HalfWidth * m;
+            foreach (float zoom in new[] { 0f, 0.5f, 1f })
+            {
+                var p = CameraRig.Pose(cfg, Aspect, 0f, zoom);
+                float pitch = Mathf.Lerp(cfg.camera.pitchDeg, cfg.camera.live.pitchDeg, zoom);
+                Assert.Less(GroundZ(p, cfg, pitch + cfg.camera.fovDeg * 0.5f), near, $"zoom {zoom}: the near border is above the bottom of the screen");
+                Assert.Greater(GroundZ(p, cfg, pitch - cfg.camera.fovDeg * 0.5f), far, $"zoom {zoom}: the far sideline is under the top");
+            }
+            cfg.features["nearSideline"] = false;
+            Assert.AreEqual(cfg.camera.lookAtZYd * m, CameraRig.Pose(cfg, Aspect, 0f).target.z, 1e-4f, "off: looks where it always did");
+        }
+
+        // Where a ray from the camera `downDeg` below level (straight ahead) meets the grass, Z in metres.
+        static float GroundZ(CameraRig.CamPose p, GameConfig cfg, float downDeg)
+        {
+            if (downDeg <= 0f) return float.PositiveInfinity;
+            return p.position.z + p.position.y / Mathf.Tan(downDeg * Mathf.Deg2Rad);
         }
 
         [Test]
