@@ -40,6 +40,7 @@
     ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws');
     ws.onopen = function () {
       retryMs = RETRY_MIN_MS;
+      $('netDot').classList.remove('off');
       send({ t: 'join', code: code, name: store.get('name') || '', token: store.get('tok:' + code) || '', pid: pid });
     };
     ws.onmessage = function (ev) {
@@ -62,6 +63,7 @@
     };
     ws.onclose = function () {
       ws = null;
+      $('netDot').classList.add('off');
       if (!wantJoin) return;
       $('reconnect').classList.remove('hidden');
       clearTimeout(retryTimer);
@@ -133,6 +135,7 @@
     $('walkBtns').classList.toggle('hidden', play);
     $('playView').classList.toggle('no-stick', play && r.stick === false);
     $('playView').setAttribute('data-layout', play ? r.layout : 'none');
+    $('playView').classList.toggle('live', play && ['qbpre', 'wait', 'kick'].indexOf(r.layout) < 0);   // the ball is live: the play card shrinks
     document.querySelector('#playView .stam').classList.toggle('hidden', play && r.stam === false);
     baseLine = play ? r.line : 'Run with the stick. Hold SPRINT to go faster.';
     $('line').textContent = baseLine;
@@ -150,6 +153,7 @@
 
   function show(id) {
     ['joinView', 'pickView', 'huddleView', 'playView'].forEach(function (v) { $(v).classList.toggle('hidden', v !== id); });
+    if (id !== 'playView') $('menu').classList.add('hidden');
     if (id !== 'playView') releaseStick();
   }
 
@@ -172,7 +176,19 @@
       box.appendChild(b);
     });
   }
-  $('teamBtn').addEventListener('click', function () { show('pickView'); });
+  $('teamBtn').addEventListener('click', function () { openMenu(false); show('pickView'); });
+
+  // ---- PAUSE: a menu on this phone only. The game keeps going, so anything held is let go first ----
+  function openMenu(open) {
+    if (open) { releaseStick(); if (window.PPLayouts) window.PPLayouts.releaseAll(); }
+    $('menu').classList.toggle('hidden', !open);
+  }
+  $('menuBtn').addEventListener('click', function () { openMenu(true); });
+  $('menuBack').addEventListener('click', function () { openMenu(false); });
+  $('menuFind').addEventListener('click', function () {
+    send({ t: 'btn', b: 'find', d: 1, aid: aid }); send({ t: 'btn', b: 'find', d: 0, aid: aid });
+    openMenu(false);
+  });
 
   // ---- stick: latest value at 25 Hz while held, one zero on release ----
   var stick = $('stick'), knob = $('knob'), stickId = null, sx = 0, sy = 0, stickTimer = null;
