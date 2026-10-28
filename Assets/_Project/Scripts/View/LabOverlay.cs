@@ -10,13 +10,10 @@ namespace PocketFootball.View
     public sealed class LabOverlay
     {
         const int Segments = 48;
-        const float LineM = 0.09f, Lift = 0.05f, ArcHalfM = 0.16f, ArcEveryS = 0.03f, ArcCore = 0.9f, ArcFadeInM = 0.6f;
-        const int MaxArc = 160;
-        // across the ribbon: (share of its half width, alpha share): a bright middle that melts away at both edges
-        static readonly float[] Across = { -1f, -0.45f, 0f, 0.45f, 1f }, AcrossA = { 0f, 0.65f, 1f, 0.65f, 0f };
+        const float LineM = 0.09f, Lift = 0.05f, ArcEveryS = 0.03f;
 
         static readonly Color Body = new Color(1f, 1f, 1f), Tackle = new Color(0.95f, 0.22f, 0.2f), Block = new Color(0.25f, 0.55f, 1f),
-            Catch = new Color(1f, 0.9f, 0.15f), Aim = new Color(1f, 0.55f, 0.1f), Arc = new Color(1f, 1f, 1f);
+            Catch = new Color(1f, 0.9f, 0.15f), Aim = new Color(1f, 0.55f, 0.1f);
 
         readonly GameConfig cfg;
         readonly Material mat;
@@ -24,12 +21,7 @@ namespace PocketFootball.View
         readonly Dictionary<int, Transform> bodies = new Dictionary<int, Transform>(), reach = new Dictionary<int, Transform>(),
             humanReach = new Dictionary<int, Transform>(), blocks = new Dictionary<int, Transform>();
         readonly Transform catchNow, aim;
-        readonly Mesh arc;
-        readonly GameObject arcGo;
-        readonly List<Vector3> arcV = new List<Vector3>();
-        readonly List<Color> arcC = new List<Color>();
-        readonly List<int> arcT = new List<int>();
-        readonly Vector3[] path = new Vector3[MaxArc];
+        readonly ArcRibbon arc;
         bool shown = true;
 
         public LabOverlay(GameConfig cfg, Material baseMat)
@@ -39,15 +31,7 @@ namespace PocketFootball.View
             root = new GameObject("LabOverlay").transform;
             catchNow = Ring(cfg.play.catchRadiusYd, Catch, "CatchCircle");
             aim = Ring(cfg.play.catchRadiusYd, Aim, "AimCircle");
-            arc = new Mesh { name = "Arc" };
-            arc.MarkDynamic();
-            arcGo = new GameObject("Arc");
-            arcGo.transform.SetParent(root, false);
-            arcGo.AddComponent<MeshFilter>().sharedMesh = arc;
-            var ar = arcGo.AddComponent<MeshRenderer>();
-            ar.sharedMaterial = Looks.Glow(baseMat);
-            ar.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            ar.receiveShadows = false;
+            arc = new ArcRibbon(root, "Arc", baseMat);
         }
 
         public bool Shown
@@ -90,52 +74,14 @@ namespace PocketFootball.View
             if (flying)
             {
                 float g = cfg.ball.gravityYdS2;
-                for (float t = 0f; n < MaxArc; t += ArcEveryS)
+                for (float t = 0f; n < ArcRibbon.Max; t += ArcEveryS)
                 {
                     float y = b.Y + b.VY * t - g * t * t * 0.5f;
                     if (y < 0f) break;
-                    path[n++] = new Vector3((b.X + b.VX * t) * m, y * m + cfg.view.ballWidthM * 0.5f, (b.Z + b.VZ * t) * m);
+                    arc.Path[n++] = new Vector3((b.X + b.VX * t) * m, y * m + cfg.view.ballWidthM * 0.5f, (b.Z + b.VZ * t) * m);
                 }
             }
-            Ribbon(n);
-        }
-
-        // The flight path as one smooth ribbon turned to face the camera: soft at its edges, fading in from the ball
-        // (so it never hides it) and out where it meets the grass.
-        void Ribbon(int n)
-        {
-            arcV.Clear(); arcC.Clear(); arcT.Clear();
-            var cam = Camera.main;
-            if (n >= 2 && cam != null)
-            {
-                int k = Across.Length;
-                float run = 0f;
-                for (int i = 0; i < n; i++)
-                {
-                    if (i > 0) run += (path[i] - path[i - 1]).magnitude;
-                    Vector3 along = (path[Mathf.Min(i + 1, n - 1)] - path[Mathf.Max(i - 1, 0)]).normalized;
-                    Vector3 side = Vector3.Cross(along, cam.transform.position - path[i]).normalized;
-                    float fade = Mathf.Clamp01(run / ArcFadeInM) * Mathf.Clamp01((n - 1 - i) / 6f);
-                    for (int j = 0; j < k; j++)
-                    {
-                        arcV.Add(path[i] + side * (Across[j] * ArcHalfM));
-                        arcC.Add(Looks.VertexColor(Arc, ArcCore * AcrossA[j] * fade));
-                    }
-                    if (i == 0) continue;
-                    int s0 = (i - 1) * k, s1 = i * k;
-                    for (int j = 0; j + 1 < k; j++)
-                    {
-                        arcT.Add(s0 + j); arcT.Add(s1 + j); arcT.Add(s1 + j + 1);
-                        arcT.Add(s0 + j); arcT.Add(s1 + j + 1); arcT.Add(s0 + j + 1);
-                    }
-                }
-            }
-            arc.Clear();
-            arc.SetVertices(arcV);
-            arc.SetColors(arcC);
-            arc.SetTriangles(arcT, 0);
-            arc.RecalculateBounds();
-            arcGo.SetActive(arcT.Count > 0);
+            arc.Draw(n);
         }
 
         void Show(Dictionary<int, Transform> set, int slot, float radiusYd, Color c, Vector3 at, bool on)

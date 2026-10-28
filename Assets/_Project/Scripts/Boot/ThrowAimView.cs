@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using PocketFootball.Input;
 using PocketFootball.Sim;
 using PocketFootball.View;
@@ -7,20 +6,20 @@ using UnityEngine;
 namespace PocketFootball.Boot
 {
     // The throw stick on the TV (FEATURES.throwStick): while a person at QB holds the aim stick, the pass he would
-    // throw is drawn from the ball to the grass, a line of dots along its flight (ThrowStick.Plan, the same flight the
-    // sim will fly) and a ring where it comes down, catch-radius wide. Bullet: a low flat line; lob: a high arc. Drawing
-    // only: the sim never sees the aim until the stick is let go. Nothing moves on its own (no wobble).
+    // throw is drawn from the ball to the grass: the same soft faded ribbon as the lab's flight path (ArcRibbon) along
+    // its flight (ThrowStick.Plan, the same flight the sim will fly) and a ring where it comes down, catch-radius wide.
+    // Bullet: a low flat line; lob: a high arc. Drawing only: the sim never sees the aim until the stick is let go.
     public sealed class ThrowAimView : MonoBehaviour
     {
-        const int Segments = 40, MaxDots = 48;
-        const float LineM = 0.12f, Lift = 0.06f, DotM = 0.16f, DotEveryS = 0.07f;
-        static readonly Color Spot = new Color(1f, 0.85f, 0.2f), Dot = new Color(1f, 1f, 1f);
+        const int Segments = 40;
+        const float LineM = 0.12f, Lift = 0.06f, ArcEveryS = 0.03f;
+        static readonly Color Spot = new Color(1f, 0.85f, 0.2f);
 
         PartyHost host;
         GameConfig cfg;
-        Material mat;
+        Material mat, baseMat;
         Transform root, ring;
-        readonly List<Transform> dots = new List<Transform>();
+        ArcRibbon arc;
 
         public static ThrowAimView Attach(PartyHost h, Material baseMat)
         {
@@ -28,6 +27,7 @@ namespace PocketFootball.Boot
             v.host = h;
             v.cfg = h.World.Cfg;
             v.mat = Looks.Toon(baseMat);
+            v.baseMat = baseMat;
             v.Build();
             return v;
         }
@@ -44,11 +44,7 @@ namespace PocketFootball.Boot
                 bl.Quad(P(r0, a0), P(r1, a0), P(r1, a1), P(r0, a1), Spot, Vector3.up);
             }
             ring = bl.Build(root, "AimSpot", mat, false).transform;
-            var d = new Blocks { Flag = Looks.Gloss };
-            d.Box(Vector3.zero, Vector3.one * DotM, Dot);
-            var first = d.Build(root, "AimDot", mat, false).transform;
-            dots.Add(first);
-            for (int i = 1; i < MaxDots; i++) dots.Add(Instantiate(first.gameObject, root).transform);
+            arc = new ArcRibbon(root, "AimArc", baseMat);
             Hide();
         }
 
@@ -69,21 +65,19 @@ namespace PocketFootball.Boot
             ring.position = new Vector3(tx * m, Lift, tz * m);
             float g = cfg.ball.gravityYdS2;
             int n = 0;
-            for (float t = DotEveryS; n < MaxDots && t < f.T; t += DotEveryS)
+            for (float t = 0f; n < ArcRibbon.Max && t < f.T; t += ArcEveryS)
             {
                 float y = b.Y + f.TrueVY * t - g * t * t * 0.5f;
                 if (y < 0f) break;
-                dots[n].position = new Vector3((b.X + f.VX * t) * m, y * m + cfg.view.ballWidthM * 0.5f, (b.Z + f.VZ * t) * m);
-                dots[n].gameObject.SetActive(true);
-                n++;
+                arc.Path[n++] = new Vector3((b.X + f.VX * t) * m, y * m + cfg.view.ballWidthM * 0.5f, (b.Z + f.VZ * t) * m);
             }
-            for (int i = n; i < dots.Count; i++) dots[i].gameObject.SetActive(false);
+            arc.Draw(n);
         }
 
         void Hide()
         {
             if (ring != null) ring.gameObject.SetActive(false);
-            foreach (var d in dots) d.gameObject.SetActive(false);
+            arc?.Hide();
         }
     }
 }
