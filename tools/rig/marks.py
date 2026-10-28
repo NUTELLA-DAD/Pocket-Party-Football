@@ -117,7 +117,7 @@ for zi, z in enumerate(spec['zones']):
         marks[inz, 0] = np.clip(local[inz, 0] / 3 + 0.5, 0, 1); marks[inz, 1] = np.clip(local[inz, 1] / 3 + 0.5, 0, 1)
         marks[inz, 2] = 128 / 255; marks[inz, 3] = 1
     else:
-        e = inz & eye_open
+        e = grow(inz & eye_open, 2, inz)   # (2 texels past the painted opening, so a shut lid covers its edge too)
         marks[inz, 0] = np.clip(local[inz, 0] / 6 + 0.5, 0, 1); marks[inz, 1] = np.clip(local[inz, 1] / 6 + 0.5, 0, 1)
         marks[inz, 2] = 1; marks[e, 3] = 1
 # outside every zone, R = how much grass a stain may leave there (FEATURES.grassStains; B and A stay 0): the legs and
@@ -141,7 +141,8 @@ marks[free, 0] = np.clip(st[free], 0, 1)
 # and G = how much of the texel is skin (FEATURES.skinTones: each man's own skin colour), from the first colour map:
 # skin hues above the hips, soft at the edges
 dh0 = np.abs(((h0 - 22) + 180) % 360 - 180)
-sk = band(dh0, -1, 16, 6) * band(s0, 0.2, 0.75, 0.08) * band(v0, 0.2, 0.97, 0.06) * (zn > 0.35)
+handish = np.abs(P[..., 0]) > 0.6 * X                     # (bare hands are paler: a lower saturation counts there)
+sk = band(dh0, -1, 16, 6) * band(s0, np.where(handish, 0.1, 0.2), 0.75, 0.06) * band(v0, 0.2, 0.97, 0.06) * (zn > 0.35)
 marks[free, 1] = np.clip(sk[free], 0, 1)
 hard = free & (sk > 0.5)
 if hard.any():
