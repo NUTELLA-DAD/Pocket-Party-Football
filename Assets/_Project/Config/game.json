@@ -623,7 +623,12 @@
   "lobby": {
     "holdUntilKickoff": true,
     "botCoversDropped": true,
-    "swapAskS": 12
+    "swapAskS": 12,
+    "tint": 0.6,
+    "qrFrac": 0.4,
+    "emblemFrac": 0.3,
+    "teamApplyS": 1.2,
+    "listRows": 6
   },
   "carrier": {
     "spinTicks": 12,
@@ -1147,6 +1152,7 @@
     "stayOnside": true,
     "huddleSwitch": true,
     "teamPick": true,
+    "lobbyScreen": true,
     "botsV3": true,
     "smoothMotion": true
   }
