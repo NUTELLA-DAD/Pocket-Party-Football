@@ -18,7 +18,7 @@ namespace PocketFootball.Boot
     //   phone -> game: spot {side: "o" | "d", spot, aid}, swap {yes, aid}, kickoff {aid}, lobbyme {}
     // FEATURES.huddleSwitch (NO_HUDDLE_SWITCH=1 turns it off): after kickoff the same spot and swap presses work from
     // the huddle screen (huddle.js, carrying the huddle screen's aid), so a person can switch spots between plays. The
-    // lineup then carries switch: true, and every huddle screen of the team is sent again with the new spots.
+    // lineup then carries switch: true, and once a spot changes every huddle screen of that team is sent again.
     public sealed class Lobby : MonoBehaviour
     {
         public static Lobby Instance { get; private set; }
@@ -228,19 +228,23 @@ namespace PocketFootball.Boot
 
         void SyncAndSend()
         {
+            var moved = new HashSet<int>();   // teams where someone's spots changed
             foreach (var seat in R.Seats)
             {
                 var p = W.Find(seat.Slot);
-                if (seat.Kind == SeatKind.Phone && p != null && p.Team == seat.Team) { p.OffenseSpot = seat.OffenseSpot; p.DefenseSpot = seat.DefenseSpot; }
+                if (seat.Kind != SeatKind.Phone || p == null || p.Team != seat.Team) continue;
+                if (p.OffenseSpot != seat.OffenseSpot || p.DefenseSpot != seat.DefenseSpot) moved.Add(p.Team);
+                p.OffenseSpot = seat.OffenseSpot; p.DefenseSpot = seat.DefenseSpot;
             }
             if (Holding) W.LineUp();
             SendLineups();
-            if (Switching)
+            if (Switching && moved.Count > 0)
             {
-                // in the huddle: relabel the spots now and send every huddle screen again, so the jobs are right
+                // in the huddle: relabel the spots now and send that team's huddle screens again, so the jobs are right.
+                // Only when a spot changed: a new huddle screen has a new aid, and an open swap question must still answer
                 relabel = false;
                 foreach (var q in W.Players) Formation.Place(W, q);
-                for (int team = 0; team < cfg.teams.Count; team++) host.RefreshHuddle(team);
+                foreach (int team in moved) host.RefreshHuddle(team);
             }
         }
 
