@@ -123,7 +123,7 @@ namespace PocketFootball.Tests.EditMode
             {
                 var cfg = ConfigTests.Load();
                 cfg.features["narrowLegs"] = on;
-                foreach (var pos in new[] { null, "LB", "OL", "QB", "K", "WR" })
+                foreach (var pos in new[] { null, "LB", "OL", "QB", "K", "WR", "TE" })
                 {
                     var fig = FootballFigure.Create(null, "Legs", cfg.view.playerHeightM);
                     try

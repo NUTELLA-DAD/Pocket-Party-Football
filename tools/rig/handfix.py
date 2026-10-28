@@ -2,7 +2,8 @@
 #   python handfix.py -- <in.fbx> <params.json> <Model> <out.fbx>
 # The T-pose FBX (arms along X, model faces -Y, its left is +X, Z up; Unity's bone names) keeps its 22 bones and
 # gains four per hand: <Side>Thumb > <Side>ThumbTip and <Side>Fingers > <Side>FingersTip (the four fingers move as
-# one, children of <Side>Hand). A model with a sixth finger ("extra" in its params) has it pulled back into the palm.
+# one, children of <Side>Hand). A "Left"/"Right" entry in a model's params overrides numbers for that hand.
+# A model with a sixth finger ("extra" in its params) has it pulled back into the palm.
 # The hand's old weight is split between the hand and the new bones; nothing else changes.
 import bpy, sys, json, numpy as np
 from mathutils import Vector, Matrix
@@ -32,8 +33,9 @@ def weights(name):
 new = {}; bones = {}
 for s, side in ((1, 'Left'), (-1, 'Right')):
     h = weights(side + 'Hand')
-    co, e = retract(co, s, p)
-    W, nh, B = rig(co, h, s, p, side)
+    ps = {**p, **p.get(side, {})}   # (a model whose two hands differ gives one side its own numbers)
+    co, e = retract(co, s, ps)
+    W, nh, B = rig(co, h, s, ps, side)
     print('HANDFIX', side, 'extra finger verts', int(e.sum()), 'hand verts', int((h > 0).sum()))
     new[side + 'Hand'] = nh; new.update(W); bones.update(B)
 
