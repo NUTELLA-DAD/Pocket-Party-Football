@@ -66,10 +66,10 @@ namespace PocketFootball.View
             if (on)
             {
                 g.position = new Vector3(feet.x, 0.035f, feet.z);
-                g.localScale = Vector3.one * (big ? 1.2f : 1f);
+                g.localScale = Vector3.one * (big ? 1.1f : 1f);
             }
             if (rings.TryGetValue(slot, out var r))
-                r.localScale = Vector3.one * (big ? 1.4f : 1f);
+                r.localScale = Vector3.one * (big ? 1.15f : 1f);
         }
 
         Transform Ring()
@@ -212,11 +212,12 @@ namespace PocketFootball.View
 
         // A small triangle in `fill` (the team colour) pointing down at `screen` (GUI coordinates: y down), with a dark
         // edge so it reads on grass and on jerseys. `dim` fades it (phone asleep, or a bot is playing for them).
-        public static void Pointer(Vector2 screen, Color fill, bool dim, float s)
+        public static void Pointer(Vector2 screen, Color fill, bool dim, float s, bool flash = false)
         {
             Init();
             float w = 22 * s, a = dim ? 0.45f : 1f;
-            GUI.color = new Color(0.06f, 0.06f, 0.08f, 0.9f * a);
+            // FIND ME: the outline goes white on every other 8 fps step (a small highlight, nothing over the play)
+            GUI.color = flash ? Color.white : new Color(0.06f, 0.06f, 0.08f, 0.9f * a);
             GUI.DrawTexture(new Rect(screen.x - w * 0.5f - 3 * s, screen.y - w - 3 * s, w + 6 * s, w + 6 * s), tri);
             GUI.color = new Color(fill.r, fill.g, fill.b, a);
             GUI.DrawTexture(new Rect(screen.x - w * 0.5f, screen.y - w, w, w), tri);
