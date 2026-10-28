@@ -73,16 +73,20 @@ namespace PocketFootball.Boot
             csv.Append(string.Format(ic, "{0},{1},{2:0.00},{3},{4},{5},{6},{7},{8}\n", w.Tick, w.Phase, w.PlayTicks / (float)w.Cfg.sim.tickHz, w.Ball.State,
                 carrier != null ? carrier.Pos + "#" + carrier.Number : "", carrier != null ? carrier.Team : -1, held, blocking, w.Result));
             var shot = ScreenCapture.CaptureScreenshotAsTexture();
+            // half size, averaging each 2x2 (a Blit through a render texture washed the colours out)
             int hw = shot.width / 2, hh = shot.height / 2;
-            var rt = RenderTexture.GetTemporary(hw, hh, 0);
-            Graphics.Blit(shot, rt);
-            var was = RenderTexture.active;
-            RenderTexture.active = rt;
+            var src = shot.GetPixels32();
+            var dst = new Color32[hw * hh];
+            for (int y = 0; y < hh; y++)
+                for (int x = 0; x < hw; x++)
+                {
+                    int i = (y * 2) * shot.width + x * 2;
+                    Color32 a = src[i], b = src[i + 1], c = src[i + shot.width], d = src[i + shot.width + 1];
+                    dst[y * hw + x] = new Color32((byte)((a.r + b.r + c.r + d.r) / 4), (byte)((a.g + b.g + c.g + d.g) / 4), (byte)((a.b + b.b + c.b + d.b) / 4), 255);
+                }
             var small = new Texture2D(hw, hh, TextureFormat.RGB24, false);
-            small.ReadPixels(new Rect(0, 0, hw, hh), 0, 0);
+            small.SetPixels32(dst);
             small.Apply();
-            RenderTexture.active = was;
-            RenderTexture.ReleaseTemporary(rt);
             File.WriteAllBytes(Path.Combine(dir, filmed.ToString("0") + "-" + w.Tick.ToString("00000") + ".png"), small.EncodeToPNG());
             Destroy(shot); Destroy(small);
         }
