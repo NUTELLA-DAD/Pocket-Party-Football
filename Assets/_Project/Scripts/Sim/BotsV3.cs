@@ -80,6 +80,8 @@ namespace PocketFootball.Sim
             if (p.Team == w.Offense && p.Spot == 0) return 0f;             // the QB (and the kicker) made it happen
             if (Bots.Intended(w) == p) return 0f;                            // the man the pass is for
             if (Kicking.ReturnerNow(w) == p) return 0f;                      // the returner under a kick
+            var meant = Bots.Intended(w);                                    // a defender on the man a pass is for is watching him
+            if (meant != null && p.Team != w.Offense && LivePlay.Dist(p, meant) <= c.coverNearYd) return 0f;
             float dx = w.Ball.X - p.X, dz = w.Ball.Z - p.Z, d = (float)Math.Sqrt(dx * dx + dz * dz);
             if (d <= c.reactNearYd) return 0f;
             float far = c.reactFarYd > 0f ? Math.Min(1f, d / c.reactFarYd) : 1f;
@@ -298,6 +300,7 @@ namespace PocketFootball.Sim
         // reactions: reactMinS next to the ball .. reactMaxS at reactFarYd and beyond, times (1 - quickness * reactQuickFrac),
         // plus up to reactJitterS; inside reactNearYd of the ball a man reacts at once
         public float reactMinS, reactMaxS, reactFarYd, reactJitterS, reactQuickFrac, reactNearYd;
+        public float coverNearYd;      // a defender this close to the man a pass is for sees the throw at once
         public float pursuitLeadVar;   // a chaser's lead on the carrier, long or short by up to this share by his quickness
         // blocking: an opponent within threatRangeYd of the ball closing on it (or within threatNearYd whatever he does) is a
         // threat, ordered by his time to it at no less than threatMinSpeedYdS; a blocker takes one he can meet within
