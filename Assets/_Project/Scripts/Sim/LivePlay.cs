@@ -43,6 +43,7 @@ namespace PocketFootball.Sim
             w.Result = "";
             w.CatchTried.Clear();
             foreach (var p in w.Players) { p.RouteIndex = 0; p.TackleCooldown = 0; p.StumbleTicks = 0; p.JukeTicks = 0; p.JukeCooldown = 0; p.BlockedTicks = 0; p.FreeTicks = 0; p.OffBalanceTicks = 0; p.OffBalanceBy = -1; }
+            if (BotsV3.On(w)) foreach (var p in w.Players) BotsV3.AtTheSnap(w, p);   // bots v3: the defense has to see the snap
             w.Events.Push(w, EventKind.Hike, Qb(w));
         }
 

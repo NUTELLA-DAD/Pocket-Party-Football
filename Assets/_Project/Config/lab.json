@@ -101,6 +101,51 @@
       "you": "none", "youSpot": 0, "carrier": 0,
       "offense": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "defense": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
       "live": false, "endOnCatch": false, "maxS": 0
+    },
+    {
+      "id": "watchpunt",
+      "name": "Watch a punt",
+      "help": "Bots only: a punt and its return. Watch the coverage run lanes and the return team block for the returner.",
+      "offensePlay": "punt",
+      "defensePlay": "cover3",
+      "you": "none",
+      "youSpot": 0,
+      "carrier": 0,
+      "offense": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "defense": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "live": false,
+      "endOnCatch": false,
+      "maxS": 0
+    },
+    {
+      "id": "watchrun",
+      "name": "Watch a run",
+      "help": "Bots only: HB Dive against Cover 3. Watch the line pick its men and the spare blockers lead the back.",
+      "offensePlay": "dive",
+      "defensePlay": "cover3",
+      "you": "none",
+      "youSpot": 0,
+      "carrier": 0,
+      "offense": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "defense": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "live": false,
+      "endOnCatch": false,
+      "maxS": 0
+    },
+    {
+      "id": "watchtoss",
+      "name": "Watch a toss",
+      "help": "Bots only: the toss against Man Blitz. Watch the convoy form on the edge.",
+      "offensePlay": "toss",
+      "defensePlay": "mblitz",
+      "you": "none",
+      "youSpot": 0,
+      "carrier": 0,
+      "offense": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "defense": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "live": false,
+      "endOnCatch": false,
+      "maxS": 0
     }
   ]
 }

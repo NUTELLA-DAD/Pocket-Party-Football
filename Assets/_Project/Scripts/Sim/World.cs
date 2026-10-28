@@ -42,6 +42,11 @@ namespace PocketFootball.Sim
         // bot v0
         public float GoalX, GoalZ;
         public int NextThinkTick;
+        // bots v3 (BotsV3.cs, FEATURES.botsV3): what he last took in, when his next reaction lands, what he keeps doing
+        // meanwhile, the man he is blocking, and how quick he is (0..1, drawn once)
+        public int SeenSituation = -1, SeenCarrier = -1, ReactTick = -1, BlockSlot = -1;
+        public float HeldX, HeldZ, Quick;
+        public bool HeldSprint, HeldBlock;
     }
 
     // The authoritative game state. Step() advances one fixed tick (1 / tickHz s). Pure C#: no Unity, no clock,
@@ -87,6 +92,7 @@ namespace PocketFootball.Sim
         public readonly KickState Kick = new KickState();   // WS-01: kickoffs, punts, field goals, tries (Kicking.cs)
         public readonly HitState Hit = new HitState();   // FEATURES.hitAngle: the last hit, for the TV (HitAngle.cs); not hashed
         public readonly AudibleState Audible = new AudibleState();   // WS-13: audibles and hot routes this down (Audibles.cs)
+        public readonly BotsV3.Plan BotPlan = new BotsV3.Plan();   // bots v3: this tick's blocking plan (BotsV3.cs); not hashed, rebuilt every tick
 
         public World(GameConfig cfg, int seed)
         {
@@ -133,6 +139,7 @@ namespace PocketFootball.Sim
                 int at = 0;
                 while (at < Players.Count && Players[at].Slot < slot) at++;
                 Players.Insert(at, p);
+                if (Cfg.Feature("botsV3")) p.Quick = Rng.Value();   // bots v3: how quick he is to react
             }
             p.Human = human;
             p.Team = team;
@@ -273,6 +280,7 @@ namespace PocketFootball.Sim
                 Mix(p.BlockedTicks); Mix(p.FreeTicks); Mix(p.IdleTicks);
                 if (p.OffBalanceTicks > 0 || p.OffBalanceBy >= 0) { Mix(p.OffBalanceTicks); Mix(p.OffBalanceBy); }   // (only while it runs, so games without it hash as before)
                 MixF(p.GoalX); MixF(p.GoalZ); Mix(p.NextThinkTick);
+                if (Cfg.Feature("botsV3")) { Mix(p.SeenSituation); Mix(p.SeenCarrier); Mix(p.ReactTick); Mix(p.BlockSlot); MixF(p.HeldX); MixF(p.HeldZ); Mix(p.HeldSprint ? 1 : 0); Mix(p.HeldBlock ? 1 : 0); MixF(p.Quick); }
             }
             Mix((int)Ball.State); Mix(Ball.Carrier);
             MixF(Ball.X); MixF(Ball.Y); MixF(Ball.Z); MixF(Ball.VX); MixF(Ball.VY); MixF(Ball.VZ);

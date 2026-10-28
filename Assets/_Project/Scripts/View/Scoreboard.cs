@@ -46,6 +46,7 @@ namespace PocketFootball.View
             int hz = w.Cfg.sim.tickHz;
             int secs = (w.PhaseTicks + hz - 1) / hz;
             if (w.Phase == Phase.Set && LivePlay.On(w)) return "SET   (the QB hikes)";
+            if (w.Phase == Phase.Live && w.Kick.Returned) return Kicking.Name(w) + " RETURN";   // (a run-back uses the interception rules, but it is no interception)
             if (w.Phase == Phase.Live) return w.Intercepted ? "INTERCEPTED!" : "";
             if (w.Phase == Phase.Whistle) return w.Result + "!" + (w.Note.Length > 0 ? "   " + w.Note : "");
             if (w.Phase != Phase.Huddle) return "LINE UP   (next huddle in " + secs + ")";

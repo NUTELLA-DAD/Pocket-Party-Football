@@ -32,6 +32,16 @@ namespace PocketFootball.Sim
         // the QB everyone takes a pursuit angle on the carrier, or runs to where a pass is coming down.
         static PlayerInput Live(World w, Player p)
         {
+            if (!BotsV3.On(w)) return Decide(w, p);
+            // bots v3: a change takes a moment to sink in; until then he keeps doing what he was doing
+            if (BotsV3.Delayed(w, p, out var held)) return held;
+            var now = Decide(w, p);
+            BotsV3.Remember(p, now);
+            return now;
+        }
+
+        static PlayerInput Decide(World w, Player p)
+        {
             if (Fumbles.Loose(w)) return Fumbles.Chase(w, p);   // WS-04: everyone scrambles for a fumble
             var kick = Kicking.BotThink(w, p); if (kick.HasValue) return kick.Value;   // WS-01: kick coverage and returns
             var b = w.Cfg.bots;
@@ -58,6 +68,10 @@ namespace PocketFootball.Sim
                 // a throw-stick pass names a spot, not a man: whoever is nearest it runs there (v1 or v2), not off to block
                 if (w.StickThrow && w.Ball.State == BallState.Flying && p == Intended(w)) return To(p, w.Ball.TargetX, w.Ball.TargetZ, 1f, true);
                 if (V2(w) && w.Ball.State == BallState.Flying && p == Intended(w)) return MeetThePass(w, p);
+                // bots v3: a man on a short route (the pulling guard, the QB's fake) finishes it before he blocks; a deep
+                // route (a go route run to clear its corner) turns and blocks as soon as the ball is out, as in v2
+                if (ballOut && BotsV3.On(w) && job != null && job.kind == "route" && job.pts.Count > 0 && job.pts[job.pts.Count - 1][0] <= w.Cfg.botsV3.routeBlockYd)
+                { var on = FollowRoute(w, p, job, true); if (on.HasValue) return on.Value; }
                 if (ballOut || job == null || job.kind == "block") return Block(w, p, carrier);
                 if (job.kind == "route" && job.pts.Count > 0)
                 {
@@ -333,6 +347,7 @@ namespace PocketFootball.Sim
         // A blocker: the defender nearest the ball; stand between them, a step off him.
         static PlayerInput Block(World w, Player p, Player carrier)
         {
+            if (BotsV3.On(w)) return BotsV3.Block(w, p, carrier);   // bots v3: one plan a team, meet the man, the convoy
             float bx = carrier != null ? carrier.X : w.Ball.X, bz = carrier != null ? carrier.Z : w.Ball.Z;
             Player best = null; float bd = float.MaxValue;
             foreach (var d in w.Players)
@@ -369,6 +384,7 @@ namespace PocketFootball.Sim
         static PlayerInput Pursue(World w, Player p, Player carrier)
         {
             float t = LivePlay.Dist(p, carrier) / Math.Max(w.Cfg.players.sprintSpeedYdS, w.Cfg.players.jogSpeedYdS);
+            t = BotsV3.PursuitLead(w, p, t);   // bots v3: some lead him long, some short
             return To(p, carrier.X + carrier.VX * t, carrier.Z + carrier.VZ * t, 1f, true);
         }
 
@@ -409,7 +425,7 @@ namespace PocketFootball.Sim
 
         static bool HasRunner(World w) { var pl = LivePlay.Called(w, w.Offense); return pl != null && pl.runner >= 0; }
 
-        static JobConfig JobOfCalled(World w, Player p)
+        public static JobConfig JobOfCalled(World w, Player p)
         {
             var hot = Audibles.HotJob(w, p); if (hot != null) return hot;   // WS-13: a hot route replaces the called job
             var play = LivePlay.Called(w, p.Team);
