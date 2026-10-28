@@ -3,7 +3,7 @@
 # the PocketParty/Toon shader where a number or an eye goes on each texel.
 #   marks map RGBA: R, G = the texel's spot in its zone (number: in number heights, -1.5..1.5; eye: in iris radii, -3..3;
 #   both 0..1 in the PNG), B = 128 number / 255 eye, A = 255 inside the zone (an eye's: inside its opening only).
-# usage: python3 marks.py <uvmap.npz> <zones.json> <Models dir> [preview.png]
+# usage: [MARKS_ONLY=1] python3 marks.py <uvmap.npz> <zones.json> <Models dir> [preview.png]
 #   uvmap.npz from uvmap.py (the rest-pose point and normal under every texel of the colour map).
 #   zones.json: {"marks": "Chiefs24/Chiefs24_Marks.png", "textures": [{"file": ..., "hue": jersey hue in degrees}],
 #     "zones": [{"kind": "number"|"eye", "c": centre [x,y,z] m, "n": facing, "up": up, "w","h": half box m,
@@ -133,6 +133,8 @@ Image.fromarray((marks * 255 + 0.5).astype(np.uint8), 'RGBA').save(out)
 print('wrote', out)
 
 # ---- paint the old numbers and irises out of each colour map ----
+# (MARKS_ONLY=1: the maps are already painted out; only the marks map is rewritten, e.g. after widening a zone)
+if os.environ.get('MARKS_ONLY') == '1': sys.exit(0)
 def inpaint(rgb, hole, source, iters=400):
     # each hole texel takes the average of its known neighbours (5x5), ring by ring in from the edge; only the hole
     # texels are visited
