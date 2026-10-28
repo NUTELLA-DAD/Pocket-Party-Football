@@ -66,16 +66,18 @@ namespace PocketFootball.Sim
                 }
         }
 
-        // FEATURES.stayOnside (NO_STAY_ONSIDE=1): before the snap (the huddle and the line-up) nobody crosses the line of
-        // scrimmage. Each team can shuffle about on its own side but stops onsideGapYd short of the line until the hike.
+        // FEATURES.stayOnside (NO_STAY_ONSIDE=1): before the snap (the huddle and the line-up) a person can't run across
+        // the line of scrimmage. They can shuffle about on their own side but stop onsideGapYd short of the line until
+        // the hike. Bots stand where the play puts them, so they are left alone; with no huddle (NO_HUDDLE) there is no snap.
         public static bool OnsideOn(World w) => w.Cfg.Feature("stayOnside");
 
         public static void Onside(World w)
         {
-            if (!OnsideOn(w) || (w.Phase != Phase.Huddle && w.Phase != Phase.Set)) return;
+            if (!OnsideOn(w) || !Huddle.On(w) || (w.Phase != Phase.Huddle && w.Phase != Phase.Set)) return;
             float gap = w.Cfg.players.onsideGapYd;
             foreach (var p in w.Players)
             {
+                if (!p.Human) continue;
                 float own = p.Team == w.Offense ? -w.Dir : w.Dir;     // which way is "back" for this team
                 float limit = w.LineOfScrimmageX + own * gap;
                 if ((p.X - limit) * own >= 0f) continue;
