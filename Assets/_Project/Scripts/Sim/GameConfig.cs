@@ -58,6 +58,7 @@ namespace PocketFootball.Sim
         public float jogSpeedYdS, sprintSpeedYdS, accelYdS2, decelYdS2;
         public float staminaDrainPerS, staminaRegenPerS, staminaRestart;
         public float radiusYd, bumpPushFrac, boundsMarginYd;
+        public float onsideGapYd;   // FEATURES.stayOnside: how far short of the line of scrimmage a player stops before the snap
         public int perTeam;
     }
 
