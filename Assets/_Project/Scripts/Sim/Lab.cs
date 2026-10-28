@@ -270,8 +270,8 @@ namespace PocketFootball.Sim
             return odds < 0f ? 0f : odds > 1f ? 1f : odds;
         }
 
-        // How far a tackle reaches: a person's TACKLE button reaches half as far again as a bot's automatic try.
-        public static float TackleReach(World w, Player p) => w.Cfg.play.tackleReachYd * (p.Human ? 1f + 0.5f : 1f);
+        // How far a tackle reaches (the game's own rule, LivePlay.TackleReach).
+        public static float TackleReach(World w, Player p) => LivePlay.TackleReach(w, p);
 
         // The nearest defender to the ball carrier (null: nobody has the ball).
         public Player NearestTackler()
