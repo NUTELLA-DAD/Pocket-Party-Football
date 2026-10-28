@@ -24,7 +24,7 @@ namespace PocketFootball.View
 
         void OnGUI()
         {
-            if (world == null || players == null || !Kicking.On(world)) return;
+            if (world == null || players == null || !Kicking.On(world) || Replay.OnScreen) return;
             var cam = Camera.main;
             if (cam == null) return;
             var k = world.Kick;

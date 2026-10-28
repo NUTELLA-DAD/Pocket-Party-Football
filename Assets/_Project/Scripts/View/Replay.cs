@@ -192,6 +192,14 @@ namespace PocketFootball.View
 
         public bool Showing => Tape != null && Tape.Playing;
 
+        // True while a replay is on the TV. The live game's marks over the field (the rings under people's players,
+        // the triangles over them, shape badges, the throw aim, the kick meter...) stand where the live players are,
+        // not where the replay's are, so each of them checks this and hides.
+        public static bool OnScreen { get; private set; }
+
+        // The World the replay is drawing this frame (its line of scrimmage and first-down line), or null.
+        public World Shown => Showing ? ghost : null;
+
         // From PartyHost.Update, after the live view drew and the camera moved. names: a person's name by slot (or null).
         public static Replay Drive(GameObject on, GameConfig cfg, World live, PlayersView liveView, CameraRig rig, Func<int, string> names)
         {
@@ -268,6 +276,7 @@ namespace PocketFootball.View
             Tape.Observe(live);
             if (Tape.Playing && !was) { camX = float.NaN; Prime(); }
             Tape.Advance(Time.unscaledDeltaTime);   // (also the card's time after the replay)
+            OnScreen = Tape.Playing;
 
             if (!Tape.Playing)
             {
@@ -304,6 +313,7 @@ namespace PocketFootball.View
 
         void OnDestroy()
         {
+            OnScreen = false;
             foreach (var go in mine) if (go != null) Destroy(go);
         }
 
