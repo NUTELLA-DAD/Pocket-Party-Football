@@ -78,6 +78,39 @@ const LAYOUTS = ['wait', 'qbpre', 'qb', 'carrier', 'route', 'block', 'rush', 'lb
     sendIn({ t: 'huddle', side: 'offense', secs: 15, caller: true, callerNumber: 15, locked: false, mine: '', plays, spots: OFF, opp: DEF, me: 0, thumbs: { slants: 2 } });
     sendIn({ t: 'ui', layout: 'huddle', aid: 'h1' });
     await check('huddle');
+    // FEATURES.huddleSwitch: POSITION opens the team's offense spots; a bot's spot sends a spot press with the huddle aid
+    const lineup = (you, extra) => sendIn(Object.assign({ t: 'lineup', held: false, switch: true, team: 0, teamName: 'CHIEFS', people: 2, players: 11,
+      offense: OFF.map((s, i) => ({ pos: s.pos, number: s.number, who: i === you ? 'KENNY' : i === 4 ? 'RAY' : 'BOT', person: i === you || i === 4, me: i === you, away: false })),
+      defense: DEF.map((s, i) => ({ pos: s.pos, number: s.number, who: i === 1 ? 'KENNY' : 'BOT', person: i === 1, me: i === 1, away: false })),
+      you: { o: you, d: 1 } }, extra || {}));
+    ok(!(await page.isVisible('#hSwitch')), tag + ' no POSITION button before the game says switching is on');
+    lineup(0);
+    await page.waitForTimeout(50);
+    ok(await page.isVisible('#hSwitch'), tag + ' POSITION button shows in the huddle');
+    await check('huddle-switch');
+    await page.click('#hSwitch');
+    await check('huddle-position');
+    ok((await page.$$('#hSpots .lspot')).length === 11, tag + ' 11 offense spots to pick from');
+    got.length = 0;
+    await page.locator('#hSpots .lspot').nth(3).click();
+    await page.locator('#hSpots .lspot').nth(0).click();
+    await page.waitForTimeout(50);
+    const spots = got.filter(m => m.t === 'spot');
+    ok(spots.length === 1 && spots[0].side === 'o' && spots[0].spot === 3 && spots[0].aid === 'h1', tag + ' spot press (and none for your own): ' + JSON.stringify(got));
+    lineup(3);
+    await page.waitForTimeout(50);
+    ok(!(await page.isVisible('#hPos')), tag + ' the picker closes once you have the new spot');
+    // a teammate asks to swap: the picker opens with the question, SWAP answers
+    lineup(3, { ask: { from: 'RAY', side: 'o', give: 'WR #17', get: 'WR #19' } });
+    await check('huddle-position-ask');
+    ok(await page.isVisible('#hAsk'), tag + ' the swap question shows in the huddle');
+    got.length = 0;
+    await page.click('#hAskYes');
+    await page.waitForTimeout(50);
+    ok(got.some(m => m.t === 'swap' && m.yes === true && m.aid === 'h1'), tag + ' swap answer: ' + JSON.stringify(got));
+    await page.click('#hPosDone');
+    await page.waitForTimeout(30);
+    ok(!(await page.isVisible('#hPos')), tag + ' DONE closes the picker');
     // pick a play and lock it in
     const second = page.locator('#hPlays .play').nth(1);
     await second.click();
@@ -117,5 +150,5 @@ const LAYOUTS = ['wait', 'qbpre', 'qb', 'carrier', 'route', 'block', 'rush', 'lb
   }
   await browser.close();
   if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }
-  console.log('PASS: ' + SIZES.length + ' sizes, join, pick, huddle, lock in, ' + LAYOUTS.length + ' layouts, nothing off screen, throw stick flick/lob/cancel');
+  console.log('PASS: ' + SIZES.length + ' sizes, join, pick, huddle, position switch, lock in, ' + LAYOUTS.length + ' layouts, nothing off screen, throw stick flick/lob/cancel');
 })();
