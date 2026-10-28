@@ -111,8 +111,8 @@ half3 MarkEye(half3 col, float2 e, float aa)
     float mood = _EyeLook.w;
     if (abs(mood) > 0.5)
     {
-        float line = mood > 0 ? 0.35 - 0.55 * e.x * e.x : -0.1 + 0.35 * abs(e.x);
-        col = lerp(_LidColor.rgb, _IrisColor.rgb * 0.12, saturate((0.2 - abs(e.y - line)) / aa + 0.5));
+        float lidLine = mood > 0 ? 0.35 - 0.55 * e.x * e.x : -0.1 + 0.35 * abs(e.x);
+        col = lerp(_LidColor.rgb, _IrisColor.rgb * 0.12, saturate((0.2 - abs(e.y - lidLine)) / aa + 0.5));
     }
     return col;
 }
