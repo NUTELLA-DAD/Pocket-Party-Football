@@ -587,10 +587,49 @@ namespace PocketFootball.View
                 foreach (float sz in new[] { -1f, 1f })
                 {
                     b.Box(new Vector3(sx * endX, bar + up * 0.5f, sz * half), new Vector3(t * 0.8f, up * 0.5f, t * 0.8f), yellow);          // an upright
-                    b.Box(new Vector3(sx * endX, bar + up + sc.postRibbonM * 0.5f, sz * half), new Vector3(t * 0.5f, sc.postRibbonM * 0.5f, t * 0.5f), ribbon);
+                    var top = new Vector3(sx * endX, bar + up + sc.postRibbonM * 0.5f, sz * half);
+                    if (!windFlags) { b.Box(top, new Vector3(t * 0.5f, sc.postRibbonM * 0.5f, t * 0.5f), ribbon); continue; }
+                    // FEATURES.wind: a short yellow staff and a flag on top of it (SetWind turns it)
+                    b.Box(top, new Vector3(t * 0.5f, sc.postRibbonM * 0.5f, t * 0.5f), yellow);
+                    flags.Add(Flag(new Vector3(sx * endX, bar + up + sc.postRibbonM, sz * half), ribbon, flags.Count));
                 }
             }
             b.Build(root, "GoalPosts", mat);
+        }
+
+        // ---- FEATURES.wind: the flags on top of the posts ----
+        bool windFlags => cfg.Feature("wind") && cfg.Feature("kicking");
+        readonly List<Transform> flags = new List<Transform>();
+        public int FlagCount => flags.Count;
+        public Transform FlagAt(int i) => flags[i];
+
+        // One flag, its pivot on the staff's top: the cloth runs out along its +x, hangs below the pivot.
+        Transform Flag(Vector3 at, Color color, int i)
+        {
+            var fb = new Blocks();
+            float l = sc.flagLengthM, h = sc.flagHeightM;
+            fb.Box(new Vector3(l * 0.5f, -h * 0.5f, 0f), new Vector3(l * 0.5f, h * 0.5f, sc.flagThickM * 0.5f), color);
+            var go = fb.Build(root, "WindFlag" + i, mat, false);
+            go.transform.localPosition = at;
+            return go.transform;
+        }
+
+        // Every frame: the flags stream the way the wind blows (x, z: yards a second), straighter the stronger it is,
+        // and flutter in stepped keys (key: the anim.fps key count, never the time itself), each flag a key apart.
+        static readonly float[] FlutterKeys = { 0f, 1f, -0.5f, 0.6f, -1f, 0.3f };
+        public void SetWind(float x, float z, float maxYdS, int key)
+        {
+            if (flags.Count == 0) return;
+            float speed = Mathf.Sqrt(x * x + z * z);
+            float strength = maxYdS > 0f ? Mathf.Clamp01(speed / maxYdS) : 0f;
+            float yaw = speed > 0.01f ? Mathf.Atan2(-z, x) * Mathf.Rad2Deg : 0f;
+            float droop = Mathf.Lerp(sc.flagCalmDroopDeg, 0f, Mathf.Sqrt(strength));
+            for (int i = 0; i < flags.Count; i++)
+            {
+                float k = FlutterKeys[(key + i) % FlutterKeys.Length];
+                float flutter = k * sc.flagFlutterDeg * (0.3f + 0.7f * strength);
+                flags[i].localRotation = Quaternion.Euler(0f, yaw + flutter, 0f) * Quaternion.Euler(0f, 0f, -droop + flutter * 0.5f);
+            }
         }
 
         // An orange down marker: a pole with a box on top, held by one of the chain crew standing just off the field

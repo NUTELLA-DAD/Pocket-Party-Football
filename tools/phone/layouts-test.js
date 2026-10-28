@@ -12,7 +12,7 @@ const { chromium } = require('playwright');
   page.on('pageerror', e => errors.push(e.message));
   await page.goto('file://' + path.resolve(__dirname, 'layouts-harness.html'));
   const names = await page.evaluate(() => PPLayouts.names);
-  ok(names.length === 10, 'expected 10 layouts, got ' + names.length);
+  ok(names.length === 11, 'expected 11 layouts, got ' + names.length);
   for (const n of names) {
     await page.evaluate(n => go(n), n);
     const count = await page.$$eval('#btnBox > *', els => els.length);

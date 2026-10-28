@@ -134,6 +134,7 @@ namespace PocketFootball.Boot
                 if (Huddle.IsLocked(W, p.Team)) Broadcast(Messages.Status(W));
             }
             else if (cmd == "kick") GamepadSource.Kick(W, pad.Slot, pad.KickPower, pad.KickAim);
+            else if (cmd == "kicktap") GamepadSource.KickTap(W, pad.Slot);   // FEATURES.kickSweep: A sets the aim, then the power
             else if (cmd == "kickoff" && W.Tick == 0)
                 host.gameObject.SendMessage("KickOff", SendMessageOptions.DontRequireReceiver);   // the lobby (WS-07), if there is one
         }

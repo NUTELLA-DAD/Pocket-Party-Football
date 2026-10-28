@@ -242,7 +242,14 @@ namespace PocketFootball.View
             bool snapping = SnapBall(w, alpha, holder);
             // the hand with the ball in it closes round it (FEATURES.handCurl, ModelSkin)
             foreach (var body in bodies.Values) body.HoldL = body.HoldR = false;
-            if (!snapping && holder != null)
+            if (!snapping && holder != null && Kicking.Holding(w))
+            {
+                // FEATURES.fgHolder: set down on its point on the spot, the holder's hand on top of it
+                holder.HoldR = true;
+                ball.localPosition = new Vector3(w.Kick.HoldX * yd, cfg.view.ballLengthM * 0.5f, w.Kick.HoldZ * yd);
+                ball.rotation = Quaternion.LookRotation(Vector3.up, new Vector3(w.Dir, 0f, 0f));
+            }
+            else if (!snapping && holder != null)
             {
                 holder.HoldR = true;
                 ball.position = holder.HandR.position;
@@ -309,6 +316,7 @@ namespace PocketFootball.View
                 case Move.Throw: kind = FootballFigure.PoseKind.Release; frame = m.Full ? 2 + Mathf.Min(3, m.Frame) : Mathf.Min(1, m.Frame / 2); return true;
                 case Move.KickSet: kind = FootballFigure.PoseKind.KickSet; frame = m.Frame; return true;
                 case Move.Kick: kind = FootballFigure.PoseKind.Kick; frame = Mathf.Min(4, m.Frame); return true;
+                case Move.Hold: kind = FootballFigure.PoseKind.Kneel; return true;   // FEATURES.fgHolder
                 case Move.Handoff: kind = FootballFigure.PoseKind.Handoff; return true;
                 case Move.Snap: kind = FootballFigure.PoseKind.Stance; return true;
                 case Move.TakeSnap: kind = FootballFigure.PoseKind.Handoff; return true;   // hands out in front for it

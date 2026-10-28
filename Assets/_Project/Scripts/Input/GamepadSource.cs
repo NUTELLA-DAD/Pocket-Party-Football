@@ -155,7 +155,7 @@ namespace PocketFootball.Input
             {
                 if (int.TryParse(a.Substring(6), out int k) && k >= 1) { throwButton = (int)b; throwTo = k; throwAt = now; }
             }
-            else if (a == "kick") { kickButton = (int)b; kickAt = now; }
+            else if (a == "kick") { kickButton = (int)b; kickAt = now; commands.Enqueue("kicktap"); }   // (FEATURES.kickSweep: the press is the tap)
             else if (a.StartsWith("team:", System.StringComparison.Ordinal) || a == "agree" || a == "kickoff") commands.Enqueue(a);
             else phone.OnButton(a, true, phone.Aid);
         }
@@ -240,8 +240,10 @@ namespace PocketFootball.Input
             return book.Count > 0 ? book[w.HuddleNumber % book.Count].id : null;
         }
 
-        // The kicker's pad kicks, like the phone's swipe (Kicking.Kick checks it is the kicker and the moment).
-        public static bool Kick(World w, int slot, float power, float aim) => Kicking.Kick(w, slot, power, aim);
+        // The kicker's pad kicks, like the phone's swipe (Kicking.Kick checks it is the kicker and the moment). With
+        // FEATURES.kickSweep a field goal is two presses of A instead ("kicktap": Tap), and the release kicks nothing.
+        public static bool Kick(World w, int slot, float power, float aim) => !Kicking.SweepOn(w) && Kicking.Kick(w, slot, power, aim);
+        public static bool KickTap(World w, int slot) => Kicking.SweepOn(w) && Kicking.Tap(w, slot);
 
         public static bool Agree(World w, int slot)
         {

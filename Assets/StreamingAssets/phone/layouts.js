@@ -43,7 +43,9 @@
     cover:   { line: 'Stay with your man. Jump for the pick', stam: true,
                btns: [['tackle', 'TACKLE', 'red'], ['sprint', 'SPRINT', 'teal', 'Hold', true],
                       ['jump', 'JUMP', 'yellow', 'Pick or swat'], ['dive', 'DIVE TACKLE', 'orange', 'Big reach, slow to get up']] },
-    kick:    { line: 'Drag up from the ball: longer = harder, sideways = aim', stam: false, kick: true, noStick: true, btns: [] }
+    kick:    { line: 'Drag up from the ball: longer = harder, sideways = aim', stam: false, kick: true, noStick: true, btns: [] },
+    hold:    { line: 'You\'re the holder: the snap comes to you, hold it down for the kick', stam: false, noStick: true,
+               btns: [['find', 'FIND ME', 'purple', 'Flash your ring on the TV']] }
   };
 
   // Little line pictures on the gems (24 x 24, drawn with the text colour). Offline: plain SVG paths, no icon font.

@@ -61,6 +61,9 @@ namespace PocketFootball.Sim
         // postCrossbarM up, uprights postWidthM apart and postUprightM tall with a ribbon on top, all postThickM thick.
         public float postCrossbarM, postWidthM, postUprightM, postThickM, postBackM, postPadM, postRibbonM;
         public string postColor, postPadColor, postRibbonColor;
+        // FEATURES.wind: a flag on top of each upright instead of the ribbon, flagLengthM by flagHeightM, streaming the way
+        // the wind blows; in a calm it hangs flagCalmDroopDeg down, and it flutters up to flagFlutterDeg in stepped keys.
+        public float flagLengthM, flagHeightM, flagThickM, flagCalmDroopDeg, flagFlutterDeg;
 
         // The full bowl round the field (FEATURES.stadiumBowl, NO_STADIUM_BOWL=1: only the old straight stand on the
         // far side). View/Bowl.cs.

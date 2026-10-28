@@ -9,6 +9,7 @@ namespace PocketFootball.Input
     //   rush    SWIM, BULL RUSH, TACKLE, SWAT            lb      SPRINT, TACKLE, DIVE TACKLE, SWAT
     //   cover   SPRINT, TACKLE, JUMP, DIVE TACKLE        wait    FIND ME (after the whistle)
     //   walk    the plain stick and SPRINT (no live play: NO_LIVEPLAY=1)
+    //   kick    the kick meter (the kicker only)            hold    FIND ME (the field goal holder, FEATURES.fgHolder)
     public static class PhoneLayouts
     {
         public static readonly string[] All = { "huddle", "qbpre", "qb", "carrier", "route", "block", "rush", "lb", "cover", "wait" };
@@ -22,6 +23,7 @@ namespace PocketFootball.Input
                 case Phase.Whistle: return "wait";
             }
             if (Kicking.WaitingToKick(w, p)) return "kick";   // WS-01: the kick meter, for the kicker only
+            if (p != null && p == Kicking.Holder(w) && !w.Kick.Kicked) return "hold";   // FEATURES.fgHolder: he just holds it
             var carrier = LivePlay.Carrier(w);
             bool qb = p == LivePlay.Qb(w);
             if (w.Phase == Phase.Set) return qb ? "qbpre" : Role(p);

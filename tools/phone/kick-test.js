@@ -57,6 +57,51 @@ const { chromium } = require('playwright');
     s = await state();
     ok(s.shown && !s.done && s.kind === 'KICKOFF', tag + ': a new kick gets a fresh meter ' + JSON.stringify(s));
     ok(!(await page.isVisible('.kposts')) && (await page.isVisible('.kdown')), tag + ': kickoff shows DOWNFIELD, not posts');
+
+    // a field goal with two taps (kickSweep): tap = the aim (and the snap), tap again = the power
+    await page.evaluate(() => { meter(false); ui('walk'); window.sent = []; ui('kick'); sweepMeter('aim'); });
+    s = await state();
+    ok(s.shown && s.sweep && s.stage === 'aim', tag + ': the aim sweeps ' + JSON.stringify(s));
+    ok(await page.isVisible('.ktap'), tag + ': a big TAP button');
+    ok((await page.getAttribute('.ktap', 'aria-label')).length > 0, tag + ': the tap button names its action');
+    ok((await page.textContent('.kwind')).includes('11 mph'), tag + ': the wind is shown');
+    await page.waitForTimeout(300);
+    await page.screenshot({ path: path.resolve(__dirname, '../../.shots/phone-kick-' + tag + '-aim.png') });
+    await page.locator('.ktap').dispatchEvent('pointerdown', { pointerId: 3 });
+    sent = await page.evaluate(() => window.sent);
+    const aimAid = await page.evaluate(() => aid);
+    ok(sent.length === 1 && sent[0].t === 'kickaim' && sent[0].aid === aimAid, tag + ': the first tap sends the aim ' + JSON.stringify(sent));
+    ok(sent[0] && sent[0].aim > 0.2 && sent[0].aim <= 1, tag + ': 0.3 s in, the arrow had swung right ' + (sent[0] && sent[0].aim));
+    s = await state();
+    ok(s.stage === 'power', tag + ': then the power sweeps');
+    // the game answers with its own stage: nothing restarts
+    await page.evaluate(a => sweepMeter('power', a), sent[0] ? sent[0].aim : 0);
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: path.resolve(__dirname, '../../.shots/phone-kick-' + tag + '-power.png') });
+    await page.locator('.kfield').dispatchEvent('pointerdown', { pointerId: 4 });
+    sent = await page.evaluate(() => window.sent);
+    ok(sent.length === 2 && sent[1].t === 'kick' && sent[1].aid === aimAid, tag + ': the second tap kicks ' + JSON.stringify(sent));
+    ok(sent[1] && sent[1].power > 0.45 && sent[1].power <= 0.8, tag + ': half a second up the sweep ' + (sent[1] && sent[1].power));
+    ok(sent[1] && sent[1].aim === sent[0].aim, tag + ': with the aim from the first tap');
+    await page.locator('.kfield').dispatchEvent('pointerdown', { pointerId: 5 });
+    ok((await page.evaluate(() => window.sent.length)) === 2, tag + ': one kick');
+    // the run-up: the game still says on (no sweep): the phone stays on "kicked"
+    await page.evaluate(() => meter(true, 'FIELD GOAL', 42));
+    s = await state();
+    ok(s.done && s.shown, tag + ': still showing the kick while he runs up');
+    await page.screenshot({ path: path.resolve(__dirname, '../../.shots/phone-kick-' + tag + '-kicked.png') });
+    // too slow: the game snapped it and says power first
+    await page.evaluate(() => { meter(false); ui('walk'); window.sent = []; ui('kick'); sweepMeter('aim'); sweepMeter('power', -0.4); });
+    s = await state();
+    ok(s.stage === 'power' && !s.done, tag + ': the game snapped it: straight to the power ' + JSON.stringify(s));
+    await page.locator('.ktap').dispatchEvent('pointerdown', { pointerId: 6 });
+    sent = await page.evaluate(() => window.sent);
+    ok(sent.length === 1 && sent[0].t === 'kick' && sent[0].aim === -0.4, tag + ': kicks with the game\'s aim ' + JSON.stringify(sent));
+    // and a kickoff after it is the swipe again
+    await page.evaluate(() => { meter(false); ui('walk'); ui('kick'); meter(true, 'KICKOFF', 0); });
+    s = await state();
+    ok(!s.sweep && !(await page.isVisible('.ktap')), tag + ': a kickoff is a swipe again ' + JSON.stringify(s));
+
     ok(errors.length === 0, tag + ': page errors ' + errors.join('; '));
     await page.close();
   }

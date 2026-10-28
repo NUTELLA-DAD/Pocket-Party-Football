@@ -74,6 +74,8 @@ namespace PocketFootball.Sim
             }
             if (State == BallState.Flying)
             {
+                Kicking.Drift(w, out float ax, out float az);   // FEATURES.wind: a field goal drifts with the wind
+                VX += ax * dt; VZ += az * dt;
                 VY -= c.gravityYdS2 * dt;
                 X += VX * dt; Y += VY * dt; Z += VZ * dt;
                 if (Y <= 0f)
