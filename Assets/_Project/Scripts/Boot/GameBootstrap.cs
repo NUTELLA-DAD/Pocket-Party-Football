@@ -20,6 +20,7 @@ namespace PocketFootball.Boot
         public CliArgs Args { get; private set; }
         public PartyHost Host { get; private set; }
         public LabMode Lab { get; private set; }     // the practice lab (-lab, Lab.bat), else null
+        public TitleScreen Title { get; private set; }   // the title screen while it is up, else null
 
         void Awake()
         {
@@ -28,6 +29,9 @@ namespace PocketFootball.Boot
             Config = ConfigLoader.Parse(LoadConfigText(), Environment.GetEnvironmentVariable);
             ConfigLoader.AddPlays(Config, LoadPlays());
             Application.targetFrameRate = 60;
+            TitleScreen.ApplySavedSettings();
+            bool title = TitleScreen.Requested(Config, Args);
+            if (title) TitleScreen.PrepareAttract(Config, Args);   // the bots' show game behind the title
 
             BuildLight();
             Field = FieldView.Build(Config, baseMaterial);
@@ -35,6 +39,7 @@ namespace PocketFootball.Boot
             if (Args.LookX.HasValue) Rig.SetLookAtX(Args.LookX.Value);
             Host = PartyHost.Create(gameObject, Config, baseMaterial, Rig, Args);
             if (LabMode.Requested()) Lab = LabMode.Create(gameObject, Config, baseMaterial, Host, Rig, ConfigDir);
+            if (title) Title = TitleScreen.Attach(gameObject, Config, Host, Rig);
 
             if (!string.IsNullOrEmpty(Args.ShotsDir))
             {
@@ -89,7 +94,7 @@ namespace PocketFootball.Boot
         void Update()
         {
             var kb = Keyboard.current;
-            if (kb != null && kb.escapeKey.wasPressedThisFrame) Application.Quit(0);
+            if (kb != null && kb.escapeKey.wasPressedThisFrame && !TitleScreen.HoldsEscape) Application.Quit(0);   // (Esc on a title page goes back)
         }
 
         // Shows the version in a corner until the real HUD exists (M1-e).
@@ -97,6 +102,7 @@ namespace PocketFootball.Boot
         {
             if (Host != null && Host.Photo != null) return;
             if (Lab != null) return;     // the lab draws its own panel
+            if (TitleScreen.Showing) return;
             GUI.Label(new Rect(12, 8, 600, 24), "Pocket Party Football - M0   (B adds a bot, Esc quits)");
         }
     }
