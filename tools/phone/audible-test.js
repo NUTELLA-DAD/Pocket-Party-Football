@@ -7,8 +7,8 @@ const { chromium } = require('playwright');
 const DIR = path.join(__dirname, '..', '..', 'Assets', 'StreamingAssets', 'phone');
 const SHOTS = path.join(__dirname, '..', '..', '.shots');
 const SIZES = [[844, 390], [568, 320], [390, 844]];
-const TEAMS = [{ name: 'CHIEFS', short: 'KC', color: '#d7263d', color2: '#ffb612', people: 1, players: 11 },
-               { name: 'ROUGHRIDERS', short: 'SSK', color: '#1f7a3a', color2: '#ffffff', people: 0, players: 11 }];
+const TEAMS = [{ name: 'ARROWS', short: 'ARR', color: '#d7263d', color2: '#ffb612', people: 1, players: 11 },
+               { name: 'GRAINS', short: 'GRN', color: '#1f7a3a', color2: '#ffffff', people: 0, players: 11 }];
 const PLAYS = [{ id: 'verts', name: 'Four Verticals', desc: 'Everyone goes deep' }, { id: 'dive', name: 'HB Dive', desc: 'Straight ahead' },
                { id: 'screen', name: 'RB Screen', desc: 'Dump it off' }, { id: 'toss', name: 'Toss', desc: 'Outside run' }];
 const HOT = [{ id: 'hot_slant', name: 'Hot slant', text: 'Hot route: two steps, then slant inside fast' }, { id: 'hot_go', name: 'Hot go', text: 'Hot route: run straight deep' }];
@@ -40,7 +40,7 @@ const offer = o => Object.assign({ t: 'audible', open: true, side: 'offense', ca
       ws.onMessage(m => {
         const msg = JSON.parse(m); got.push(msg);
         if (msg.t === 'join') ws.send(JSON.stringify({ t: 'joined', token: 'tk', name: msg.name, team: 0, teams: TEAMS }));
-        if (msg.t === 'join') ws.send(JSON.stringify({ t: 'picked', team: 0, color: '#d7263d', color2: '#ffb612', name: 'KENNY', teamName: 'CHIEFS', pos: 'QB', number: 15 }));
+        if (msg.t === 'join') ws.send(JSON.stringify({ t: 'picked', team: 0, color: '#d7263d', color2: '#ffb612', name: 'KENNY', teamName: 'ARROWS', pos: 'QB', number: 15 }));
       });
     });
     const sendIn = o => sock.send(JSON.stringify(o));

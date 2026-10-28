@@ -271,8 +271,8 @@
   },
   "teams": [
     {
-      "name": "CHIEFS",
-      "short": "KC",
+      "name": "ARROWS",
+      "short": "ARR",
       "color": "#d7263d",
       "color2": "#ffb612",
       "model": "Models/Chiefs24/Chiefs24_Rigged",
@@ -292,8 +292,8 @@
       "numberEdge": "#ffb612"
     },
     {
-      "name": "ROUGHRIDERS",
-      "short": "SSK",
+      "name": "GRAINS",
+      "short": "GRN",
       "color": "#1f8a4c",
       "color2": "#f6f1de",
       "model": "Models/Chiefs24/Chiefs24_Rigged",

@@ -342,7 +342,7 @@ namespace PocketFootball.Boot
         static readonly string[] HowTo =
         {
             "<b>1. Join.</b> Press PLAY. Everyone scans the QR code on the TV with their phone (same Wi-Fi as the TV).",
-            "<b>2. Pick a side.</b> Chiefs or Roughriders. Bots play every spot nobody took.",
+            "<b>2. Pick a side.</b> Arrows or Grains. Bots play every spot nobody took.",
             "<b>3. Lobby.</b> Pick your offense spot and your defense spot. Any phone taps KICK OFF to start.",
             "<b>4. Huddle.</b> Call a play on your phone in secret. The TV only shows CALLED, never which play.",
             "<b>5. Offense.</b> QB: tap HIKE, then a receiver's shape to throw (tap = bullet, hold = lob). With the ball: SPRINT, JUKE, SPIN, STIFF ARM.",

@@ -31,7 +31,7 @@ namespace PocketFootball.Tests.EditMode
                 Assert.IsNotNull(tex, t.name + ": Resources/" + t.cheerTexture);
                 Assert.LessOrEqual(tex.width, 2048, "imported at most 2048 (ModelImport)");
             }
-            Assert.AreNotEqual(cfg.teams[0].cheerTexture, cfg.teams[1].cheerTexture, "Chiefs red and gold, Roughriders green and white");
+            Assert.AreNotEqual(cfg.teams[0].cheerTexture, cfg.teams[1].cheerTexture, "Arrows red and gold, Grains green and white");
         }
 
         [Test]

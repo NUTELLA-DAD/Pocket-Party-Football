@@ -5,7 +5,7 @@ Blender as a Python module (`pip install bpy`), run with `python script.py -- ar
 - `rigfix.py -- in.fbx params.json out.fbx`: re-places the 22 Humanoid joints and rebuilds every skin weight from
   the T-pose shape (arms along X, legs down Z, model faces -Y, its left +X). Only the helmet keeps its old rigid
   Head weights (`headKeep`: old Head weight above this stays rigid). All mesh-specific numbers live in the JSON:
-  `chiefs24.json` is the tuned set for Chiefs #24 (joint heights/widths in metres, blend widths).
+  `chiefs24.json` is the tuned set for Arrows #24 (joint heights/widths in metres, blend widths).
   Exports with the same FBX settings as the original (Unity axes, no leaf bones, texture not embedded).
 - `gauntlet.py model.fbx texture.png outdir [Pose,Pose]`: poses the model exactly the way the game's ModelSkin does
   (FootballFigure pose angles, arms lowered 12 deg, raised arms splayed) and renders each pose; prints a
@@ -17,7 +17,7 @@ Blender as a Python module (`pip install bpy`), run with `python script.py -- ar
   and finger vertex's old weights; `"newAbove": [z0, z1]` gives the new weights only above z1 (old below z0, blended
   between). `soften/<Model>.json` are the sets that softened the shoulders and armpits of the Linebacker, QB, WR, TE and
   Kicker (wider smoothing, a wider clavicle blend): arms-up poses lost about a third of their stretched triangles.
-  Chiefs #24 kept its weights (they already scored better).
+  Arrows #24 kept its weights (they already scored better).
 
 For another model (e.g. the linebacker): copy chiefs24.json, set the joints from slices of that mesh (shoulder at the
 sleeve/pad centre, elbow mid bare arm, wrist at the wristband, knee at the pants hem, ankle inside the shoe top), and
@@ -27,7 +27,7 @@ check `headKeep` keeps the helmet and facemask rigid.
 rigid above 1.245 m before rigfix) and `padShift` is 0. Its import/prep/rig scripts are in the project files under
 models/referee/scripts.
 
-`te.json`: the tight end (Resources/Models/TE, Kenny's Chiefs #88). Its import/prep/rig scripts are in the project
+`te.json`: the tight end (Resources/Models/TE, Kenny's Arrows #88). Its import/prep/rig scripts are in the project
 files under models/te/scripts; after rigfix it goes through handfix.py (`TE` in hands.json, with a `Right` override:
 its right hand sits further back than the left).
 

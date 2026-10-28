@@ -4,9 +4,9 @@ The live, editable version is the Claude Doc "Pocket Party Football: Game Plan" 
 
 ## The game in plain words
 
-An 11-on-11 couch football game, Chiefs vs Roughriders, on one TV with everyone's phone as the controller. The TV shows a chunky Wind Waker-style stadium from the sideline, so the field runs left to right like a broadcast. Every spot nobody claims is a bot, so 2 people or 22 get the same full game.
+An 11-on-11 couch football game, Arrows vs Grains, on one TV with everyone's phone as the controller. The TV shows a chunky Wind Waker-style stadium from the sideline, so the field runs left to right like a broadcast. Every spot nobody claims is a bot, so 2 people or 22 get the same full game.
 
-- **Join:** double-click the game, a QR code and 4-letter code appear. Scan, type a name, pick Chiefs or Roughriders, pick a position.
+- **Join:** double-click the game, a QR code and 4-letter code appear. Scan, type a name, pick Arrows or Grains, pick a position.
 - **Huddle:** each team's phones show the playbook. Only your team sees it; the TV only shows "CALLED ✓". Then your phone shows YOUR job on a mini field diagram.
 - **Play:** the QB taps HIKE and each phone flips to the buttons that position needs.
 - **Not in v1:** penalties, injuries, season mode, official logos. Short quarters, about 25 minutes a game.
@@ -28,7 +28,7 @@ Lessons (LESSONS.md): a rough playable in days then real people; the core fantas
 
 ## Teams, humans, bots
 
-- 11 on the field per team; up to 22 phones. Chiefs red/gold/white, Roughriders green/white/black.
+- 11 on the field per team; up to 22 phones. Arrows red/gold/white, Grains green/white/black.
 - Offense: QB 1, RB 1, WR 2, TE 1, OL 5. Defense: DL 4, LB 3, CB 2, S 2. Kicker/punter are bots; the play caller gets a kicking meter.
 - Two-way players when fewer than 22 humans: one offense spot + one defense spot each (confirmed).
 - A human idle 5 s during a live play gets bot help until they move (robot icon on the plate).
@@ -38,7 +38,7 @@ Lessons (LESSONS.md): a rough playable in days then real people; the core fantas
 
 1. Ball spotted; both teams' phones open the playbook. 15 s clock.
 2. Caller: human QB on offense, human middle LB on defense, else the first human on that side. Teammates tap to suggest (thumbs-up count on the caller's cards).
-3. LOCK IN; TV shows "CHIEFS: CALLED ✓" only.
+3. LOCK IN; TV shows "ARROWS: CALLED ✓" only.
 4. Clock out: the bot coach picks for the down and distance.
 5. Every phone shows its job (route, block target, zone or man). Bots get the same jobs.
 
@@ -129,4 +129,4 @@ Safety net: three seeded 22-bot games must replay identically after every change
 - Two-way players when fewer than 22 humans: one offense spot + one defense spot each.
 - Play callers: the QB on offense and the middle LB on defense, with teammates suggesting.
 - Downloads OK: the MIT QR encoder (M0) and CC0 Quaternius character art (M4).
-- Art direction: Kenny's concept art in `docs/art/`, real logos allowed for private play.
+- Art direction: Kenny's concept art in `docs/art/` (style only; the game uses our own Arrows and Grains marks).

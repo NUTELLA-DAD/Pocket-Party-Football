@@ -5,8 +5,8 @@ using UnityEngine;
 namespace PocketFootball.View
 {
     // Each team's mark is ONE texture, used everywhere (the centre of the field, the scoreboard, banners).
-    // A PNG at Assets/_Project/Resources/Logos/<SHORT>.png (KC, SSK) replaces it, a one-file change; without one, the
-    // game draws its own mark from code (our own simple marks, not the official logos).
+    // It is the PNG at Assets/_Project/Resources/Logos/<SHORT>.png (ARR the Arrows, GRN the Grains: the same emblems
+    // the helmets wear, see tools/rebrand), a one-file change; without one, the game draws a plain mark from code.
     public static class TeamMarks
     {
         static readonly Dictionary<string, Texture2D> cache = new Dictionary<string, Texture2D>();
@@ -16,23 +16,9 @@ namespace PocketFootball.View
         {
             if (cache.TryGetValue(t.@short, out var tex) && tex != null) return tex;
             tex = Resources.Load<Texture2D>("Logos/" + t.@short);
-            if (tex == null) tex = t.@short == "KC" ? Arrowhead(t) : Sweep(t);
+            if (tex == null) tex = Sweep(t);
             cache[t.@short] = tex;
             return tex;
-        }
-
-        // A white arrowhead pointing left, a team-colour rim, the team's letters inside.
-        static Texture2D Arrowhead(TeamConfig t)
-        {
-            var p = new Painter(Size, Size, new Color(1, 1, 1, 0));
-            Color team = Colors.Hex(t.color), white = Color.white;
-            var shape = new List<Vector2> { new Vector2(28, 256), new Vector2(470, 450), new Vector2(420, 256), new Vector2(470, 62) };
-            p.Fill(Grow(shape, 22), team);
-            p.Fill(shape, white);
-            var letters = Glyphs.Text(t.@short, 190, 0.05f, out float w);
-            Offset(letters, new Vector2(270 - w * 0.5f, 160));
-            p.Strokes(letters, 34, team);
-            return p.ToTexture("Mark " + t.@short);
         }
 
         // A slanted banner with a white edge, a bold italic first letter, wheat chevrons at both ends.

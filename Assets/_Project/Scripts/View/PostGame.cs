@@ -119,7 +119,7 @@ namespace PocketFootball.View
             return rows;
         }
 
-        // "CHIEFS WIN!", "IT'S A TIE!"
+        // "ARROWS WIN!", "IT'S A TIE!"
         public static string WinnerLine(World w)
         {
             int best = -1, most = int.MinValue; bool tie = false;

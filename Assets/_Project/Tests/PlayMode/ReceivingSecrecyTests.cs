@@ -10,8 +10,8 @@ using UnityEngine.TestTools;
 
 namespace PocketFootball.Tests.PlayMode
 {
-    // WS-05's gate: CALL FOR IT is team-private. A Chiefs receiver taps it; the Chiefs QB's phone gets the "call"
-    // message, the Roughriders phone never does (not as a message, not inside the public status), and neither does
+    // WS-05's gate: CALL FOR IT is team-private. An Arrows receiver taps it; the Arrows QB's phone gets the "call"
+    // message, the Grains phone never does (not as a message, not inside the public status), and neither does
     // the receiver's own phone (only the QB needs it).
     public sealed class ReceivingSecrecyTests
     {
@@ -30,14 +30,14 @@ namespace PocketFootball.Tests.PlayMode
 
             var qbPhone = new FakePhone();
             var rbPhone = new FakePhone();
-            var riders = new FakePhone();
+            var grains = new FakePhone();
             yield return qbPhone.JoinAndPick(port, host.RoomCode, "Kay", off);   // the first person on offense is the QB
             yield return rbPhone.JoinAndPick(port, host.RoomCode, "Bo", off);    // the next one takes spot 1, the RB
-            yield return riders.JoinAndPick(port, host.RoomCode, "Ray", def);
+            yield return grains.JoinAndPick(port, host.RoomCode, "Ray", def);
 
             var qb = LivePlay.Qb(w);
             var rb = LivePlay.SpotOf(w, off, 1);
-            Assert.IsTrue(qb.Human && rb.Human, "both Chiefs people are on the field");
+            Assert.IsTrue(qb.Human && rb.Human, "both Arrows people are on the field");
             Assert.Greater(Receiving.ShapeOf(w, rb), 0, "the RB is a receiver");
 
             // (drop what came before: the next "ui" the RB phone sees must be the one for the live play)
@@ -62,10 +62,10 @@ namespace PocketFootball.Tests.PlayMode
             Assert.AreEqual(rb.Number, (int)call["number"]);
             Assert.AreEqual(1, w.Recv.Calls);
 
-            yield return riders.Settle(30);
+            yield return grains.Settle(30);
             yield return rbPhone.Settle(30);
-            Assert.Greater(riders.All.Count, 3, "the defense phone did get its own messages");
-            foreach (var text in riders.All)
+            Assert.Greater(grains.All.Count, 3, "the defense phone did get its own messages");
+            foreach (var text in grains.All)
             {
                 var m = JObject.Parse(text);
                 Assert.AreNotEqual("call", (string)m["t"], "the call reached the other team");
@@ -76,7 +76,7 @@ namespace PocketFootball.Tests.PlayMode
             w.Cfg.features["receiving"] = false;
             qbPhone.Dispose();
             rbPhone.Dispose();
-            riders.Dispose();
+            grains.Dispose();
         }
     }
 }
