@@ -122,11 +122,11 @@ namespace PocketFootball.View
                     Vector3 axis = Vector3.Cross(along, down);
                     if (axis.sqrMagnitude < 1e-12f) continue;
                     // (the tip carries on the way its bone points: it has no bone past it to measure by)
-                    int key = digit == "Thumb" ? 2 : 0;
+                    int digitKey = digit == "Thumb" ? 2 : 0;
                     foreach (var bone in new[] { root, tip })
                     {
                         fingerBones.Add(bone); fingerAxes.Add(Quaternion.Inverse(bone.rotation) * axis.normalized);
-                        fingerKeys.Add(bone == root ? key : key + 1); fingerSides.Add(side == "Left");
+                        fingerKeys.Add(bone == root ? digitKey : digitKey + 1); fingerSides.Add(side == "Left");
                     }
                 }
 
