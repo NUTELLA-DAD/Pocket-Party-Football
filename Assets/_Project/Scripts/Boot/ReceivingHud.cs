@@ -34,7 +34,7 @@ namespace PocketFootball.Boot
         void OnGUI()
         {
             var w = Host != null ? Host.World : null;
-            if (w == null || Host.Photo != null || !Receiving.On(w)) return;
+            if (w == null || Host.Photo != null || !Receiving.On(w) || Replay.OnScreen) return;
             var cam = Camera.main;
             if (cam == null) return;
             GUI.depth = -1;   // over the plain badges

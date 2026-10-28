@@ -51,7 +51,7 @@ namespace PocketFootball.Boot
         void LateUpdate()
         {
             var w = host != null ? host.World : null;
-            if (w == null || !ThrowStick.On(w) || w.Phase != Phase.Live || w.Thrown) { Hide(); return; }
+            if (w == null || !ThrowStick.On(w) || w.Phase != Phase.Live || w.Thrown || Replay.OnScreen) { Hide(); return; }
             var qb = LivePlay.Qb(w);
             var src = qb != null && qb.Human ? host.SourceOf(qb.Slot) : null;
             if (src == null || !src.Aiming || LivePlay.Carrier(w) != qb) { Hide(); return; }
