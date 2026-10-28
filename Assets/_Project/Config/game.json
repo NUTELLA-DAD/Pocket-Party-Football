@@ -412,7 +412,10 @@
     "strideTwistDeg": [5, 7, 8],
     "strideSettleTicks": 8,
     "strideToeBendShare": 0.9,
-    "strideSwingToeUpDeg": [12, 8, 4]
+    "strideSwingToeUpDeg": [12, 8, 4],
+    "handCurlOpenDeg": [-12, -6, -18, -4],
+    "handCurlRelaxedDeg": [14, 12, 8, 6],
+    "handCurlShutDeg": [45, 40, 25, 15]
   },
   "defense": {
     "swimEarlyS": 0.5,
@@ -930,6 +933,7 @@
     "momentumLean": true,
     "strideCycle": true,
     "footFlex": true,
+    "handCurl": true,
     "idleMotion": true,
     "headTrack": true,
     "ballSpin": true,

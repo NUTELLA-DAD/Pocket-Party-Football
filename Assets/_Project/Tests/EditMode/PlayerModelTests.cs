@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using NUnit.Framework;
+using PocketFootball.Sim;
 using PocketFootball.View;
 using UnityEngine;
 
@@ -67,6 +68,57 @@ namespace PocketFootball.Tests.EditMode
                 Assert.Less(new Vector2(b.center.x, b.center.z).magnitude, cfg.view.playerHeightM * 0.3f, "where the player stands");
             }
             finally { Object.DestroyImmediate(holder); }
+        }
+
+        // FEATURES.handCurl: the fingers open reaching for a catch, close round the ball pulling it in, and a hand with
+        // the ball in it stays shut whatever the pose; switched off, the fingers stay as modelled.
+        [Test]
+        public void TheFingersOpenToCatchAndCloseOnTheBall()
+        {
+            foreach (bool on in new[] { true, false })
+            {
+                var cfg = ConfigTests.Load();
+                cfg.features["handCurl"] = on;
+                var fig = FootballFigure.Create(null, "Hands", cfg.view.playerHeightM);
+                try
+                {
+                    Assert.IsTrue(ModelSkin.Wear(fig, cfg.teams[0], null, cfg, Looks.Toon(null)));
+                    var skin = fig.GetComponentInChildren<ModelSkin>();
+                    Transform root = Find(fig.transform, "RightFingers"), tip = Find(fig.transform, "RightFingersTip"), thumb = Find(fig.transform, "RightThumbTip");
+                    float len = Vector3.Distance(root.position, tip.position);
+                    // (the glove, where the ball sits, rides on the hand: only the fingers move against it)
+                    float Gap(FootballFigure.PoseKind kind, bool hold)
+                    {
+                        fig.HoldR = hold;
+                        fig.Pose(kind, 0);
+                        skin.Follow();
+                        return Vector3.Distance(tip.position, fig.HandR.position) + Vector3.Distance(thumb.position, fig.HandR.position);
+                    }
+                    float open = Gap(FootballFigure.PoseKind.Catch, false), shut = Gap(FootballFigure.PoseKind.Secure, false);
+                    float held = Gap(FootballFigure.PoseKind.Catch, true), relaxed = Gap(FootballFigure.PoseKind.Stand, false);
+                    if (on)
+                    {
+                        Assert.Less(shut, open - 0.3f * len, "the fingers close round the ball");
+                        Assert.That(relaxed, Is.InRange(shut, open), "relaxed, between the two");
+                        Assert.AreEqual(shut, held, 1e-3f, "the hand with the ball stays shut");
+                    }
+                    else
+                    {
+                        Assert.AreEqual(open, shut, 1e-3f, "switched off: the fingers don't move");
+                        Assert.AreEqual(open, held, 1e-3f);
+                    }
+                }
+                finally { Object.DestroyImmediate(fig.gameObject); }
+            }
+            Assert.AreEqual("NO_HAND_CURL", ConfigLoader.EnvName("handCurl"));
+            Assert.IsTrue(ConfigTests.Load().Feature("handCurl"));
+        }
+
+        static Transform Find(Transform t, string name)
+        {
+            if (t.name == name) return t;
+            foreach (Transform c in t) { var f = Find(c, name); if (f != null) return f; }
+            return null;
         }
 
         // tools/rig/handfix.py: every player's model and the referee's have a thumb and the four fingers as bones under

@@ -37,6 +37,8 @@ namespace PocketFootball.Boot
                 case "concept01": return Concept01(w, view, rig);
                 case "concept04": return Concept04(w, view, rig);
                 case "moves": return MovesLineup(w, view, rig);
+                case "hands": return Hands(w, view, rig, "hands", new[] { Pose.Reach, Pose.Catch, Pose.Secure, Pose.Carry });
+                case "hands2": return Hands(w, view, rig, "hands2", new[] { Pose.Throw, Pose.Run, Pose.Block, Pose.Stand });
                 case "stadium": return StadiumShot(w, view, rig, new Vector3(-40f, 45f, -175f), new Vector3(0f, 25f, 0f), 50f);
                 case "sunset": return StadiumShot(w, view, rig, new Vector3(-25f, 3f, -18f), new Vector3(3.7f, 13.6f, 23f), 55f);
             }
@@ -83,6 +85,28 @@ namespace PocketFootball.Boot
             for (int i = 0; i < back.Length; i++) Put(w, view, 1, i, -19f + i * 3.8f, 1f, back[i]);
             rig.SetLookAtX(0f);
             return new PhotoState { Name = "moves", Hud = false, FirstDownX = 10f };
+        }
+
+        // The hands up close (FEATURES.handCurl): four Chiefs side by side in poses that open, shut or hold the hand (a
+        // ball in the carrier's and the thrower's right hands), seen square from the side at chest height. No HUD.
+        static PhotoState Hands(World w, PlayersView view, CameraRig rig, string name, Pose[] poses)
+        {
+            const int team = 0;
+            w.Offense = team;
+            w.Dir = 1f;
+            w.LineOfScrimmageX = -45f;
+            w.LineUp();
+            foreach (var p in w.Players) { p.X = p.Team == team ? -90f : 90f; p.Z = 0f; p.VX = 0f; p.VZ = 0f; }
+            const float cx = 22.5f, z = -6f, gap = 1.25f;   // (yards; spot 0, the QB with the game ball, stays off)
+            for (int i = 0; i < poses.Length; i++)
+            {
+                Put(w, view, team, i + 1, cx + (i - (poses.Length - 1) * 0.5f) * gap, z, poses[i]);
+                var p = Spot(w, team, i + 1);
+                if (p != null && (poses[i] == Pose.Carry || poses[i] == Pose.Throw)) view.PropBalls[p.Slot] = true;
+            }
+            float m = w.Cfg.field.yardM;
+            rig.Hold(new Vector3(cx * m, 1.4f, z * m - 6f), new Vector3(cx * m, 1.4f, z * m), 30f);
+            return new PhotoState { Name = name, Hud = false, FirstDownX = -35f };
         }
 
         // Concept 01, the team lineup: three Chiefs (68 in his stance, QB 7 throwing, RB 24 carrying) facing three

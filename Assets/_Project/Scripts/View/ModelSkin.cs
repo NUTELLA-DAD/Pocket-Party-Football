@@ -39,6 +39,14 @@ namespace PocketFootball.View
         float[] footPitch;     // each foot's pitch (toes above the heel, degrees) standing at rest
         Quaternion[] footRest, toeRest;
         Quaternion shoulderRestL, shoulderRestR;
+        // FEATURES.handCurl: the finger bones (left then right: fingers, fingertips, thumb, thumb tip), each one's rest
+        // turn and the axis it curls toward the palm about (its own space); none on a model without them
+        Transform[] fingers;
+        Quaternion[] fingerRest;
+        Vector3[] fingerAxis;
+        int[] fingerKey;       // which of the four curls each one takes (0 fingers, 1 fingertips, 2 thumb, 3 thumb tip)
+        bool[] fingerLeft;
+        float[] curlOpen, curlRelaxed, curlShut;
 
         bool fixArms = true;   // the helmeted players' arm fixes (Adapt, Splay); the cheerleaders have no helmet
 
@@ -46,7 +54,9 @@ namespace PocketFootball.View
         {
             team.ModelFor(pos, cfg.Feature("posModels"), out string model, out string modelTexture);
             if (string.IsNullOrEmpty(model)) { Debug.LogError("[model] team " + team.@short + " has no \"model\" in game.json; its players don't show"); return false; }
-            return Wear(fig, model, modelTexture, kit, true) != null;
+            var skin = Wear(fig, model, modelTexture, kit, true);
+            if (skin != null && cfg.Feature("handCurl")) skin.Hands(cfg.anim);
+            return skin != null;
         }
 
         // Any rigged Humanoid model (Resources path) and colour map on the figure; null if it's missing (logged).
@@ -97,8 +107,30 @@ namespace PocketFootball.View
             hb = BoundsIn(holder, smr);
             pivot.localPosition = new Vector3(-hb.center.x, -hb.min.y, -hb.center.z);
 
-            // the arms down by the sides, like the figure's at rest (the T-pose's palms face down; they turn with the arm)
+            // the finger bones' curl axes, in the T-pose (palms down: each curls about its own length x down)
             Vector3 down = -holder.up;
+            var fingerBones = new List<Transform>();
+            var fingerAxes = new List<Vector3>();
+            var fingerKeys = new List<int>();
+            var fingerSides = new List<bool>();
+            foreach (var side in new[] { "Left", "Right" })
+                foreach (var digit in new[] { "Fingers", "Thumb" })
+                {
+                    Transform root = Find(inst.transform, side + digit), tip = Find(inst.transform, side + digit + "Tip");
+                    if (root == null || tip == null) continue;
+                    Vector3 along = tip.position - root.position;
+                    Vector3 axis = Vector3.Cross(along, down);
+                    if (axis.sqrMagnitude < 1e-12f) continue;
+                    // (the tip carries on the way its bone points: it has no bone past it to measure by)
+                    int key = digit == "Thumb" ? 2 : 0;
+                    foreach (var bone in new[] { root, tip })
+                    {
+                        fingerBones.Add(bone); fingerAxes.Add(Quaternion.Inverse(bone.rotation) * axis.normalized);
+                        fingerKeys.Add(bone == root ? key : key + 1); fingerSides.Add(side == "Left");
+                    }
+                }
+
+            // the arms down by the sides, like the figure's at rest (the T-pose's palms face down; they turn with the arm)
             var palm = new Dictionary<string, Vector3>();
             foreach (var side in new[] { ("Left", 1f), ("Right", -1f) })
             {
@@ -134,6 +166,12 @@ namespace PocketFootball.View
             skin.toeRest = new[] { skin.toes[0].localRotation, skin.toes[1].localRotation };
             for (int i = 0; i < 2; i++) skin.footPitch[i] = Pitch(skin.toes[i].position - skin.feet[i].position, holder.up);
             skin.shoulderRestL = skin.shoulderL.localRotation; skin.shoulderRestR = skin.shoulderR.localRotation;
+            skin.fingers = fingerBones.ToArray();
+            skin.fingerAxis = fingerAxes.ToArray();
+            skin.fingerKey = fingerKeys.ToArray();
+            skin.fingerLeft = fingerSides.ToArray();
+            skin.fingerRest = new Quaternion[skin.fingers.Length];
+            for (int i = 0; i < skin.fingers.Length; i++) skin.fingerRest[i] = skin.fingers[i].localRotation;
 
             // the ball goes in the model's gloves, turned as it was in the figure's hands
             fig.HandL = Glove(b["LeftHand"], b["LeftLowerArm"], fig.HandL.rotation, palm["Left"]);
@@ -216,6 +254,28 @@ namespace PocketFootball.View
             Point(1, fig.ToeR);
             Bend(0, fig.BallL);
             Bend(1, fig.BallR);
+            Curl();
+        }
+
+        // FEATURES.handCurl: the curls to take from game.json (off, the fingers stay as modelled)
+        void Hands(AnimConfig a)
+        {
+            curlOpen = a.handCurlOpenDeg; curlRelaxed = a.handCurlRelaxedDeg; curlShut = a.handCurlShutDeg;
+            Follow();
+        }
+
+        // Each hand's fingers curled to its grip (FootballFigure.GripL/R; a hand holding the ball shut).
+        void Curl()
+        {
+            if (curlRelaxed == null || curlOpen == null || curlShut == null || fingers == null) return;
+            for (int i = 0; i < fingers.Length; i++)
+            {
+                float grip = fingerLeft[i] ? (fig.HoldL ? 1f : fig.GripL) : (fig.HoldR ? 1f : fig.GripR);
+                int k = fingerKey[i];
+                if (k >= curlRelaxed.Length || k >= curlOpen.Length || k >= curlShut.Length) continue;
+                float deg = grip >= 0f ? Mathf.Lerp(curlRelaxed[k], curlShut[k], grip) : Mathf.Lerp(curlRelaxed[k], curlOpen[k], -grip);
+                fingers[i].localRotation = fingerRest[i] * Quaternion.AngleAxis(deg, fingerAxis[i]);
+            }
         }
 
         // The model's knee and elbow bends as drawn (degrees between the two bones, after every fix), for the motion

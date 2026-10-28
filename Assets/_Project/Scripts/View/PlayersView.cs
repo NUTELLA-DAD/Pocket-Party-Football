@@ -223,8 +223,11 @@ namespace PocketFootball.View
             var holder = b.State == BallState.Held ? Figure(b.Carrier) : null;
             // the snap (Snap.cs) places the ball itself before the hike and on its way back to the QB
             bool snapping = SnapBall(w, alpha, holder);
+            // the hand with the ball in it closes round it (FEATURES.handCurl, ModelSkin)
+            foreach (var body in bodies.Values) body.HoldL = body.HoldR = false;
             if (!snapping && holder != null)
             {
+                holder.HoldR = true;
                 ball.position = holder.HandR.position;
                 ball.rotation = holder.HandR.rotation * Quaternion.Euler(0, 90, 0);
             }
@@ -249,6 +252,7 @@ namespace PocketFootball.View
                 if (f == null) continue;
                 if (!props.TryGetValue(kv.Key, out var prop)) props[kv.Key] = prop = FootballFigure.MakeBall(null, mat, cfg.view.ballLengthM, cfg.Feature("modelBall")).transform;
                 var hand = kv.Value ? f.HandR : f.HandL;
+                if (kv.Value) f.HoldR = true; else f.HoldL = true;
                 prop.position = hand.position;
                 prop.rotation = hand.rotation * Quaternion.Euler(0, 90, 0);
             }
