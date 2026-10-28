@@ -33,6 +33,15 @@ namespace PocketFootball.Tests.EditMode
             return new Vector2(g.Thigh * Mathf.Sin(t) + g.Shin * Mathf.Sin(s), hip - g.Thigh * Mathf.Cos(t) - g.Shin * Mathf.Cos(s));
         }
 
+        // a foot on the grass: its heel down, or (rolling over it at push-off) the ball of the foot
+        static bool Down(StrideLegs g, StridePose p, bool left)
+        {
+            float ankle = Ankle(g, p, left).y;
+            if (ankle <= g.Ankle + 1.5f) return true;
+            float rest = g.FootDropDeg * Mathf.Deg2Rad, turn = -(left ? p.ToeL : p.ToeR) * Mathf.Deg2Rad;
+            return g.Foot > 0f && ankle - g.Foot * Mathf.Sin(rest + turn) <= g.Ankle - g.Foot * Mathf.Sin(rest) + 1.5f;
+        }
+
         static IEnumerable<float> Values(StridePose p)
         {
             yield return p.ThighL; yield return p.ShinL; yield return p.ThighR; yield return p.ShinR;
@@ -116,7 +125,7 @@ namespace PocketFootball.Tests.EditMode
                 for (int i = 0; i < Steps; i++)
                 {
                     var p = At(Model, (float)i / Steps, v);
-                    if (Ankle(Model, p, true).y > Model.Ankle + 1.5f && Ankle(Model, p, false).y > Model.Ankle + 1.5f) return true;
+                    if (!Down(Model, p, true) && !Down(Model, p, false)) return true;
                 }
                 return false;
             }

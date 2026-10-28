@@ -126,13 +126,14 @@ namespace PocketFootball.View
         {
             knee = Curve(s, new[] { 0f, LoadAt, 1f }, new[] { k.land, k.load, k.push }, 0f, (k.push - k.load) / (1f - LoadAt));
             x = k.ahead - s * k.sweep;
-            y = k.g.Ankle + k.heel * Smooth((s - PushFrom) / (1f - PushFrom));
-            // the pointing foot turns about its ball, which stays on the grass: the ankle rises with it
+            // the pointing foot turns about its ball, which stays on the grass: the ankle rises with it (a figure with no
+            // foot measured: the heel just comes up strideHeelCm)
             if (k.g.Foot > 0f)
             {
                 float rest = k.g.FootDropDeg * Mathf.Deg2Rad, turn = k.point * Smooth((s - PointFrom) / (1f - PointFrom)) * Mathf.Deg2Rad;
-                y = Mathf.Max(y, k.g.Ankle + k.g.Foot * (Mathf.Sin(rest + turn) - Mathf.Sin(rest)));
+                y = k.g.Ankle + k.g.Foot * (Mathf.Sin(rest + turn) - Mathf.Sin(rest));
             }
+            else y = k.g.Ankle + k.heel * Smooth((s - PushFrom) / (1f - PushFrom));
             float l = Span(k.g, knee), r = Mathf.Clamp(x / l, -0.999f, 0.999f);
             hip = y + l * Mathf.Sqrt(1f - r * r);
             thigh = Mathf.Asin(r) * Mathf.Rad2Deg + AtHip(k.g, l);
