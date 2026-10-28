@@ -122,6 +122,7 @@
     "radiusYd": 0.6,
     "bumpPushFrac": 0.5,
     "boundsMarginYd": 4,
+    "onsideGapYd": 0.5,
     "perTeam": 11
   },
   "bots": {
@@ -971,6 +972,7 @@
     "titleScreen": true,
     "flightLine": true,
     "landingRing": true,
-    "reachRing": true
+    "reachRing": true,
+    "stayOnside": true
   }
 }
