@@ -859,10 +859,11 @@ namespace PocketFootball.Sim
     }
 
     // Config/game.json "kicking.cam" (FEATURES.kickCam, View): for a field goal the TV camera stands backYd behind the
-    // holder's spot, sideYd across and heightM up, looking lookShare of the way from the spot to the crossbar, and eases
-    // there and back at rate.
+    // holder's spot, sideYd across (plus: the kicker's side, so the holder doesn't hide the ball) and heightM up, and
+    // tilts so the picture runs from the kicker's feet at the bottom to the flags on the uprights at the top (lookShare
+    // of the way up from the feet: over a half leaves room for the scoreboard); fovDeg wide. It eases there and back at rate.
     public sealed class KickCamConfig
     {
-        public float backYd, sideYd, heightM, fovDeg, lookShare, lookHeightM, rate, holdAfterS;
+        public float backYd, sideYd, heightM, fovDeg, lookShare, rate, holdAfterS;
     }
 }

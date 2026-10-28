@@ -748,12 +748,11 @@
     "botWindRead": 0.8,
     "windMphPerYdS": 2.045,
     "cam": {
-      "backYd": 9,
-      "sideYd": -3.2,
+      "backYd": 11,
+      "sideYd": 3.4,
       "heightM": 4.6,
-      "fovDeg": 46,
-      "lookShare": 0.1,
-      "lookHeightM": 0.5,
+      "fovDeg": 52,
+      "lookShare": 0.55,
       "rate": 2.5,
       "holdAfterS": 1.2
     },

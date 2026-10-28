@@ -317,9 +317,14 @@ namespace PocketFootball.Boot
             {
                 float m = cfg.field.yardM, dir = World.Dir;
                 kickCamPos = new Vector3((k.HoldX - dir * kc.backYd) * m, kc.heightM, (k.HoldZ + dir * kc.sideYd) * m);
-                var spot = new Vector3(k.HoldX * m, kc.lookHeightM, k.HoldZ * m);
-                var posts = new Vector3(dir * cfg.field.HalfLength * m, cfg.stadium.postCrossbarM, 0f);
-                kickCamLook = Vector3.Lerp(spot, posts, kc.lookShare);
+                // the nearest thing (the kicker's feet where he lines up) and the highest (the flags on the uprights),
+                // and the look tilted lookShare of the way up between them, so both are in the picture
+                var kc2 = cfg.kicking;
+                var feet = new Vector3((k.HoldX - dir * kc2.kickerBackYd) * m, 0f, (k.HoldZ + dir * kc2.kickerSideYd) * m);
+                var st = cfg.stadium;
+                var flags = new Vector3(dir * cfg.field.HalfLength * m, st.postCrossbarM + st.postUprightM + st.flagHeightM, 0f);
+                var look = Vector3.Slerp((feet - kickCamPos).normalized, (flags - kickCamPos).normalized, kc.lookShare);
+                kickCamLook = kickCamPos + look * (flags - kickCamPos).magnitude;
                 kickCamUntil = Time.unscaledTime + kc.holdAfterS;
                 want = true;
             }
