@@ -34,3 +34,16 @@ models/referee/scripts.
 `gauntlet.py` env: `FINGERS=fingers,tips,thumb,thumbTip` bends those bones toward the palm (degrees, e.g.
 `45,40,25,15` for a hand closing on the ball); `HANDCAM=Left|Right` renders close-ups of that hand.
 The Cheerleader (pom-poms) has no finger bones.
+
+## Jersey numbers and eyes (`uvmap.py`, `marks.py`, `marks/*.json`)
+FEATURES.jerseyNumbers / FEATURES.eyesLook: the game draws every player's own number and his moving irises in the toon
+shader, so each model's baked number and irises are painted out of its colour maps and a marks map tells the shader
+where they go.
+- `python3.11 uvmap.py -- <Model_Rigged.fbx> <out.npz>`: the rest-pose point and normal under every texel of the
+  colour map (Blender space: +X the model's left, -Y forward, Z up).
+- `python3 marks.py <out.npz> marks/<Model>.json Assets/_Project/Resources/Models`: writes `<Model>_Marks.png` and
+  paints the old numbers and irises out of every colour map listed (in place, so run it on the original maps once).
+  Each zone in the JSON is a plane on the model: `c` centre, `n` facing, `up`, `w`/`h` half box, `depth`, `size`
+  (number height or iris radius, metres); an eye's `iris` (its centre on the plane) and `poly` (its opening, drawn
+  by hand from a raster of the zone). The first zone that claims a texel keeps it (chest and back before shoulders).
+  It prints each map's lid and iris colours for game.json "marks".

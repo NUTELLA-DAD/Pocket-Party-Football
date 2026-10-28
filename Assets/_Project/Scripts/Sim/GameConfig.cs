@@ -41,6 +41,7 @@ namespace PocketFootball.Sim
         public HitConfig hit = new HitConfig();   // FEATURES.hitAngle: straight-on hits and glancing blows (HitAngle.cs)
         public RatingsConfig ratings = new RatingsConfig();   // player ratings by position (Ratings.cs, FEATURES.ratings)
         public TitleConfig title = new TitleConfig();   // the title screen and its attract mode (TitleConfig.cs, Boot/TitleScreen.cs)
+        public MarksConfig marks = new MarksConfig();   // FEATURES.jerseyNumbers / eyesLook: the players' numbers and eyes (View/JerseyMarks.cs)
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 
@@ -173,6 +174,8 @@ namespace PocketFootball.Sim
         public List<PosModelConfig> posModels = new List<PosModelConfig>();
         // FEATURES.cheerleaders: the squad on the far sideline wears this rigged model and colour map (Stadium.cs)
         public string cheerModel, cheerTexture;
+        // FEATURES.jerseyNumbers: the players' numbers, white (numberFill) with a thin edge (numberEdge) in the team's trim
+        public string numberFill, numberEdge;
 
         // The model and colour map a player at this position wears.
         public void ModelFor(string pos, bool byPos, out string m, out string tex) => ModelFor(pos, byPos, out m, out tex, out _);
@@ -186,6 +189,37 @@ namespace PocketFootball.Sim
                 if (pm != null && pm.pos == pos && !string.IsNullOrEmpty(pm.model))
                 { m = pm.model; tex = pm.modelTexture; bend = pm.strideBend > 0f ? pm.strideBend : 1f; return; }
         }
+    }
+
+    // FEATURES.jerseyNumbers and FEATURES.eyesLook (View/JerseyMarks.cs, Toon shader): each model's numbers and irises
+    // were painted out of its colour maps; its marks map (tools/rig/marks.py) says where the shader draws them.
+    // The digits: the game's own glyphs drawn with a pen penHalf either side of the line and an edge round it, gap
+    // between two digits (glyph units: a digit is 1 wide, 1.4 tall).
+    // The eyes: the iris moves up to eyeMaxX across and eyeMaxY up or down (iris radii), all the way at eyeFullDeg off
+    // where his head points, in eyeStep steps. Each glanceKeys key frames he may (glanceChance) look glanceDeg aside;
+    // once every blinkEveryKeys key frames (at a time his own) he blinks for blinkKeys.
+    public sealed class MarksConfig
+    {
+        public float penHalf, edge, gap;
+        public float eyeMaxX, eyeMaxY, eyeFullDeg, eyeStep;
+        public int glanceKeys, blinkEveryKeys, blinkKeys;
+        public float glanceChance, glanceDeg;
+        public List<ModelMarksConfig> models = new List<ModelMarksConfig>();
+
+        public ModelMarksConfig For(string model)
+        {
+            if (models == null || string.IsNullOrEmpty(model)) return null;
+            foreach (var m in models) if (m != null && m.model == model) return m;
+            return null;
+        }
+    }
+
+    // One model's marks map (under Resources), its iris and eyelid colours, and the number painted on it at first (worn
+    // by everyone with FEATURES.jerseyNumbers off).
+    public sealed class ModelMarksConfig
+    {
+        public string model, map, iris, lid;
+        public int number;
     }
 
     public sealed class PosModelConfig

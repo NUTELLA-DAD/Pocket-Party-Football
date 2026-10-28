@@ -438,8 +438,13 @@ namespace PocketFootball.View
             var f = FootballFigure.Create(root, "Sideline player", cfg.view.playerHeightM * scale);
             f.transform.localPosition = new Vector3(x, 0, z);
             f.transform.localRotation = Quaternion.Euler(0, yaw, 0);
-            if (ModelSkin.Wear(f, team, null, cfg, FootballFigure.KitMaterial(mat, cfg.view))) ModelSkin.Freeze(f, FootballFigure.PoseKind.Stand);
-            Rand(); Rand(); Rand();   // (what the code-built player drew: number, build, skin; the rest of the seeded layout stays put)
+            var holder = f.gameObject;
+            float number = Rand(); Rand(); Rand();   // (what the code-built player drew: number, build, skin; the rest of the seeded layout stays put)
+            if (ModelSkin.Wear(f, team, null, cfg, FootballFigure.KitMaterial(mat, cfg.view)))
+            {
+                ModelSkin.Freeze(f, FootballFigure.PoseKind.Stand);
+                JerseyMarks.SetNumber(holder, cfg, 1 + (int)(number * 98f));   // FEATURES.jerseyNumbers: a number of his own
+            }
         }
 
         // A ref on the sideline. FEATURES.refModel (NO_REF_MODEL=1): Kenny's rigged referee (stadium.refModel), standing,

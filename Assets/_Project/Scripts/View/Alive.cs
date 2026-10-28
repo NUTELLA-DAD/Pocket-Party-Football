@@ -7,7 +7,7 @@ namespace PocketFootball.View
     // FEATURES.idleMotion: a man standing still breathes (his chest rises a degree or two) and shifts his weight from
     // foot to foot, each man on his own beat so the line doesn't breathe as one.
     // FEATURES.headTrack: a man with nothing else to look at turns his head (only his head) toward the ball and tips
-    // it up to a ball in the air. (The models have no eye bones: their eyes are painted on behind the facemask.)
+    // it up to a ball in the air. (The models have no eye bones: FEATURES.eyesLook draws the irises in the shader, Eyes.)
     // FEATURES.ballSpin: a pass spirals about its long axis; a kick tumbles end over end.
     public static class Alive
     {
@@ -52,6 +52,44 @@ namespace PocketFootball.View
             float up = Mathf.Atan2(by - eyes, flat) * Mathf.Rad2Deg;
             tip = Step(Mathf.Clamp(up, -a.trackDownDeg, a.trackUpDeg));
             return true;
+        }
+
+        // FEATURES.eyesLook: where a man's irises go (iris radii: x to his left, y up) for something yawDeg to his left
+        // and upDeg above where his head points: all the way (marks.eyeMaxX / eyeMaxY) at eyeFullDeg, in eyeStep steps.
+        // Each window of glanceKeys key frames he may (glanceChance) glance glanceDeg aside; once every blinkEveryKeys
+        // he blinks (shut, then half open, over blinkKeys), each man at his own moment. Off: centred, eyes open.
+        public static void Eyes(GameConfig cfg, int key, int slot, float yawDeg, float upDeg, out float x, out float y, out float blink)
+        {
+            x = 0f; y = 0f; blink = 0f;
+            if (!cfg.Feature("eyesLook")) return;
+            var m = cfg.marks;
+            int gk = Mathf.Max(1, m.glanceKeys);
+            uint g = Hash(slot, FloorDiv(key, gk));
+            if ((g & 0xffff) / 65536f < m.glanceChance)
+            {
+                yawDeg += (g & 0x10000) == 0 ? m.glanceDeg : -m.glanceDeg;
+                if ((g & 0x20000) != 0) upDeg -= m.glanceDeg * 0.3f;
+            }
+            float full = Mathf.Max(1f, m.eyeFullDeg), step = Mathf.Max(0.01f, m.eyeStep);
+            x = Mathf.Round(Mathf.Clamp(yawDeg / full, -1f, 1f) * m.eyeMaxX / step) * step;
+            y = Mathf.Round(Mathf.Clamp(upDeg / full, -1f, 1f) * m.eyeMaxY / step) * step;
+            int bk = Mathf.Max(2, m.blinkEveryKeys);
+            int window = FloorDiv(key, bk);
+            int into = key - window * bk - (int)(Hash(slot + 977, window) % (uint)Mathf.Max(1, bk - m.blinkKeys + 1));   // (inside its window)
+            if (into >= 0 && into < m.blinkKeys) blink = into == 0 ? 1f : 0.6f;
+        }
+
+        static int FloorDiv(int a, int b) => a >= 0 ? a / b : -((-a + b - 1) / b);
+
+        // a small integer hash (the same on every machine; no Random)
+        static uint Hash(int a, int b)
+        {
+            unchecked
+            {
+                uint h = (uint)a * 0x9E3779B1u ^ (uint)b * 0x85EBCA77u;
+                h ^= h >> 15; h *= 0x2C1B3C6Du; h ^= h >> 12; h *= 0x297A2D39u; h ^= h >> 15;
+                return h;
+            }
         }
 
         // FEATURES.ballSpin: the ball's turn (degrees) keys key frames into its flight: about its long axis for a pass

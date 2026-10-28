@@ -33,6 +33,17 @@ Shader "PocketParty/Toon"
         _OutlineMinScale ("Outline min width share (far)", Range(0, 1)) = 0.5
         _OutlineZBias ("Outline: tucked behind by (m)", Float) = 0.06
         _DropShadow ("Receives the far drop shadows (0/1)", Float) = 0
+        [Header(Jersey numbers and eyes (View JerseyMarks))]
+        _Marks ("Draws the marks map (0/1)", Float) = 0
+        _MarksTex ("Marks map (linear)", 2D) = "black" {}
+        _DigitsTex ("Digits (distance)", 2D) = "white" {}
+        _NumberDigits ("Number: tens, ones, digits", Vector) = (0, 0, 0, 0)
+        _NumberFill ("Number fill", Color) = (1, 1, 1, 1)
+        _NumberEdge ("Number edge", Color) = (1, 0.75, 0.1, 1)
+        _NumberStyle ("Number: pen, edge, gap", Vector) = (0.125, 0.08, 0.1, 0)
+        _EyeLook ("Eyes: look x, y, blink", Vector) = (0, 0, 0, 0)
+        _IrisColor ("Iris", Color) = (0.4, 0.22, 0.1, 1)
+        _LidColor ("Eyelid", Color) = (0.6, 0.38, 0.22, 1)
     }
     SubShader
     {
