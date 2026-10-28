@@ -3,7 +3,7 @@
 FEATURES.teamPick: the league is game.json's `teams` (the default match, away then home) and `moreTeams`; the title's
 SETTINGS page picks any two (AWAY / HOME rows, saved), and `PP_TEAMS=CAC,WHL` picks them for one run.
 
-Every colour map of a new team is made from the Chiefs-red maps (as at PR #77, before the rebrand), numpy and Pillow
+Every colour map of a new team is made from the old red maps (as at PR #77, before the rebrand), numpy and Pillow
 only: `python3 tools/teams/build.py <work dir> [CAC WHL]`.
 - `emblems/<SHORT>.png`: Kenny's emblem pictures. `python3 tools/rebrand/emblems.py emblems/CAC.png
   Assets/_Project/Resources/Logos/CAC.png` makes the team mark (midfield, scoreboard, banners).

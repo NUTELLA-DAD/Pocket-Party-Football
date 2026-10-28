@@ -1,4 +1,4 @@
-# A new team's kit from a Chiefs-red colour map: every red, gold and white part of the uniform repainted in the team's
+# A new team's kit from a old red colour map: every red, gold and white part of the uniform repainted in the team's
 # own colours, region by region (helmet, jersey, pants), keeping the map's baked shading. Skin, eyes, shoes, gloves
 # and the facemask are left alone. The helmet's old decal is painted out and the team's emblem laid on afterwards by
 # tools/rebrand (rebrand.py), so run this first.

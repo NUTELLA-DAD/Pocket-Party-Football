@@ -6,7 +6,7 @@
 #   outside every zone R = where grass stains may go (0..1), G = how much is skin (0..1), B, A = 0.
 # usage: [MARKS_ONLY=1] python3 marks.py <uvmap.npz> <zones.json> <Models dir> [preview.png]
 #   uvmap.npz from uvmap.py (the rest-pose point and normal under every texel of the colour map).
-#   zones.json: {"marks": "Chiefs24/Chiefs24_Marks.png", "textures": [{"file": ..., "hue": jersey hue in degrees}],
+#   zones.json: {"marks": "Player24/Player24_Marks.png", "textures": [{"file": ..., "hue": jersey hue in degrees}],
 #     "zones": [{"kind": "number"|"eye", "c": centre [x,y,z] m, "n": facing, "up": up, "w","h": half box m,
 #     "depth": m either side of the surface, "size": number height | iris radius m,
 #     an eye's "iris": its centre on the plane [s, t] m, "poly": its opening on the plane [[s, t], ...] m}]}

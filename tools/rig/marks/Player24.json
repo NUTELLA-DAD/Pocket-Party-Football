@@ -1,4 +1,4 @@
-{"marks": "Chiefs24/Chiefs24_Marks.png", "textures": [{"file": "Chiefs24/Chiefs24_BaseColor.png", "hue": 355}, {"file": "Roughriders/Roughriders_BaseColor.png", "hue": 150}], "zones": [
+{"marks": "Player24/Player24_Marks.png", "textures": [{"file": "Player24/Player24_BaseColor.png", "hue": 355}, {"file": "Player24/Player24GRN_BaseColor.png", "hue": 150}], "zones": [
     {"kind": "number", "c": [0, -0.25, 0.905], "n": [0, -1, 0], "up": [0, 0, 1], "w": 0.218, "h": 0.13, "depth": 0.18, "size": 0.23}, 
     {"kind": "number", "c": [0, 0.25, 0.94], "n": [0, 1, 0], "up": [0, 0, 1], "w": 0.223, "h": 0.17, "depth": 0.18, "size": 0.235}, 
     {"kind": "number", "c": [0.265, 0.01, 1.14], "n": [0.45, 0, 0.9], "up": [-1, 0, 0], "w": 0.26, "h": 0.075, "depth": 0.2, "size": 0.11, "facing": -0.4}, 
