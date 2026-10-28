@@ -217,7 +217,7 @@
     "catchRadiusYd": 1.8,
     "catchMaxHeightYd": 2.8,
     "catchChanceOffense": 0.9,
-    "catchChanceDefense": 0.06,
+    "catchChanceDefense": 0.07,
     "tackleReachYd": 1.7,
     "tackleBase": 0.65,
     "tackleSpeedBonus": 0.03,

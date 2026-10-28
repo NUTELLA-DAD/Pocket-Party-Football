@@ -15,8 +15,7 @@ namespace PocketFootball.Tests.EditMode
         {
             var cfg = ConfigTests.Load();
             var p = CameraRig.Pose(cfg, Aspect, 10f);
-            var target = new Vector3(10f * cfg.field.yardM, 0f, cfg.camera.lookAtZYd * cfg.field.yardM);
-            var o = OrbitCamera.From(p.position, p.rotation, target, cfg.camera.fovDeg);
+            var o = OrbitCamera.From(p.position, p.rotation, p.target, cfg.camera.fovDeg);   // (the lab takes over at rig.LookTarget, which is p.target)
             Assert.Less(Vector3.Distance(p.position, o.Position), 0.01f);
             Assert.Less(Quaternion.Angle(p.rotation, o.Rotation), 0.1f);
         }
@@ -26,7 +25,7 @@ namespace PocketFootball.Tests.EditMode
         {
             var cfg = ConfigTests.Load();
             var p = CameraRig.Pose(cfg, Aspect, 0f);
-            var o = OrbitCamera.Preset(cfg.camera.free.presets[0], new Vector3(0f, 0f, cfg.camera.lookAtZYd * cfg.field.yardM), Aspect, cfg.field.yardM);
+            var o = OrbitCamera.Preset(cfg.camera.free.presets[0], p.target, Aspect, cfg.field.yardM);
             Assert.Less(Vector3.Distance(p.position, o.Position), 0.05f);
             Assert.AreEqual(cfg.camera.fovDeg, o.fovDeg, 1e-4f);
         }
