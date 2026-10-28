@@ -68,5 +68,42 @@ namespace PocketFootball.Tests.EditMode
             }
             finally { Object.DestroyImmediate(holder); }
         }
+
+        // tools/rig/handfix.py: every player's model and the referee's have a thumb and the four fingers as bones under
+        // each hand (two each, so a hand can close round the ball), and the hands' skin follows them.
+        [Test]
+        public void EveryModelsHandsHaveThumbAndFingerBones()
+        {
+            var cfg = ConfigTests.Load();
+            var models = new SortedSet<string> { cfg.stadium.refModel };
+            foreach (var team in cfg.teams)
+            {
+                models.Add(team.model);
+                foreach (var pm in team.posModels) models.Add(pm.model);
+            }
+            foreach (var path in models)
+            {
+                var prefab = Resources.Load<GameObject>(path);
+                Assert.IsNotNull(prefab, path);
+                var smr = prefab.GetComponentInChildren<SkinnedMeshRenderer>();
+                var bones = new HashSet<string>();
+                foreach (var b in smr.bones) bones.Add(b.name);
+                var weighted = new HashSet<int>();
+                foreach (var w in smr.sharedMesh.boneWeights)
+                {
+                    if (w.weight0 > 0.2f) weighted.Add(w.boneIndex0);
+                    if (w.weight1 > 0.2f) weighted.Add(w.boneIndex1);
+                }
+                foreach (var side in new[] { "Left", "Right" })
+                    foreach (var n in new[] { "Thumb", "ThumbTip", "Fingers", "FingersTip" })
+                    {
+                        Assert.IsTrue(bones.Contains(side + n), path + " has the bone " + side + n);
+                        int i = System.Array.FindIndex(smr.bones, b => b.name == side + n);
+                        Assert.IsTrue(weighted.Contains(i), path + ": the skin follows " + side + n);
+                        Assert.AreEqual(side + (n.StartsWith("Thumb") ? (n == "Thumb" ? "Hand" : "Thumb") : (n == "Fingers" ? "Hand" : "Fingers")),
+                            smr.bones[i].parent.name, path + " " + side + n + "'s parent");
+                    }
+            }
+        }
     }
 }
