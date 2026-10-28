@@ -48,8 +48,8 @@ namespace PocketFootball.View
         // drive at FoldThighAt and all the way at DriveAt, the knee still UnfoldKeep of its fold there (it unfolds only
         // in the last of the swing, just before the foot lands)
         const float FoldAt = 0.35f, FoldThighAt = 0.38f, FoldDrive = 0.55f, DriveAt = 0.62f, UnfoldKeep = 0.9f;
-        const float PushFrom = 0.45f;         // the heel comes up over the last part of the stance (the hip rolling over the toes)
-        const float PointFrom = 0.5f;         // and the foot points over the last part of that
+        const float PushFrom = 0.3f;          // the heel comes up over the last part of the stance (the hip rolling over the toes)
+        const float PointFrom = 0.25f;        // and the foot points over the last part of that
         const float ToeBackBy = 0.35f;        // the pointed foot comes back level by this share of the swing
         const float StrikeTo = 0.2f, StrikeFrom = 0.7f;   // the toes up (strideHeelStrikeDeg) landing: from this share of the swing to this of the stance
         // a swing leg's say in the hips' height fades out while the other foot is down (it's in the air, it holds
