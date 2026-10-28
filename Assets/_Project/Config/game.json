@@ -926,6 +926,7 @@
     "reactQuickFrac": 0.5,
     "reactNearYd": 2.5,
     "coverNearYd": 7,
+    "reactThrowMaxS": 0.12,
     "pursuitLeadVar": 0.2,
     "threatRangeYd": 25,
     "threatNearYd": 4,

@@ -86,6 +86,7 @@ namespace PocketFootball.Sim
             if (d <= c.reactNearYd) return 0f;
             float far = c.reactFarYd > 0f ? Math.Min(1f, d / c.reactFarYd) : 1f;
             float s = c.reactMinS + (c.reactMaxS - c.reactMinS) * far;
+            if (w.Ball.State == BallState.Flying && p.Team != w.Offense) s = Math.Min(s, c.reactThrowMaxS);   // the defense is watching the QB
             s *= 1f - p.Quick * c.reactQuickFrac;
             return s + w.Rng.Range(0f, c.reactJitterS);
         }
@@ -303,6 +304,7 @@ namespace PocketFootball.Sim
         // plus up to reactJitterS; inside reactNearYd of the ball a man reacts at once
         public float reactMinS, reactMaxS, reactFarYd, reactJitterS, reactQuickFrac, reactNearYd;
         public float coverNearYd;      // a defender this close to the man a pass is for sees the throw at once
+        public float reactThrowMaxS;   // no defender takes longer than this to see a pass leave the QB's hand
         public float pursuitLeadVar;   // a chaser's lead on the carrier, long or short by up to this share by his quickness
         // blocking: an opponent within threatRangeYd of the ball closing on it (or within threatNearYd whatever he does) is a
         // threat, ordered by his time to it at no less than threatMinSpeedYdS; a blocker takes one he can meet within
