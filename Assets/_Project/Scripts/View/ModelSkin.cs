@@ -111,7 +111,7 @@ namespace PocketFootball.View
 
             // the model's own leg, for the stride's reach (FEATURES.strideCycle): the legs' turns are the figure's, so a
             // foot lands where the model's leg puts it
-            fig.Legs = LegOf(holder, b["LeftUpperLeg"], b["LeftLowerLeg"], b["LeftFoot"]);
+            fig.Legs = LegOf(holder, b["LeftUpperLeg"], b["LeftLowerLeg"], b["LeftFoot"], b["LeftToes"]);
 
             var skin = inst.AddComponent<ModelSkin>();
             skin.fig = fig;
@@ -248,14 +248,17 @@ namespace PocketFootball.View
 
         // A model's leg standing, in the figure's units (rig cm, +x forward): the hip's height, the bones' lengths and
         // their angles from straight down, the ankle's height.
-        static StrideLegs LegOf(Transform holder, Transform hip, Transform knee, Transform ankle)
+        static StrideLegs LegOf(Transform holder, Transform hip, Transform knee, Transform ankle, Transform ball)
         {
             Vector3 h = holder.InverseTransformPoint(hip.position), k = holder.InverseTransformPoint(knee.position), a = holder.InverseTransformPoint(ankle.position);
+            Vector3 t = holder.InverseTransformPoint(ball.position);
+            float foot = Vector3.Distance(a, t);
             float Down(Vector3 from, Vector3 to) => Mathf.Atan2(to.x - from.x, from.y - to.y) * Mathf.Rad2Deg;
             return new StrideLegs
             {
                 HipY = h.y, Thigh = Vector3.Distance(h, k), Shin = Vector3.Distance(k, a), Ankle = a.y,
                 ThighRest = Down(h, k), ShinRest = Down(k, a),
+                Foot = foot, FootDropDeg = foot > 1e-4f ? Mathf.Asin(Mathf.Clamp((a.y - t.y) / foot, -1f, 1f)) * Mathf.Rad2Deg : 0f,
             };
         }
 

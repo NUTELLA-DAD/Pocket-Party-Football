@@ -12,7 +12,7 @@ namespace PocketFootball.Tests.EditMode
     public sealed class StrideTests
     {
         // the Chiefs #24 model's left leg standing (rig cm), as ModelSkin measures it
-        static readonly StrideLegs Model = new StrideLegs { HipY = 53.6f, Thigh = 14.3f, Shin = 27.4f, Ankle = 12.1f, ShinRest = -4.2f };
+        static readonly StrideLegs Model = new StrideLegs { HipY = 53.6f, Thigh = 14.3f, Shin = 27.4f, Ankle = 12.1f, ShinRest = -4.2f, Foot = 13f, FootDropDeg = 40f };
         static readonly StrideLegs[] Legs = { Model, StrideLegs.Figure };
         const int Steps = 800;
 
