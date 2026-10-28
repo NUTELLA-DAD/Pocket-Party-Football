@@ -94,6 +94,18 @@ namespace PocketFootball.View
         static Texture2D round, disc, tri;
         static GUIStyle text;
 
+        // Where the TV's join panel (QR code, room code) is on screen this frame, else Rect.zero: other overlays keep clear of it.
+        public static Rect JoinPanel;
+
+        // Moves a box sideways so it stays on screen and out of the join panel (its left edge then sits just left of it).
+        public static Rect Clear(Rect r, float margin)
+        {
+            var j = JoinPanel;
+            if (j.width > 0f && r.Overlaps(j)) r.x = j.x - margin - r.width;
+            r.x = Mathf.Clamp(r.x, margin, Mathf.Max(margin, Screen.width - margin - r.width));
+            return r;
+        }
+
         static void Init()
         {
             if (round != null) return;
