@@ -6,6 +6,8 @@ namespace PocketFootball.View
     // The one broadcast camera: stands on the near sideline and never rolls or spins.
     // It slides along X (following the ball from M1-e). It is placed so visibleYards of field fit across the screen
     // at the look-at point. Once a play runs it eases back and up to camera.live (FEATURES.snapZoom, SetZoom).
+    // FEATURES.nearSideline: if the bottom of the screen would cut into the near sideline, the look-at point slides
+    // toward the camera until the near border (plus camera.nearSidelinePadYd) is on screen.
     public sealed class CameraRig : MonoBehaviour
     {
         public Camera Cam { get; private set; }
@@ -13,6 +15,7 @@ namespace PocketFootball.View
         float lastAspect;
         float lookAtXYd;
         float zoom;   // 0 = the framing before the snap, 1 = camera.live
+        Vector3 lookTarget;
 
         public static CameraRig Create(GameConfig cfg)
         {
@@ -47,7 +50,7 @@ namespace PocketFootball.View
         public void Release() { held = false; Apply(); }
         public bool Held => held;
         // The point on the grass the broadcast framing looks at (metres).
-        public Vector3 LookTarget => new Vector3(lookAtXYd * cfg.field.yardM, 0f, cfg.camera.lookAtZYd * cfg.field.yardM);
+        public Vector3 LookTarget => lookTarget;
 
         void LateUpdate()
         {
@@ -68,12 +71,13 @@ namespace PocketFootball.View
             }
             var p = Pose(cfg, Cam.aspect, lookAtXYd, zoom);
             transform.SetPositionAndRotation(p.position, p.rotation);
+            lookTarget = p.target;
             Cam.fieldOfView = cfg.camera.fovDeg;
             Cam.nearClipPlane = 1f;
             Cam.farClipPlane = p.distance * 4f;
         }
 
-        public struct CamPose { public Vector3 position; public Quaternion rotation; public float distance; }
+        public struct CamPose { public Vector3 position; public Quaternion rotation; public float distance; public Vector3 target; }
 
         // Pure maths, so the EditMode tests can check the framing without a window.
         public static CamPose Pose(GameConfig cfg, float aspect, float lookAtXYd, float zoom = 0f)
@@ -87,8 +91,17 @@ namespace PocketFootball.View
             float dist = yards * m * 0.5f / Mathf.Tan(hHalf);
             float side = c.sideline < 0f ? 1f : -1f;   // -Z sideline looks toward +Z
             var rot = Quaternion.Euler(pitch, side > 0f ? 0f : 180f, 0f);
-            var target = new Vector3(lookAtXYd * m, 0f, c.lookAtZYd * m);
-            return new CamPose { position = target - rot * Vector3.forward * dist, rotation = rot, distance = dist };
+            float tz = c.lookAtZYd * m;
+            float down = pitch * Mathf.Deg2Rad + vHalf;   // the bottom of the screen, below level
+            if (cfg.Feature("nearSideline") && down < Mathf.PI * 0.5f - 0.01f)
+            {
+                // the bottom row of the screen meets the grass on a line `reach` metres short of the look-at point
+                float reach = dist * Mathf.Cos(pitch * Mathf.Deg2Rad) - dist * Mathf.Sin(pitch * Mathf.Deg2Rad) / Mathf.Tan(down);
+                float edge = (cfg.field.HalfWidth + cfg.field.sidelineBorderYd + c.nearSidelinePadYd) * m;
+                if (side * tz > reach - edge) tz = side * (reach - edge);
+            }
+            var target = new Vector3(lookAtXYd * m, 0f, tz);
+            return new CamPose { position = target - rot * Vector3.forward * dist, rotation = rot, distance = dist, target = target };
         }
     }
 }

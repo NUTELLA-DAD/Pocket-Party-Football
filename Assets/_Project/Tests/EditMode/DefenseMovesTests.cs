@@ -146,6 +146,51 @@ namespace PocketFootball.Tests.EditMode
             Assert.IsTrue(w.Intercepted, "and runs it back (FEATURES.intreturn)");
         }
 
+        // FEATURES.jumpAnytime: JUMP from the phone always jumps, pass or no pass: off the grass for the hop, then he
+        // lands (off balance: there was nothing to go for). With the switch off a jump needs a pass in the air.
+        [Test]
+        public void TheJumpButtonJumpsWithNoPassInTheAir()
+        {
+            var w = Live();
+            Assert.AreNotEqual(BallState.Flying, w.Ball.State);
+            var d = w.Find(Def);
+            w.Step(In(Def, new PlayerInput { Def = DefMove.Jump }));
+            Assert.AreEqual(DefMove.Jump, DefenseMoves.Get(w, Def).Move, "up he goes");
+            float top = 0f;
+            for (int i = 0; i < Huddle.Ticks(w, w.Cfg.defense.swatActiveS) + 2 && DefenseMoves.Get(w, Def).Move == DefMove.Jump; i++)
+            {
+                top = System.Math.Max(top, PocketFootball.View.DefenseMovesView.LiftYd(w, d));
+                w.Step(null);
+            }
+            Assert.Greater(top, 0f, "his feet left the grass on the TV");
+            Assert.AreEqual(DefMove.None, DefenseMoves.Get(w, Def).Move, "and he came down");
+            Assert.AreEqual(0f, PocketFootball.View.DefenseMovesView.LiftYd(w, d));
+            Assert.AreEqual("NO_JUMP_ANYTIME", ConfigLoader.EnvName("jumpAnytime"));
+            Assert.IsTrue(ConfigTests.Load().Feature("jumpAnytime"), "on in game.json");
+        }
+
+        [Test]
+        public void NoJumpAnytimeNeedsAPassInTheAir()
+        {
+            var w = Live(c => c.features["jumpAnytime"] = false);
+            w.Step(In(Def, new PlayerInput { Def = DefMove.Jump }));
+            Assert.AreEqual(DefMove.None, DefenseMoves.Get(w, Def).Move);
+        }
+
+        // A person who only presses buttons (no stick) has not put the phone down: no bot takes over his spot.
+        [Test]
+        public void PressingJumpIsNotIdle()
+        {
+            var w = Live();
+            var d = w.Find(Def);
+            int ticks = (int)(w.Cfg.bots.idleTakeoverS * w.Cfg.sim.tickHz) + 5;
+            int ran = 0;
+            for (; ran < ticks && w.Phase == Phase.Live; ran++)
+                w.Step(In(Def, new PlayerInput { Def = ran % 10 == 0 ? DefMove.Jump : DefMove.None }));
+            Assert.GreaterOrEqual(ran, 30, "the play ran long enough to tell");
+            Assert.Less(d.IdleTicks, 10, "each press counts as a touch");
+        }
+
         // ---- dive tackle ----
 
         // The QB with the ball sprinting across the field (toward +Z, or -Z), the person on defense `gap` yards on the

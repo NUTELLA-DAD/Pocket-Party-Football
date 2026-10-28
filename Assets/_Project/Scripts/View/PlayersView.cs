@@ -109,7 +109,7 @@ namespace PocketFootball.View
                 at += new Vector2(ox, oz);
                 var t = fig.transform;
                 var pos = new Vector3(at.x * yd, 0f, at.y * yd);
-                float moved = (pos - t.localPosition).magnitude;
+                float moved = (pos - new Vector3(t.localPosition.x, 0f, t.localPosition.z)).magnitude;   // (along the grass: a jump is no stride)
 
                 // facing: the way it runs, else its team's direction of play; turned toward the camera by turn
                 float speed = Mathf.Sqrt(p.VX * p.VX + p.VZ * p.VZ);
@@ -159,7 +159,11 @@ namespace PocketFootball.View
                     pos += new Vector3(move.KnockX * yd, 0f, move.KnockZ * yd);   // FEATURES.hitAngle: a big hit drives them back
                     yaw = downYaw[p.Slot]; moved = 0f;
                 }
-                else downStart.Remove(p.Slot);
+                else
+                {
+                    downStart.Remove(p.Slot);
+                    pos.y += DefenseMovesView.LiftYd(w, p) * yd;   // a defender's JUMP leaves the grass
+                }
                 t.localPosition = pos;
                 t.localRotation = Quaternion.Euler(0f, yaw, 0f);
                 fig.Carry(0f, 0f, 0f, 0f, 0f);

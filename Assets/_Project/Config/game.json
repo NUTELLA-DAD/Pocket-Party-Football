@@ -81,6 +81,7 @@
     "pitchDeg": 22,
     "lookAtXYd": 0,
     "lookAtZYd": 0,
+    "nearSidelinePadYd": 1.5,
     "sideline": -1,
     "leadYd": 8,
     "followRate": 3,
@@ -492,6 +493,7 @@
     "jumpPickPerfectChance": 0.1,
     "jumpPickChance": 0.03,
     "jumpKnockChance": 0.3,
+    "jumpLiftYd": 0.7,
     "coverMissS": 0.6,
     "coverMissSpeedFrac": 0.4,
     "diveSpeedYdS": 9,
@@ -1106,6 +1108,9 @@
     "huddleSwitch": true,
     "teamPick": true,
     "botsV3": true,
-    "smoothMotion": true
+    "smoothMotion": true,
+    "nearSideline": true,
+    "oobIncomplete": true,
+    "jumpAnytime": true
   }
 }

@@ -184,6 +184,14 @@ namespace PocketFootball.Sim
                     bool offense = near.Team == w.Offense;
                     if (w.Rng.Value() < Receiving.Chance(w, near, Ratings.Catch(w, near, offense ? c.catchChanceOffense : c.catchChanceDefense)))   // WS-05: CATCH timing
                     {
+                        // FEATURES.oobIncomplete: a catch with his feet out of bounds is no catch (no gain, no first
+                        // down, no interception): incomplete, the ball falls on past him and goes back to the line
+                        if (near.OutOfBounds && w.Cfg.Feature("oobIncomplete"))
+                        {
+                            w.Events.Push(w, EventKind.Incomplete, qb != null ? qb.Slot : -1, w.Offense, w.Ball.X, w.Ball.Z);
+                            Whistle(w, "INCOMPLETE", w.LineOfScrimmageX);
+                            return;
+                        }
                         w.Ball.GiveTo(near, w.Cfg.ball);
                         w.Events.Push(w, offense ? EventKind.Catch : EventKind.Interception, near, qb);
                         if (!offense)
