@@ -6,10 +6,11 @@ using UnityEngine.SceneManagement;
 
 namespace PocketFootball.Boot
 {
-    // The title screen (FEATURES.titleScreen, NO_TITLE_SCREEN=1 goes straight to the lobby). Kenny's logo and three
-    // buttons: PLAY, HOW TO PLAY, SETTINGS. Behind them the bots play a game of their own (attract mode), filmed from
-    // a new angle every play (title.shots, View/TitleShots.cs). That game is only for show: no lobby, no game clock,
-    // no replays, no game log, no pads joining, and a new seed every time. PLAY loads the Boot scene again, so the real
+    // The title screen (FEATURES.titleScreen, NO_TITLE_SCREEN=1 goes straight to the lobby). Kenny's logo and the
+    // buttons: PLAY, POCKET CUP (FEATURES.cup: the bracket page, CupHost.cs), HOW TO PLAY, SETTINGS. Behind them the
+    // bots play a game of their own (attract mode), filmed from a new angle every play (title.shots,
+    // View/TitleShots.cs). That game is only for show: no lobby, no game clock, no replays, no game log, no pads
+    // joining, and a new seed every time. PLAY loads the Boot scene again, so the real
     // game starts fresh (a new world, a new room code) at the lobby; the title shows once per run.
     // Mouse, keyboard (arrows, Enter, Esc) or an Xbox pad (d-pad or stick, A, B). Esc on the menu quits as before.
     public sealed class TitleScreen : MonoBehaviour
@@ -17,11 +18,19 @@ namespace PocketFootball.Boot
         public static TitleScreen Instance { get; private set; }
         public static bool Showing => Instance != null;
         static bool done;   // PLAY was pressed: the reloaded scene goes straight to the lobby
+        static string returnPage;   // a cup game ended: the reloaded scene shows the title again, on this page
         static string lobbyAway, lobbyHome;   // the teams the lobby screen picked this run (they beat PP_TEAMS)
 
         // (the editor may keep statics between play sessions: every session starts on the title again)
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() { done = false; Instance = null; lobbyAway = lobbyHome = null; }
+        static void ResetStatics() { done = false; returnPage = null; Instance = null; lobbyAway = lobbyHome = null; }
+
+        // The next scene load shows the title again, open on this page ("cup": after a cup game).
+        public static void ReturnTo(string startPage)
+        {
+            done = false;
+            returnPage = startPage;
+        }
 
         // The attract game leaves these off; the reloaded scene reads game.json again, so the real game has them all.
         static readonly string[] AttractOff = { "lobby", "clock", "replay", "gamelog", "gamepad" };
@@ -37,18 +46,20 @@ namespace PocketFootball.Boot
         int SettingsRows => HelperRow + FlightMarks.Switches.Length + 1;
         int away, home;   // the picked teams, as league indexes (saved at once; the game after PLAY wears them)
 
-        enum Page { Menu, HowTo, Settings }
+        enum Page { Menu, HowTo, Settings, Cup }
+        enum Item { Play, Cup, HowTo, Settings }
 
         GameConfig cfg;
         PartyHost host;
         CameraRig rig;
         Page page = Page.Menu;
-        int pick;              // the button with the highlight (menu: 0 PLAY, 1 HOW TO PLAY, 2 SETTINGS; settings: its rows)
+        int pick;              // the button with the highlight (menu: its items in order; settings: its rows; cup: its buttons)
         float fadeT = -1f;     // PLAY pressed: the fade to black (-1: not fading)
         int escFrame = -1;
         Texture2D logo, black;
-        Texture2D[] buttons;
-        readonly Rect[] hit = new Rect[3];   // the menu buttons on screen (GUI space), for the mouse
+        Item[] items;          // the menu's buttons, top to bottom
+        Texture2D[] buttons;   // their pictures (null: drawn as text)
+        Rect[] hit;            // the menu buttons on screen (GUI space), for the mouse
 
         // the camera
         int shot = -1;
@@ -79,18 +90,26 @@ namespace PocketFootball.Boot
             t.host = host;
             t.rig = rig;
             t.logo = Resources.Load<Texture2D>("Title/TitleArt");
-            t.buttons = new[] { Resources.Load<Texture2D>("Title/ButtonPlay"), Resources.Load<Texture2D>("Title/ButtonHowToPlay"), Resources.Load<Texture2D>("Title/ButtonSettings") };
+            t.items = CupHost.On(cfg) ? new[] { Item.Play, Item.Cup, Item.HowTo, Item.Settings } : new[] { Item.Play, Item.HowTo, Item.Settings };
+            t.buttons = new Texture2D[t.items.Length];
+            t.hit = new Rect[t.items.Length];
+            for (int i = 0; i < t.items.Length; i++) t.buttons[i] = Resources.Load<Texture2D>(ButtonArt[(int)t.items[i]]);
             t.black = Texture2D.whiteTexture;
             host.DevKeys = false;   // (W/A/S/D and the arrows move the highlight here, not the dev keys)
             t.away = Mathf.Max(0, TeamPick.Find(cfg, cfg.teams.Count > 0 ? cfg.teams[0].@short : null));
             t.home = Mathf.Max(0, TeamPick.Find(cfg, cfg.teams.Count > 1 ? cfg.teams[1].@short : null));
             if (t.home == t.away) t.home = TeamPick.Step(cfg, t.home, t.away, +1);
+            if (returnPage != null) { startPage = returnPage; returnPage = null; }
             if (startPage == "howto") t.page = Page.HowTo;
             else if (startPage == "settings") t.page = Page.Settings;
+            else if (startPage == "cup" && System.Array.IndexOf(t.items, Item.Cup) >= 0) { t.page = Page.Cup; t.cup = CupHost.Load(cfg); }
             Instance = t;
             Debug.Log("[title] title screen up (attract mode behind it)");
             return t;
         }
+
+        static readonly string[] ButtonArt = { "Title/ButtonPlay", "Title/ButtonCup", "Title/ButtonHowToPlay", "Title/ButtonSettings" };   // by Item
+        static readonly string[] ButtonText = { "PLAY", "POCKET CUP", "HOW TO PLAY", "SETTINGS" };
 
         void OnDestroy() { if (Instance == this) Instance = null; }
 
@@ -152,12 +171,13 @@ namespace PocketFootball.Boot
 
             if (page == Page.Menu)
             {
-                if (up) pick = (pick + 2) % 3;
-                if (down) pick = (pick + 1) % 3;
+                int n = items.Length;
+                if (up) pick = (pick + n - 1) % n;
+                if (down) pick = (pick + 1) % n;
                 for (int i = 0; i < hit.Length; i++)
                     if ((moved || click) && hit[i].Contains(mp)) { pick = i; if (click) ok = true; }
                 if (click && !Over(mp)) ok = false;
-                if (ok) Choose(pick);
+                if (ok) Choose(items[pick]);
                 return;
             }
 
@@ -167,11 +187,16 @@ namespace PocketFootball.Boot
                 if (ok || click) Open(Page.Menu);
                 return;
             }
+            if (page == Page.Cup)
+            {
+                CupInput(up || left, down || right, ok, click, moved, mp);
+                return;
+            }
 
             // settings: 0 sound, the teams, full screen, the helpers, back
-            int n = SettingsRows;
-            if (up) pick = (pick + n - 1) % n;
-            if (down) pick = (pick + 1) % n;
+            int rowsN = SettingsRows;
+            if (up) pick = (pick + rowsN - 1) % rowsN;
+            if (down) pick = (pick + 1) % rowsN;
             for (int i = 0; i < rows.Length; i++)
                 if ((moved || click) && rows[i].Contains(mp)) pick = i;
             if (pick == 0)
@@ -187,8 +212,8 @@ namespace PocketFootball.Boot
                 if (right || ok || (clickRow && mp.x >= rows[pick].center.x)) PickTeam(pick == 1, +1);
             }
             else if (pick == ScreenRow && (ok || left || right || (click && rows[pick].Contains(mp)))) Screen.fullScreen = !Screen.fullScreen;
-            else if (pick >= HelperRow && pick < n - 1 && (ok || left || right || (click && rows[pick].Contains(mp)))) Toggle(pick - HelperRow);
-            else if (pick == n - 1 && (ok || (click && rows[n - 1].Contains(mp)))) Open(Page.Menu);
+            else if (pick >= HelperRow && pick < rowsN - 1 && (ok || left || right || (click && rows[pick].Contains(mp)))) Toggle(pick - HelperRow);
+            else if (pick == rowsN - 1 && (ok || (click && rows[rowsN - 1].Contains(mp)))) Open(Page.Menu);
         }
 
         bool Over(Vector2 mp)
@@ -197,15 +222,22 @@ namespace PocketFootball.Boot
             return false;
         }
 
-        void Choose(int i)
+        void Choose(Item i)
         {
-            if (i == 0) { fadeT = 0f; Debug.Log("[title] PLAY"); }
-            else Open(i == 1 ? Page.HowTo : Page.Settings);
+            if (i == Item.Play) { CupHost.SetLive(false); fadeT = 0f; Debug.Log("[title] PLAY"); }
+            else if (i == Item.Cup) { cup = CupHost.Load(cfg); Open(Page.Cup); }
+            else Open(i == Item.HowTo ? Page.HowTo : Page.Settings);
         }
 
         void Open(Page p)
         {
-            pick = p == Page.Menu ? (page == Page.HowTo ? 1 : page == Page.Settings ? 2 : 0) : 0;
+            if (p == Page.Menu)
+            {
+                var from = page == Page.HowTo ? Item.HowTo : page == Page.Settings ? Item.Settings : page == Page.Cup ? Item.Cup : Item.Play;
+                pick = Mathf.Max(0, System.Array.IndexOf(items, from));
+            }
+            else pick = 0;
+            confirmNew = false;
             page = p;
         }
 
@@ -277,7 +309,7 @@ namespace PocketFootball.Boot
         }
 
         // ---- the TV ----
-        GUIStyle head, body, row, hint;
+        GUIStyle head, body, row, hint, small;
         readonly Rect[] rows = new Rect[8];
 
         void OnGUI()
@@ -295,9 +327,12 @@ namespace PocketFootball.Boot
             hint.fontSize = Mathf.RoundToInt(22 * s);
 
             Fill(new Rect(0, 0, W, H), new Color(0f, 0f, 0f, page == Page.Menu ? t.tint : Mathf.Max(t.tint, 0.55f)));
+            small ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, fontStyle = FontStyle.Bold, clipping = TextClipping.Clip, richText = true };
+            small.fontSize = Mathf.RoundToInt(24 * s);
 
             if (page == Page.Menu) DrawMenu(W, H, s, t);
             else if (page == Page.HowTo) DrawHowTo(W, H, s);
+            else if (page == Page.Cup) DrawCup(W, H, s);
             else DrawSettings(W, H, s);
 
             if (fadeT >= 0f)
@@ -313,15 +348,18 @@ namespace PocketFootball.Boot
             float y = H * t.logoTopFrac;
             if (logo != null)
             {
-                float lh = H * t.logoHeightFrac, lw = lh * logo.width / logo.height;
+                // a fourth button (POCKET CUP): the logo gives up the room, so the buttons stay clear of the hint
+                float below = t.playHeightFrac + (items.Length - 1) * t.otherHeightFrac + (items.Length + 1) * t.gapFrac;
+                float fit = Mathf.Max(0.2f, t.menuBottomFrac - t.logoTopFrac - below);
+                float lh = H * Mathf.Min(t.logoHeightFrac, fit), lw = lh * logo.width / logo.height;
                 if (lw > W * 0.94f) { lw = W * 0.94f; lh = lw * logo.height / logo.width; }
                 GUI.DrawTexture(new Rect((W - lw) * 0.5f, y, lw, lh), logo);
                 y += lh + H * t.gapFrac * 2f;
             }
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < items.Length; i++)
             {
                 var tex = buttons[i];
-                float bh = H * (i == 0 ? t.playHeightFrac : t.otherHeightFrac);
+                float bh = H * (items[i] == Item.Play ? t.playHeightFrac : t.otherHeightFrac);
                 float bw = tex != null ? bh * tex.width / tex.height : bh * 4f;
                 var r = new Rect((W - bw) * 0.5f, y, bw, bh);
                 hit[i] = r;
@@ -334,7 +372,7 @@ namespace PocketFootball.Boot
                 }
                 GUI.color = on ? Color.white : new Color(t.dimOthers, t.dimOthers, t.dimOthers, 1f);
                 if (tex != null) GUI.DrawTexture(r, tex);
-                else GUI.Label(r, i == 0 ? "PLAY" : i == 1 ? "HOW TO PLAY" : "SETTINGS", row);
+                else GUI.Label(r, ButtonText[(int)items[i]], row);
                 GUI.color = Color.white;
             }
             Shadowed(new Rect(0, H - 44 * s, W, 34 * s), "Mouse, arrows + Enter, or a controller", hint);
@@ -355,7 +393,7 @@ namespace PocketFootball.Boot
         static readonly string[] HowTo =
         {
             "<b>1. Join.</b> Press PLAY. Everyone scans the QR code on the TV with their phone (same Wi-Fi as the TV).",
-            "<b>2. Pick a side.</b> The two teams on the TV (change them with the arrows on the join screen, or under SETTINGS). Bots play every spot nobody took.",
+            "<b>2. Pick a side.</b> The two teams on the TV (change them with the arrows on the join screen or under SETTINGS, or play through the POCKET CUP). Bots play every spot nobody took.",
             "<b>3. Lobby.</b> Pick your offense spot and your defense spot. Any phone taps KICK OFF to start.",
             "<b>4. Huddle.</b> Call a play on your phone in secret. The TV only shows CALLED, never which play.",
             "<b>5. Offense.</b> QB: tap HIKE, then a receiver's shape to throw (tap = bullet, hold = lob). With the ball: SPRINT, JUKE, SPIN, STIFF ARM.",
@@ -412,6 +450,196 @@ namespace PocketFootball.Boot
                 y += rh + gap;
             }
             Shadowed(new Rect(r.x, r.yMax - 70 * s, r.width, 40 * s), "Up / Down to pick, Left / Right to change, Esc or (B) to go back", hint);
+        }
+
+        // ---- the Pocket Cup page (FEATURES.cup): the bracket, and PLAY NEXT GAME / NEW CUP / BACK under it ----
+        Cup cup;                 // the saved cup (null: none yet)
+        bool confirmNew;         // NEW CUP pressed once while a cup is under way: the second press starts over
+        readonly Rect[] cupHit = new Rect[3];
+        readonly System.Collections.Generic.Dictionary<string, Texture2D> logos = new System.Collections.Generic.Dictionary<string, Texture2D>();
+
+        enum CupButton { Next, New, Back }
+
+        CupButton[] CupButtons()
+        {
+            if (cup != null && !cup.Over && cup.Next() != null) return new[] { CupButton.Next, CupButton.New, CupButton.Back };
+            return new[] { CupButton.New, CupButton.Back };
+        }
+
+        void CupInput(bool prev, bool next, bool ok, bool click, bool moved, Vector2 mp)
+        {
+            var b = CupButtons();
+            int n = b.Length;
+            if (pick >= n) pick = 0;
+            if (prev) pick = (pick + n - 1) % n;
+            if (next) pick = (pick + 1) % n;
+            bool onButton = false;
+            for (int i = 0; i < n; i++)
+                if ((moved || click) && cupHit[i].Contains(mp)) { pick = i; onButton = true; }
+            if (click && onButton) ok = true;
+            if (!ok) return;
+            var what = b[pick];
+            if (what == CupButton.Back) { Open(Page.Menu); return; }
+            if (what == CupButton.New)
+            {
+                if (cup != null && !cup.Over && !confirmNew) { confirmNew = true; return; }
+                cup = CupHost.StartNew(cfg);
+                confirmNew = false;
+                pick = 0;   // PLAY NEXT GAME
+                return;
+            }
+            // the cup's next game: the Boot scene again, wearing its two teams, opening on the lobby
+            confirmNew = false;
+            CupHost.SetLive(true);
+            fadeT = 0f;
+            Debug.Log("[title] POCKET CUP: next game");
+        }
+
+        TeamConfig TeamOf(string code)
+        {
+            int i = TeamPick.Find(cfg, code);
+            return i >= 0 ? TeamPick.League(cfg)[i] : null;
+        }
+
+        Texture2D LogoOf(string code)
+        {
+            if (!logos.TryGetValue(code, out var tex)) { tex = Resources.Load<Texture2D>("Logos/" + code); logos[code] = tex; }
+            return tex;
+        }
+
+        void DrawCup(float W, float H, float s)
+        {
+            var r = Panel(W, H, s, "POCKET CUP");
+            var next = cup?.Next();
+            float pad = 48 * s;
+            // the line under the title: what's next
+            string sub = cup == null ? "Every team in one knockout bracket. Win and go through; lose and you're out."
+                : cup.Over ? "CHAMPIONS: " + (TeamOf(cup.Champion)?.name ?? cup.Champion).ToUpperInvariant()
+                : next != null ? cup.RoundName(next.Round) + ":  " + Name(next.Away) + "  at  " + Name(next.Home) : "";
+            hint.normal.textColor = Color.white;
+            Shadowed(new Rect(r.x, r.y + 92 * s, r.width, 36 * s), sub, hint);
+
+            // the bracket: a column a round, then the champion
+            float top = r.y + 140 * s, bottom = r.yMax - 170 * s;
+            if (cup != null) DrawBracket(new Rect(r.x + pad, top, r.width - 2 * pad, bottom - top), s, next);
+            else
+            {
+                body.normal.textColor = Color.white;
+                var teams = CupHost.Teams(cfg);
+                float lw = Mathf.Min(120 * s, (r.width - 2 * pad) / Mathf.Max(1, teams.Count) - 12 * s), x = r.x + (r.width - teams.Count * (lw + 12 * s)) * 0.5f;
+                for (int i = 0; i < teams.Count; i++)
+                {
+                    var logo = LogoOf(teams[i]);
+                    var lr = new Rect(x + i * (lw + 12 * s), (top + bottom) * 0.5f - lw * 0.5f, lw, lw);
+                    if (logo != null) GUI.DrawTexture(lr, logo, ScaleMode.ScaleToFit);
+                    else { var t = TeamOf(teams[i]); if (t != null) Fill(lr, Colors.Hex(t.color)); }
+                }
+                Shadowed(new Rect(r.x, (top + bottom) * 0.5f + lw * 0.5f + 16 * s, r.width, 40 * s), teams.Count + " teams. Press NEW CUP to draw the bracket.", hint);
+            }
+
+            // the buttons, side by side
+            var b = CupButtons();
+            float bw = Mathf.Min(360 * s, (r.width - 2 * pad - (b.Length - 1) * 20 * s) / b.Length), bh = 70 * s;
+            float bx = r.x + (r.width - (b.Length * bw + (b.Length - 1) * 20 * s)) * 0.5f, by = r.yMax - 160 * s;
+            for (int i = 0; i < cupHit.Length; i++) cupHit[i] = Rect.zero;
+            for (int i = 0; i < b.Length; i++)
+            {
+                var br = new Rect(bx + i * (bw + 20 * s), by, bw, bh);
+                cupHit[i] = br;
+                bool on = i == pick;
+                Fill(br, on ? CupColors.Gold : new Color(1f, 1f, 1f, 0.08f));
+                row.normal.textColor = on ? CupColors.NavyText : Color.white;
+                string label = b[i] == CupButton.Next ? "PLAY NEXT GAME" : b[i] == CupButton.Back ? "BACK"
+                    : confirmNew ? "SURE? PRESS AGAIN" : "NEW CUP";
+                int was = row.fontSize;
+                row.fontSize = Mathf.RoundToInt(32 * s);
+                GUI.Label(br, label, row);
+                row.fontSize = was;
+            }
+            Shadowed(new Rect(r.x, r.yMax - 70 * s, r.width, 40 * s), "Left / Right to pick, Enter or (A) to press, Esc or (B) to go back", hint);
+        }
+
+        string Name(string code) => (TeamOf(code)?.name ?? code).ToUpperInvariant();
+
+        // Every match as two team boxes, joined by lines to the box its winner moves into.
+        void DrawBracket(Rect area, float s, CupMatch next)
+        {
+            int cols = cup.Rounds + 1;
+            float colGap = 36 * s, colW = (area.width - colGap * (cols - 1)) / cols;
+            float boxH = Mathf.Min(64 * s, area.height / cup.Size * 0.8f);
+            var line = new Color(1f, 0.78f, 0.12f, 0.55f);
+            float lw = Mathf.Max(2f, 3 * s);
+            small.fontSize = Mathf.RoundToInt(Mathf.Min(26 * s, boxH * 0.42f));
+
+            for (int round = 0; round < cup.Rounds; round++)
+            {
+                float x = area.x + round * (colW + colGap);
+                int slots = cup.Size >> round;
+                float slotH = area.height / slots;
+                small.normal.textColor = CupColors.GoldText;
+                small.alignment = TextAnchor.MiddleCenter;
+                GUI.Label(new Rect(x, area.y - 30 * s, colW, 28 * s), cup.RoundName(round), small);
+                small.alignment = TextAnchor.MiddleLeft;
+                for (int m = 0; m < cup.Matches(round); m++)
+                {
+                    string winner = cup.Winner(round, m);
+                    bool isNext = next != null && next.Round == round && next.Index == m;
+                    float ya = area.y + (m * 2 + 0.5f) * slotH, yb = ya + slotH;
+                    for (int side = 0; side < 2; side++)
+                    {
+                        float cy = side == 0 ? ya : yb;
+                        var box = new Rect(x, cy - boxH * 0.5f, colW, boxH);
+                        string code = cup.Team(round, m, side);
+                        bool bye = cup.IsBye(round, m, side);
+                        TeamBox(box, code, bye ? "BYE" : "", code != null && winner != null && winner != code, code != null && winner == code && !IsByeMatch(round, m), isNext, s);
+                    }
+                    // the joining lines: out of each box, down the middle, on to the next round's box
+                    float xr = x + colW, xm = xr + colGap * 0.5f;
+                    Fill(new Rect(xr, ya - lw * 0.5f, colGap * 0.5f, lw), line);
+                    Fill(new Rect(xr, yb - lw * 0.5f, colGap * 0.5f, lw), line);
+                    Fill(new Rect(xm - lw * 0.5f, ya, lw, yb - ya), line);
+                    Fill(new Rect(xm, (ya + yb) * 0.5f - lw * 0.5f, colGap * 0.5f, lw), line);
+                }
+            }
+            // the champion's box, level with the final
+            float cx = area.x + cup.Rounds * (colW + colGap);
+            var champ = new Rect(cx, area.y + area.height * 0.5f - boxH * 0.5f, colW, boxH);
+            small.normal.textColor = CupColors.GoldText;
+            small.alignment = TextAnchor.MiddleCenter;
+            GUI.Label(new Rect(cx, champ.y - 34 * s, colW, 28 * s), "CHAMPION", small);
+            small.alignment = TextAnchor.MiddleLeft;
+            TeamBox(champ, cup.Champion, "?", false, cup.Champion != null, false, s);
+        }
+
+        bool IsByeMatch(int round, int m) => cup.IsBye(round, m, 0) || cup.IsBye(round, m, 1);
+
+        // One team in the bracket: its colours, its logo, its seed and name. Empty: still to be decided (or a bye).
+        void TeamBox(Rect box, string code, string empty, bool lost, bool won, bool next, float s)
+        {
+            var t = code != null ? TeamOf(code) : null;
+            if (next) Fill(new Rect(box.x - 4 * s, box.y - 4 * s, box.width + 8 * s, box.height + 8 * s), CupColors.Gold);
+            Fill(box, won ? new Color(0.16f, 0.13f, 0.03f, 1f) : new Color(0.02f, 0.05f, 0.13f, 1f));
+            if (won) { Fill(new Rect(box.x, box.y, box.width, 3 * s), CupColors.Gold); Fill(new Rect(box.x, box.yMax - 3 * s, box.width, 3 * s), CupColors.Gold); }
+            if (t == null)
+            {
+                small.normal.textColor = new Color(1f, 1f, 1f, 0.35f);
+                GUI.Label(new Rect(box.x + 16 * s, box.y, box.width - 16 * s, box.height), empty, small);
+                return;
+            }
+            float sw = 10 * s;
+            Fill(new Rect(box.x, box.y, sw, box.height), Colors.Hex(t.color));
+            Fill(new Rect(box.x + sw, box.y, sw * 0.6f, box.height), Colors.Hex(t.color2));
+            float lx = box.x + sw * 1.6f + 6 * s, ls = box.height - 6 * s;
+            var logo = LogoOf(code);
+            if (logo != null)
+            {
+                if (lost) GUI.color = new Color(1f, 1f, 1f, 0.35f);
+                GUI.DrawTexture(new Rect(lx, box.y + 3 * s, ls, ls), logo, ScaleMode.ScaleToFit);
+                GUI.color = Color.white;
+                lx += ls + 6 * s;
+            }
+            small.normal.textColor = lost ? new Color(1f, 1f, 1f, 0.35f) : won ? CupColors.GoldText : Color.white;
+            GUI.Label(new Rect(lx, box.y, box.xMax - lx - 4 * s, box.height), "<size=" + Mathf.RoundToInt(small.fontSize * 0.7f) + ">" + cup.SeedOf(code) + "</size>  " + t.name.ToUpperInvariant(), small);
         }
 
         void Fill(Rect r, Color c)
