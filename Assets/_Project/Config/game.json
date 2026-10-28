@@ -973,6 +973,7 @@
     "flightLine": true,
     "landingRing": true,
     "reachRing": true,
-    "stayOnside": true
+    "stayOnside": true,
+    "huddleSwitch": true
   }
 }

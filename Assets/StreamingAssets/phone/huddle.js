@@ -5,6 +5,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var SVG = 'http' + '://www.w3.org/2000/svg';   // the SVG namespace name (not a download)
   var H = { plays: [], spots: [], opp: [], me: 0, caller: false, locked: false, mine: '', pick: '', thumbs: {}, side: '', ends: 0 };
+  var P = { lineup: null, open: false, asked: -1 };   // FEATURES.huddleSwitch: the team's spots, and the position picker
   var clockTimer = null;
 
   // ---- the playbook picture: a coach's chalkboard on grass. Offense = cream O's, defense = red X's, jobs = yellow arrows. ----
@@ -251,6 +252,67 @@
     window.PP.send({ t: H.caller ? 'lock' : 'suggest', id: H.pick, aid: window.PP.aid() });
   });
 
+  // ---- a new position between plays (FEATURES.huddleSwitch): the same spot and swap presses as the lobby ----
+  function posSide() { return H.side === 'defense' ? 'd' : 'o'; }
+  function onLineup(msg) {
+    P.lineup = msg;
+    var on = !!msg.switch;
+    $('hSwitch').classList.toggle('hidden', !on);
+    if (!on) { openPos(false); return; }
+    var you = msg.you ? msg.you[posSide()] : -1;
+    if (msg.line) $('hPosLine').textContent = msg.line;
+    if (msg.ask) openPos(true);
+    else if (P.open && P.asked >= 0 && you === P.asked) {   // you got the spot you tapped: back to the plays
+      openPos(false);
+      $('hPosLine').textContent = 'Tap a bot\u2019s spot to take it. Tap a person to ask them to swap.';
+    }
+    drawSpots();
+  }
+  function openPos(open) {
+    P.open = open;
+    if (!open) P.asked = -1;
+    $('hPos').classList.toggle('hidden', !open);
+    $('hSwitch').setAttribute('aria-pressed', String(open));
+    if (open) drawSpots();
+  }
+  function drawSpots() {
+    var m = P.lineup, box = $('hSpots');
+    if (!m || !P.open) return;
+    var side = posSide(), list = (side === 'o' ? m.offense : m.defense) || [];
+    $('hPosTitle').textContent = 'NEW POSITION ON ' + (side === 'o' ? 'OFFENSE' : 'DEFENSE');
+    box.innerHTML = '';
+    list.forEach(function (s, i) {
+      var b = document.createElement('button');
+      b.className = 'lspot' + (s.me ? ' me' : '') + (s.person && !s.me ? ' person' : '') + (s.away ? ' away' : '');
+      b.setAttribute('aria-pressed', String(!!s.me));
+      b.setAttribute('aria-label', s.me ? 'Your position now: ' + s.pos + ' number ' + s.number
+        : s.person ? 'Ask ' + s.who + ' to swap for ' + s.pos + ' number ' + s.number
+        : 'Switch to ' + s.pos + ' number ' + s.number + ' (a bot plays it now)');
+      var pos = document.createElement('b'); pos.textContent = s.pos + ' ' + s.number;
+      var who = document.createElement('i'); who.textContent = s.me ? 'YOU' : s.away ? s.who + ' (away)' : s.who;
+      b.appendChild(pos); b.appendChild(who);
+      b.addEventListener('click', function () {
+        if (s.me) return;
+        P.asked = i;
+        window.PP.send({ t: 'spot', side: side, spot: i, aid: window.PP.aid() });
+        if (!s.person) $('hPosLine').textContent = 'Switching to ' + s.pos + ' #' + s.number + '...';
+      });
+      box.appendChild(b);
+    });
+    var ask = m.ask;
+    $('hAsk').classList.toggle('hidden', !ask);
+    if (ask) $('hAskText').textContent = ask.from + ' wants your ' + ask.give + ' spot. You would get ' + ask.get + '.';
+  }
+  $('hSwitch').addEventListener('click', function () { openPos(!P.open); });
+  $('hPosDone').addEventListener('click', function () { openPos(false); });
+  function answer(yes) {
+    window.PP.send({ t: 'swap', yes: yes, aid: window.PP.aid() });
+    $('hAsk').classList.add('hidden');
+    if (P.lineup) P.lineup.ask = null;
+  }
+  $('hAskYes').addEventListener('click', function () { answer(true); });
+  $('hAskNo').addEventListener('click', function () { answer(false); });
+
   function onThumbs(msg) {
     H.thumbs = msg.counts || {}; H.mine = msg.mine || ''; H.locked = !!msg.locked;
     drawPlays();
@@ -258,6 +320,8 @@
 
   // ---- your job, shown above the stick once the plays are called ----
   function onJob(msg) {
+    openPos(false);   // the plays are called: the position picker is done until the next huddle
+    $('hSwitch').classList.add('hidden');
     var me = (msg.spots || [])[msg.me] || {};
     var job = msg.play && msg.play.jobs ? msg.play.jobs[msg.me] : null;
     $('job').classList.remove('hidden');
@@ -278,6 +342,7 @@
       else if (msg.t === 'thumbs') onThumbs(msg);
       else if (msg.t === 'job') onJob(msg);
       else if (msg.t === 'status') onStatus(msg);
+      else if (msg.t === 'lineup') onLineup(msg);
     }
   };
 })();

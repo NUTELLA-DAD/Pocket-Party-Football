@@ -246,6 +246,7 @@ namespace PocketFootball.Boot
             {
                 Server.Send(seat.Conn, Messages.HuddleFor(World, p.Team, p));
                 SendUi(src, "huddle");
+                if (Lobby.Instance != null) Lobby.Instance.SendHuddleLineup(seat);   // FEATURES.huddleSwitch: the spots to switch to
             }
             else
             {
@@ -254,6 +255,15 @@ namespace PocketFootball.Boot
                 SendUi(src, LayoutFor(p));
             }
         }
+
+        // The team's huddle screens again (FEATURES.huddleSwitch: someone switched spots, so the jobs and caller changed).
+        public void RefreshHuddle(int team)
+        {
+            foreach (var (src, _) in TeamPhones(team)) SendPhaseTo(src);
+        }
+
+        // The aid of the screen this seat's phone shows now (a press must carry it).
+        public string AidOf(int slot) => sources.TryGetValue(slot, out var src) ? src.Aid : null;
 
         // ---- the phone's buttons for this moment (M1-c; the layouts are drawn by the phone's layouts.js) ----
         readonly Dictionary<int, string> lastLayout = new Dictionary<int, string>();

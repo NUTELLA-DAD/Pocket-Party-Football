@@ -16,6 +16,9 @@ namespace PocketFootball.Boot
     //                  lineup {held, team, teamName, color, color2, offense[], defense[], you {o, d}, ask, line}
     //                    offense / defense: one {pos, number, who, person, me, away} per spot (team-only: own team)
     //   phone -> game: spot {side: "o" | "d", spot, aid}, swap {yes, aid}, kickoff {aid}, lobbyme {}
+    // FEATURES.huddleSwitch (NO_HUDDLE_SWITCH=1 turns it off): after kickoff the same spot and swap presses work from
+    // the huddle screen (huddle.js, carrying the huddle screen's aid), so a person can switch spots between plays. The
+    // lineup then carries switch: true, and once a spot changes every huddle screen of that team is sent again.
     public sealed class Lobby : MonoBehaviour
     {
         public static Lobby Instance { get; private set; }
@@ -50,6 +53,9 @@ namespace PocketFootball.Boot
         void OnDestroy() { if (Instance == this) Instance = null; }
 
         public bool On => cfg != null && cfg.Feature("lobby");
+
+        // Switching spots from the huddle screen, between plays (FEATURES.huddleSwitch).
+        public bool Switching => On && cfg.Feature("huddleSwitch") && !Holding && W.Phase == Phase.Huddle && Huddle.On(W);
 
         // The sim waits while this is true (PartyHost.StepOnce). Never for screenshots, photo scenes or batch runs.
         public bool Holding => On && cfg.lobby.holdUntilKickoff && !KickedOff && !shots && host.Photo == null && (HoldOverride ?? !Application.isBatchMode);
@@ -142,8 +148,13 @@ namespace PocketFootball.Boot
             if (!On || seat == null) return;
             if (t == "lobbyme") { if (Holding && HasBody(seat)) ShowLobby(seat); return; }
             if (t != "spot" && t != "swap" && t != "kickoff") return;
-            if (!Holding || seat.Team < 0) return;
-            if (!aidOf.TryGetValue(seat.Slot, out var aid) || PhoneProtocol.Str(m, "aid") != aid) return;
+            if (seat.Team < 0) return;
+            if (!Holding)
+            {
+                // after kickoff: only a spot or a swap, from this phone's huddle screen
+                if (t == "kickoff" || !Switching || PhoneProtocol.Str(m, "aid") != host.AidOf(seat.Slot)) return;
+            }
+            else if (!aidOf.TryGetValue(seat.Slot, out var aid) || PhoneProtocol.Str(m, "aid") != aid) return;
             if (t == "spot") OnSpot(seat, PhoneProtocol.Str(m, "side") == "o", PhoneProtocol.Int(m, "spot", -1));
             else if (t == "swap") OnSwap(seat, m["yes"]?.Type == JTokenType.Boolean && (bool)m["yes"]);
             else KickOff();
@@ -217,13 +228,30 @@ namespace PocketFootball.Boot
 
         void SyncAndSend()
         {
+            var moved = new HashSet<int>();   // teams where someone's spots changed
             foreach (var seat in R.Seats)
             {
                 var p = W.Find(seat.Slot);
-                if (seat.Kind == SeatKind.Phone && p != null && p.Team == seat.Team) { p.OffenseSpot = seat.OffenseSpot; p.DefenseSpot = seat.DefenseSpot; }
+                if (seat.Kind != SeatKind.Phone || p == null || p.Team != seat.Team) continue;
+                if (p.OffenseSpot != seat.OffenseSpot || p.DefenseSpot != seat.DefenseSpot) moved.Add(p.Team);
+                p.OffenseSpot = seat.OffenseSpot; p.DefenseSpot = seat.DefenseSpot;
             }
             if (Holding) W.LineUp();
             SendLineups();
+            if (Switching && moved.Count > 0)
+            {
+                // in the huddle: relabel the spots now and send that team's huddle screens again, so the jobs are right.
+                // Only when a spot changed: a new huddle screen has a new aid, and an open swap question must still answer
+                relabel = false;
+                foreach (var q in W.Players) Formation.Place(W, q);
+                foreach (int team in moved) host.RefreshHuddle(team);
+            }
+        }
+
+        // The huddle screen's line-up (FEATURES.huddleSwitch), sent with the huddle. Team-only, like the huddle.
+        public void SendHuddleLineup(Seat seat)
+        {
+            if (Switching && seat.Conn >= 0 && seat.Team >= 0 && HasBody(seat)) host.Server.Send(seat.Conn, Lineup(seat));
         }
 
         // ---- what the phones see ----
@@ -255,6 +283,7 @@ namespace PocketFootball.Boot
                 ["offense"] = Side(team, true, me), ["defense"] = Side(team, false, me),
                 ["you"] = new JObject { ["o"] = me != null ? Formation.SpotOn(W, me, true) : -1, ["d"] = me != null ? Formation.SpotOn(W, me, false) : -1 },
                 ["people"] = R.TeamCount(team, true), ["players"] = cfg.players.perTeam,
+                ["switch"] = Switching,
             };
             if (asks.TryGetValue(seat.Slot, out var ask) && me != null)
             {

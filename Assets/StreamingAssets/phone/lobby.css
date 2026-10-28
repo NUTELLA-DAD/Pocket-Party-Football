@@ -16,7 +16,7 @@
 .lspot.person { background: var(--turf-2); }
 .lspot.person i { color: var(--chalk); }
 .lspot.away { opacity: .6; }
-.lspot.me { background: var(--team); color: var(--team-ink); border-color: var(--team-2); }
+.lspot.me { grid-area: auto; background: var(--team); color: var(--team-ink); border-color: var(--team-2); }
 .lspot.me i { color: var(--team-ink); }
 .lask { display: grid; gap: 10px; border: 3px solid var(--warn); }
 .lask p { margin: 0; font-size: 17px; font-weight: 800; }
