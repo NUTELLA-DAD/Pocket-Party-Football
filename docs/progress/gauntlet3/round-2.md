@@ -8,7 +8,7 @@ Round 2:
 1. A stubby chibi build like concept 01: shorter, thicker legs (hips 70 to 60 cm on the 182 cm rig), a deeper and wider
    chest, bigger pads, thicker arms, gloves, socks and cleats, and a bigger helmet (HeadScale 0.9 to 1.08, about a third
    of the height). The pads still stick out past the helmet.
-2. The helmet mark is a curved decal wrapped round the side of the shell, about half the helmet's height. The Chiefs'
+2. The helmet mark is a curved decal wrapped round the side of the shell, about half the helmet's height. The Arrows'
    arrowhead points forward on both sides.
 3. Thicker facemask bars, bigger eyes and brows.
 4. Concept 01 scene: the six stand shoulder to shoulder so all of them fit the 2.5:1 frame, there's a plain cream card

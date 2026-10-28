@@ -28,7 +28,7 @@ namespace PocketFootball.View
             return (secs / 60) + ":" + (secs % 60).ToString("00");
         }
 
-        // "CHIEFS WIN 21-14" or "TIE GAME 14-14".
+        // "ARROWS WIN 21-14" or "TIE GAME 14-14".
         public static string WinnerText(World w)
         {
             var teams = w.Cfg.teams;

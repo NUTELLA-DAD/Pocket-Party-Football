@@ -177,7 +177,7 @@ namespace PocketFootball.Boot
             }
         }
 
-        // "LB = Chiefs, RB = Roughriders", from the pick mapping.
+        // "LB = Arrows, RB = Grains", from the pick mapping.
         string TeamKeys()
         {
             var parts = new List<string>();

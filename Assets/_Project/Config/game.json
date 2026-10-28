@@ -34,7 +34,7 @@
       "logoWidthYd": 17,
       "logoHeightYd": 14,
       "logoAlpha": 0.92,
-      "logoSplit": 0.75,
+      "logoSplit": 0.9,
       "logoLightMix": 0.8,
       "logoDarkMix": 0.9,
       "logoDarkValue": 0.85,
@@ -271,8 +271,8 @@
   },
   "teams": [
     {
-      "name": "CHIEFS",
-      "short": "KC",
+      "name": "ARROWS",
+      "short": "ARR",
       "color": "#d7263d",
       "color2": "#ffb612",
       "model": "Models/Chiefs24/Chiefs24_Rigged",
@@ -287,13 +287,15 @@
         { "pos": "TE", "model": "Models/TE/TE_Rigged", "modelTexture": "Models/TE/TE_BaseColor" }
       ],
       "cheerModel": "Models/Cheerleader/Cheerleader_Rigged",
-      "cheerTexture": "Models/Cheerleader/Cheerleader_BaseColor"
+      "cheerTexture": "Models/Cheerleader/Cheerleader_BaseColor",
+      "numberFill": "#ffffff",
+      "numberEdge": "#ffb612"
     },
     {
-      "name": "ROUGHRIDERS",
-      "short": "SSK",
-      "color": "#1f8a4c",
-      "color2": "#f6f1de",
+      "name": "GRAINS",
+      "short": "GRN",
+      "color": "#5cb83a",
+      "color2": "#f2b632",
       "model": "Models/Chiefs24/Chiefs24_Rigged",
       "modelTexture": "Models/Roughriders/Roughriders_BaseColor",
       "posModels": [
@@ -306,7 +308,53 @@
         { "pos": "TE", "model": "Models/TE/TE_Rigged", "modelTexture": "Models/TE/TERR_BaseColor" }
       ],
       "cheerModel": "Models/Cheerleader/Cheerleader_Rigged",
-      "cheerTexture": "Models/Cheerleader/CheerleaderRR_BaseColor"
+      "cheerTexture": "Models/Cheerleader/CheerleaderRR_BaseColor",
+      "numberFill": "#ffffff",
+      "numberEdge": "#14522f"
+    }
+  ],
+  "moreTeams": [
+    {
+      "name": "CACTI",
+      "short": "CAC",
+      "color": "#287a4b",
+      "color2": "#f47a35",
+      "model": "Models/Chiefs24/Chiefs24_Rigged",
+      "modelTexture": "Models/Chiefs24/Chiefs24CAC_BaseColor",
+      "posModels": [
+        { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerCAC_BaseColor", "strideBend": 0.7 },
+        { "pos": "OL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerCAC_BaseColor", "strideBend": 0.7 },
+        { "pos": "DL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerCAC_BaseColor", "strideBend": 0.7 },
+        { "pos": "QB", "model": "Models/QB/QB_Rigged", "modelTexture": "Models/QB/QBCAC_BaseColor" },
+        { "pos": "K", "model": "Models/Kicker/Kicker_Rigged", "modelTexture": "Models/Kicker/KickerCAC_BaseColor" },
+        { "pos": "WR", "model": "Models/WR/WR_Rigged", "modelTexture": "Models/WR/WRCAC_BaseColor" },
+        { "pos": "TE", "model": "Models/TE/TE_Rigged", "modelTexture": "Models/TE/TECAC_BaseColor" }
+      ],
+      "cheerModel": "Models/Cheerleader/Cheerleader_Rigged",
+      "cheerTexture": "Models/Cheerleader/CheerleaderCAC_BaseColor",
+      "numberFill": "#ffffff",
+      "numberEdge": "#f47a35"
+    },
+    {
+      "name": "WHALES",
+      "short": "WHL",
+      "color": "#1976c9",
+      "color2": "#55d6be",
+      "model": "Models/Chiefs24/Chiefs24_Rigged",
+      "modelTexture": "Models/Chiefs24/Chiefs24WHL_BaseColor",
+      "posModels": [
+        { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerWHL_BaseColor", "strideBend": 0.7 },
+        { "pos": "OL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerWHL_BaseColor", "strideBend": 0.7 },
+        { "pos": "DL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerWHL_BaseColor", "strideBend": 0.7 },
+        { "pos": "QB", "model": "Models/QB/QB_Rigged", "modelTexture": "Models/QB/QBWHL_BaseColor" },
+        { "pos": "K", "model": "Models/Kicker/Kicker_Rigged", "modelTexture": "Models/Kicker/KickerWHL_BaseColor" },
+        { "pos": "WR", "model": "Models/WR/WR_Rigged", "modelTexture": "Models/WR/WRWHL_BaseColor" },
+        { "pos": "TE", "model": "Models/TE/TE_Rigged", "modelTexture": "Models/TE/TEWHL_BaseColor" }
+      ],
+      "cheerModel": "Models/Cheerleader/Cheerleader_Rigged",
+      "cheerTexture": "Models/Cheerleader/CheerleaderWHL_BaseColor",
+      "numberFill": "#ffffff",
+      "numberEdge": "#10243a"
     }
   ],
   "net": {
@@ -894,6 +942,46 @@
     "gradeTint": 5,
     "gradeSaturation": 8
   },
+  "marks": {
+    "penHalf": 0.125,
+    "edge": 0.08,
+    "gap": 0.1,
+    "eyeMaxX": 0.55,
+    "eyeMaxY": 0.35,
+    "eyeFullDeg": 45,
+    "eyeStep": 0.1,
+    "glanceKeys": 12,
+    "glanceChance": 0.3,
+    "glanceDeg": 40,
+    "blinkEveryKeys": 28,
+    "blinkKeys": 2,
+    "skinTones": ["#f3d0b0", "#e2b48a", "#c98e5e", "#a86e44", "#8a5432", "#6b3f24", "#4a2a17"],
+    "models": [
+      { "model": "Models/Chiefs24/Chiefs24_Rigged", "map": "Models/Chiefs24/Chiefs24_Marks", "iris": "#6b3a1e", "lid": "#9f623a", "number": 24 , "skin": "#9C5E34" },
+      { "model": "Models/Linebacker/Linebacker_Rigged", "map": "Models/Linebacker/Linebacker_Marks", "iris": "#5e3822", "lid": "#da8a54", "number": 64 , "skin": "#BD7546" },
+      { "model": "Models/QB/QB_Rigged", "map": "Models/QB/QB_Marks", "iris": "#8a5a22", "lid": "#c28146", "number": 7 , "skin": "#C78147" },
+      { "model": "Models/WR/WR_Rigged", "map": "Models/WR/WR_Marks", "iris": "#94601c", "lid": "#ac6e49", "number": 81 , "skin": "#8E5839" },
+      { "model": "Models/Kicker/Kicker_Rigged", "map": "Models/Kicker/Kicker_Marks", "iris": "#8a5510", "lid": "#c7936b", "number": 3 , "skin": "#CA966A" },
+      { "model": "Models/TE/TE_Rigged", "map": "Models/TE/TE_Marks", "iris": "#885415", "lid": "#A46742", "number": 88 , "skin": "#8F5938" }
+    ]
+  },
+  "reactions": {
+    "touchdownS": 4,
+    "bigHitS": 1.5,
+    "sackS": 1.5,
+    "pickS": 2.5,
+    "stainTackled": 0.18,
+    "stainTackler": 0.1,
+    "stainBigHit": 0.08,
+    "stainMax": 1,
+    "stainGrass": "#5f8f2e",
+    "stainDirt": "#7d5b36",
+    "stainScale": 34,
+    "stainOpacity": 0.9,
+    "barFontPx": 15,
+    "barLiveAlpha": 0.55,
+    "barAboveM": 0.9
+  },
   "title": {
     "minShotS": 3,
     "followRate": 3.5,
@@ -990,6 +1078,12 @@
     "strideCycle": true,
     "footFlex": true,
     "handCurl": true,
+    "jerseyNumbers": true,
+    "eyesLook": true,
+    "skinTones": true,
+    "faceReactions": true,
+    "grassStains": true,
+    "nameBars": true,
     "narrowLegs": true,
     "throwMotion": true,
     "kickMotion": true,
@@ -1007,6 +1101,7 @@
     "reachRing": true,
     "stayOnside": true,
     "huddleSwitch": true,
+    "teamPick": true,
     "botsV3": true
   }
 }

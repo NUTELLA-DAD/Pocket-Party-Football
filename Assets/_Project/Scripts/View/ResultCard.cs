@@ -20,7 +20,7 @@ namespace PocketFootball.View
             public string ByVerb = "";      // "Tackle by", "Sack by", "Picked off by", "Scored by", "Thrown to"
             public int BySlot = -1, ByNumber, ByTeam = -1;
             public string ByPos = "";
-            public string NextText = "";    // "2ND & 3", "FIRST DOWN · 1ST & 10", "TURNOVER ON DOWNS · ROUGHRIDERS BALL, 1ST & 10"
+            public string NextText = "";    // "2ND & 3", "FIRST DOWN · 1ST & 10", "TURNOVER ON DOWNS · GRAINS BALL, 1ST & 10"
         }
 
         // Call just after the whistle. play: the play's events, from the hike to the whistle; los: the line of
