@@ -141,9 +141,9 @@ namespace PocketFootball.View
                         case 0: return new P { drop = 6, lean = 18, head = -8, armL = -30, armLx = 20, foreL = 40, armR = 150, armRx = 15, foreR = 20, thighL = 30, thighLx = 6, shinL = -20, thighR = -25, thighRx = 8, shinR = -15 };
                         case 1: return new P { drop = 10, lean = 32, head = -14, armL = -40, armLx = 20, foreL = 60, armR = 50, armRx = 30, foreR = 30, thighL = 35, thighLx = 6, shinL = -30, thighR = -30, thighRx = 8, shinR = -40 };
                         case 2: return new P { drop = 6, lean = 14, head = -4, twist = 0, armL = -10, armLx = 25, foreL = 70, armR = 135, armRx = 10, foreR = 30, thighL = 28, thighLx = 6, shinL = -18, thighR = -28, thighRx = 8, shinR = -22 };
-                        case 3: return new P { drop = 8, lean = 22, head = -8, twist = -12, armL = -30, armLx = 22, foreL = 70, armR = 95, armRx = 4, foreR = 10, thighL = 30, thighLx = 6, shinL = -26, thighR = -32, thighRx = 8, shinR = -45 };
-                        case 4: return new P { drop = 10, lean = 30, head = -12, twist = -18, armL = -35, armLx = 20, foreL = 65, armR = 40, armRx = -25, foreR = 55, thighL = 32, thighLx = 6, shinL = -32, thighR = -20, thighRx = 8, shinR = -70 };
-                        default: return new P { drop = 8, lean = 20, head = -8, twist = -6, armL = 0, armLx = 18, foreL = 50, armR = 25, armRx = 5, foreR = 50, thighL = 10, thighLx = 6, shinL = -20, thighR = 25, thighRx = 8, shinR = -45 };
+                        case 3: return new P { drop = 8, lean = 22, head = -8, twist = -4, armL = -30, armLx = 22, foreL = 70, armR = 95, armRx = 4, foreR = 10, thighL = 30, thighLx = 6, shinL = -26, thighR = -32, thighRx = 8, shinR = -45 };
+                        case 4: return new P { drop = 10, lean = 30, head = -12, twist = -6, armL = -35, armLx = 20, foreL = 65, armR = 40, armRx = -25, foreR = 55, thighL = 32, thighLx = 6, shinL = -32, thighR = -20, thighRx = 8, shinR = -70 };
+                        default: return new P { drop = 8, lean = 20, head = -8, twist = 0, armL = 0, armLx = 18, foreL = 50, armR = 25, armRx = 5, foreR = 50, thighL = 10, thighLx = 6, shinL = -20, thighR = 25, thighRx = 8, shinR = -45 };
                     }
                 case PoseKind.Handoff: return new P { drop = 10, lean = 22, head = -10, armL = 60, armLx = 25, foreL = 40, armR = 70, armRx = 25, foreR = 30, thighL = 24, thighLx = 9, shinL = -30, thighR = 10, thighRx = 9, shinR = -28 };
                 // hands up for a pass coming in, on the run
