@@ -932,7 +932,7 @@
     "stainGrass": "#5f8f2e",
     "stainDirt": "#7d5b36",
     "stainScale": 34,
-    "stainOpacity": 0.75,
+    "stainOpacity": 0.9,
     "barFontPx": 15,
     "barLiveAlpha": 0.55,
     "barAboveM": 0.9

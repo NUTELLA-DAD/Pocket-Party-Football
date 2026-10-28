@@ -113,8 +113,8 @@ half3 MarkEye(half3 col, float2 e, float aa)
     float mood = _EyeLook.w;
     if (abs(mood) > 0.5)
     {
-        float lidLine = mood > 0 ? 0.35 - 0.55 * e.x * e.x : -0.1 + 0.35 * abs(e.x);
-        col = lerp(_LidColor.rgb * _Skin.rgb, _IrisColor.rgb * 0.12, saturate((0.2 - abs(e.y - lidLine)) / aa + 0.5));
+        float lidLine = mood > 0 ? 0.55 - 0.85 * e.x * e.x : -0.45 + 0.6 * abs(e.x);
+        col = lerp(_LidColor.rgb * _Skin.rgb, _IrisColor.rgb * 0.12, saturate((0.26 - abs(e.y - lidLine)) / aa + 0.5));
     }
     return col;
 }
@@ -138,8 +138,8 @@ half3 MarkStain(half3 col, float2 uv, float n, float aa, float allow)
     float sc = _StainLook.x;
     float cover = _Stain.x * allow;
     // a soft edge (a smear, not a cut-out); grass green or dirt brown by patch, laid over the cloth's own shading
-    float k = saturate((cover * 0.8 - n) / max(aa, 0.07) + 0.5) * step(0.01, cover);
-    k *= 0.55 + 0.45 * StainNoise(uv * sc * 5.0 + 9.0);   // (rubbed in, not painted flat)
+    float k = saturate((cover - n) / max(aa, 0.07) + 0.5) * step(0.01, cover);
+    k *= 0.7 + 0.3 * StainNoise(uv * sc * 5.0 + 9.0);   // (rubbed in, not painted flat)
     half3 tint = lerp(_StainGrass.rgb, _StainDirt.rgb, saturate((StainNoise(uv * sc * 0.4 + 5.0) - 0.5) * 6.0 + 0.5));
     half3 over = tint * lerp(0.75, 1.15, dot(col, half3(0.2126, 0.7152, 0.0722)));
     return lerp(col, over, k * _StainLook.y);
