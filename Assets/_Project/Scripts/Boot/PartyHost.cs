@@ -88,6 +88,7 @@ namespace PocketFootball.Boot
             Lobby.Attach(h, cfg, args);   // WS-07: the lobby and two-way players (FEATURES.lobby)
             KickPhones.Attach(h);   // WS-01: the kick meter on the kicker's phone and on the TV
             ThrowAimView.Attach(h, baseMat);   // the throw stick's live arc and landing spot on the TV
+            FlightView.Attach(h, baseMat);   // the lab's helpers in the game: the pass's flight, landing and catch rings, tackle reach
             return h;
         }
 

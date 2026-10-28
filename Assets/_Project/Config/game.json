@@ -967,6 +967,9 @@
     "sunsetSky": true,
     "refModel": true,
     "ratings": true,
-    "titleScreen": true
+    "titleScreen": true,
+    "flightLine": true,
+    "landingRing": true,
+    "reachRing": true
   }
 }
