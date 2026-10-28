@@ -95,7 +95,7 @@ namespace PocketFootball.Sim
                 w.Events.Push(w, EventKind.Juke, p);
             }
             // a person's tackle
-            if (input.Tackle && carrier != null && carrier.Team != p.Team && p.TackleCooldown == 0 && Dist(p, carrier) <= c.tackleReachYd * (1f + 0.5f))
+            if (input.Tackle && carrier != null && carrier.Team != p.Team && p.TackleCooldown == 0 && Dist(p, carrier) <= TackleReach(w, p))
                 TryTackle(w, p, carrier);
         }
 
@@ -112,6 +112,9 @@ namespace PocketFootball.Sim
             float t = lob ? (vy + vy) / b.gravityYdS2 : d / b.bulletSpeedYdS;
             if (w.Throw(target.X + target.VX * t, target.Z + target.VZ * t, lob)) { w.Thrown = true; w.Events.Push(w, EventKind.Throw, qb, target); }
         }
+
+        // How far a tackle reaches: a person's TACKLE button reaches half as far again as a bot's automatic try.
+        public static float TackleReach(World w, Player p) => w.Cfg.play.tackleReachYd * (p.Human ? 1f + 0.5f : 1f);
 
         public static float Dist(Player a, Player b) { float dx = a.X - b.X, dz = a.Z - b.Z; return (float)Math.Sqrt(dx * dx + dz * dz); }
 

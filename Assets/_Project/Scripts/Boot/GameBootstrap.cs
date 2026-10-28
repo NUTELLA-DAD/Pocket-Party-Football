@@ -29,7 +29,7 @@ namespace PocketFootball.Boot
             Config = ConfigLoader.Parse(LoadConfigText(), Environment.GetEnvironmentVariable);
             ConfigLoader.AddPlays(Config, LoadPlays());
             Application.targetFrameRate = 60;
-            TitleScreen.ApplySavedSettings();
+            TitleScreen.ApplySavedSettings(Config);   // the sound level, and the helpers switched off on the SETTINGS page
             bool title = TitleScreen.Requested(Config, Args);
             if (title) TitleScreen.PrepareAttract(Config, Args);   // the bots' show game behind the title
 
