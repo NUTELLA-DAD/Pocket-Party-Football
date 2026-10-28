@@ -62,6 +62,18 @@ namespace PocketFootball.Editor
         {
             if (!assetPath.StartsWith(ModelsDir)) return;
             var t = (TextureImporter)assetImporter;
+            if (assetPath.EndsWith("_Marks.png"))
+            {
+                // a marks map (View/JerseyMarks.cs) holds numbers, not colours: linear, exact, no mips, clamped
+                t.textureType = TextureImporterType.Default;
+                t.sRGBTexture = false;
+                t.mipmapEnabled = false;
+                t.wrapMode = TextureWrapMode.Clamp;
+                t.filterMode = FilterMode.Bilinear;
+                t.maxTextureSize = MaxTextureSize;
+                t.textureCompression = TextureImporterCompression.Uncompressed;
+                return;
+            }
             t.textureType = TextureImporterType.Default;
             t.textureShape = TextureImporterShape.Texture2D;
             t.sRGBTexture = true;

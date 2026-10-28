@@ -33,6 +33,22 @@ Shader "PocketParty/Toon"
         _OutlineMinScale ("Outline min width share (far)", Range(0, 1)) = 0.5
         _OutlineZBias ("Outline: tucked behind by (m)", Float) = 0.06
         _DropShadow ("Receives the far drop shadows (0/1)", Float) = 0
+        [Header(Jersey numbers and eyes (View JerseyMarks))]
+        _Marks ("Draws the marks map (0/1)", Float) = 0
+        _MarksTex ("Marks map (linear)", 2D) = "black" {}
+        _DigitsTex ("Digits (distance)", 2D) = "white" {}
+        _NumberDigits ("Number: tens, ones, digits", Vector) = (0, 0, 0, 0)
+        _NumberFill ("Number fill", Color) = (1, 1, 1, 1)
+        _NumberEdge ("Number edge", Color) = (1, 0.75, 0.1, 1)
+        _NumberStyle ("Number: pen, edge, gap", Vector) = (0.125, 0.08, 0.1, 0)
+        _EyeLook ("Eyes: look x, y, blink", Vector) = (0, 0, 0, 0)
+        _IrisColor ("Iris", Color) = (0.4, 0.22, 0.1, 1)
+        _LidColor ("Eyelid", Color) = (0.6, 0.38, 0.22, 1)
+        _Stain ("Grass on him (0..1)", Vector) = (0, 0, 0, 0)
+        _StainLook ("Stains: scale, opacity", Vector) = (34, 0.85, 0, 0)
+        _StainGrass ("Stain grass", Color) = (0.33, 0.48, 0.17, 1)
+        _StainDirt ("Stain dirt", Color) = (0.43, 0.32, 0.2, 1)
+        _Skin ("Skin tone (ratio to the model's)", Vector) = (1, 1, 1, 1)
     }
     SubShader
     {
