@@ -14,35 +14,68 @@
   var LOB_HOLD_MS = 350, KICK_AUTO_MS = 5000;
   var AIM_HZ = 20, FLICK_MS = 150, LOB_FULL_MS = 800, AIM_DEAD = 0.25;
 
-  // One row per layout: the line under the name plate, whether the stamina bar shows, and the buttons.
-  // A button: [action, label, style, hint, hold]. style: 'main' = team colour, 'alt' = second colour, '' = chalk.
+  // One row per layout: the line under the player tag, whether the stamina bar shows, and the buttons.
+  // A button: [action, label, colour, hint, hold]. The first button is the big one under the right thumb, then the
+  // ring around it (like a game pad's A, B, Y, X). The colour belongs to the action, so SPRINT is always teal and
+  // TACKLE always red, whatever the moment.
   var LAYOUTS = {
     wait:    { line: 'A bot is playing your spot. You\'re back next play.', stam: false,
-               btns: [['find', 'FIND ME', 'main', 'Flash your ring on the TV']] },
+               btns: [['find', 'FIND ME', 'purple', 'Flash your ring on the TV']] },
     qbpre:   { line: 'Tap HIKE when everyone is set', stam: false,
-               btns: [['hike', 'HIKE', 'main', 'Starts the play'], ['find', 'FIND ME', '', 'Flash your ring on the TV']] },
+               btns: [['hike', 'HIKE', 'teal', 'Starts the play'], ['find', 'FIND ME', 'purple', 'Flash your ring on the TV']] },
     qb:      { line: 'Tap = bullet pass · hold = lob', stam: false, receivers: true,
-               btns: [['scramble', 'SCRAMBLE', 'alt', 'Run it yourself']] },
+               btns: [['scramble', 'SCRAMBLE', 'teal', 'Run it yourself']] },
     carrier: { line: 'Ball in hands! Run for it', stam: true,
-               btns: [['sprint', 'SPRINT', 'main', 'Hold', true], ['juke', 'JUKE', 'alt', 'Stick picks the side'],
-                      ['spin', 'SPIN', ''], ['stiff', 'STIFF ARM', 'alt', 'Keeps off a man in front'],
-                      ['divein', 'DIVE', '', 'Near the goal line']] },
+               btns: [['sprint', 'SPRINT', 'teal', 'Hold', true], ['stiff', 'STIFF ARM', 'red', 'Keeps off a man in front'],
+                      ['juke', 'JUKE', 'yellow', 'Stick picks the side'], ['spin', 'SPIN', 'purple'],
+                      ['divein', 'DIVE', 'orange', 'Near the goal line']] },
     route:   { line: 'Run your route', stam: true,
-               btns: [['sprint', 'SPRINT', 'main', 'Hold', true], ['call', 'CALL FOR IT', 'alt', 'Your shape pulses on the TV'],
-                      ['catch', 'CATCH', '', 'Jump for the ball']] },
+               btns: [['sprint', 'SPRINT', 'teal', 'Hold', true], ['catch', 'CATCH', 'red', 'Jump for the ball'],
+                      ['call', 'CALL FOR IT', 'yellow', 'Your shape pulses on the TV']] },
     block:   { line: 'Hold BLOCK next to a defender', stam: true,
-               btns: [['block', 'BLOCK', 'main', 'Hold to lock on', true], ['sprint', 'SPRINT', '', 'Hold', true]] },
+               btns: [['block', 'BLOCK', 'red', 'Hold to lock on', true], ['sprint', 'SPRINT', 'teal', 'Hold', true]] },
     rush:    { line: 'Beat your blocker, get the QB', stam: true,
-               btns: [['swim', 'SWIM', 'alt', 'Rush move'], ['bull', 'BULL RUSH', ''],
-                      ['tackle', 'TACKLE', 'main'], ['swat', 'SWAT', '', 'Bat the pass']] },
+               btns: [['tackle', 'TACKLE', 'red'], ['swim', 'SWIM', 'yellow', 'Rush move'],
+                      ['bull', 'BULL RUSH', 'purple', 'Drive him back'], ['swat', 'SWAT', 'blue', 'Bat the pass']] },
     lb:      { line: 'Read run or pass, then hit', stam: true,
-               btns: [['sprint', 'SPRINT', '', 'Hold', true], ['tackle', 'TACKLE', 'main'],
-                      ['dive', 'DIVE TACKLE', 'alt', 'Big reach, slow to get up'], ['swat', 'SWAT', '']] },
+               btns: [['tackle', 'TACKLE', 'red'], ['sprint', 'SPRINT', 'teal', 'Hold', true],
+                      ['dive', 'DIVE TACKLE', 'orange', 'Big reach, slow to get up'], ['swat', 'SWAT', 'blue', 'Bat the pass']] },
     cover:   { line: 'Stay with your man. Jump for the pick', stam: true,
-               btns: [['sprint', 'SPRINT', '', 'Hold', true], ['tackle', 'TACKLE', 'main'],
-                      ['jump', 'JUMP', 'alt', 'Pick or swat'], ['dive', 'DIVE TACKLE', '']] },
+               btns: [['tackle', 'TACKLE', 'red'], ['sprint', 'SPRINT', 'teal', 'Hold', true],
+                      ['jump', 'JUMP', 'yellow', 'Pick or swat'], ['dive', 'DIVE TACKLE', 'orange', 'Big reach, slow to get up']] },
     kick:    { line: 'Drag up from the ball: longer = harder, sideways = aim', stam: false, kick: true, noStick: true, btns: [] }
   };
+
+  // Little line pictures on the gems (24 x 24, drawn with the text colour). Offline: plain SVG paths, no icon font.
+  var ICONS = {
+    sprint: 'M5 6l6 6-6 6M12 6l6 6-6 6',
+    juke: 'M5 20l7-8-5-3 8-6m0 0h-5m5 0v5',
+    spin: 'M20 12a8 8 0 1 1-2.6-5.9M20 3.5v5h-5',
+    stiff: 'M8 13V6.5a1.5 1.5 0 0 1 3 0V11m0-6a1.5 1.5 0 0 1 3 0v6m0-5a1.5 1.5 0 0 1 3 0v8c0 4-2.5 7-6.5 7-3 0-5-2-6-5l-1.5-3.5a1.5 1.5 0 0 1 2.7-1.3L8 14',
+    divein: 'M4 5l12 12M16 9v8H8M3 21h18',
+    tackle: 'M12 2.5l2.2 5.6 5.8-2-2.6 5.4 4.8 2.7-5.6 1.1.9 6-4.6-3.8L8.6 21l.4-6-5.6-1 4.8-2.8-2.7-5.4 5.8 2.2z',
+    dive: 'M3 12h13M11 6l6 6-6 6M3 20h18',
+    swat: 'M12 21V9M7 13l5-5 5 5M5 4h14',
+    jump: 'M12 19V5M6 11l6-6 6 6M8 21h8',
+    call: 'M3 10v4h3l8 5V5l-8 5H3zM18 9a4 4 0 0 1 0 6M20.5 6.5a8 8 0 0 1 0 11',
+    'catch': '~M3.5 12c3.5-6.5 13.5-6.5 17 0-3.5 6.5-13.5 6.5-17 0zM9 12h6M10.5 10.5v3M13.5 10.5v3',
+    hike: 'M12 2.5v9M8 6.5l4-4 4 4M4.5 18c3.5-4 11.5-4 15 0-3.5 4-11.5 4-15 0z',
+    block: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z',
+    swim: 'M3 16c3-3 6-3 9 0s6 3 9 0M7 11l5-6 5 6',
+    bull: 'M3 12h12M10 6l6 6-6 6M20 4v16',
+    find: 'M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8z',
+    scramble: 'M13 2L4 14h7l-1 8 9-12h-7z'
+  };
+  function icon(action) {
+    var d = ICONS[action];
+    if (!d) return null;
+    var s = document.createElementNS('http' + '://www.w3.org/2000/svg', 'svg');   // the SVG namespace name (not a download)
+    s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('class', 'ic'); s.setAttribute('aria-hidden', 'true');
+    var p = document.createElementNS('http' + '://www.w3.org/2000/svg', 'path');
+    if (d.charAt(0) === '~') { d = d.slice(1); p.setAttribute('transform', 'rotate(-35 12 12)'); }   // ~ = a football, tipped
+    p.setAttribute('d', d); s.appendChild(p);
+    return s;
+  }
 
   var box = null, sendFn = function () {}, aidFn = function () { return ''; };
   var current = '', kickTimer = null, aimStop = null;
@@ -61,12 +94,17 @@
   }
 
   // A plain button: down on pointerdown, up on release; released buttons never send twice.
-  function addButton(spec) {
-    var action = spec[0], label = spec[1], style = spec[2], hint = spec[3];
-    var b = el('button', 'btn' + (style ? ' ' + style : ''), label);
+  // In the ring of gems each one takes the next spot: s0 = the big one, then s1..s4.
+  function addButton(spec, i) {
+    var action = spec[0], label = spec[1], colour = spec[2], hint = spec[3], hold = spec[4];
+    var b = el('button', 'btn gem g-' + colour + ' s' + i + (hold ? ' hold' : ''));
     b.setAttribute('data-act', action);
     b.setAttribute('aria-label', label + (hint ? ': ' + hint : ''));
+    var ic = icon(action);
+    if (ic) b.appendChild(ic);
+    b.appendChild(el('span', 'lb', label));
     if (hint) b.appendChild(el('span', 'k', hint));
+    if (hold) b.appendChild(el('span', 'hk', 'HOLD'));
     b.addEventListener('pointerdown', function (e) {
       e.preventDefault();
       try { b.setPointerCapture(e.pointerId); } catch (err) {}
@@ -85,12 +123,12 @@
 
   // A receiver button: tap = bullet, hold past LOB_HOLD_MS = lob. The shape matches the badge over him on the TV.
   function addReceiver(r, parent) {
-    var b = el('button', 'btn rcv');
+    var b = el('button', 'btn rcv g-ivory');
     b.setAttribute('data-act', 'throw');
     b.setAttribute('data-tgt', r.shape);
     b.setAttribute('aria-label', 'Throw to ' + r.shape + ' ' + r.label + ': tap for a bullet, hold for a lob');
     b.appendChild(el('span', 'shape', r.shape));
-    b.appendChild(document.createTextNode(r.label));
+    b.appendChild(el('span', 'lb', r.label));
     if (r.open) b.classList.add('open');
     var t0 = 0;
     b.addEventListener('pointerdown', function (e) {
@@ -240,6 +278,7 @@
         return { stam: L.stam, stick: true, line: data.line || 'Right stick: aim, let go to throw. Flick = bullet, hold = lob', layout: name };
       }
       if (L.receivers) (data.receivers || []).forEach(function (r) { addReceiver(r); });
+      else if (!L.kick) box.className += ' cluster n' + L.btns.length;
       L.btns.forEach(addButton);
       if (L.kick) addKickPad();
       return { stam: L.stam, stick: !L.noStick, line: data.line || L.line, layout: name };

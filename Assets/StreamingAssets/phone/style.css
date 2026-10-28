@@ -1,9 +1,13 @@
 /* Pocket Party Football phone controller. Offline only: system fonts, nothing loaded from the internet.
-   One screen, never scrolls. Held sideways (landscape) is the main way to play: stick on the left, buttons on the right. */
+   One screen, never scrolls. Held sideways (landscape) is the main way to play: stick on the left, buttons on the right.
+   The look (Kenny's mockup): a navy pad, gold-rimmed glossy gem buttons, the POCKET PARTY logo and a player tag. */
 :root {
-  --turf: #123b2c; --turf-2: #1a4d39; --chalk: #f6f1de; --ink: #0d2219; --muted: #a8c4b4;
-  --team: #d7263d; --team-2: #ffb612; --team-ink: #ffffff; --warn: #ffcf4a; --good: #5fd38a;
-  --display: "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif;
+  /* the old token names stay so every screen picks up the navy look; turf = the pad, ink = the deepest panels */
+  --turf: #10215a; --turf-2: #1b3478; --chalk: #fbf3dc; --ink: #0a1640; --muted: #a9b8e2;
+  --team: #d7263d; --team-2: #ffb612; --team-ink: #ffffff; --warn: #ffd23f; --good: #3fe0b4;
+  --gold: #ffc928; --gold-hi: #fff2a8; --gold-lo: #d98a00; --edge: #060d2b;
+  --rim: linear-gradient(160deg, var(--gold-hi), var(--gold) 32%, var(--gold-lo) 62%, #ffd85a 82%, var(--gold-lo));
+  --display: "Arial Black", "Arial Rounded MT Bold", "Segoe UI Black", system-ui, -apple-system, sans-serif;
   --body: "Segoe UI", system-ui, -apple-system, sans-serif;
   --gap: 10px;
   /* the stick: as big as the short side allows */
@@ -13,8 +17,16 @@
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; overflow: hidden; }
 body {
-  background: var(--turf); color: var(--chalk); font-family: var(--body); font-weight: 600;
-  background-image: repeating-linear-gradient(90deg, transparent 0 46px, rgba(255,255,255,.035) 46px 92px);
+  color: var(--chalk); font-family: var(--body); font-weight: 600;
+  background-color: var(--turf);
+  /* confetti in the corners, faint chalk X's and O's, and a soft light in the middle */
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http%3A//www.w3.org/2000/svg' width='90' height='90'%3E%3Crect x='10' y='14' width='12' height='8' fill='%23ffc928' transform='rotate(-30 16 18)'/%3E%3Crect x='44' y='40' width='14' height='9' fill='%23e8333a' transform='rotate(25 51 44)'/%3E%3Crect x='16' y='62' width='12' height='8' fill='%2322b35b' transform='rotate(-55 22 66)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http%3A//www.w3.org/2000/svg' width='90' height='90'%3E%3Crect x='60' y='12' width='13' height='8' fill='%2322b35b' transform='rotate(40 66 16)'/%3E%3Crect x='34' y='44' width='12' height='8' fill='%23ffc928' transform='rotate(-20 40 48)'/%3E%3Crect x='64' y='66' width='12' height='9' fill='%23e8333a' transform='rotate(60 70 70)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http%3A//www.w3.org/2000/svg' width='260' height='220' fill='none' stroke='%23ffffff' stroke-opacity='.06' stroke-width='5' stroke-linecap='round'%3E%3Cpath d='M30 40l22 22M52 40L30 62'/%3E%3Ccircle cx='190' cy='60' r='13'/%3E%3Cpath d='M70 180c30-40 70-50 110-40m0 0l-14-12m14 12l-16 8'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse 70% 60% at 50% 40%, #1d3a8a 0%, rgba(16,33,90,0) 70%);
+  background-repeat: no-repeat, no-repeat, repeat, no-repeat;
+  background-position: left 0 bottom 0, right 0 top 0, 0 0, center;
   padding: env(safe-area-inset-top, 0px) max(12px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(12px, env(safe-area-inset-left, 0px));
   -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; overscroll-behavior: none;
   touch-action: none;
@@ -22,120 +34,256 @@ body {
 .app { height: 100%; max-width: 1000px; margin: 0 auto; padding: 8px 0; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
 .view { flex: 1; min-height: 0; display: grid; gap: var(--gap); align-content: start; }
 .hidden { display: none !important; }
-h1, h2 { font-family: var(--display); font-weight: 400; margin: 0; letter-spacing: .02em; }
+h1, h2 { font-family: var(--display); font-weight: 900; margin: 0; letter-spacing: .02em; }
 h1 { font-size: 28px; }
 h2 { font-size: 20px; }
 .sub { color: var(--muted); font-size: 13px; margin: 0; }
 .field { display: grid; gap: 4px; font-size: 14px; color: var(--muted); min-width: 0; }
 input {
-  font: inherit; font-size: 22px; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--turf-2);
-  background: var(--ink); color: var(--chalk); text-transform: uppercase; -webkit-user-select: text; user-select: text;
+  font: inherit; font-family: var(--display); font-size: 22px; padding: 10px 12px; border-radius: 14px;
+  border: 3px solid transparent; background: linear-gradient(var(--ink), var(--ink)) padding-box, var(--rim) border-box;
+  color: var(--chalk); text-transform: uppercase; -webkit-user-select: text; user-select: text;
   touch-action: manipulation; width: 100%; min-width: 0;
 }
 button { font: inherit; color: inherit; cursor: pointer; touch-action: none; }
 button:focus-visible { outline: 3px solid var(--warn); outline-offset: 2px; }
-.big {
-  border: 0; border-radius: 16px; padding: 12px 16px; font-family: var(--display); font-size: 24px;
-  background: var(--team); color: var(--team-ink); box-shadow: 0 5px 0 rgba(0,0,0,.35);
+
+/* ---- the gold-rimmed pieces: one rim, one drop shadow, used by every button on every screen ---- */
+.big, .pill, .btn, .team, .tag-me {
+  border: 3px solid transparent; font-family: var(--display); font-weight: 900; letter-spacing: .03em;
+  box-shadow: 0 0 0 2px var(--edge), 0 5px 0 2px var(--edge);
 }
-.big:disabled { opacity: .4; }
-.big:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 rgba(0,0,0,.35); }
+.big {
+  border-radius: 18px; padding: 12px 16px; font-size: 24px; color: #fff; text-shadow: 0 2px 0 rgba(0,0,0,.35);
+  background:
+    radial-gradient(70% 45% at 45% 12%, rgba(255,255,255,.45), rgba(255,255,255,0) 70%) padding-box,
+    linear-gradient(#ff5a4e, #e8333a 45%, #a5141f) padding-box,
+    var(--rim) border-box;
+}
+.big:disabled { filter: grayscale(.7) brightness(.7); }
+.big:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 0 0 2px var(--edge), 0 1px 0 2px var(--edge); }
+/* a small navy pill: PAUSE, POSITION, DONE, Change team */
+.pill {
+  border-radius: 12px; padding: 6px 14px; min-height: 40px; font-size: 14px; color: var(--chalk);
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap;
+  background:
+    linear-gradient(rgba(255,255,255,.14), rgba(255,255,255,0) 50%) padding-box,
+    linear-gradient(#1e3d8f, #0d1d55) padding-box,
+    var(--rim) border-box;
+}
+.pill:active, .pill[aria-pressed="true"] { transform: translateY(3px); box-shadow: 0 0 0 2px var(--edge), 0 2px 0 2px var(--edge); }
+.pill .bars { display: inline-flex; gap: 4px; }
+.pill .bars i { display: block; width: 5px; height: 16px; border-radius: 2px; background: var(--gold); }
+
+/* the logo: POCKET PARTY in system fonts, and a football */
+.logo { display: flex; flex-direction: column; align-items: center; line-height: .86; pointer-events: none; }
+.logo .w1, .logo .w2 {
+  font-family: var(--display); font-weight: 900; letter-spacing: .01em; font-style: italic;
+  filter: drop-shadow(0 2px 0 var(--edge)) drop-shadow(0 -2px 0 var(--edge)) drop-shadow(2px 0 0 var(--edge)) drop-shadow(-2px 0 0 var(--edge)) drop-shadow(0 4px 0 var(--edge));
+}
+.logo .w1 { font-size: 30px; color: var(--chalk); transform: rotate(-3deg); }
+.logo .w2 {
+  font-size: 40px; transform: rotate(-3deg);
+  background: linear-gradient(#fff6b8, #ffd02e 45%, #f39b00); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.logo svg { width: 64px; height: auto; margin-top: -2px; filter: drop-shadow(0 3px 0 var(--edge)); }
+.logo.small .w1 { font-size: 18px; }
+.logo.small .w2 { font-size: 24px; }
+.logo.small svg { width: 38px; }
 
 /* ---- join and team pick ---- */
 #joinView { grid-template-columns: 1fr; }
-.pick { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+#joinView .logo { margin: 4px 0 6px; }
+.pick { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .team {
-  border: 4px solid transparent; border-radius: 16px; padding: 16px 10px; font-family: var(--display); font-size: 22px;
-  color: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.35); min-height: 96px;
+  border-radius: 18px; padding: 16px 10px; font-size: 22px; color: #fff; min-height: 96px; text-shadow: 0 2px 0 rgba(0,0,0,.4);
+  background-image: radial-gradient(70% 45% at 45% 12%, rgba(255,255,255,.35), rgba(255,255,255,0) 70%), var(--rim);
+  background-origin: padding-box, border-box; background-clip: padding-box, border-box;
 }
-.team .sub { color: rgba(255,255,255,.85); margin-top: 8px; }
-.team[aria-pressed="true"] { border-color: var(--chalk); }
+.team .sub { color: rgba(255,255,255,.9); margin-top: 8px; text-shadow: none; font-family: var(--body); font-weight: 700; }
+.team[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--edge), 0 0 0 6px var(--chalk), 0 5px 0 6px var(--edge); }
 
-/* ---- the strip at the top: what the TV says ---- */
-.tvstrip { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; background: var(--ink); border-radius: 10px; padding: 5px 10px; font-size: 13px; min-width: 0; }
-.tvstrip .tag { font-family: var(--display); font-size: 10px; letter-spacing: .08em; color: var(--muted); white-space: nowrap; }
+/* ---- the strip at the top: what the TV says, and the connected light ---- */
+.tvstrip {
+  flex: 0 0 auto; display: flex; align-items: center; gap: 10px; border-radius: 12px; padding: 5px 10px; font-size: 13px; min-width: 0;
+  background: rgba(6,13,43,.7); border: 2px solid rgba(255,201,40,.35);
+}
+.tvstrip .dot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: #2fd36b; box-shadow: 0 0 0 2px var(--edge); }
+.tvstrip .tag { font-family: var(--display); font-weight: 900; font-size: 10px; letter-spacing: .08em; color: var(--gold); white-space: nowrap; }
 .tvstrip .msg { flex: 1; min-width: 0; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tvstrip .score { font-family: var(--display); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tvstrip .score { font-family: var(--display); font-weight: 900; white-space: nowrap; font-variant-numeric: tabular-nums; }
 
-/* ---- the play screen: name plate, the line and stamina, the stick, the buttons ---- */
+/* ---- the play screen: the player tag and PAUSE, the line and stamina, the stick, the buttons ---- */
 #playView {
-  grid-template-columns: var(--stick) minmax(0, 1fr);
   grid-template-rows: auto auto minmax(0, 1fr);
-  grid-template-areas: "me me" "info info" "stick btns";
+  /* upright: the gems get the full width, the stick sits under them */
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-areas: "me pause" "info info" "btns btns" "stick stick";
   align-content: stretch;
 }
-.me {
-  grid-area: me; display: flex; justify-content: space-between; align-items: center; gap: 8px; border-radius: 12px; padding: 6px 12px;
-  background: var(--team); color: var(--team-ink); font-family: var(--display); font-size: 18px; min-width: 0;
+#playView .pause { grid-area: pause; align-self: center; }
+.me { grid-area: me; display: flex; align-items: center; gap: 8px; min-width: 0; }
+/* the player tag: a helmet in the team colours, then the name and number on a gold-rimmed plate */
+.tag-me {
+  flex: 1 1 auto; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  border-radius: 12px; padding: 4px 12px 4px 4px; font-size: 16px; color: var(--chalk);
+  background: linear-gradient(rgba(255,255,255,.12), rgba(255,255,255,0) 50%) padding-box, linear-gradient(#1e3d8f, #0d1d55) padding-box, var(--rim) border-box;
 }
-.me span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.num { font-size: 20px; white-space: nowrap; }
-.info { grid-area: info; display: grid; gap: 6px; align-content: start; min-height: 0; min-width: 0; overflow: hidden; }
-/* once the ball is live the job card goes: the TV is where to look. It stays before the snap and while a bot plays you */
-#playView:not([data-layout="qbpre"]):not([data-layout="wait"]):not([data-layout="none"]) .job { display: none; }
+.tag-me .helmet { flex: none; width: 40px; height: 32px; margin: -6px 0; filter: drop-shadow(0 2px 0 var(--edge)); }
+.helmet .shell { fill: var(--team); stroke: var(--edge); stroke-width: 3; }
+.helmet .stripe { fill: none; stroke: var(--team-2); stroke-width: 5; }
+.helmet .mask { fill: none; stroke: #e7ecf6; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+.helmet .hole { fill: var(--edge); }
+.tag-me .who { flex: 1 1 auto; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; column-gap: 8px; line-height: 1.15; }
+.tag-me #meName { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.num { font-size: 15px; white-space: nowrap; color: var(--gold); }
+.me .pill { flex: none; }
+.info { grid-area: info; display: grid; gap: 6px; align-content: start; justify-items: stretch; min-height: 0; min-width: 0; overflow: hidden; }
+.info .logo { display: none; }
+/* the play card stays up for the whole play, a reminder of the call; while the ball is live it shrinks to make room */
+#playView.hasjob .info .logo { display: none !important; }
 .line { font-size: 15px; font-weight: 800; min-height: 1.3em; margin: 0; }
 .line.warn { color: var(--warn); }
-.stam { height: 10px; border-radius: 999px; background: var(--ink); overflow: hidden; }
-.stam i { display: block; height: 100%; width: 100%; background: var(--good); }
-.stam.tired i { background: var(--warn); }
-.stickcol { grid-area: stick; display: flex; align-items: flex-end; justify-content: flex-start; min-height: 0; }
-.stick {
-  position: relative; width: var(--stick); height: var(--stick); flex: 0 0 auto; border-radius: 50%;
-  background: radial-gradient(circle, var(--turf-2) 0 55%, var(--ink) 56%); touch-action: none;
+.stam { height: 12px; border-radius: 999px; background: var(--ink); overflow: hidden; border: 2px solid rgba(255,201,40,.55); }
+.stam i { display: block; height: 100%; width: 100%; background: linear-gradient(#8ff5d6, var(--good) 50%, #13a183); }
+.stam.tired i { background: linear-gradient(#fff08a, var(--warn) 50%, #e09a00); }
+
+/* the move stick: a navy well in a gold ring, an ivory knob with little arrows */
+.stickcol { grid-area: stick; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px; min-height: 0; }
+.stick, .tstick {
+  position: relative; border-radius: 50%; touch-action: none; border: 6px solid transparent;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http%3A//www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%235d86d6'%3E%3Cpath d='M50 6l6 8H44zM50 94l6-8H44zM6 50l8-6v12zM94 50l-8-6v12z'/%3E%3C/svg%3E") center / 100% 100% no-repeat padding-box,
+    radial-gradient(circle, #1a3580 0 50%, #0c1a4d 51% 100%) padding-box,
+    var(--rim) border-box;
+  box-shadow: 0 0 0 2px var(--edge), 0 6px 0 2px var(--edge), inset 0 0 0 3px var(--edge);
 }
-.knob {
-  position: absolute; left: 50%; top: 50%; width: 40%; height: 40%; margin: -20% 0 0 -20%; border-radius: 50%;
-  background: var(--chalk); box-shadow: 0 4px 0 rgba(0,0,0,.35); pointer-events: none;
+.stick { width: var(--stick); height: var(--stick); flex: 0 0 auto; }
+.stickcol .cap { font-family: var(--display); font-weight: 900; font-size: 13px; line-height: 1; letter-spacing: .08em; color: var(--chalk); padding-bottom: 4px; }
+.knob, .tstick .tknob {
+  position: absolute; left: 50%; top: 50%; width: 46%; height: 46%; margin: -23% 0 0 -23%; border-radius: 50%; pointer-events: none;
+  border: 4px solid transparent;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http%3A//www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%23c9b88e'%3E%3Cpath d='M50 16l8 10H42zM50 84l8-10H42zM16 50l10-8v16zM84 50l-10-8v16z'/%3E%3C/svg%3E") center / 100% 100% no-repeat padding-box,
+    radial-gradient(circle at 40% 32%, #fffdf4, #f4e9cc 55%, #d9c7a0) padding-box,
+    var(--rim) border-box;
+  box-shadow: 0 0 0 2px var(--edge), 0 5px 0 2px rgba(6,13,43,.8);
 }
-.btncol { grid-area: btns; display: flex; align-items: flex-end; min-height: 0; min-width: 0; }
+
+/* ---- the buttons: glossy gems in a gold rim. Colour = the action, so SPRINT is always teal and TACKLE always red ---- */
+.btncol { grid-area: btns; display: flex; align-items: flex-end; justify-content: flex-end; min-height: 0; min-width: 0; }
 .btns { display: grid; gap: var(--gap); grid-template-columns: 1fr 1fr; width: 100%; max-height: 100%; }
-#walkBtns { grid-template-columns: 1fr; }
 .btn {
-  border: 0; border-radius: 16px; min-height: 64px; padding: 6px; font-family: var(--display); font-size: 19px; line-height: 1.05;
-  background: var(--chalk); color: var(--ink); box-shadow: 0 5px 0 rgba(0,0,0,.35); min-width: 0; overflow: hidden;
+  --g: #f4e9cc; --g-hi: #fffdf4; --g-lo: #d2bd8f; --g-ink: var(--ink);
+  border-radius: 18px; min-height: 64px; padding: 6px; font-size: 18px; line-height: 1.05; min-width: 0; overflow: hidden;
+  color: var(--g-ink);
+  background:
+    radial-gradient(70% 40% at 42% 14%, rgba(255,255,255,.55), rgba(255,255,255,0) 70%) padding-box,
+    conic-gradient(from 20deg, rgba(255,255,255,.10) 0 12%, rgba(255,255,255,0) 0 25%, rgba(0,0,0,.07) 0 37%, rgba(255,255,255,0) 0 50%,
+                   rgba(255,255,255,.08) 0 62%, rgba(255,255,255,0) 0 75%, rgba(0,0,0,.06) 0 87%, rgba(255,255,255,0) 0) padding-box,
+    radial-gradient(120% 100% at 35% 20%, var(--g-hi), var(--g) 45%, var(--g-lo)) padding-box,
+    var(--rim) border-box;
 }
-.btn.main { background: var(--team); color: var(--team-ink); }
-.btn.small { min-height: 40px; font-size: 14px; background: var(--ink); color: var(--muted); }
-.btn.on, .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 rgba(0,0,0,.35); filter: brightness(1.12); }
-.btn .k { display: block; font-family: var(--body); font-size: 11px; font-weight: 800; opacity: .75; margin-top: 3px; }
-#playView.no-stick { grid-template-columns: minmax(0, 1fr); grid-template-areas: "me" "info" "btns"; }
+.btn.g-teal   { --g: #3fe0b4; --g-hi: #a8f7e0; --g-lo: #0f9677; --g-ink: #0a1640; }
+.btn.g-red    { --g: #ec3a3f; --g-hi: #ff8a7a; --g-lo: #a3121d; --g-ink: #ffffff; }
+.btn.g-yellow { --g: #ffd02e; --g-hi: #fff3a0; --g-lo: #e08f00; --g-ink: #0a1640; }
+.btn.g-purple { --g: #8b4ee8; --g-hi: #c49cff; --g-lo: #5520ad; --g-ink: #ffffff; }
+.btn.g-orange { --g: #ff8a2a; --g-hi: #ffc58a; --g-lo: #c44f00; --g-ink: #ffffff; }
+.btn.g-blue   { --g: #3a8cff; --g-hi: #9fcaff; --g-lo: #1748b8; --g-ink: #ffffff; }
+.btn.g-navy   { --g: #1e3d8f; --g-hi: #3a62c4; --g-lo: #0b1a50; --g-ink: var(--chalk); }
+.btn.g-red, .btn.g-purple, .btn.g-orange, .btn.g-blue, .btn.g-navy { text-shadow: 0 2px 0 rgba(0,0,0,.35); }
+/* the old style names still work: main = team red, alt = gold, small = navy */
+.btn.main { --g: #ec3a3f; --g-hi: #ff8a7a; --g-lo: #a3121d; --g-ink: #fff; }
+.btn.small { --g: #1e3d8f; --g-hi: #3a62c4; --g-lo: #0b1a50; --g-ink: var(--chalk); min-height: 40px; font-size: 14px; border-radius: 12px; }
+.btn.on, .btn:active { transform: translateY(4px); box-shadow: 0 0 0 2px var(--edge), 0 1px 0 2px var(--edge); filter: brightness(1.12); }
+.btn .k { display: block; font-family: var(--body); font-size: 11px; font-weight: 800; opacity: .85; margin-top: 3px; letter-spacing: 0; }
+.btn .ic { display: block; width: 1.5em; height: 1.5em; margin: 0 auto 2px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+#playView.no-stick { grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto minmax(0, 1fr); grid-template-areas: "me pause" "info info" "btns btns"; }
 #playView.no-stick .stickcol { display: none; }
 
 /* the job diagram: small, it is a reminder; the field is on the TV */
-.job { display: grid; gap: 4px; min-height: 0; }
-.job h3 { font-family: var(--display); font-weight: 400; font-size: 16px; margin: 0; }
+.job {
+  display: grid; gap: 3px; min-height: 0; padding: 6px 8px; border-radius: 14px; border: 3px solid transparent;
+  background: linear-gradient(#1b3478, #0d1d55) padding-box, var(--rim) border-box; box-shadow: 0 0 0 2px var(--edge);
+}
+.job #jobPlay { font-family: var(--display); font-weight: 900; color: var(--gold); font-size: 12px; letter-spacing: .03em; }
+.job h3 { font-family: var(--body); font-weight: 800; font-size: 14px; margin: 0; line-height: 1.2; }
+#jobField { min-height: 0; display: flex; justify-content: center; }
 #jobField svg { display: block; width: 100%; height: auto; max-height: 22vh; border-radius: 8px; }
+/* while the ball is live: the play name, two lines of your job, a small picture */
+#playView.live .job h3 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 13px; }
+#playView.live #jobField svg { max-height: 14vh; }
+.job { overflow: hidden; }
 
-/* ---- sideways: a game pad. Stick left, buttons right, a thin bar on top ---- */
+/* ---- the phone menu (PAUSE): the game keeps going, this just tucks away the extras ---- */
+.menu {
+  position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 16px;
+  background: rgba(6,13,43,.88); touch-action: none;
+}
+.menu .card {
+  width: min(420px, 100%); display: grid; gap: 12px; padding: 16px; border-radius: 20px; border: 3px solid transparent;
+  background: linear-gradient(#1b3478, #0d1d55) padding-box, var(--rim) border-box; box-shadow: 0 0 0 2px var(--edge), 0 6px 0 2px var(--edge);
+}
+.menu h2 { text-align: center; color: var(--gold); }
+.menu .sub { text-align: center; }
+.menu .mrow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.menu .btn { min-height: 56px; }
+.menu .big { width: 100%; }
+
+/* ---- sideways: a game pad. Stick left, the tag and logo in the middle, the gems right ---- */
 @media (orientation: landscape) {
-  :root { --stick: min(calc(100dvh - 92px), 30vw); }
+  :root { --stick: min(calc(100dvh - 120px), 26vw); }
   .app { padding: 6px 0; gap: 6px; }
   h1 { font-size: 24px; }
-  #joinView { grid-template-columns: 1fr 1fr; align-content: center; column-gap: 14px; }
-  #joinView h1, #joinView .big, #joinView #joinMsg { grid-column: 1 / -1; }
+  #joinView { grid-template-columns: minmax(0, .9fr) minmax(0, 1fr); align-content: center; column-gap: 18px; row-gap: 8px; }
+  #joinView .logo { grid-row: 1 / span 3; align-self: center; }
+  #joinView .logo .w1 { font-size: 34px; }
+  #joinView .logo .w2 { font-size: 48px; }
+  #joinView #joinMsg { grid-column: 1 / -1; }
   .team { min-height: 0; padding: 14px 10px; }
   #playView {
-    grid-template-columns: var(--stick) minmax(0, 1fr) minmax(0, calc(var(--stick) * 1.35));
-    grid-template-rows: auto minmax(0, 1fr);
-    grid-template-areas: "me me me" "stick info btns";
-    column-gap: 14px;
+    grid-template-columns: var(--stick) minmax(0, 1fr) minmax(0, calc(var(--stick) * 1.3));
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas: "stick me btns" "stick info btns" "stick pause btns";
+    column-gap: 14px; row-gap: 6px;
   }
-  #playView.no-stick { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); grid-template-areas: "me me" "info btns"; }
-  .info { align-content: end; }
-  #jobField svg { max-height: calc(100dvh - 190px); }
+  #playView.no-stick { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); grid-template-rows: auto minmax(0, 1fr) auto; grid-template-areas: "me btns" "info btns" "pause btns"; }
+  #playView .pause { justify-self: center; }
+  .me { flex-wrap: wrap; justify-content: center; }
+  .info { align-content: center; justify-items: center; text-align: center; }
+  /* the logo fills the middle until there is a play card to show */
+  .info .logo { display: flex; }
+  .info .stam { width: 100%; max-width: 260px; }
+  .info .job { width: 100%; text-align: left; }
+  #jobField svg { max-height: calc(100dvh - 230px); }
+  #playView.live #jobField svg { max-height: calc(100dvh - 290px); }
+  .stickcol { justify-content: center; }
+  .stickcol .cap { display: none; }
+  .btncol { align-items: center; }
   .btns { grid-auto-rows: 1fr; height: var(--stick); }
   .btn { min-height: 0; }
   .btn .k { font-size: 10px; }
-  #walkBtns { grid-template-rows: 1fr 1fr auto; }
+}
+@media (orientation: landscape) and (max-height: 400px) {
+  .info .logo .w1 { font-size: 20px; }
+  .info .logo .w2 { font-size: 27px; }
+  .info .logo svg { width: 44px; }
 }
 @media (orientation: landscape) and (max-height: 340px) {
-  .btn { font-size: 16px; }
+  .btn { font-size: 15px; }
   .btn .k { display: none; }
-  .me { padding: 3px 10px; font-size: 16px; }
+  .tag-me { font-size: 14px; padding: 2px 10px 2px 2px; }
+  .tag-me .helmet { width: 34px; height: 27px; }
+  .info .logo svg { display: none; }
+  #playView.live #jobField { display: none; }
+  .job h3 { font-size: 12px; }
+  .line { font-size: 13px; }
+  .me .pill { min-height: 34px; padding: 3px 10px; }
 }
 
 .overlay {
-  position: fixed; inset: 0; display: grid; place-items: center; background: rgba(13,34,25,.85);
-  font-family: var(--display); font-size: 28px;
+  position: fixed; inset: 0; display: grid; place-items: center; background: rgba(6,13,43,.88);
+  font-family: var(--display); font-weight: 900; font-size: 28px; color: var(--gold);
 }
-@media (prefers-reduced-motion: reduce) { .btn.on, .btn:active, .big:active:not(:disabled) { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .btn.on, .btn:active, .big:active:not(:disabled), .pill:active { transform: none; } }
