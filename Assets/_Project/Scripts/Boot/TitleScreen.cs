@@ -19,10 +19,11 @@ namespace PocketFootball.Boot
         public static bool Showing => Instance != null;
         static bool done;   // PLAY was pressed: the reloaded scene goes straight to the lobby
         static string returnPage;   // a cup game ended: the reloaded scene shows the title again, on this page
+        static string lobbyAway, lobbyHome;   // the teams the lobby screen picked this run (they beat PP_TEAMS)
 
         // (the editor may keep statics between play sessions: every session starts on the title again)
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() { done = false; returnPage = null; Instance = null; }
+        static void ResetStatics() { done = false; returnPage = null; Instance = null; lobbyAway = lobbyHome = null; }
 
         // The next scene load shows the title again, open on this page ("cup": after a cup game).
         public static void ReturnTo(string startPage)
@@ -119,9 +120,21 @@ namespace PocketFootball.Boot
             AudioListener.volume = Mathf.Clamp01(PlayerPrefs.GetFloat(VolumeKey, 1f));
             FlightMarks.ApplySaved(cfg, n => PlayerPrefs.HasKey(HelperKey + n) ? PlayerPrefs.GetInt(HelperKey + n) != 0 : (bool?)null,
                 System.Environment.GetEnvironmentVariable);
-            if (TeamPick.ParsePair(System.Environment.GetEnvironmentVariable("PP_TEAMS"), out string a, out string h)) TeamPick.Apply(cfg, a, h);
+            if (lobbyAway != null) TeamPick.Apply(cfg, lobbyAway, lobbyHome);
+            else if (TeamPick.ParsePair(System.Environment.GetEnvironmentVariable("PP_TEAMS"), out string a, out string h)) TeamPick.Apply(cfg, a, h);
             else if (!Application.isBatchMode) TeamPick.Apply(cfg, PlayerPrefs.GetString(AwayKey, ""), PlayerPrefs.GetString(HomeKey, ""));
             if (cfg.teams.Count >= 2) Debug.Log("[title] teams: " + cfg.teams[0].name + " at " + cfg.teams[1].name);
+        }
+
+        // The lobby screen's pick (FEATURES.lobbyScreen): saved for later runs, like the SETTINGS page, and kept for this
+        // run's scene rebuild. (Batch runs save nothing.)
+        public static void SaveTeams(string away, string home)
+        {
+            lobbyAway = away; lobbyHome = home;
+            if (Application.isBatchMode) return;
+            PlayerPrefs.SetString(AwayKey, away);
+            PlayerPrefs.SetString(HomeKey, home);
+            PlayerPrefs.Save();
         }
 
         // GameBootstrap quits on Esc; not while a page is open here, nor on the frame Esc closed one.
@@ -380,7 +393,7 @@ namespace PocketFootball.Boot
         static readonly string[] HowTo =
         {
             "<b>1. Join.</b> Press PLAY. Everyone scans the QR code on the TV with their phone (same Wi-Fi as the TV).",
-            "<b>2. Pick a side.</b> The two teams on the TV (choose them under SETTINGS, or play through the POCKET CUP). Bots play every spot nobody took.",
+            "<b>2. Pick a side.</b> The two teams on the TV (change them with the arrows on the join screen or under SETTINGS, or play through the POCKET CUP). Bots play every spot nobody took.",
             "<b>3. Lobby.</b> Pick your offense spot and your defense spot. Any phone taps KICK OFF to start.",
             "<b>4. Huddle.</b> Call a play on your phone in secret. The TV only shows CALLED, never which play.",
             "<b>5. Offense.</b> QB: tap HIKE, then a receiver's shape to throw (tap = bullet, hold = lob). With the ball: SPRINT, JUKE, SPIN, STIFF ARM.",

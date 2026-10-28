@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using PocketFootball.Sim;
+using PocketFootball.View;
 using PocketParty.Net;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -19,6 +20,10 @@ namespace PocketFootball.Boot
     // FEATURES.huddleSwitch (NO_HUDDLE_SWITCH=1 turns it off): after kickoff the same spot and swap presses work from
     // the huddle screen (huddle.js, carrying the huddle screen's aid), so a person can switch spots between plays. The
     // lineup then carries switch: true, and once a spot changes every huddle screen of that team is sent again.
+    // FEATURES.lobbyScreen (NO_LOBBY_SCREEN=1: the old box and the small join panel): while the game waits, the TV shows
+    // the join screen: a big QR code and room code, and a card for each side with its emblem and its people. With
+    // FEATURES.teamPick and more than two teams in the league, the cards' arrows (or the keyboard) pick the teams too;
+    // teamApplyS after the last press the stadium is built again with them (PartyHost.SwitchTeams; the phones stay).
     public sealed class Lobby : MonoBehaviour
     {
         public static Lobby Instance { get; private set; }
@@ -45,7 +50,9 @@ namespace PocketFootball.Boot
             var l = h.gameObject.AddComponent<Lobby>();
             l.host = h;
             l.cfg = cfg;
-            l.shots = !string.IsNullOrEmpty(args.ShotsDir);
+            l.shots = !string.IsNullOrEmpty(args.ShotsDir) && !args.Lobby;   // (-lobby: a screenshot of the join screen)
+            for (int side = 0; side < 2; side++)
+                l.shown[side] = Mathf.Max(0, TeamPick.Find(cfg, cfg.teams.Count > side ? cfg.teams[side].@short : null));
             Instance = l;
             return l;
         }
@@ -140,6 +147,63 @@ namespace PocketFootball.Boot
         {
             var kb = Keyboard.current;
             if (kb != null && kb.kKey.wasPressedThisFrame && Holding) KickOff();
+            if (!FullScreen || !CanPick || switching) return;
+            if (applyFrame >= 0)
+            {
+                // (one frame later: the "bringing out the teams" card is on the TV while the stadium is built)
+                if (Time.frameCount > applyFrame + 1)
+                {
+                    switching = true;
+                    var league = TeamPick.League(cfg);
+                    host.SwitchTeams(league[shown[0]].@short, league[shown[1]].@short);
+                }
+                return;
+            }
+            PickInput(kb);
+            if (pickedAt >= 0f && Time.unscaledTime - pickedAt >= cfg.lobby.teamApplyS) { pickedAt = -1f; applyFrame = Time.frameCount; }
+        }
+
+        // ---- picking the teams on the TV (FEATURES.lobbyScreen + teamPick) ----
+        public bool FullScreen => Holding && cfg.Feature("lobbyScreen");
+        // (not in a Pocket Cup game: the bracket picked its two teams, CupHost.cs)
+        bool CanPick => cfg.Feature("teamPick") && TeamPick.League(cfg).Count > 2 && cfg.teams.Count >= 2 && CupHost.Live == null;
+        bool Waiting => pickedAt >= 0f || applyFrame >= 0 || switching;   // a new team is on its way: no kickoff yet
+
+        readonly int[] shown = new int[2];      // the league team on each card (away, home); differs from cfg.teams while one waits
+        int focus;                              // the card the keyboard changes: 0 away, 1 home
+        float pickedAt = -1f;                   // the last press (-1: nothing waiting)
+        int applyFrame = -1;                    // the frame the waiting pick was taken (-1: none)
+        bool switching;
+        readonly Rect[] arrows = new Rect[4];   // away ◄ ►, home ◄ ► (GUI space), for the mouse
+        readonly Rect[] cards = new Rect[2];
+
+        void PickInput(Keyboard kb)
+        {
+            if (kb != null)
+            {
+                if (kb.upArrowKey.wasPressedThisFrame || kb.downArrowKey.wasPressedThisFrame || kb.wKey.wasPressedThisFrame
+                    || kb.sKey.wasPressedThisFrame || kb.tabKey.wasPressedThisFrame) focus = 1 - focus;
+                if (kb.leftArrowKey.wasPressedThisFrame || kb.aKey.wasPressedThisFrame) Change(focus, -1);
+                if (kb.rightArrowKey.wasPressedThisFrame || kb.dKey.wasPressedThisFrame) Change(focus, +1);
+            }
+            var mouse = Mouse.current;
+            if (mouse == null) return;
+            var mp = mouse.position.ReadValue();
+            mp.y = Screen.height - mp.y;   // GUI space: y goes down
+            if (mouse.delta.ReadValue().sqrMagnitude > 0f)
+                for (int side = 0; side < 2; side++) if (cards[side].Contains(mp)) focus = side;
+            if (!mouse.leftButton.wasPressedThisFrame) return;
+            for (int i = 0; i < arrows.Length; i++)
+                if (arrows[i].Contains(mp)) { focus = i / 2; Change(i / 2, i % 2 == 0 ? -1 : +1); }
+        }
+
+        // The next or last team on one card (never the other card's team). Back to the two playing now: nothing waits.
+        void Change(int side, int dir)
+        {
+            var league = TeamPick.League(cfg);
+            shown[side] = TeamPick.Step(cfg, shown[side], shown[1 - side], dir);
+            bool same = league[shown[0]] == cfg.teams[0] && league[shown[1]] == cfg.teams[1];
+            pickedAt = same ? -1f : Time.unscaledTime;
         }
 
         // ---- the phone's presses (PartyHost passes on the message types it does not know) ----
@@ -203,7 +267,7 @@ namespace PocketFootball.Boot
         // mid-game); a fresh game opens its first huddle on its first tick.
         public void KickOff()
         {
-            if (KickedOff) return;
+            if (KickedOff || Waiting) return;
             KickedOff = true;
             asks.Clear();
             SendLineups();
@@ -349,6 +413,7 @@ namespace PocketFootball.Boot
         void OnGUI()
         {
             if (!Holding) return;
+            if (cfg.Feature("lobbyScreen")) { JoinScreen(); return; }
             float s = Screen.height / 1080f;
             title ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.UpperCenter, fontStyle = FontStyle.Bold, richText = true };
             body ??= new GUIStyle(GUI.skin.label) { richText = true, wordWrap = true };
@@ -365,18 +430,205 @@ namespace PocketFootball.Boot
             {
                 var t = cfg.teams[team];
                 var lines = new List<string> { "<b><size=" + Mathf.RoundToInt(32 * s) + "><color=" + t.color + ">" + t.name + "</color></size></b>   " + R.TeamCount(team, true) + " people" };
-                foreach (var p in W.Players)
-                {
-                    if (p.Team != team) continue;
-                    var person = PersonOf(p);
-                    if (person == null) continue;
-                    int os = Formation.SpotOn(W, p, true), ds = Formation.SpotOn(W, p, false);
-                    lines.Add(person.Name + (person.Connected ? "" : " (away, a bot plays)") + ":  " + Label(cfg.formation.offense, os) + "  ·  " + Label(cfg.formation.defense, ds));
-                }
+                foreach (var line in PeopleLines(team)) lines.Add(line);
                 lines.Add("<color=#a8c4b4>Every other spot: a bot</color>");
                 GUI.Label(new Rect(x + 20 * s + team * (col + 20 * s), y + 90 * s, col, h - 150 * s), string.Join("\n", lines), body);
             }
             GUI.Label(new Rect(x, y + h - 52 * s, w, 44 * s), "Any phone taps KICK OFF to start", title);
+        }
+
+        // Each person on the team: their name and their two spots.
+        List<string> PeopleLines(int team)
+        {
+            var lines = new List<string>();
+            foreach (var p in W.Players)
+            {
+                if (p.Team != team) continue;
+                var person = PersonOf(p);
+                if (person == null) continue;
+                int os = Formation.SpotOn(W, p, true), ds = Formation.SpotOn(W, p, false);
+                lines.Add(person.Name + (person.Connected ? "" : " (away, a bot plays)") + ":  " + Label(cfg.formation.offense, os) + "  ·  " + Label(cfg.formation.defense, ds));
+            }
+            return lines;
+        }
+
+        // ---- FEATURES.lobbyScreen: the join screen, in the title screen's navy and gold ----
+        static readonly Color Navy = new Color(0.04f, 0.09f, 0.22f, 0.95f), NavyInk = new Color(0.04f, 0.09f, 0.22f, 1f);
+        static readonly Color Gold = new Color(1f, 0.78f, 0.12f, 1f), GoldText = new Color(1f, 0.82f, 0.2f, 1f), Muted = new Color(0.66f, 0.72f, 0.89f, 1f);
+        readonly Dictionary<string, Texture2D> emblems = new Dictionary<string, Texture2D>();
+        GUIStyle big, mid, small, list, arrow;
+
+        // The team card picture: Resources/Emblems/<SHORT>.png (the emblem with the team name under it, from
+        // tools/teams/wordmarks.py), else null (the card shows the team mark and the name).
+        Texture2D Emblem(TeamConfig t)
+        {
+            if (!emblems.TryGetValue(t.@short, out var tex)) emblems[t.@short] = tex = Resources.Load<Texture2D>("Emblems/" + t.@short);
+            return tex;
+        }
+
+        void JoinScreen()
+        {
+            GUI.depth = -50;   // over the game's own overlays
+            float sw = Screen.width, sh = Screen.height, s = sh / 1080f;
+            var lc = cfg.lobby;
+            big ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, richText = true };
+            mid ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, richText = true, wordWrap = true };
+            small ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, richText = true, wordWrap = true };
+            list ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.UpperLeft, richText = true, wordWrap = false, clipping = TextClipping.Clip };
+            arrow ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold };
+
+            Box(new Rect(0, 0, sw, sh), new Color(0f, 0f, 0f, lc.tint), 0f);
+            if (applyFrame >= 0 || switching)
+            {
+                // the stadium is being built again with the new teams (a second or two)
+                var league = TeamPick.League(cfg);
+                Box(new Rect(0, 0, sw, sh), new Color(0f, 0f, 0f, 0.85f), 0f);
+                Text(new Rect(0, sh * 0.42f, sw, 90 * s), "BRINGING OUT THE " + league[shown[0]].name + " AND THE " + league[shown[1]].name + "...", big, 52 * s, GoldText);
+                Text(new Rect(0, sh * 0.42f + 90 * s, sw, 50 * s), "Phones stay connected.", small, 28 * s, Color.white);
+                return;
+            }
+
+            float margin = 56 * s, top = 132 * s, bottom = 150 * s;
+            Text(new Rect(0, 26 * s, sw, 80 * s), "JOIN THE GAME", big, 64 * s, GoldText);
+            Text(new Rect(0, 92 * s, sw, 36 * s), "Scan the code with your phone (same Wi-Fi as the TV), then pick your side", small, 26 * s, Color.white);
+
+            // the QR card, left
+            float qr = Mathf.Min(sh * lc.qrFrac, (sh - top - bottom) - 300 * s), pad = 28 * s;
+            var qc = new Rect(margin, top + 10 * s, qr + 2 * pad, sh - top - bottom);
+            Card(qc, s, false);
+            var qrRect = new Rect(qc.x + pad, qc.y + pad, qr, qr);
+            Box(new Rect(qrRect.x - 8 * s, qrRect.y - 8 * s, qr + 16 * s, qr + 16 * s), Color.white, 14 * s);
+            if (host.Qr != null) GUI.DrawTexture(qrRect, host.Qr);
+            float y = qrRect.yMax + 20 * s;
+            if (host.ServerError != null)
+                Text(new Rect(qc.x + 12 * s, y, qc.width - 24 * s, 160 * s), "Phone server failed:\n" + host.ServerError, mid, 24 * s, new Color(1f, 0.5f, 0.5f));
+            else
+            {
+                Text(new Rect(qc.x, y, qc.width, 44 * s), "SCAN TO JOIN", big, 36 * s, GoldText);
+                Text(new Rect(qc.x, y + 44 * s, qc.width, 32 * s), "or open <b>" + host.Url.Replace("http://", "") + "</b>", small, 24 * s, Color.white);
+                Text(new Rect(qc.x, y + 86 * s, qc.width, 30 * s), "ROOM CODE", small, 22 * s, Muted);
+                var code = new Rect(qc.center.x - 130 * s, y + 118 * s, 260 * s, 84 * s);
+                Box(code, Gold, 42 * s);
+                Box(new Rect(code.x + 5 * s, code.y + 5 * s, code.width - 10 * s, code.height - 10 * s), NavyInk, 37 * s);
+                Text(code, host.RoomCode, big, 60 * s, Color.white);
+            }
+
+            // the two team cards, right, VS between them
+            float areaX = qc.xMax + 44 * s, areaW = sw - margin - areaX, vs = 110 * s;
+            float cw = (areaW - vs) * 0.5f;
+            bool pick = CanPick;
+            for (int side = 0; side < 2 && side < cfg.teams.Count; side++)
+            {
+                var r = new Rect(areaX + side * (cw + vs), qc.y, cw, qc.height);
+                cards[side] = r;
+                TeamCard(side, r, s, pick);
+            }
+            // (level with the middle of the emblems)
+            float vsY = qc.y + 5 * s + 60 * s + 22 * s + Mathf.Min(sh * lc.emblemFrac, qc.height * 0.45f) * 0.5f;
+            Text(new Rect(areaX + cw, vsY - 60 * s, vs, 120 * s), "<i>VS</i>", big, 64 * s, GoldText, true);
+
+            // kick off, bottom
+            var ko = new Rect(sw * 0.5f - 430 * s, sh - bottom + 34 * s, 860 * s, 70 * s);
+            Box(ko, Gold, 35 * s);
+            Text(ko, "ANY PHONE TAPS  <b>KICK OFF</b>  TO START", big, 34 * s, NavyInk);
+            string keys = pick ? "TV keyboard: ◄ ► change team  ·  ▲ ▼ away or home  ·  K kick off      Mouse: click the arrows" : "TV keyboard: K kick off";
+            small.fontSize = Mathf.RoundToInt(23 * s);
+            float kw = small.CalcSize(new GUIContent(keys)).x + 40 * s;
+            var kr = new Rect((sw - kw) * 0.5f, ko.yMax + 6 * s, kw, 34 * s);
+            Box(kr, new Color(0f, 0f, 0f, 0.7f), 17 * s);   // (a dark strip: readable over the field)
+            Text(kr, keys, small, 23 * s, Color.white);
+        }
+
+        void TeamCard(int side, Rect r, float s, bool pick)
+        {
+            var lc = cfg.lobby;
+            var league = TeamPick.League(cfg);
+            var t = pick ? league[shown[side]] : cfg.teams[side];
+            bool waiting = t != cfg.teams[side];
+            bool focused = pick && side == focus;
+            Color tc = Colors.Hex(t.color), tc2 = Colors.Hex(t.color2);
+            Card(r, s, focused);
+
+            // the band: AWAY / HOME in the team's colours, the head count at the right
+            float bh = 60 * s, inset = focused ? 8 * s : 5 * s;
+            var band = new Rect(r.x + inset, r.y + inset, r.width - 2 * inset, bh);
+            Box(band, tc, 16 * s);
+            Box(new Rect(band.x, band.yMax - 16 * s, band.width, 16 * s), tc, 0f);
+            Box(new Rect(band.x, band.yMax, band.width, 6 * s), tc2, 0f);
+            big.alignment = TextAnchor.MiddleLeft;
+            Text(new Rect(band.x + 20 * s, band.y, band.width * 0.5f, bh), side == 0 ? "AWAY" : "HOME", big, 30 * s, Color.white, true);
+            big.alignment = TextAnchor.MiddleRight;
+            int people = R.TeamCount(side, true);
+            Text(new Rect(band.center.x, band.y, band.width * 0.5f - 20 * s, bh), people + (people == 1 ? " PERSON" : " PEOPLE"), big, 24 * s, Color.white, true);
+            big.alignment = TextAnchor.MiddleCenter;
+
+            // the emblem, with the arrows either side when the teams can change
+            float aw = pick ? 66 * s : 0f, eh = Mathf.Min(Screen.height * lc.emblemFrac, r.height * 0.45f);
+            var er = new Rect(r.x + 20 * s + aw, band.yMax + 22 * s, r.width - 40 * s - 2 * aw, eh);
+            var tex = Emblem(t);
+            if (tex != null) GUI.DrawTexture(er, tex, ScaleMode.ScaleToFit);
+            else
+            {
+                var mark = TeamMarks.For(t);
+                if (mark != null) GUI.DrawTexture(new Rect(er.x, er.y, er.width, er.height * 0.72f), mark, ScaleMode.ScaleToFit);
+                Text(new Rect(er.x, er.y + er.height * 0.72f, er.width, er.height * 0.28f), t.name, big, 48 * s, tc, true);
+            }
+            if (pick)
+                for (int k = 0; k < 2; k++)
+                {
+                    var a = new Rect(k == 0 ? r.x + 16 * s : r.xMax - 16 * s - aw, er.center.y - aw * 0.5f, aw, aw);
+                    arrows[side * 2 + k] = a;
+                    Box(a, focused ? Gold : new Color(1f, 1f, 1f, 0.16f), aw * 0.5f);
+                    Text(a, k == 0 ? "◄" : "►", arrow, 34 * s, focused ? NavyInk : Color.white);
+                }
+            else { arrows[side * 2] = Rect.zero; arrows[side * 2 + 1] = Rect.zero; }
+
+            // under the emblem: the new team on its way, or who plays
+            float y = er.yMax + 14 * s, x = r.x + 30 * s, w = r.width - 60 * s;
+            if (waiting)
+            {
+                Text(new Rect(x, y, w, 40 * s), "NEW TEAM: THE " + t.name, big, 28 * s, GoldText);
+                Text(new Rect(x, y + 40 * s, w, 34 * s), "Coming out in a moment...", small, 22 * s, Color.white);
+                return;
+            }
+            Box(new Rect(x, y, w, 3 * s), new Color(tc2.r, tc2.g, tc2.b, 0.8f), 0f);
+            y += 14 * s;
+            var lines = PeopleLines(side);
+            int rows = Mathf.Max(1, lc.listRows);
+            float lh = 34 * s;
+            if (lines.Count == 0)
+                Text(new Rect(x, y, w, 64 * s), "Nobody yet. Bots play every spot.\nPick this side on your phone!", small, 26 * s, new Color(0.88f, 0.91f, 1f));
+            for (int i = 0; i < lines.Count && i < rows; i++)
+            {
+                bool more = i == rows - 1 && lines.Count > rows;
+                Text(new Rect(x, y + i * lh, w, lh), more ? "+ " + (lines.Count - rows + 1) + " more" : lines[i], list, 22 * s, more ? Muted : Color.white, true);
+            }
+            if (lines.Count > 0 && lines.Count < rows)
+                Text(new Rect(x, y + lines.Count * lh, w, lh), "Every other spot: a bot", list, 20 * s, Muted, true);
+        }
+
+        // A navy card with a gold rim (thicker on the card the keyboard changes), like the title screen's panels.
+        void Card(Rect r, float s, bool lit)
+        {
+            Box(new Rect(r.x, r.y + 8 * s, r.width, r.height), new Color(0f, 0f, 0f, 0.45f), 22 * s);   // drop shadow
+            Box(r, Navy, 22 * s);
+            GUI.DrawTexture(r, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f, Gold, lit ? 8 * s : 4 * s, 22 * s);
+        }
+
+        // A filled box, rounded by radius (0: square).
+        static void Box(Rect r, Color c, float radius) =>
+            GUI.DrawTexture(r, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f, c, 0f, radius);
+
+        static void Text(Rect r, string text, GUIStyle st, float size, Color c, bool shadow = false)
+        {
+            st.fontSize = Mathf.Max(1, Mathf.RoundToInt(size));
+            if (shadow)
+            {
+                st.normal.textColor = new Color(0f, 0f, 0f, 0.6f);
+                GUI.Label(new Rect(r.x + 2, r.y + 2, r.width, r.height), text, st);
+            }
+            st.normal.textColor = c;
+            GUI.Label(r, text, st);
         }
     }
 }

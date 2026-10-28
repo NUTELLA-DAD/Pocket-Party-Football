@@ -25,12 +25,28 @@ namespace PocketFootball.Boot
         readonly Dictionary<int, float> findUntil = new Dictionary<int, float>();              // by slot
         int joined;
 
+        // A team switch in the lobby builds the scene again (PartyHost.SwitchTeams): the pads keep their seats.
+        static Dictionary<int, Seat> carried;
+        static int carriedJoined;
+        Dictionary<int, Seat> kept;   // the carried pads not seen yet
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetCarry() { carried = null; carriedJoined = 0; }
+
+        public void CarryPads()
+        {
+            carried = new Dictionary<int, Seat>();
+            foreach (var kv in pads) carried[kv.Key] = kv.Value.Seat;
+            carriedJoined = joined;
+        }
+
         public static GamepadHost Attach(PartyHost h, GameConfig cfg)
         {
             if (!cfg.Feature("gamepad")) return null;
             var g = h.gameObject.AddComponent<GamepadHost>();
             g.host = h;
             g.cfg = cfg;
+            if (carried != null) { g.joined = carriedJoined; g.kept = carried; carried = null; }
             h.BeforeTick += g.Feed;
             Instance = g;
             Debug.Log("[pad] gamepads on: press " + cfg.gamepad.join.ToUpperInvariant() + " to join");
@@ -56,6 +72,15 @@ namespace PocketFootball.Boot
                 var s = PadState.Read(g);
                 if (!pads.TryGetValue(g.deviceId, out var pad))
                 {
+                    if (kept != null && kept.TryGetValue(g.deviceId, out var keptSeat))
+                    {
+                        // a pad from before the team switch: the same person, no START needed
+                        kept.Remove(g.deviceId);
+                        var back = new GamepadSource(keptSeat, cfg.gamepad, cfg.play.shapes) { DeviceId = g.deviceId };
+                        back.Prime(s);
+                        pads[g.deviceId] = back;
+                        continue;
+                    }
                     int j = System.Array.IndexOf(PadState.Names, cfg.gamepad.join);
                     if (j >= 0 && s.Has((PadButton)j)) Join(g.deviceId, s);
                     continue;
@@ -133,6 +158,7 @@ namespace PocketFootball.Boot
         void OnGUI()
         {
             if (host.Photo != null) return;
+            if (Lobby.Instance != null && Lobby.Instance.FullScreen) GUI.depth = -60;   // (over the join screen)
             float s = Screen.height / 1080f;
             line ??= new GUIStyle(GUI.skin.label) { richText = true, alignment = TextAnchor.LowerLeft };
             plate ??= new GUIStyle(GUI.skin.box) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold };

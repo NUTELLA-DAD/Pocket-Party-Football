@@ -347,10 +347,15 @@ namespace PocketFootball.Sim
     // WS-07 the lobby (FEATURES.lobby): each person picks an offense spot and a defense spot before kickoff. The game
     // waits on the lobby until a phone taps KICK OFF (holdUntilKickoff), a bot plays for a dropped phone until it comes
     // back (botCoversDropped), and a swap request waits swapAskS seconds for the other person's answer.
+    // FEATURES.lobbyScreen: the TV's join screen (Boot/Lobby.cs). The game behind darkens by tint; the QR code is qrFrac
+    // of the screen height and each team card's emblem emblemFrac; a card lists at most listRows people. A new team picked
+    // there waits teamApplyS with no further press before the stadium is built again with it.
     public sealed class LobbyConfig
     {
         public bool holdUntilKickoff, botCoversDropped;
         public float swapAskS;
+        public float tint, qrFrac, emblemFrac, teamApplyS;
+        public int listRows;
     }
 
     // The field runs along X (goal line to goal line), across Z (sideline to sideline); the centre is (0, 0).

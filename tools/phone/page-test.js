@@ -37,6 +37,7 @@ const LAYOUTS = ['wait', 'qbpre', 'qb', 'carrier', 'route', 'block', 'rush', 'lb
       let f = u.pathname === '/' || u.pathname.startsWith('/join/') ? 'index.html' : u.pathname.slice(1);
       const file = path.join(DIR, f);
       if (!fs.existsSync(file)) return route.fulfill({ status: 404, body: 'nope' });
+      if (f.endsWith('.png')) return route.fulfill({ status: 200, contentType: 'image/png', body: fs.readFileSync(file) });
       const type = f.endsWith('.js') ? 'text/javascript' : f.endsWith('.css') ? 'text/css' : 'text/html';
       route.fulfill({ status: 200, contentType: type + '; charset=utf-8', body: fs.readFileSync(file) });
     });
@@ -73,6 +74,7 @@ const LAYOUTS = ['wait', 'qbpre', 'qb', 'carrier', 'route', 'block', 'rush', 'lb
     await page.waitForTimeout(150);
     ok(got.some(m => m.t === 'join' && m.code === 'LEPT' && m.name === 'KENNY'), tag + ' join message: ' + JSON.stringify(got));
     await check('pick');
+    ok(await page.$$eval('#teams .team', bs => bs.length === 2 && bs.every(b => b.classList.contains('has-emblem'))), tag + ' both side buttons show their team emblem');
     await page.locator('.team').first().click();
     sendIn({ t: 'status', phase: 'huddle', secs: 15, called: [false, false], score: [0, 0], down: '1ST & 10', tv: 'HUDDLE' });
     sendIn({ t: 'huddle', side: 'offense', secs: 15, caller: true, callerNumber: 15, locked: false, mine: '', plays, spots: OFF, opp: DEF, me: 0, thumbs: { slants: 2 } });

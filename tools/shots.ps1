@@ -21,6 +21,7 @@ foreach ($f in $Fixtures) {
         'title'           { @('-title','-warmup','400') }
         'title_howto'     { @('-title','-title-page','howto') }
         'title_settings'  { @('-title','-title-page','settings') }
+        'lobby'           { @('-lobby') }
         default           { }
     })
     $p = Start-Process -FilePath $exe -ArgumentList (@('-fixture',$f,'-seed','1','-bind','127.0.0.1') + $extra + @('-shots',"`"$shots`"",'-quit-after-shots','-screen-width','1920','-screen-height','1080','-screen-fullscreen','0','-logFile',"`"$LOGS\shots-$f.log`"")) -PassThru

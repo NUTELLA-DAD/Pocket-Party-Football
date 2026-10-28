@@ -54,7 +54,18 @@ namespace PocketFootball.Boot
         readonly Dictionary<int, string> lastMe = new Dictionary<int, string>();
         float nextMeAt;
         Texture2D qrTex;
+        public Texture2D Qr => qrTex;   // the join code picture (the lobby screen draws it big)
         int aidCounter;
+
+        // FEATURES.lobbyScreen: the TV picks new teams in the lobby. The Boot scene is built again with them (every
+        // model, the stadium, the field paint), but the phone server, the room code and the roster carry over, so the
+        // phones stay connected and keep their side (away or home) and their spots.
+        sealed class Carry { public PhoneServer Server; public Roster Roster; public string RoomCode, Url, ServerError; }
+        static Carry carry;
+        bool keepServer;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetCarry() { carry?.Server?.Dispose(); carry = null; }
 
         public static PartyHost Create(GameObject on, GameConfig cfg, Material baseMat, CameraRig rig, CliArgs args)
         {
@@ -64,12 +75,16 @@ namespace PocketFootball.Boot
             h.rig = rig;
             h.lockstep = !string.IsNullOrEmpty(args.ShotsDir);
             h.World = new World(cfg, args.Seed);
-            h.Roster = new Roster(cfg.net.maxPlayers);
+            var kept = carry;
+            carry = null;
+            h.Roster = kept != null ? kept.Roster : new Roster(cfg.net.maxPlayers);
             h.Players = new PlayersView(cfg, baseMat);
             h.stadium = new Stadium(cfg, baseMat);
             h.marks = new Markings(cfg, baseMat);
-            h.StartServer(args.Bind);
+            if (kept != null) h.TakeServer(kept);
+            else h.StartServer(args.Bind);
             h.FillWithBots();
+            if (kept != null) h.SeatCarriedPeople();
             GamepadHost.Attach(h, cfg);   // WS-14: Xbox pads join as players (FEATURES.gamepad)
             if (args.Wander) h.World.BotsWander = true;
             if (!args.LookX.HasValue) rig.SetLookAtX(h.World.LineOfScrimmageX);
@@ -125,8 +140,54 @@ namespace PocketFootball.Boot
 
         void OnDestroy()
         {
-            Server?.Dispose();
+            if (!keepServer) Server?.Dispose();
             if (Instance == this) Instance = null;
+        }
+
+        // ---- new teams from the lobby (FEATURES.lobbyScreen) ----
+
+        // Play away against home (short codes, saved like the title's SETTINGS page) and build the Boot scene again with
+        // them. The phones stay connected through it: the next PartyHost takes over this one's server and roster.
+        public void SwitchTeams(string away, string home)
+        {
+            TitleScreen.SaveTeams(away, home);
+            carry = new Carry { Server = Server, Roster = Roster, RoomCode = RoomCode, Url = Url, ServerError = ServerError };
+            keepServer = true;
+            GamepadHost.Instance?.CarryPads();
+            Debug.Log("[lobby] new teams: " + away + " at " + home + "; building the stadium again (the phones stay)");
+            UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
+        }
+
+        void TakeServer(Carry kept)
+        {
+            Server = kept.Server;
+            RoomCode = kept.RoomCode;
+            Url = kept.Url;
+            ServerError = kept.ServerError;
+            if (Url != null) qrTex = MakeQr(Url + "/join/" + RoomCode);
+        }
+
+        // After a team switch: every person back on their side (a bot's spot; the lobby puts them on their own spots
+        // again), and every connected phone told the new teams. Messages that came in meanwhile wait in the server.
+        void SeatCarriedPeople()
+        {
+            foreach (var seat in Roster.Seats)
+            {
+                if (seat.Kind != SeatKind.Phone) continue;
+                if (seat.Team >= cfg.teams.Count) seat.Team = -1;
+                if (seat.Team >= 0 && World.ReplaceBot(seat.Team, seat.Slot) == null) seat.Team = -1;
+                if (seat.Pid == "pad") continue;   // (a pad's seat: GamepadHost takes it back)
+                var src = new PhoneSource(seat) { Shapes = cfg.play.shapes };
+                sources[seat.Slot] = src;
+                if (!seat.Connected || seat.Conn < 0) continue;
+                byConn[seat.Conn] = src;
+                Server.Send(seat.Conn, Messages.Joined(seat, RoomCode, cfg, Roster));
+                Server.Send(seat.Conn, Messages.Status(World));
+                var mine = World.Find(seat.Slot);
+                if (seat.Team >= 0 && mine != null) Server.Send(seat.Conn, Messages.Picked(seat, mine, cfg));
+                else SendUi(src, "pick");
+            }
+            BroadcastLobby();
         }
 
         void Update()
@@ -515,6 +576,7 @@ namespace PocketFootball.Boot
         {
             Hud.JoinPanel = Rect.zero;   // (set again below while the join panel is on)
             if (TitleScreen.Showing) return;   // the title screen covers the TV (the bots' show game has no HUD)
+            if (Lobby.Instance != null && Lobby.Instance.FullScreen) return;   // FEATURES.lobbyScreen: the join screen covers the TV
             float s = Screen.height / 1080f;
             panelText ??= new GUIStyle(GUI.skin.label) { richText = true, wordWrap = true };
             plate ??= new GUIStyle(GUI.skin.box) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold };
