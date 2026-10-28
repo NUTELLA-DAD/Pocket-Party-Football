@@ -454,9 +454,9 @@ namespace PocketFootball.View
             if (fig != null) Object.Destroy(fig.gameObject);
             var team = cfg.teams[Mathf.Clamp(p.Team, 0, cfg.teams.Count - 1)];
             fig = FootballFigure.Create(root, "Player " + p.Slot, cfg.view.playerHeightM);
-            ModelSkin.Wear(fig, team, pos, cfg, mat);   // the team's (or the position's) rigged model over the pose rig
+            ModelSkin.Wear(fig, team, pos, cfg, mat, p.Number);   // the team's (or the position's) rigged model over the pose rig
             JerseyMarks.SetNumber(fig.gameObject, cfg, p.Number);   // FEATURES.jerseyNumbers: his own number
-            team.ModelFor(pos, cfg.Feature("posModels"), out string model, out _, out _);
+            team.ModelFor(pos, cfg.Feature("posModels"), out string model, out _, out _, p.Number);
             JerseyMarks.SetSkin(fig.gameObject, cfg, model, JerseyMarks.SkinPick(p.Slot));   // FEATURES.skinTones: his own skin
             skins[p.Slot] = fig.GetComponentInChildren<ModelSkin>();
             fig.SwayCm = cfg.anim.idleSwayCm; fig.RollDeg = cfg.anim.idleRollDeg; fig.KneeDeg = cfg.anim.idleKneeDeg;
