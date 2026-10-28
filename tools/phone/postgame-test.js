@@ -7,12 +7,12 @@ const { chromium } = require('playwright');
 const DIR = path.join(__dirname, '..', '..', 'Assets', 'StreamingAssets', 'phone');
 const SHOTS = path.join(__dirname, '..', '..', '.shots');
 const SIZES = [[844, 390], [740, 360], [667, 375], [568, 320], [390, 844], [360, 640]];
-const TEAMS = [{ name: 'CHIEFS', short: 'KC', color: '#d7263d', color2: '#ffb612', people: 1, players: 11 },
-               { name: 'ROUGHRIDERS', short: 'SSK', color: '#1f7a3a', color2: '#ffffff', people: 0, players: 11 }];
+const TEAMS = [{ name: 'ARROWS', short: 'ARR', color: '#d7263d', color2: '#ffb612', people: 1, players: 11 },
+               { name: 'GRAINS', short: 'GRN', color: '#1f7a3a', color2: '#ffffff', people: 0, players: 11 }];
 const CARD = {
   t: 'postgame', winner: 0,
-  teams: [{ name: 'CHIEFS', short: 'KC', color: '#d7263d', score: 28, yds: 412, tds: 4, tackles: 21, picks: 2 },
-          { name: 'ROUGHRIDERS', short: 'SSK', color: '#1f7a3a', score: 21, yds: 355, tds: 3, tackles: 27, picks: 1 }],
+  teams: [{ name: 'ARROWS', short: 'ARR', color: '#d7263d', score: 28, yds: 412, tds: 4, tackles: 21, picks: 2 },
+          { name: 'GRAINS', short: 'GRN', color: '#1f7a3a', score: 21, yds: 355, tds: 3, tackles: 27, picks: 1 }],
   mvp: 'Player of the game: <B>WWWWWWWWWWWW</B> (#87 WR) · 2 TD · 131 YDS · 7 REC',
   mine: { team: 0, number: 15, pos: 'QB', yds: -4, rushYd: -4, recYd: 0, catches: 0, tackles: 0, sacks: 0, picks: 0, tds: 0, points: 0,
           line: '-4 YDS · 14/22 PASSING, 288 YDS' },
@@ -43,7 +43,7 @@ const CARD = {
       ws.onMessage(m => {
         const msg = JSON.parse(m);
         if (msg.t === 'join') ws.send(JSON.stringify({ t: 'joined', token: 'tk', name: msg.name, team: 0, teams: TEAMS }));
-        if (msg.t === 'join') ws.send(JSON.stringify({ t: 'picked', team: 0, color: '#d7263d', color2: '#ffb612', name: 'KENNY', teamName: 'CHIEFS', pos: 'QB', number: 15 }));
+        if (msg.t === 'join') ws.send(JSON.stringify({ t: 'picked', team: 0, color: '#d7263d', color2: '#ffb612', name: 'KENNY', teamName: 'ARROWS', pos: 'QB', number: 15 }));
         if (msg.t === 'join') ws.send(JSON.stringify({ t: 'ui', layout: 'wait', aid: 'w1' }));
       });
     });
@@ -74,7 +74,7 @@ const CARD = {
     ok(o.length === 0, tag + ' off screen: ' + o.join(' | '));
     ok(await page.evaluate(() => !document.querySelector('#postgame b')), tag + ' a name is text, not HTML');
     const text = await page.evaluate(() => document.getElementById('postgame').textContent);
-    ok(text.includes('CHIEFS WIN!') && text.includes('28') && text.includes('21') && text.includes('14/22 PASSING'), tag + ' card text: ' + text);
+    ok(text.includes('ARROWS WIN!') && text.includes('28') && text.includes('21') && text.includes('14/22 PASSING'), tag + ' card text: ' + text);
     ok(await page.evaluate(() => { const b = document.querySelector('#postgame button'); return b && /hide/i.test(b.getAttribute('aria-label') || ''); }), tag + ' HIDE names its action');
     await page.click('#postgame button');
     await page.waitForTimeout(50);

@@ -1,6 +1,6 @@
 # Pocket Party Football - notes for Claude Code
 
-A couch football party game in Unity: one TV runs the game, up to 22 phones join by QR code and act as controllers. 11 players per team (Chiefs vs Roughriders), bots fill every spot no human took. Side-on camera, Wind Waker-style toon look.
+A couch football party game in Unity: one TV runs the game, up to 22 phones join by QR code and act as controllers. 11 players per team (Arrows vs Grains), bots fill every spot no human took. Side-on camera, Wind Waker-style toon look.
 
 Read first: `docs/PLAN.md` (the design), then `docs/BUILD_BRIEF.md` (the M0/M1 jobs, in order). The phone UI target is `docs/mockup/controller.html`. The visual target is `docs/art/ART_DIRECTION.md` and the concept pictures next to it (camera and HUD from `concepts/04-in-game-camera.png`).
 
@@ -22,7 +22,7 @@ This game reuses the design of the Airship Crew Unity remake: clone https://gith
 - Every tunable number in `Assets/_Project/Config/game.json`; plays in `Config/plays/*.json`. Every new rule behind `FEATURES.<name>` plus an `NO_<NAME>=1` env override.
 - Scenes and objects are built from code and data at runtime (one near-empty Boot scene). No hand-placed prefabs, so no editor GUI work is needed.
 - No wobble: no sine-of-time animation; stepped 8 fps keys for effects.
-- Private game: Kenny's concept art uses the real team logos, which is fine at home. Keep each team's logo as ONE replaceable texture so it can be swapped for our own mark if the game is ever shared publicly.
+- No real team branding (no NFL/CFL names or logos). The teams are the Arrows (ARR) and the Grains (GRN). Each team's logo is ONE texture, `Resources/Logos/<SHORT>.png`; helmet and cheer-top emblems are painted by `tools/rebrand/`. The concept art still shows real logos: style reference only.
 
 ## How to work
 - Do one job from `docs/BUILD_BRIEF.md` at a time, in the stated order.

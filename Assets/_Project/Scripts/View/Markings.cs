@@ -137,7 +137,7 @@ namespace PocketFootball.View
         static void Box(Rect r, Color c) { GUI.color = c; GUI.DrawTexture(r, Texture2D.whiteTexture); GUI.color = Color.white; }
         static void Label(Rect r, string s, int size, Color c) { text.fontSize = size; text.normal.textColor = c; GUI.Label(r, s, text); }
 
-        // KC 14 | SSK 21 | 3RD 2:18 | 2ND & 10, at the top centre. s = screen scale (height / 1080).
+        // ARR 14 | GRN 21 | 3RD 2:18 | 2ND & 10, at the top centre. s = screen scale (height / 1080).
         public static void Scoreboard(GameConfig cfg, int[] score, string quarter, string clock, string down, float s)
         {
             Init();

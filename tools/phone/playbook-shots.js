@@ -7,8 +7,8 @@ const DIR = path.join(__dirname, '..', '..', 'Assets', 'StreamingAssets', 'phone
 const SHOTS = path.join(__dirname, '..', '..', '.shots');
 const PLAYS = path.join(__dirname, '..', '..', 'Assets', '_Project', 'Config', 'plays');
 const SIZES = [[844, 390], [568, 320], [390, 844]];
-const TEAMS = [{ name: 'CHIEFS', short: 'KC', color: '#d7263d', color2: '#ffb612', people: 1, players: 11 },
-               { name: 'ROUGHRIDERS', short: 'SSK', color: '#1f7a3a', color2: '#ffffff', people: 0, players: 11 }];
+const TEAMS = [{ name: 'ARROWS', short: 'ARR', color: '#d7263d', color2: '#ffb612', people: 1, players: 11 },
+               { name: 'GRAINS', short: 'GRN', color: '#1f7a3a', color2: '#ffffff', people: 0, players: 11 }];
 const OFF = [['QB', 15, 5, 0], ['RB', 21, 7, 0], ['WR', 11, 0, -20], ['WR', 17, 0, 20], ['WR', 19, 1, 13], ['TE', 87, 0, -4.5],
              ['C', 60, 0, 0], ['G', 64, 0, -1.5], ['G', 66, 0, 1.5], ['T', 72, 0, -3], ['T', 76, 0, 3]]
   .map(([pos, number, back, z]) => ({ pos, number, ahead: -back, z }));

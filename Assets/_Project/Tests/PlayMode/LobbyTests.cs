@@ -59,7 +59,7 @@ namespace PocketFootball.Tests.PlayMode
             int port = host.Server.Port, team = w.Offense;
             var off = GameBootstrap.Instance.Config.formation.offense;
 
-            // Kay joins and picks the Chiefs: the lobby screen comes up
+            // Kay joins and picks the Arrows: the lobby screen comes up
             var kay = new FakePhone();
             yield return FakePhone.Wait(kay.Connect(port));
             kay.Send(new JObject { ["t"] = "join", ["code"] = host.RoomCode, ["name"] = "Kay", ["token"] = "", ["pid"] = "kay" });

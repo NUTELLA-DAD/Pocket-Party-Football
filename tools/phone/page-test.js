@@ -7,8 +7,8 @@ const DIR = path.join(__dirname, '..', '..', 'Assets', 'StreamingAssets', 'phone
 const SHOTS = path.join(__dirname, '..', '..', '.shots');
 const PLAYS = path.join(__dirname, '..', '..', 'Assets', '_Project', 'Config', 'plays');
 const SIZES = [[844, 390], [740, 360], [667, 375], [568, 320], [390, 844]];
-const TEAMS = [{ name: 'CHIEFS', short: 'KC', color: '#d7263d', color2: '#ffb612', people: 1, players: 11 },
-               { name: 'ROUGHRIDERS', short: 'SSK', color: '#1f7a3a', color2: '#ffffff', people: 0, players: 11 }];
+const TEAMS = [{ name: 'ARROWS', short: 'ARR', color: '#d7263d', color2: '#ffb612', people: 1, players: 11 },
+               { name: 'GRAINS', short: 'GRN', color: '#1f7a3a', color2: '#ffffff', people: 0, players: 11 }];
 const OFF = [['QB', 15, 5, 0], ['RB', 21, 7, 0], ['WR', 11, 0, -20], ['WR', 17, 0, 20], ['WR', 19, 1, 13], ['TE', 87, 0, -4.5],
              ['C', 60, 0, 0], ['G', 64, 0, -1.5], ['G', 66, 0, 1.5], ['T', 72, 0, -3], ['T', 76, 0, 3]]
   .map(([pos, number, back, z]) => ({ pos, number, ahead: -back, z }));
@@ -46,7 +46,7 @@ const LAYOUTS = ['wait', 'qbpre', 'qb', 'carrier', 'route', 'block', 'rush', 'lb
         const msg = JSON.parse(m); got.push(msg);
         if (msg.t === 'join') ws.send(JSON.stringify({ t: 'joined', token: 'tk', name: msg.name, team: -1, teams: TEAMS }));
         if (msg.t === 'join') ws.send(JSON.stringify({ t: 'ui', layout: 'pick', aid: 'p1' }));
-        if (msg.t === 'pick') ws.send(JSON.stringify({ t: 'picked', team: 0, color: '#d7263d', color2: '#ffb612', name: 'KENNY', teamName: 'CHIEFS', pos: 'QB', number: 15 }));
+        if (msg.t === 'pick') ws.send(JSON.stringify({ t: 'picked', team: 0, color: '#d7263d', color2: '#ffb612', name: 'KENNY', teamName: 'ARROWS', pos: 'QB', number: 15 }));
       });
     });
     const sendIn = o => sock.send(JSON.stringify(o));
@@ -79,7 +79,7 @@ const LAYOUTS = ['wait', 'qbpre', 'qb', 'carrier', 'route', 'block', 'rush', 'lb
     sendIn({ t: 'ui', layout: 'huddle', aid: 'h1' });
     await check('huddle');
     // FEATURES.huddleSwitch: POSITION opens the team's offense spots; a bot's spot sends a spot press with the huddle aid
-    const lineup = (you, extra) => sendIn(Object.assign({ t: 'lineup', held: false, switch: true, team: 0, teamName: 'CHIEFS', people: 2, players: 11,
+    const lineup = (you, extra) => sendIn(Object.assign({ t: 'lineup', held: false, switch: true, team: 0, teamName: 'ARROWS', people: 2, players: 11,
       offense: OFF.map((s, i) => ({ pos: s.pos, number: s.number, who: i === you ? 'KENNY' : i === 4 ? 'RAY' : 'BOT', person: i === you || i === 4, me: i === you, away: false })),
       defense: DEF.map((s, i) => ({ pos: s.pos, number: s.number, who: i === 1 ? 'KENNY' : 'BOT', person: i === 1, me: i === 1, away: false })),
       you: { o: you, d: 1 } }, extra || {}));
