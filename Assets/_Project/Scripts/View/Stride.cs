@@ -50,7 +50,10 @@ namespace PocketFootball.View
         const float FoldAt = 0.35f, FoldThighAt = 0.38f, FoldDrive = 0.55f, DriveAt = 0.62f, UnfoldKeep = 0.9f;
         const float PushFrom = 0.3f;          // the heel comes up over the last part of the stance (the hip rolling over the toes)
         const float PointFrom = 0.25f;        // and the foot points over the last part of that
-        const float ToeBackBy = 0.35f;        // the pointed foot comes back level by this share of the swing
+        const float ToeBackBy = 0.45f;        // the pointed foot comes back level by this share of the swing
+        // the foot points most just after it leaves the grass (as a real one does): OffShare of the way there at toe-off,
+        // all the way at PeakAt of the swing, so a run's short touch on the grass doesn't snap it down in one frame
+        const float OffShare = 0.6f, PeakAt = 0.12f;
         const float StrikeTo = 0.2f, StrikeFrom = 0.7f;   // the toes up (strideHeelStrikeDeg) landing: from this share of the swing to this of the stance
         // a swing leg's say in the hips' height fades out while the other foot is down (it's in the air, it holds
         // nothing): Release leg lengths higher at the middle of that, so the planted leg's own bend sets the hips
@@ -130,7 +133,7 @@ namespace PocketFootball.View
             // foot measured: the heel just comes up strideHeelCm)
             if (k.g.Foot > 0f)
             {
-                float rest = k.g.FootDropDeg * Mathf.Deg2Rad, turn = k.point * Smooth((s - PointFrom) / (1f - PointFrom)) * Mathf.Deg2Rad;
+                float rest = k.g.FootDropDeg * Mathf.Deg2Rad, turn = k.point * OffShare * Smooth((s - PointFrom) / (1f - PointFrom)) * Mathf.Deg2Rad;
                 y = k.g.Ankle + k.g.Foot * (Mathf.Sin(rest + turn) - Mathf.Sin(rest));
             }
             else y = k.g.Ankle + k.heel * Smooth((s - PushFrom) / (1f - PushFrom));
@@ -198,8 +201,11 @@ namespace PocketFootball.View
                     l.planted = true;
                     l.s = u / k.stance;
                     Planted(k, l.s, out l.knee, out _, out _, out l.hip, out l.thigh);
-                    l.toe = -point * Smooth((l.s - PointFrom) / (1f - PointFrom)) + strike * (1f - Smooth(l.s / StrikeTo));
-                    l.ball = ball * Smooth((l.s - PointFrom) / (1f - PointFrom));
+                    float push = Smooth((l.s - PointFrom) / (1f - PointFrom));
+                    // a toes-down landing (a sprint's) stays down and runs straight on into the push, never flat between
+                    l.toe = strike < 0f ? Mathf.Lerp(strike, -point * OffShare, push)
+                                        : -point * OffShare * push + strike * (1f - Smooth(l.s / StrikeTo));
+                    l.ball = ball * OffShare * push;
                 }
                 else
                 {
@@ -213,10 +219,11 @@ namespace PocketFootball.View
                     l.hip = Mathf.Lerp(hOff, hOn, Smooth(l.s)) + (f >= 0f ? k.bob * 4f * f * (1f - f) : 0f);
                     float down = Mathf.Max(air, 0f), held = 1f - 2f * down, m = held > 0f ? (l.s - down) / held : -1f;
                     if (m > 0f && m < 1f) l.hip += Release * leg * 16f * m * m * (1f - m) * (1f - m);
-                    l.toe = -point * (1f - Smooth(l.s / ToeBackBy)) + strike * Smooth((l.s - StrikeFrom) / (1f - StrikeFrom));
+                    float pointed = l.s < PeakAt ? Mathf.Lerp(OffShare, 1f, Smooth(l.s / PeakAt)) : 1f - Smooth((l.s - PeakAt) / (ToeBackBy - PeakAt));
+                    l.toe = -point * pointed + strike * Smooth((l.s - StrikeFrom) / (1f - StrikeFrom));
                     float up = (l.s - ToeBackBy) / (StrikeFrom - ToeBackBy);
                     if (up > 0f && up < 1f) l.toe += lift * 4f * up * (1f - up);
-                    l.ball = ball * (1f - Smooth(l.s / ToeBackBy));
+                    l.ball = ball * pointed;
                 }
                 hip = Mathf.Min(hip, l.hip);   // (as high as the lower leg holds him: no foot ends up under the grass)
                 legs[i] = l;
