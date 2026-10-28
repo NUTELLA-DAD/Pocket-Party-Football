@@ -19,7 +19,7 @@ namespace PocketFootball.Tests.EditMode
         [Test]
         public void TheLogoAndTheThreeButtonsLoad()
         {
-            foreach (var name in new[] { "Title/Logo", "Title/ButtonPlay", "Title/ButtonHowToPlay", "Title/ButtonSettings" })
+            foreach (var name in new[] { "Title/TitleArt", "Title/ButtonPlay", "Title/ButtonHowToPlay", "Title/ButtonSettings" })
             {
                 var tex = Resources.Load<Texture2D>(name);
                 Assert.IsNotNull(tex, name);

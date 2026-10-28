@@ -68,7 +68,7 @@ namespace PocketFootball.Boot
             t.cfg = cfg;
             t.host = host;
             t.rig = rig;
-            t.logo = Resources.Load<Texture2D>("Title/Logo");
+            t.logo = Resources.Load<Texture2D>("Title/TitleArt");
             t.buttons = new[] { Resources.Load<Texture2D>("Title/ButtonPlay"), Resources.Load<Texture2D>("Title/ButtonHowToPlay"), Resources.Load<Texture2D>("Title/ButtonSettings") };
             t.black = Texture2D.whiteTexture;
             host.DevKeys = false;   // (W/A/S/D and the arrows move the highlight here, not the dev keys)
