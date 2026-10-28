@@ -117,9 +117,12 @@ for zi, z in enumerate(spec['zones']):
         marks[inz, 0] = np.clip(local[inz, 0] / 3 + 0.5, 0, 1); marks[inz, 1] = np.clip(local[inz, 1] / 3 + 0.5, 0, 1)
         marks[inz, 2] = 128 / 255; marks[inz, 3] = 1
     else:
-        e = grow(inz & eye_open, 2, inz)   # (2 texels past the painted opening, so a shut lid covers its edge too)
-        marks[inz, 0] = np.clip(local[inz, 0] / 6 + 0.5, 0, 1); marks[inz, 1] = np.clip(local[inz, 1] / 6 + 0.5, 0, 1)
-        marks[inz, 2] = 1; marks[e, 3] = 1
+        # only the opening (and 2 texels past it, so a shut lid covers its painted edge) is the eye's; the rest of the
+        # zone is face again, free for the skin tone below
+        e = grow(inz & eye_open, 2, inz)
+        marks[e, 0] = np.clip(local[e, 0] / 6 + 0.5, 0, 1); marks[e, 1] = np.clip(local[e, 1] / 6 + 0.5, 0, 1)
+        marks[e, 2] = 1; marks[e, 3] = 1
+        zone_of[inz & ~e] = -1
 # outside every zone, R = how much grass a stain may leave there (FEATURES.grassStains; B and A stay 0): the legs and
 # knees most, the arms and body some, the helmet, face and hands none (from the rest pose, in model heights)
 H = P[ok][:, 2].max(); X = np.abs(P[ok][:, 0]).max()
@@ -142,7 +145,7 @@ marks[free, 0] = np.clip(st[free], 0, 1)
 # skin hues above the hips, soft at the edges
 dh0 = np.abs(((h0 - 22) + 180) % 360 - 180)
 handish = np.abs(P[..., 0]) > 0.6 * X                     # (bare hands are paler: a lower saturation counts there)
-sk = band(dh0, -1, 16, 6) * band(s0, np.where(handish, 0.1, 0.2), 0.75, 0.06) * band(v0, 0.2, 0.97, 0.06) * (zn > 0.35)
+sk = band(dh0, -1, 16, 6) * band(s0, np.where(handish, 0.1, 0.2), 0.75, 0.06) * band(v0, 0.2, 1.1, 0.06) * (zn > 0.35)
 marks[free, 1] = np.clip(sk[free], 0, 1)
 hard = free & (sk > 0.5)
 if hard.any():

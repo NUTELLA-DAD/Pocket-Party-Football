@@ -156,9 +156,13 @@ half3 Marks(half3 col, float2 uv)
         float sn = StainNoise(uv * _StainLook.x) * 0.65 + StainNoise(uv * _StainLook.x * 2.3 + 17.0) * 0.35;
         float saa = max(fwidth(sn), 1e-3);
         // skin: the marks map's G outside the zones, and all of an eye zone round its opening (the lids and brows)
-        float skinW = (m.b < 0.25 ? m.g : (m.b > 0.75 ? 1.0 : 0.0)) * saturate(dot(col, half3(0.2126, 0.7152, 0.0722)) * 12.0 - 0.15);   // (not the dark brows and lashes)
+        // skin: the marks map's G outside the zones (the face round the eyes too), not the dark brows and lashes; in an
+        // eye's opening only what is coloured (the lid's edge), never the white
+        half lum = dot(col, half3(0.2126, 0.7152, 0.0722));
+        half sat = (max(col.r, max(col.g, col.b)) - min(col.r, min(col.g, col.b))) / max(max(col.r, max(col.g, col.b)), 1e-3);
+        float skinW = (m.a >= 0.5 ? saturate((sat - 0.15) * 8.0) * step(0.75, m.b) : m.g) * saturate(lum * 12.0 - 0.15);
         half3 skin = col * lerp(half3(1, 1, 1), (half3)_Skin.rgb, skinW);
-        if (m.a >= 0.5) outCol = m.b < 0.75 ? MarkNumber(col, q, aa) : MarkEye(col, q * 2.0, aa * 2.0);
+        if (m.a >= 0.5) outCol = m.b < 0.75 ? MarkNumber(col, q, aa) : MarkEye(skin, q * 2.0, aa * 2.0);
         else outCol = MarkStain(skin, uv, sn, saa, m.r * step(m.b, 0.25));
     }
     return outCol;
