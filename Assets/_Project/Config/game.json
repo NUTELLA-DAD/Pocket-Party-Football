@@ -985,6 +985,10 @@
     "barLiveAlpha": 0.55,
     "barAboveM": 0.9
   },
+  "cup": {
+    "maxTeams": 8,
+    "randomDraw": true
+  },
   "title": {
     "minShotS": 3,
     "followRate": 3.5,
@@ -1001,6 +1005,7 @@
     "tint": 0.2,
     "fadeS": 0.375,
     "volumeStep": 0.1,
+    "menuBottomFrac": 0.94,
     "shots": [
       { "name": "broadcast", "broadcast": true },
       { "name": "behindQb", "backYd": 20, "sideYd": 0, "heightYd": 7, "aheadYd": 14, "fovDeg": 42 },
@@ -1106,6 +1111,7 @@
     "huddleSwitch": true,
     "teamPick": true,
     "botsV3": true,
-    "smoothMotion": true
+    "smoothMotion": true,
+    "cup": true
   }
 }
