@@ -34,7 +34,7 @@
       "logoWidthYd": 17,
       "logoHeightYd": 14,
       "logoAlpha": 0.92,
-      "logoSplit": 0.75,
+      "logoSplit": 0.9,
       "logoLightMix": 0.8,
       "logoDarkMix": 0.9,
       "logoDarkValue": 0.85,
@@ -294,8 +294,8 @@
     {
       "name": "GRAINS",
       "short": "GRN",
-      "color": "#1f8a4c",
-      "color2": "#f6f1de",
+      "color": "#5cb83a",
+      "color2": "#f2b632",
       "model": "Models/Chiefs24/Chiefs24_Rigged",
       "modelTexture": "Models/Roughriders/Roughriders_BaseColor",
       "posModels": [

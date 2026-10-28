@@ -16,3 +16,7 @@ Numpy and Pillow only, no Blender.
   decal search skips (a stripe touching the decal), `hueTol`, `minWhite`, `join`, `edge`, `pad`, `scale`, `du`/`dv`.
 
 A new team: put its emblem through `emblems.py`, then add its colour maps to `rebrand.json` with its own `emblem` key.
+
+`recolour.py recolour.json Assets/_Project/Resources`: the Grains' lighter kit. The team green turns light green and
+the white cloth between `goldZ` heights (pants, sleeve and pant stripes, cheer trim) turns gold. Run it once, after
+`rebrand.py`, on the green maps (it edits them in place).

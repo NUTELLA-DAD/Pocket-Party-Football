@@ -1,0 +1,13 @@
+{
+  "green": { "hue": 150, "tol": 35, "shift": -42, "sat": 0.7, "gain": 1.2, "lift": 0.1 },
+  "gold": "#F2B632",
+  "models": [
+    { "fbx": "Models/Chiefs24/Chiefs24_Rigged.fbx", "textures": ["Models/Roughriders/Roughriders_BaseColor.png"], "goldZ": [0.42, 1.2] },
+    { "fbx": "Models/Linebacker/Linebacker_Rigged.fbx", "textures": ["Models/Linebacker/Linebacker_BaseColor.png"], "goldZ": [0.42, 1.2] },
+    { "fbx": "Models/QB/QB_Rigged.fbx", "textures": ["Models/QB/QBRR_BaseColor.png"], "goldZ": [0.42, 1.2] },
+    { "fbx": "Models/WR/WR_Rigged.fbx", "textures": ["Models/WR/WRRR_BaseColor.png"], "goldZ": [0.42, 1.2] },
+    { "fbx": "Models/TE/TE_Rigged.fbx", "textures": ["Models/TE/TERR_BaseColor.png"], "goldZ": [0.42, 1.2] },
+    { "fbx": "Models/Kicker/Kicker_Rigged.fbx", "textures": ["Models/Kicker/KickerRR_BaseColor.png"], "goldZ": [0.42, 1.2] },
+    { "fbx": "Models/Cheerleader/Cheerleader_Rigged.fbx", "textures": ["Models/Cheerleader/CheerleaderRR_BaseColor.png"], "goldZ": [0.3, 1.13] }
+  ]
+}
