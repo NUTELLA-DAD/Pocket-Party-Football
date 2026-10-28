@@ -1,75 +1,130 @@
-/* The secret huddle (huddle.js): a clean list of play names, one big picture of the play you tapped, LOCK IN always on screen. */
+/* The secret huddle (huddle.js): CHOOSE YOUR PLAY. The down and the play clock on a gold bar, PASS / RUN / SPECIAL tabs,
+   a row of play cards with the whole play drawn on grass, then your job and a gold LOCK IN. Kenny's play-select mockup. */
 #huddleView {
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto auto minmax(0, 1fr) auto;
-  grid-template-areas: "hud" "plays" "prev" "go";
-  align-content: stretch;
+  grid-template-areas: "hud" "tabs" "plays" "go";
+  align-content: stretch; row-gap: 8px;
 }
-.hud { grid-area: hud; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }
-.hudtext { min-width: 0; }
-.hudtext .sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hud .hswitch { margin-left: auto; flex: none; min-height: 36px; padding: 4px 10px; font-size: 13px; color: var(--chalk); border: 2px solid var(--team-2); }
-.hud .hswitch[aria-pressed="true"] { background: var(--team); color: var(--team-ink); }
-.clock { font-family: var(--display); font-size: 28px; font-variant-numeric: tabular-nums; color: var(--warn); }
+.hud { grid-area: hud; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 10px; min-width: 0; }
+#hTitle {
+  font-size: 24px; color: var(--chalk); letter-spacing: .03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  text-shadow: 0 2px 0 var(--edge), 0 -2px 0 var(--edge), 2px 0 0 var(--edge), -2px 0 0 var(--edge), 0 4px 0 var(--edge);
+}
+.hbar {
+  grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; min-width: 0;
+  border: 3px solid transparent; border-radius: 12px; padding: 4px 4px; font-family: var(--display); font-weight: 900; font-size: 14px;
+  background: linear-gradient(#1e3d8f, #0d1d55) padding-box, var(--rim) border-box; box-shadow: 0 0 0 2px var(--edge);
+}
+.hbar > span { flex: 1 1 0; min-width: 0; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 6px; }
+.hbar > span + span { border-left: 2px solid rgba(255,201,40,.7); }
+.hclock .clock { color: var(--gold); font-size: 17px; font-variant-numeric: tabular-nums; }
+.hud .hswitch { grid-row: 1; grid-column: 2; min-height: 36px; padding: 3px 12px; font-size: 13px; }
+.hud .hswitch[aria-pressed="true"] { color: var(--gold); }
 
+/* the tabs: navy pills, the open one gold */
+.htabs { grid-area: tabs; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 10px; }
+.htab {
+  position: relative; border: 3px solid transparent; border-radius: 12px; min-height: 38px; padding: 4px 8px; touch-action: manipulation;
+  font-family: var(--display); font-weight: 900; font-size: 16px; letter-spacing: .04em; color: var(--chalk);
+  background: linear-gradient(rgba(255,255,255,.14), rgba(255,255,255,0) 50%) padding-box, linear-gradient(#1e3d8f, #0d1d55) padding-box, var(--rim) border-box;
+  box-shadow: 0 0 0 2px var(--edge), 0 4px 0 2px var(--edge);
+}
+.htab[aria-selected="true"] {
+  color: var(--ink);
+  background: radial-gradient(70% 45% at 45% 12%, rgba(255,255,255,.55), rgba(255,255,255,0) 70%) padding-box,
+              linear-gradient(#fff08a, #ffd02e 50%, #e09a00) padding-box, var(--rim) border-box;
+}
+.htab .thumbs { top: -9px; right: -6px; left: auto; }
+.hclock .lbl { font-style: normal; }
+
+/* the play cards: grass and chalk, the name on a navy plate. Picked = thick gold rim and a check in the corner */
 .plays {
-  grid-area: plays; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-content: start;
-  overflow-y: auto; touch-action: pan-y; min-height: 0; padding: 2px;
+  grid-area: plays; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: minmax(150px, 30vh); gap: 10px; align-content: start;
+  overflow-y: auto; touch-action: pan-y; min-height: 0; padding: 4px 4px 8px;
 }
 .play {
-  position: relative; text-align: left; border: 3px solid transparent; border-radius: 12px; background: var(--ink);
-  padding: 8px 10px; min-height: 52px; display: grid; gap: 2px; align-content: center; touch-action: manipulation; min-width: 0;
+  position: relative; text-align: center; border: 3px solid transparent; border-radius: 14px; padding: 5px 5px 0; min-width: 0; min-height: 0;
+  display: grid; grid-template-rows: minmax(0, 1fr) auto; touch-action: manipulation; color: var(--chalk);
+  background: linear-gradient(#1b3478, #0d1d55) padding-box, linear-gradient(#c9a43a, #8a6a14) border-box;
+  box-shadow: 0 0 0 2px var(--edge), 0 4px 0 2px var(--edge);
 }
-.play[aria-pressed="true"] { border-color: var(--team-2); background: var(--turf-2); }
-.play:disabled { opacity: .55; }
-.play b { font-family: var(--display); font-weight: 400; font-size: 17px; line-height: 1.1; }
-.play small { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.play .pf { min-height: 0; border-radius: 8px; overflow: hidden; display: flex; }
+.play .pf svg { display: block; width: 100%; height: 100%; }
+.play b { font-family: var(--display); font-weight: 900; font-size: 15px; line-height: 1.1; padding: 5px 2px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: .02em; }
+.play[aria-pressed="true"] { border-width: 5px; background: linear-gradient(#24418f, #10215a) padding-box, var(--rim) border-box; box-shadow: 0 0 0 2px var(--edge), 0 0 0 5px rgba(255,201,40,.35), 0 4px 0 2px var(--edge); }
+.play[aria-pressed="true"] b { color: var(--gold); }
+.play .ck {
+  display: none; position: absolute; top: -4px; right: -4px; width: 30px; height: 30px; border-radius: 0 10px 0 10px;
+  place-items: center; font-weight: 900; font-size: 18px; color: var(--ink);
+  background: linear-gradient(#fff08a, #ffd02e 50%, #e09a00); box-shadow: 0 0 0 2px var(--edge);
+}
+.play[aria-pressed="true"] .ck { display: grid; }
+.play:disabled { filter: grayscale(.4) brightness(.8); }
 .thumbs {
-  position: absolute; top: 4px; right: 4px; background: var(--team); color: var(--team-ink);
-  border-radius: 999px; padding: 0 7px; font-size: 12px; font-weight: 800;
+  position: absolute; top: 6px; left: 6px; background: var(--team); color: var(--team-ink);
+  border-radius: 999px; padding: 0 7px; font-size: 12px; font-weight: 800; box-shadow: 0 0 0 2px var(--edge);
 }
 
-.preview { grid-area: prev; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 6px; min-height: 0; background: var(--turf-2); border-radius: 14px; padding: 8px 10px; }
-.preview h3 { font-family: var(--display); font-weight: 400; font-size: 20px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.preview h3 small { font-family: var(--body); font-weight: 600; font-size: 13px; color: var(--muted); }
-.preview .pv-field { min-height: 0; display: flex; align-items: center; justify-content: center; }
-.preview .pv-field svg { display: block; width: 100%; height: 100%; max-height: 100%; border-radius: 8px; }
-.preview .pv-job { margin: 0; font-size: 14px; font-weight: 800; }
-.preview .pv-job span { color: var(--team-2); }
-.preview.empty { place-items: center; color: var(--muted); font-size: 15px; text-align: center; }
-
+/* under the cards: what you do in the picked play, and LOCK IN */
 .go { grid-area: go; display: grid; gap: 6px; }
-.go .line { font-size: 13px; color: var(--muted); }
+.gotext { min-width: 0; display: grid; gap: 2px; }
+.pv-job { margin: 0; font-size: 14px; font-weight: 800; }
+.pv-job span { color: var(--gold); }
+.pv-job.empty { color: var(--muted); }
+.go .line { font-size: 12px; color: var(--muted); }
+.big.gold {
+  color: var(--ink); text-shadow: 0 1px 0 rgba(255,255,255,.5);
+  background:
+    radial-gradient(70% 45% at 45% 12%, rgba(255,255,255,.6), rgba(255,255,255,0) 70%) padding-box,
+    linear-gradient(#fff08a, #ffd02e 45%, #e08f00) padding-box,
+    var(--rim) border-box;
+}
 
 /* the position picker (FEATURES.huddleSwitch): covers the plays; the spot buttons share lobby.css */
 .hpos {
-  grid-row: 2 / -1; grid-column: 1 / -1; z-index: 5; min-height: 0; background: var(--turf); border: 2px solid var(--turf-2); border-radius: 14px; padding: 10px;
+  grid-row: 2 / -1; grid-column: 1 / -1; z-index: 5; min-height: 0; border-radius: 16px; padding: 10px; border: 3px solid transparent;
+  background: linear-gradient(#1b3478, #0d1d55) padding-box, var(--rim) border-box; box-shadow: 0 0 0 2px var(--edge);
   display: grid; grid-template-rows: auto auto auto 1fr; align-content: start; gap: 8px; overflow-y: auto; touch-action: pan-y;
 }
 .hpos-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.hpos h3 { font-family: var(--display); font-weight: 400; font-size: 18px; margin: 0; }
+.hpos h3 { font-family: var(--display); font-weight: 900; font-size: 18px; margin: 0; color: var(--gold); }
 .hpos .lspots { align-content: start; }
 .hpos button { touch-action: manipulation; }
 .hpos .line { font-size: 13px; color: var(--muted); margin: 0; }
 
-/* sideways: the list on the left, the picture and LOCK IN on the right */
+/* sideways: the cards in one row (swipe for more), LOCK IN bottom right */
 @media (orientation: landscape) {
-  #huddleView {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-    grid-template-rows: auto minmax(0, 1fr) auto;
-    grid-template-areas: "hud hud" "plays prev" "plays go";
-    column-gap: 12px; row-gap: 6px;
+  #huddleView { row-gap: 7px; }
+  .hud { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .hbar { grid-column: 2; grid-row: 1; }
+  .hud .hswitch { grid-column: 3; }
+  .plays {
+    grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: calc((100% - 20px) / 3); grid-auto-rows: auto;
+    grid-template-rows: minmax(0, 1fr); overflow-x: auto; overflow-y: hidden; touch-action: pan-x; padding: 4px 4px 8px;
   }
-  .clock { font-size: 24px; }
-  .go { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
-  .go .big { padding: 10px 22px; font-size: 22px; }
+  .go { grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 14px; }
+  .go .big { padding: 8px 26px; font-size: 22px; }
   .hpos .lspots { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .hpos .lask .btn { min-height: 44px; }
 }
+@media (orientation: portrait) {
+  #hTitle { font-size: 20px; }
+  .hclock .lbl { display: none; }
+}
+@media (orientation: landscape) and (max-width: 700px) {
+  #hSub { display: none; }
+}
+@media (orientation: landscape) and (max-height: 400px) {
+  #hTitle { font-size: 19px; }
+  .hbar { font-size: 12px; padding: 2px; }
+  .htab { min-height: 32px; font-size: 14px; }
+  .play b { font-size: 13px; padding: 3px 2px 4px; }
+  .go .line { display: none; }
+  .pv-job { font-size: 12px; }
+}
 @media (orientation: landscape) and (max-height: 340px) {
-  .play { min-height: 44px; padding: 5px 8px; }
-  .play small { display: none; }
-  .preview .pv-job { font-size: 12px; }
+  .hbar .hclock { flex: 0 0 auto; }
   .hpos { padding: 6px 10px; gap: 5px; }
   .hpos .lspot { min-height: 38px; padding: 2px; }
   .hpos .lask { padding: 6px 10px; gap: 6px; }

@@ -346,6 +346,7 @@
   "anim": {
     "fps": 8,
     "throwS": 0.5,
+    "kickS": 0.75,
     "handoffS": 0.4,
     "secureS": 0.4,
     "bobbleS": 0.6,
@@ -1011,6 +1012,8 @@
     "grassStains": true,
     "nameBars": true,
     "narrowLegs": true,
+    "throwMotion": true,
+    "kickMotion": true,
     "idleMotion": true,
     "headTrack": true,
     "ballSpin": true,

@@ -48,6 +48,7 @@ namespace PocketFootball.View
 
         // Photo scenes (and later the play view) can hold a pose for a player: slot -> pose.
         public readonly Dictionary<int, FootballFigure.PoseKind> PoseOverride = new Dictionary<int, FootballFigure.PoseKind>();
+        public readonly Dictionary<int, int> PoseFrameOverride = new Dictionary<int, int>();   // (that pose's key frame; none: 0)
         // ...and give a player an extra football to hold (slot -> true: right hand, false: left), the sim's ball aside
         public readonly Dictionary<int, bool> PropBalls = new Dictionary<int, bool>();
         readonly Dictionary<int, Transform> props = new Dictionary<int, Transform>();
@@ -150,7 +151,7 @@ namespace PocketFootball.View
                 fig.Carry(0f, 0f, 0f, 0f, 0f);
                 fig.Stride(false, default); fig.Settle(0f);
 
-                if (PoseOverride.TryGetValue(p.Slot, out var held)) { fig.Idle(0f, 0f); fig.Pose(held, 0); continue; }
+                if (PoseOverride.TryGetValue(p.Slot, out var held)) { fig.Idle(0f, 0f); fig.Pose(held, PoseFrameOverride.TryGetValue(p.Slot, out int hf) ? hf : 0); continue; }
                 travelled[p.Slot] = (travelled.TryGetValue(p.Slot, out float d) ? d : 0f) + moved;
                 float strideMoved = moved;   // (the stride holds only in a plant slower than a walk: braking on the move, the feet keep stepping)
                 // (with the momentum lean a sprint takes longer strides than a jog)
@@ -289,8 +290,11 @@ namespace PocketFootball.View
             kind = FootballFigure.PoseKind.Ready;
             switch (m.Kind)
             {
-                case Move.Aim: kind = FootballFigure.PoseKind.Throw; return true;
-                case Move.Throw: kind = FootballFigure.PoseKind.Release; frame = Mathf.Min(1, m.Frame / 2); return true;
+                // FEATURES.throwMotion: wound up, then four keys from the release (NO_THROW_MOTION=1: the two-key throw)
+                case Move.Aim: kind = FootballFigure.PoseKind.Throw; frame = m.Full ? 1 : 0; return true;
+                case Move.Throw: kind = FootballFigure.PoseKind.Release; frame = m.Full ? 2 + Mathf.Min(3, m.Frame) : Mathf.Min(1, m.Frame / 2); return true;
+                case Move.KickSet: kind = FootballFigure.PoseKind.KickSet; frame = m.Frame; return true;
+                case Move.Kick: kind = FootballFigure.PoseKind.Kick; frame = Mathf.Min(4, m.Frame); return true;
                 case Move.Handoff: kind = FootballFigure.PoseKind.Handoff; return true;
                 case Move.Snap: kind = FootballFigure.PoseKind.Stance; return true;
                 case Move.TakeSnap: kind = FootballFigure.PoseKind.Handoff; return true;   // hands out in front for it

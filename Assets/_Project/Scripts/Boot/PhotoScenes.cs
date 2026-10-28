@@ -42,6 +42,11 @@ namespace PocketFootball.Boot
                 case "numbers": return Numbers(w, view, rig, false);
                 case "faces": return Numbers(w, view, rig, true);
                 case "grit": return Grit(w, view, rig);
+                // the throw's and the kick's keys in order, left to right (FEATURES.throwMotion, kickMotion)
+                case "throw": return Hands(w, view, rig, "throw", new[] { Pose.Throw, Pose.Release, Pose.Release, Pose.Release, Pose.Release }, new[] { 1, 2, 3, 4, 5 });
+                case "throwold": return Hands(w, view, rig, "throwold", new[] { Pose.Throw, Pose.Release, Pose.Release }, new[] { 0, 0, 1 });
+                case "kick": return Hands(w, view, rig, "kick", new[] { Pose.KickSet, Pose.Kick, Pose.Kick, Pose.Kick, Pose.Kick, Pose.Kick }, new[] { 0, 0, 1, 2, 3, 4 });
+                case "punt": return Hands(w, view, rig, "punt", new[] { Pose.KickSet, Pose.Kick, Pose.Kick }, new[] { 1, 0, 2 });
                 case "stadium": return StadiumShot(w, view, rig, new Vector3(-40f, 45f, -175f), new Vector3(0f, 25f, 0f), 50f);
                 case "sunset": return StadiumShot(w, view, rig, new Vector3(-25f, 3f, -18f), new Vector3(3.7f, 13.6f, 23f), 55f);
             }
@@ -92,7 +97,7 @@ namespace PocketFootball.Boot
 
         // The hands up close (FEATURES.handCurl): four Chiefs side by side in poses that open, shut or hold the hand (a
         // ball in the right hands of the one securing it, the carrier and the thrower), seen square from the side at chest height. No HUD.
-        static PhotoState Hands(World w, PlayersView view, CameraRig rig, string name, Pose[] poses)
+        static PhotoState Hands(World w, PlayersView view, CameraRig rig, string name, Pose[] poses, int[] frames = null)
         {
             const int team = 0;
             w.Offense = team;
@@ -105,10 +110,12 @@ namespace PocketFootball.Boot
             {
                 Put(w, view, team, i + 1, cx + (i - (poses.Length - 1) * 0.5f) * gap, z, poses[i]);
                 var p = Spot(w, team, i + 1);
-                if (p != null && (poses[i] == Pose.Carry || poses[i] == Pose.Throw || poses[i] == Pose.Secure)) view.PropBalls[p.Slot] = true;
+                if (p != null && frames != null) view.PoseFrameOverride[p.Slot] = frames[i];
+                bool held = poses[i] == Pose.Carry || poses[i] == Pose.Throw || poses[i] == Pose.Secure || (poses[i] == Pose.KickSet && frames != null && frames[i] == 1);
+                if (p != null && held) view.PropBalls[p.Slot] = true;
             }
-            float m = w.Cfg.field.yardM;
-            rig.Hold(new Vector3(cx * m, 1.3f, z * m - 9f), new Vector3(cx * m, 1.3f, z * m), 30f);
+            float m = w.Cfg.field.yardM, back = 9f * Mathf.Max(1f, poses.Length / 4.5f);   // (more players: the camera further back)
+            rig.Hold(new Vector3(cx * m, 1.3f, z * m - back), new Vector3(cx * m, 1.3f, z * m), 30f);
             return new PhotoState { Name = name, Hud = false, FirstDownX = -35f };
         }
 

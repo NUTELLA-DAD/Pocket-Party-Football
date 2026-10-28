@@ -275,6 +275,7 @@ namespace PocketFootball.Sim
     public sealed class AnimConfig
     {
         public float fps, throwS, handoffS, secureS, bobbleS, reachYd, reachS, getUpS, blockShoveS;
+        public float kickS;   // FEATURES.kickMotion: the kicker's leg, from the foot meeting the ball to landing
         public float snapAheadYd, snapSpeedYdS, snapMinS, snapArcYd, snapSecureS;
         // FEATURES.blockLock (View/Moves.cs): a blocker and his man lock arms lockGapYd apart (each slides at most
         // lockPullYd, at lockSlideYdS) and face each other, turned only lockTurnDeg toward the camera

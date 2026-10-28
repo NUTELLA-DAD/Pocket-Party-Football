@@ -12,7 +12,7 @@ namespace PocketFootball.View
     // It only reads the World, once per sim tick, and spots the moments by what changed since the tick before (the ball
     // left the QB's hand, a pass ended up held, the whistle blew on a tackle). Frames count sim ticks at anim.fps, so
     // the moves step like the rest of the look and never depend on the frame rate. Pure C#: tests drive it with a World.
-    public enum Move { None, Aim, Throw, Handoff, Reach, Secure, Bobble, Juke, Whiff, Tackle, Tackled, Celebrate, Block, Snap, TakeSnap, Stagger }
+    public enum Move { None, Aim, Throw, Handoff, Reach, Secure, Bobble, Juke, Whiff, Tackle, Tackled, Celebrate, Block, Snap, TakeSnap, Stagger, KickSet, Kick }
 
     public struct MoveNow
     {
@@ -25,6 +25,7 @@ namespace PocketFootball.View
         public bool HasPartner;   // Tackle / Tackled: the other man in the tackle is known
         public int Partner;       // ... and his slot (Block: the man he's engaged with)
         public bool Locked;       // Block (FEATURES.blockLock): arms locked with Partner
+        public bool Full;         // Aim / Throw (FEATURES.throwMotion): wound up, the four-key throw
         public bool BigHit;       // Tackle / Tackled (FEATURES.hitAngle): a straight-on big hit
         public float KnockX, KnockZ;   // ... how far (yards) he still has to slide to where the hit put him down
     }
@@ -74,7 +75,13 @@ namespace PocketFootball.View
             if (!first && On(w))
             {
                 // the ball: thrown, handed off, caught
-                if (ballState == BallState.Held && carrier >= 0 && b.State == BallState.Flying) Start(w, carrier, Move.Throw, a.throwS);
+                if (ballState == BallState.Held && carrier >= 0 && b.State == BallState.Flying)
+                {
+                    // FEATURES.kickMotion: a kick is the kicker's leg, not a throw
+                    var kicker = Kicking.Kicker(w);
+                    if (w.Kick.Kicked && kicker != null && kicker.Slot == carrier && w.Cfg.Feature("kickMotion")) Start(w, carrier, Move.Kick, a.kickS);
+                    else Start(w, carrier, Move.Throw, a.throwS);
+                }
                 if (ballState == BallState.Held && b.State == BallState.Held && carrier >= 0 && b.Carrier >= 0 && b.Carrier != carrier)
                 {
                     var from = w.Find(carrier); var to = w.Find(b.Carrier);
@@ -193,7 +200,7 @@ namespace PocketFootball.View
             var a = w.Cfg.anim;
             if (bySlot.TryGetValue(p.Slot, out var r))
             {
-                var m = new MoveNow { Kind = r.Kind, Frame = FrameOf(w, w.Tick - r.Start), OnBack = r.OnBack, StartTick = r.Start, HasPartner = r.Partner >= 0, Partner = r.Partner, BigHit = r.BigHit };
+                var m = new MoveNow { Kind = r.Kind, Frame = FrameOf(w, w.Tick - r.Start), OnBack = r.OnBack, StartTick = r.Start, HasPartner = r.Partner >= 0, Partner = r.Partner, BigHit = r.BigHit, Full = w.Cfg.Feature("throwMotion") };
                 if (r.BigHit)
                 {
                     // the slide back, in stepped keys: knockKeys of them, the first already part of the way
@@ -208,13 +215,15 @@ namespace PocketFootball.View
                 }
                 return m;
             }
+            // FEATURES.kickMotion: the kicker over the ball (Frame 1: a punt, the ball held out)
+            if (w.Cfg.Feature("kickMotion") && Kicking.WaitingToKick(w, p)) return new MoveNow { Kind = Move.KickSet, Frame = Kicking.Mode(w) == KickKind.Punt ? 1 : 0 };
             var snap = Snap.For(w, p);   // the snap (Snap.cs): the center down in his stance, the QB's hands out for it
             if (snap != Move.None) return new MoveNow { Kind = snap };
             if (reaching.Contains(p.Slot)) return new MoveNow { Kind = Move.Reach };
             if (w.Phase != Phase.Live) return default;
             // the QB with the ball in the pocket, not yet thrown: arm cocked
             var play = LivePlay.Called(w, w.Offense);
-            if (p == LivePlay.Carrier(w) && p == LivePlay.Qb(w) && !w.Thrown && (play == null || play.runner < 0) && p.VX * p.VX + p.VZ * p.VZ <= 0.25f) return new MoveNow { Kind = Move.Aim };
+            if (p == LivePlay.Carrier(w) && p == LivePlay.Qb(w) && !w.Thrown && (play == null || play.runner < 0) && p.VX * p.VX + p.VZ * p.VZ <= 0.25f) return new MoveNow { Kind = Move.Aim, Full = w.Cfg.Feature("throwMotion") };
             // a block: a defender held up, or a blocker with a man in front of him
             if (blockPartner.TryGetValue(p.Slot, out int q))
                 return new MoveNow { Kind = Move.Block, Frame = (int)(w.PlayTicks / Math.Max(1, Ticks(w, a.blockShoveS))), Locked = w.Cfg.Feature("blockLock"), Partner = q };
