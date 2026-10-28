@@ -25,6 +25,7 @@ namespace PocketFootball.View
         public float Thigh, Shin, Ankle;   // hip to knee, knee to ankle, the ankle's height standing (rig cm)
         public float ThighRest, ShinRest;  // each bone's angle from straight down standing (degrees, + forward)
         public float Foot, FootDropDeg;    // ankle to the ball of the foot (rig cm; 0: no foot) and that line's slope below level
+        public float Bend;                 // the planted knee's bend, a share of the stride's (0: all of it; the model's strideBend)
 
         // The figure's own legs, for a figure with no model on.
         public static StrideLegs Figure => new StrideLegs { HipY = 60f, Thigh = 29f, Shin = 31f, Ankle = 0f };
@@ -169,9 +170,10 @@ namespace PocketFootball.View
             if (k.sweep > most) { k.sweep = most; k.stance = Mathf.Max(0.05f, k.sweep / cycle); }   // a shorter touch, a longer flight
             k.sweep *= amp;
             k.ahead = k.sweep * aheadShare;
-            k.land = Gait(a.strideKneeLandDeg, speed, a, pc) * amp;
-            k.load = Gait(a.strideKneeDeg, speed, a, pc) * amp;
-            k.push = Gait(a.strideKneePushDeg, speed, a, pc) * amp;
+            float bend = g.Bend > 0f ? g.Bend : 1f;
+            k.land = Gait(a.strideKneeLandDeg, speed, a, pc) * amp * bend;
+            k.load = Gait(a.strideKneeDeg, speed, a, pc) * amp * bend;
+            k.push = Gait(a.strideKneePushDeg, speed, a, pc) * amp * bend;
             k.fold = Gait(a.strideKneeFoldDeg, speed, a, pc) * amp;
             k.drive = Gait(a.strideThighDriveDeg, speed, a, pc) * amp;
             k.heel = Gait(a.strideHeelCm, speed, a, pc) * amp;

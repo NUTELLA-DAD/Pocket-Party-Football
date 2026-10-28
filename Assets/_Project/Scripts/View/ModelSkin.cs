@@ -26,6 +26,10 @@ namespace PocketFootball.View
         // The figure has no feet, so the model's feet follow its shins: a foot near the grass turns FootLevel of the
         // way back to its standing pitch (soles flat in the stances, not toes-up), unless the body is falling over.
         const float FootLevel = 0.7f, FootNearCm = 22f, FootLevelMaxTiltDeg = 30f;
+        // FEATURES.narrowLegs: a model built standing wide (the linebacker's legs lean out 18 degrees from the hip) runs bow-legged and
+        // squatting once its knees bend, so each leg is first brought in to lean out at most LegSplayDeg, its foot kept
+        // flat and the model lifted back onto the grass.
+        const float LegSplayDeg = 5f;
 
         static readonly Dictionary<string, GameObject> prefabs = new Dictionary<string, GameObject>();
         static readonly Dictionary<string, Material> mats = new Dictionary<string, Material>();
@@ -52,16 +56,18 @@ namespace PocketFootball.View
 
         public static bool Wear(FootballFigure fig, TeamConfig team, string pos, GameConfig cfg, Material kit)
         {
-            team.ModelFor(pos, cfg.Feature("posModels"), out string model, out string modelTexture);
+            team.ModelFor(pos, cfg.Feature("posModels"), out string model, out string modelTexture, out float bend);
             if (string.IsNullOrEmpty(model)) { Debug.LogError("[model] team " + team.@short + " has no \"model\" in game.json; its players don't show"); return false; }
-            var skin = Wear(fig, model, modelTexture, kit, true);
+            var skin = Wear(fig, model, modelTexture, kit, true, cfg.Feature("narrowLegs"));
             if (skin != null && cfg.Feature("handCurl")) skin.Hands(cfg.anim);
+            if (skin != null) { var legs = fig.Legs; legs.Bend = bend; fig.Legs = legs; }
             return skin != null;
         }
 
         // Any rigged Humanoid model (Resources path) and colour map on the figure; null if it's missing (logged).
-        // fixArms: the arm fixes for a model with a big helmet and short arms.
-        public static ModelSkin Wear(FootballFigure fig, string model, string modelTexture, Material kit, bool fixArms)
+        // fixArms: the arm fixes for a model with a big helmet and short arms. narrowLegs (FEATURES.narrowLegs,
+        // NO_NARROW_LEGS=1): the legs brought in under the hips (LegSplayDeg).
+        public static ModelSkin Wear(FootballFigure fig, string model, string modelTexture, Material kit, bool fixArms, bool narrowLegs = true)
         {
             if (string.IsNullOrEmpty(model)) return null;
             if (!prefabs.TryGetValue(model, out var prefab))
@@ -140,6 +146,22 @@ namespace PocketFootball.View
                 up.rotation = turn * up.rotation;
                 palm[side.Item1] = turn * down;
             }
+
+            // the legs in under the hips (LegSplayDeg)
+            Vector3 fwdAxis = holder.right;   // (the figure faces +x)
+            float lowBefore = Mathf.Min(holder.InverseTransformPoint(b["LeftFoot"].position).y, holder.InverseTransformPoint(b["RightFoot"].position).y);
+            foreach (var side in narrowLegs ? new[] { "Left", "Right" } : new string[0])
+            {
+                Transform hip = b[side + "UpperLeg"], foot = b[side + "Foot"];
+                Vector3 leg = Vector3.ProjectOnPlane(foot.position - hip.position, fwdAxis);
+                float splay = Vector3.SignedAngle(down, leg, fwdAxis);
+                if (Mathf.Abs(splay) <= LegSplayDeg) continue;
+                var turn = Quaternion.AngleAxis(-(splay - Mathf.Sign(splay) * LegSplayDeg), fwdAxis);
+                hip.rotation = turn * hip.rotation;
+                foot.rotation = Quaternion.Inverse(turn) * foot.rotation;   // (the sole stays flat on the grass)
+            }
+            float lowAfter = Mathf.Min(holder.InverseTransformPoint(b["LeftFoot"].position).y, holder.InverseTransformPoint(b["RightFoot"].position).y);
+            pivot.localPosition += new Vector3(0f, lowBefore - lowAfter, 0f);
 
             // the model's own leg, for the stride's reach (FEATURES.strideCycle): the legs' turns are the figure's, so a
             // foot lands where the model's leg puts it

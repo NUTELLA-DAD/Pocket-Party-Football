@@ -43,10 +43,16 @@ namespace PocketFootball.Tests.PlayMode
             foreach (var go in SceneManager.GetActiveScene().GetRootGameObjects()) if (go.name == "Players" && go.activeInHierarchy) shownRoots++;
             Assert.AreEqual(1, shownRoots, "one set of figures on the TV: the replay's");
             Assert.IsTrue(replay.Tape.ShowCard, "the result card is up");
+            Assert.IsTrue(Replay.OnScreen, "the on-field marks (rings, triangles, badges) know a replay is on");
+            var marks = GameObject.Find("Markings");
+            if (marks != null)
+                foreach (Transform c in marks.transform)
+                    if (c.name == "Ring" || c.name == "FindMe") Assert.IsFalse(c.gameObject.activeSelf, "no player rings during the replay");
 
             while (replay.Showing && Time.realtimeSinceStartup < began + length + 5f) yield return null;
             float took = Time.realtimeSinceStartup - began;
             Assert.IsFalse(replay.Showing, "the replay ended");
+            Assert.IsFalse(Replay.OnScreen, "the marks come back after the replay");
             Assert.AreEqual(length, took, 0.5f, "the replay lasts (seconds + afterS) / speed");
             Assert.AreEqual((cfg.replay.seconds + cfg.replay.afterS) / cfg.replay.speed, length, 0.01f);
             Assert.Greater(host.World.Tick, tickAtStart + (int)(length * cfg.sim.tickHz * 0.5f), "the game kept going under the replay");

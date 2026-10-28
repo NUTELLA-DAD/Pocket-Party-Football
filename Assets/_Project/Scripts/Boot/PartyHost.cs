@@ -159,19 +159,23 @@ namespace PocketFootball.Boot
             RefreshLayouts();
             Players.Render(World, lockstep || Photo != null ? 1f : Mathf.Clamp01(accumulator / dt));
             CarrierMovesView.Apply(World, Players);   // WS-04: spin, stiff arm, dive, fumbles on the TV
-            float firstX = Photo != null ? Photo.FirstDownX : World.FirstDownX;
-            if (Photo == null && !Downs.On(World)) firstX = World.LineOfScrimmageX + World.Dir * cfg.downs.firstDownYd;
-            marks.SetLines(World.LineOfScrimmageX, firstX);
-            stadium.SetMarkers(World.LineOfScrimmageX, firstX);
+            if (Photo == null && !holdCamera) FollowBall(Time.deltaTime);   // (-look-x holds the camera where it was put)
+            var replay = Replay.Drive(gameObject, cfg, World, Players, rig, s => Roster[s]?.Name);   // WS-08: the instant replay and the result card
+            // the lines on the grass: the replayed play's while a replay is on, else the live game's
+            var lines = replay != null && replay.Showing ? replay.Shown : World;
+            float firstX = Photo != null ? Photo.FirstDownX : lines.FirstDownX;
+            if (Photo == null && !Downs.On(World)) firstX = lines.LineOfScrimmageX + lines.Dir * cfg.downs.firstDownYd;
+            marks.SetLines(lines.LineOfScrimmageX, firstX);
+            stadium.SetMarkers(lines.LineOfScrimmageX, firstX);
             stadium.SetScore(Photo != null ? Photo.Score : World.Score);   // the big scoreboard over the end (stadium bowl)
+            // the rings and FIND ME glows under people's players follow the live figures, so none while a replay is on
             humanFeet.Clear();
-            foreach (var p in World.Players) if (p.Human) humanFeet.Add(new KeyValuePair<int, Vector3>(p.Slot, Players.FeetPosition(p.Slot)));
+            if (!Replay.OnScreen)
+                foreach (var p in World.Players) if (p.Human) humanFeet.Add(new KeyValuePair<int, Vector3>(p.Slot, Players.FeetPosition(p.Slot)));
             marks.Rings(humanFeet);
             float now = Time.unscaledTime;
             foreach (var p in World.Players)
-                if (p.Human) marks.Beam(p.Slot, Players.FeetPosition(p.Slot), Colors.Hex(cfg.teams[p.Team].color), findUntil.TryGetValue(p.Slot, out float fu) && fu > now, now);
-            if (Photo == null && !holdCamera) FollowBall(Time.deltaTime);   // (-look-x holds the camera where it was put)
-            Replay.Drive(gameObject, cfg, World, Players, rig, s => Roster[s]?.Name);   // WS-08: the instant replay and the result card
+                if (p.Human) marks.Beam(p.Slot, Players.FeetPosition(p.Slot), Colors.Hex(cfg.teams[p.Team].color), !Replay.OnScreen && findUntil.TryGetValue(p.Slot, out float fu) && fu > now, now);
             AudibleHost.Drive(this);   // WS-13: each team's audible / hot route screen, to that team's phones only
             PostGameHost.Drive(this);   // WS-12: the stats, score celebrations, the post-game screen and the phones' final card
             GameLog.Drive(this);   // WS-15: the game log next to the build (tools/playtest-report.ps1 reads it)
@@ -521,8 +525,9 @@ namespace PocketFootball.Boot
             }
 
             // the people: a small team-coloured triangle over each person's player (no name, so it hides nothing);
-            // shape badges over receivers (photo scenes for now)
-            if (cam != null)
+            // shape badges over receivers (photo scenes for now). None during a replay: they would hang over the live
+            // players, who are hidden.
+            if (cam != null && !Replay.OnScreen)
                 foreach (var p in World.Players)
                 {
                     Vector3 sp = cam.WorldToScreenPoint(Players.HeadPosition(p.Slot) + Vector3.up * 0.55f);
