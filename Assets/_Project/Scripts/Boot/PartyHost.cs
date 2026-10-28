@@ -493,6 +493,7 @@ namespace PocketFootball.Boot
 
         void OnGUI()
         {
+            Hud.JoinPanel = Rect.zero;   // (set again below while the join panel is on)
             if (TitleScreen.Showing) return;   // the title screen covers the TV (the bots' show game has no HUD)
             float s = Screen.height / 1080f;
             panelText ??= new GUIStyle(GUI.skin.label) { richText = true, wordWrap = true };
@@ -544,13 +545,14 @@ namespace PocketFootball.Boot
             // join panel, top right
             float qr = cfg.view.joinPanelQrPx * s, pad = 16 * s, w = qr + 2 * pad, x = Screen.width - w - pad, y = pad;
             float textH = 210 * s;
+            Hud.JoinPanel = new Rect(x, y, w, qr + textH + 2 * pad);   // the kick meter keeps clear of it
             GUI.color = new Color(0f, 0f, 0f, 0.72f);
-            GUI.DrawTexture(new Rect(x, y, w, qr + textH + 2 * pad), Texture2D.whiteTexture);
+            GUI.DrawTexture(Hud.JoinPanel, Texture2D.whiteTexture);
             GUI.color = Color.white;
             if (qrTex != null) GUI.DrawTexture(new Rect(x + pad, y + pad, qr, qr), qrTex);
             string text = ServerError != null
                 ? "<color=#ff8080>Phone server failed:\n" + ServerError + "</color>"
-                : "Scan to join, or open\n<b>" + Url.Replace("http://", "") + "</b>\nCode <b><size=" + Mathf.RoundToInt(44 * s) + ">" + RoomCode + "</size></b>\n" + TeamLine();
+                : "Scan to join, or open\n<b>" + Url.Replace("http://", "") + "</b>\nCode <b><size=" + Mathf.RoundToInt(44 * s) + ">" + RoomCode + "</size></b>\n<size=" + Mathf.RoundToInt(21 * s) + ">" + TeamLine() + "</size>";
             GUI.Label(new Rect(x + pad, y + pad + qr + 8 * s, qr, textH), text, panelText);
 
             // the huddle banner, top centre: check marks only
@@ -596,7 +598,7 @@ namespace PocketFootball.Boot
         {
             var parts = new List<string>();
             for (int t = 0; t < cfg.teams.Count; t++) parts.Add(cfg.teams[t].@short + " " + Roster.TeamCount(t, true));
-            return "People: " + string.Join("  ·  ", parts);
+            return string.Join(" · ", parts) + " joined";   // (short and a bit smaller: one line under the code)
         }
     }
 }

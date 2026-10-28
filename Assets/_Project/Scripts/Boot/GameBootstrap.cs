@@ -96,14 +96,5 @@ namespace PocketFootball.Boot
             var kb = Keyboard.current;
             if (kb != null && kb.escapeKey.wasPressedThisFrame && !TitleScreen.HoldsEscape) Application.Quit(0);   // (Esc on a title page goes back)
         }
-
-        // Shows the version in a corner until the real HUD exists (M1-e).
-        void OnGUI()
-        {
-            if (Host != null && Host.Photo != null) return;
-            if (Lab != null) return;     // the lab draws its own panel
-            if (TitleScreen.Showing) return;
-            GUI.Label(new Rect(12, 8, 600, 24), "Pocket Party Football - M0   (B adds a bot, Esc quits)");
-        }
     }
 }

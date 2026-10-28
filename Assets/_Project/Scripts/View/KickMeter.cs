@@ -51,7 +51,8 @@ namespace PocketFootball.View
             string line = before && kicker.Human ? title + "   SWIPE YOUR PHONE" : title;
             float w = Mathf.Max(text.CalcSize(new GUIContent(line)).x + 32 * s, 260 * s);
             float h = 44 * s, barH = after ? 34 * s : 0f;
-            float x = sp.x - w * 0.5f, y = Screen.height - sp.y - h - barH;
+            float y = Screen.height - sp.y - h - barH;
+            float x = Hud.Clear(new Rect(sp.x - w * 0.5f, y, w, h + barH), 8f * s).x;   // on screen, clear of the join panel
             Box(new Rect(x, y, w, h + barH), new Color(0.05f, 0.13f, 0.1f, 0.88f));
             GUI.Label(new Rect(x, y, w, h), line, text);
             if (!after) return;
