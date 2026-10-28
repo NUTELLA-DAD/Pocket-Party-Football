@@ -190,7 +190,9 @@ namespace PocketFootball.Sim
             float bx = carrier != null ? carrier.X : flying ? w.Ball.TargetX : w.Ball.X;
             float bz = carrier != null ? carrier.Z : flying ? w.Ball.TargetZ : w.Ball.Z;
             var qb = LivePlay.Qb(w);
-            bool pocket = carrier != null && carrier == qb && carrier.Team == w.Offense && (carrier.X - w.LineOfScrimmageX) * w.Dir <= 0f;
+            // the ball with the QB behind the line, or in the air: nobody to lead, so the spare blockers hold (a convoy to
+            // where a pass comes down put a lineman under the ball)
+            bool pocket = flying || (carrier != null && carrier == qb && carrier.Team == w.Offense && (carrier.X - w.LineOfScrimmageX) * w.Dir <= 0f);
             var plan = PlanFor(w, p, bx, bz);
             PlayerInput i;
             if (plan.Assigned.TryGetValue(p.Slot, out int ds) && w.Find(ds) is Player d) i = TakeOn(w, p, d, bx, bz);
@@ -210,11 +212,11 @@ namespace PocketFootball.Sim
             return To(w, p, mx, mz, Far(p, mx, mz) > c.sprintOverYd);
         }
 
-        // Pass protection with nobody to take: the job's spot, else stay put.
+        // Nobody to take and nobody to lead: a blocker by trade keeps his job's spot, anyone else stays where he is.
         static PlayerInput Hold(World w, Player p)
         {
             var job = Bots.JobOfCalled(w, p);
-            if (job == null || job.pts.Count == 0) return default;
+            if (job == null || job.kind != "block" || job.pts.Count == 0) return default;
             float x = w.LineOfScrimmageX + w.Dir * job.pts[0][0], z = job.pts[0][1];
             return Far(p, x, z) <= w.Cfg.bots.arriveYd ? default : To(w, p, x, z, false);
         }

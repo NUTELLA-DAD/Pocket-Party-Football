@@ -919,8 +919,8 @@
     ]
   },
   "botsV3": {
-    "reactMinS": 0.1,
-    "reactMaxS": 0.3,
+    "reactMinS": 0.08,
+    "reactMaxS": 0.25,
     "reactFarYd": 25,
     "reactJitterS": 0.12,
     "reactQuickFrac": 0.5,
