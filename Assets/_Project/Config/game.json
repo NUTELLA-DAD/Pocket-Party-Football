@@ -367,6 +367,8 @@
     "stickStaleS": 0.5
   },
   "view": {
+    "perfLogEveryS": 10,
+    "perfSlowFrameMs": 25,
     "playerHeightM": 2.85,
     "playerRadiusM": 0.45,
     "tackleContactM": 1.0,
@@ -1102,6 +1104,7 @@
     "stayOnside": true,
     "huddleSwitch": true,
     "teamPick": true,
-    "botsV3": true
+    "botsV3": true,
+    "smoothMotion": true
   }
 }

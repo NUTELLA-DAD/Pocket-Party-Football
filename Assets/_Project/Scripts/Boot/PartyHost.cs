@@ -212,8 +212,13 @@ namespace PocketFootball.Boot
             var b = World.Ball;
             var carrier = LivePlay.Carrier(World);
             float target;
+            // FEATURES.smoothMotion: follow where the carrier and ball are drawn this frame, not the last tick (30 a second),
+            // so the camera glides with the players instead of chasing a target that jumps every other frame
+            bool smooth = cfg.Feature("smoothMotion");
+            float carrierX = carrier == null ? 0f : smooth ? Players.ShownX(carrier) : carrier.X;
+            float ballX = smooth ? Players.BallShownX(World) : b.X;
             if (b.State == BallState.Flying) target = b.TargetX;
-            else if (World.Phase == Phase.Live || World.Phase == Phase.Whistle) target = carrier != null ? carrier.X + World.Dir * cfg.camera.leadYd : b.X;
+            else if (World.Phase == Phase.Live || World.Phase == Phase.Whistle) target = carrier != null ? carrierX + World.Dir * cfg.camera.leadYd : ballX;
             else target = World.LineOfScrimmageX + (World.PendingTurnover ? -World.Dir : World.Dir) * cfg.camera.leadYd;
             if (World.Phase == Phase.Whistle && World.PendingTurnover) target = World.NextLos;
             float lim = cfg.field.HalfLength + cfg.field.sidelineBorderYd - cfg.camera.visibleYards * 0.5f;

@@ -258,6 +258,8 @@ namespace PocketFootball.Sim
     public sealed class ViewConfig
     {
         public float playerHeightM, playerRadiusM, findMeS, plateFontPx, joinPanelQrPx, ballLengthM, ballWidthM, meSendHz;
+        // the frame meter (Boot/FrameMeter.cs, F3 or -fps): how often it writes a line to the log, and what counts as a slow frame
+        public float perfLogEveryS, perfSlowFrameMs;
         // FIND ME: the soft team-colour glow on the grass under the player (Markings.Beam): its size, how solid its middle
         public float findMeRadiusM, findMeAlpha;
         // the players' own toon shade (gauntlet 3): a warmer, same-hue shade than the stadium's cool purple family,

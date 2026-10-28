@@ -63,6 +63,16 @@ namespace PocketFootball.Tests.EditMode
         }
 
         [Test]
+        public void SmoothMotionIsOnAndNoSmoothMotionSwitchesItOff()
+        {
+            Assert.IsTrue(ConfigTests.Load().Feature("smoothMotion"), "FEATURES.smoothMotion is on in game.json");
+            Assert.IsFalse(ConfigTests.Load(new Dictionary<string, string> { { "NO_SMOOTH_MOTION", "1" } }).Feature("smoothMotion"), "NO_SMOOTH_MOTION=1");
+            var cfg = ConfigTests.Load();
+            Assert.Greater(cfg.view.perfLogEveryS, 0f, "the frame meter logs now and then");
+            Assert.Greater(cfg.view.perfSlowFrameMs, 0f, "and knows a slow frame");
+        }
+
+        [Test]
         public void NoIdleMotionSwitchesItOff()
         {
             var cfg = ConfigTests.Load(new Dictionary<string, string> { { "NO_IDLE_MOTION", "1" } });

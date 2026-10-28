@@ -40,6 +40,7 @@ namespace PocketFootball.Boot
             Host = PartyHost.Create(gameObject, Config, baseMaterial, Rig, Args);
             if (LabMode.Requested()) Lab = LabMode.Create(gameObject, Config, baseMaterial, Host, Rig, ConfigDir);
             if (title) Title = TitleScreen.Attach(gameObject, Config, Host, Rig, Args.TitlePage);
+            FrameMeter.Attach(gameObject, Config, Args.Fps);   // F3: frames a second on the TV; a line in the log every perfLogEveryS
 
             if (!string.IsNullOrEmpty(Args.ShotsDir))
             {
