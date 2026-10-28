@@ -67,6 +67,15 @@
       "live": true, "endOnCatch": false, "maxS": 0
     },
     {
+      "id": "cutsline",
+      "name": "Cutting and reversing as a lineman",
+      "help": "The same as a big lineman (the linebacker's build, worn by the linemen too).",
+      "offensePlay": "dive", "defensePlay": "cover3",
+      "you": "offense", "youSpot": 6, "carrier": 0,
+      "offense": [0, 6], "defense": [],
+      "live": true, "endOnCatch": false, "maxS": 0
+    },
+    {
       "id": "cutsball",
       "name": "Cutting and reversing with the ball",
       "help": "The same with the ball in your arm.",

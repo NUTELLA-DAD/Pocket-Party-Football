@@ -114,6 +114,40 @@ namespace PocketFootball.Tests.EditMode
             Assert.IsTrue(ConfigTests.Load().Feature("handCurl"));
         }
 
+        // FEATURES.narrowLegs: standing, every player's legs come down under his hips (the linebacker's model, also worn
+        // by the linemen, is built with its legs leaning far out and ran bow-legged); switched off, the linebacker's lean out.
+        [Test]
+        public void EveryPlayerStandsWithHisLegsUnderHim()
+        {
+            foreach (bool on in new[] { true, false })
+            {
+                var cfg = ConfigTests.Load();
+                cfg.features["narrowLegs"] = on;
+                foreach (var pos in new[] { null, "LB", "OL", "QB", "K", "WR" })
+                {
+                    var fig = FootballFigure.Create(null, "Legs", cfg.view.playerHeightM);
+                    try
+                    {
+                        Assert.IsTrue(ModelSkin.Wear(fig, cfg.teams[0], pos, cfg, Looks.Toon(null)));
+                        fig.Pose(FootballFigure.PoseKind.Stand, 0);
+                        fig.GetComponentInChildren<ModelSkin>().Follow();
+                        float most = 0f;
+                        foreach (var side in new[] { "Left", "Right" })
+                        {
+                            Vector3 hip = fig.transform.InverseTransformPoint(Find(fig.transform, side + "UpperLeg").position);
+                            Vector3 foot = fig.transform.InverseTransformPoint(Find(fig.transform, side + "Foot").position);
+                            most = Mathf.Max(most, Mathf.Abs(Mathf.Atan2(foot.z - hip.z, hip.y - foot.y) * Mathf.Rad2Deg));
+                        }
+                        string who = (pos ?? "player") + (on ? "" : " (off)");
+                        if (on) Assert.Less(most, 10f, who + ": the legs come down under the hips");
+                        else if (pos == "LB") Assert.Greater(most, 14f, who + ": as built, leaning out");
+                    }
+                    finally { Object.DestroyImmediate(fig.gameObject); }
+                }
+            }
+            Assert.AreEqual("NO_NARROW_LEGS", ConfigLoader.EnvName("narrowLegs"));
+        }
+
         static Transform Find(Transform t, string name)
         {
             if (t.name == name) return t;

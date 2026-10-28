@@ -174,18 +174,25 @@ namespace PocketFootball.Sim
         public string cheerModel, cheerTexture;
 
         // The model and colour map a player at this position wears.
-        public void ModelFor(string pos, bool byPos, out string m, out string tex)
+        public void ModelFor(string pos, bool byPos, out string m, out string tex) => ModelFor(pos, byPos, out m, out tex, out _);
+
+        // bend: the position model's strideBend (1 for the team's own model, or none given)
+        public void ModelFor(string pos, bool byPos, out string m, out string tex, out float bend)
         {
-            m = model; tex = modelTexture;
+            m = model; tex = modelTexture; bend = 1f;
             if (!byPos || posModels == null) return;
             foreach (var pm in posModels)
-                if (pm != null && pm.pos == pos && !string.IsNullOrEmpty(pm.model)) { m = pm.model; tex = pm.modelTexture; return; }
+                if (pm != null && pm.pos == pos && !string.IsNullOrEmpty(pm.model))
+                { m = pm.model; tex = pm.modelTexture; bend = pm.strideBend > 0f ? pm.strideBend : 1f; return; }
         }
     }
 
     public sealed class PosModelConfig
     {
         public string pos, model, modelTexture;
+        // the running knee's bend on this model, a share of the stride's (strideKneeLandDeg, strideKneeDeg,
+        // strideKneePushDeg): a big, short-legged build (the linebacker's) looks squatting running on a bent knee
+        public float strideBend;
     }
 
     public sealed class NetConfig

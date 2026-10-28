@@ -96,6 +96,22 @@ namespace PocketFootball.Tests.EditMode
                 }
         }
 
+        // A model's strideBend (the linebacker's build): its planted knee bends that share of the stride's, the hips riding
+        // higher, the foot still planted on the grass.
+        [Test]
+        public void ABigBuildRunsOnStraighterKnees()
+        {
+            var big = Model; big.Bend = 0.7f;
+            float v = cfg.players.jogSpeedYdS;
+            var full = At(Model, 0.06f, v); var less = At(big, 0.06f, v);
+            Assert.Less(-less.ShinL, -full.ShinL - 5f, "the planted knee bends less");
+            Assert.Less(less.Drop, full.Drop, "the hips ride higher");
+            Assert.IsTrue(Down(big, less, true), "the foot is still on the grass");
+            float bend = 0f;
+            foreach (var pm in cfg.teams[0].posModels) if (pm.pos == "OL") bend = pm.strideBend;
+            Assert.That(bend, Is.InRange(0.5f, 0.95f), "the linemen's model runs on straighter knees");
+        }
+
         [Test]
         public void TheKneeGivesOnLandingAndFoldsInTheSwing()
         {
