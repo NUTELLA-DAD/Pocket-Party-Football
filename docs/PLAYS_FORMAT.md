@@ -59,9 +59,9 @@ Optional, `"formation": "<set id>"` (FEATURES.formations, `NO_FORMATIONS=1` turn
 | --- | --- |
 | `twohigh` | 4-3, two deep safeties (Cover 2) |
 | `singlehigh` | 4-3, one safety deep, the other walked down (Cover 3) |
-| `blitzlook` | LBs up on the line showing blitz, a single high safety (Zone Blitz) |
+| `blitzlook` | outside LBs walked up showing blitz, a single high safety (Zone Blitz) |
 | `press` | corners pressed on the receivers, safeties down, no deep help (Man Blitz) |
-| `goalline` | everyone close, two LBs on the line (Goal Line) |
+| `goalline` | everyone close, corners pressed (Goal Line) |
 | `prevent` | corners 10 off, safeties 20 deep (Prevent) |
 
 Optional, M1-c: `"runner": <offense spot>` on a run play: the QB hands the ball to that spot when they meet just after the snap (HB Dive and Toss Sweep use 1, the RB). Without it the QB keeps the ball and throws.

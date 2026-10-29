@@ -6,7 +6,7 @@
   "formation": "iform",
   "runner": 1,
   "jobs": [
-    { "kind": "route", "pts": [[-4, -0.8]], "text": "Under center: hand off to the RB, then carry out the fake" },
+    { "kind": "route", "pts": [[-4, -0.8], [-7, -3]], "text": "Under center: hand off to the RB, then carry out the fake" },
     { "kind": "route", "pts": [[-3, 0], [4, 0], [15, 0]], "text": "Take the handoff, follow the fullback through the hole over center" },
     { "kind": "route", "pts": [[16, -18]], "text": "Go route: run your corner off" },
     { "kind": "route", "pts": [[16, 18]], "text": "Go route: run your corner off" },
