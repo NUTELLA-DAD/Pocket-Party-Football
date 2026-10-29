@@ -22,6 +22,8 @@ foreach ($f in $Fixtures) {
         'title'           { @('-title','-warmup','400') }
         'title_howto'     { @('-title','-title-page','howto') }
         'title_settings'  { @('-title','-title-page','settings') }
+        'title_roster'    { @('-title','-title-page','roster') }
+        'title_roster_lb' { @('-title','-title-page','roster:4:GRN') }
         'lobby'           { @('-lobby') }
         default           { }
     })
