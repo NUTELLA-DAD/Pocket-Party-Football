@@ -60,7 +60,7 @@ Optional, `"formation": "<set id>"` (FEATURES.formations, `NO_FORMATIONS=1` turn
 | `twohigh` | 4-3, two deep safeties (Cover 2) |
 | `singlehigh` | 4-3, one safety deep, the other walked down (Cover 3) |
 | `blitzlook` | outside LBs walked up a step showing blitz, a single high safety (Zone Blitz) |
-| `press` | corners pressed on the receivers, safeties down, no deep help (Man Blitz) |
+| `press` | corners tight on the receivers, safeties down, no deep help (Man Blitz) |
 | `goalline` | everyone close, corners pressed (Goal Line) |
 | `prevent` | corners 10 off, safeties 20 deep (Prevent) |
 

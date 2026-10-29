@@ -6,8 +6,8 @@
   "formation": "press",
   "jobs": [
     { "kind": "rush", "text": "Blitz the middle: get the QB" },
-    { "kind": "man", "target": 2, "text": "Press: jam your receiver at the line, stay tight" },
-    { "kind": "man", "target": 3, "text": "Press: jam your receiver at the line, stay tight" },
+    { "kind": "man", "target": 2, "text": "Play tight on your receiver, no help behind you" },
+    { "kind": "man", "target": 3, "text": "Play tight on your receiver, no help behind you" },
     { "kind": "man", "target": 5, "text": "Man on the tight end" },
     { "kind": "man", "target": 1, "text": "Man on the running back" },
     { "kind": "man", "target": 4, "text": "Man on the slot receiver" },

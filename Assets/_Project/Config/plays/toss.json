@@ -6,8 +6,8 @@
   "formation": "iform",
   "runner": 1,
   "jobs": [
-    { "kind": "route", "pts": [[-5, -2.2]], "text": "Under center: open to the left and pitch to the RB as he goes by" },
-    { "kind": "route", "pts": [[-6, -3.5], [-4, -14], [10, -22]], "text": "Catch the pitch, race for the edge" },
+    { "kind": "route", "pts": [[-3.5, -1.5]], "text": "Under center: open to the left and pitch to the RB as he goes by" },
+    { "kind": "route", "pts": [[-4.5, -2.5], [-4, -14], [10, -22]], "text": "Catch the pitch, race for the edge" },
     { "kind": "block", "pts": [[6, -18]], "text": "Block your cornerback" },
     { "kind": "block", "pts": [[6, 18]], "text": "Block your cornerback" },
     { "kind": "block", "pts": [[3, -12]], "text": "Fullback: lead out to the edge, block the first man you meet" },
