@@ -181,10 +181,13 @@ namespace PocketFootball.Sim
             float sp = (float)Math.Sqrt(p.VX * p.VX + p.VZ * p.VZ);
             if (sp <= 0f) return To(p, bl.TargetX, bl.TargetZ, 1f, true);
             // a person's throw goes at him, not out in front (no lead): if it comes down short of where his run takes him,
-            // he waits on it (a bot's throw is led, so he can't tell and runs on)
+            // he waits on it (a bot's throw is led, so he can't tell and runs on). FEATURES.catchPlay: a bot's throw too,
+            // led by how fast he was going when it left the QB's hand: if he has since sped up past it (a lob up the
+            // sideline), he tracks it over his shoulder and comes back to it, so it is a jump ball, not an overthrow
             var qb = LivePlay.Qb(w);
             float along = ((bl.TargetX - p.X) * p.VX + (bl.TargetZ - p.Z) * p.VZ) / sp;
-            if (qb != null && qb.Human && !qb.BotHelp && along < sp * Landing(w) - w.Cfg.play.catchRadiusYd) return To(p, bl.TargetX, bl.TargetZ, 1f, true);
+            bool reads = CatchPlay.On(w) || (qb != null && qb.Human && !qb.BotHelp);
+            if (reads && along < sp * Landing(w) - w.Cfg.play.catchRadiusYd) return To(p, bl.TargetX, bl.TargetZ, 1f, true);
             return new PlayerInput { MoveX = p.VX / sp, MoveZ = p.VZ / sp, Sprint = true };
         }
 
