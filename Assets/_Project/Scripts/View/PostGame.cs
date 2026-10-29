@@ -147,6 +147,7 @@ namespace PocketFootball.View
 
         void OnGUI()
         {
+            UiFont.Use();   // (FEATURES.toonHud: the game's own lettering)
             if (!Showing || live == null) return;
             GUI.depth = -10;   // over the game's HUD
             var cfg = live.Cfg;

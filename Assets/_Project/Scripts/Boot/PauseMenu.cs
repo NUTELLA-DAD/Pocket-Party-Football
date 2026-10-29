@@ -11,7 +11,7 @@ namespace PocketFootball.Boot
     // a Pocket Cup game goes back to the bracket and is played again later) and QUIT GAME. The last two ask twice.
     // Esc again (or CONTINUE) carries on where it stopped. The keyboard or the mouse only: a pad's START joins the game
     // and its buttons play, so the pads never open it. Not in the lab (P pauses there), nor in tool runs.
-    // The look is the title's pages: a navy panel with gold edges, the highlighted row gold.
+    // The look is the title's pages: a navy panel with gold edges, the highlighted row gold, in the game's lettering.
     public sealed class PauseMenu : MonoBehaviour
     {
         public static PauseMenu Instance { get; private set; }
@@ -157,6 +157,7 @@ namespace PocketFootball.Boot
         void OnGUI()
         {
             if (!open) return;
+            UiFont.Use();   // (FEATURES.toonHud: the game's own lettering)
             GUI.depth = -90;   // over the lobby, the pads' join screen and the post-game screen
             float W = Screen.width, H = Screen.height, s = H / 1080f;
             head ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, richText = true };
@@ -194,8 +195,7 @@ namespace PocketFootball.Boot
             Fill(r, CupColors.Navy);
             Fill(new Rect(r.x, r.y, r.width, 6 * s), CupColors.Gold);
             Fill(new Rect(r.x, r.yMax - 6 * s, r.width, 6 * s), CupColors.Gold);
-            head.normal.textColor = CupColors.GoldText;
-            GUI.Label(new Rect(r.x, r.y + 24 * s, r.width, 80 * s), settings ? "SETTINGS" : "PAUSED", head);
+            UiFont.Toon(new Rect(r.x, r.y + 24 * s, r.width, 80 * s), settings ? "SETTINGS" : "PAUSED", head, CupColors.GoldText, UiFont.On ? 3f * s : 0f);
 
             float rw = Mathf.Min(r.width - 120 * s, 700 * s), y = r.y + top;
             for (int i = 0; i < rows.Length; i++) rows[i] = Rect.zero;

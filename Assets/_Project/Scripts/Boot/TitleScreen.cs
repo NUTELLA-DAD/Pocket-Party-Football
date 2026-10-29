@@ -320,6 +320,7 @@ namespace PocketFootball.Boot
 
         void OnGUI()
         {
+            UiFont.Use();   // (FEATURES.toonHud: the game's own lettering)
             GUI.depth = -100;   // over every other overlay
             float W = Screen.width, H = Screen.height, s = H / 1080f;
             var t = cfg.title;
