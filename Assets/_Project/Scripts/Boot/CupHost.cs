@@ -41,6 +41,11 @@ namespace PocketFootball.Boot
             var cup = Cup.Load(PlayerPrefs.GetString(CupKey, ""));
             if (cup == null) return null;
             foreach (var s in cup.Seeds) if (TeamPick.Find(cfg, s) < 0) return null;
+            // teams added to the league since the draw fill the byes while those games are still to play
+            bool added = false;
+            foreach (var code in Teams(cfg))
+                if (cup.SeedOf(code) == 0 && cup.AddTeam(code)) { added = true; Debug.Log("[cup] " + code + " joins the Pocket Cup in a bye"); }
+            if (added) Save(cup);
             return cup;
         }
 
