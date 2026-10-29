@@ -82,15 +82,20 @@ namespace PocketFootball.Tests.EditMode
                 var circle = LivePlay.Receiver(w, 2);
                 var square = LivePlay.Receiver(w, 3);
                 w.Step(Press(new PlayerInput { Throw = 2 }));
-                // both under the ball as it comes down, the square a little nearer
-                for (int i = 0; i < w.Cfg.sim.tickHz * 4 && w.Ball.State == BallState.Flying; i++)
+                // both under the ball as it comes down, the square a little nearer. Who goes up for it first? (A catch
+                // can still be dropped: ratings and the CATCH timing set the odds, so the first try is what counts here.)
+                int first = -1;
+                for (int i = 0; i < w.Cfg.sim.tickHz * 4 && w.Ball.State == BallState.Flying && first < 0; i++)
                 {
-                    square.X = w.Ball.X; square.Z = w.Ball.Z; square.VX = square.VZ = 0f;
-                    circle.X = w.Ball.X + w.Cfg.play.catchRadiusYd * 0.3f; circle.Z = w.Ball.Z; circle.VX = circle.VZ = 0f;
+                    // (where the ball will be after this tick, the circle a little short of it along its flight)
+                    float bx = w.Ball.X + w.Ball.VX * w.Dt, bz = w.Ball.Z + w.Ball.VZ * w.Dt;
+                    float sp = (float)System.Math.Sqrt(w.Ball.VX * w.Ball.VX + w.Ball.VZ * w.Ball.VZ) + 1e-4f, back = w.Cfg.play.catchRadiusYd * 0.3f;
+                    square.X = bx; square.Z = bz; square.VX = square.VZ = 0f;
+                    circle.X = bx - w.Ball.VX / sp * back; circle.Z = bz - w.Ball.VZ / sp * back; circle.VX = circle.VZ = 0f;
                     w.Step(null);
+                    foreach (int slot in w.CatchTried) first = slot;
                 }
-                Assert.AreEqual(BallState.Held, w.Ball.State, "caught");
-                Assert.AreEqual(on ? circle.Slot : square.Slot, w.Ball.Carrier, on ? "the circle's ball" : "NO_PASS_TARGET=1: the nearest man");
+                Assert.AreEqual(on ? circle.Slot : square.Slot, first, on ? "the circle goes up for his ball" : "NO_PASS_TARGET=1: the nearest man goes up");
             }
         }
 
