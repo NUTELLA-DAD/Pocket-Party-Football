@@ -19,6 +19,7 @@ namespace PocketFootball.Sim
         // scaled by play.throwMaxYards from the QB. Arc: 0 = flat bullet .. 1 = high lob.
         public bool ThrowAt;
         public float AimX, AimZ, Arc;
+        public float DriveX, DriveZ;   // FEATURES.driveBlock: the drive stick while BLOCK is held, in the MoveX / MoveZ frame (DriveBlock.cs)
     }
 
     public sealed class Player
@@ -95,6 +96,7 @@ namespace PocketFootball.Sim
         public readonly HitState Hit = new HitState();   // FEATURES.hitAngle: the last hit, for the TV (HitAngle.cs); not hashed
         public readonly AudibleState Audible = new AudibleState();   // WS-13: audibles and hot routes this down (Audibles.cs)
         public readonly BotsV3.Plan BotPlan = new BotsV3.Plan();   // bots v3: this tick's blocking plan (BotsV3.cs); not hashed, rebuilt every tick
+        public readonly DriveBlock.State Drive = new DriveBlock.State();   // FEATURES.driveBlock: this tick's shoves, for the TV (DriveBlock.cs); not hashed
 
         public World(GameConfig cfg, int seed)
         {
@@ -242,6 +244,7 @@ namespace PocketFootball.Sim
             }
             Mover.Bump(this);
             Blocking.Step(this);
+            DriveBlock.Step(this, inputs);   // FEATURES.driveBlock: a person holding BLOCK shoves his man with the drive stick
             Mover.Bounds(this);
             Mover.Onside(this);   // FEATURES.stayOnside: no person past the line before the snap
             Ball.Step(this, dt);
