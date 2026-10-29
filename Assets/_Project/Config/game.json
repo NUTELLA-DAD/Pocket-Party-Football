@@ -1216,6 +1216,7 @@
     "fgHolder": true,
     "kickSweep": true,
     "wind": true,
-    "kickCam": true
+    "kickCam": true,
+    "pauseMenu": true
   }
 }

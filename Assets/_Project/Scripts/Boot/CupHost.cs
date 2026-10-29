@@ -126,6 +126,7 @@ namespace PocketFootball.Boot
 
         void Update()
         {
+            if (PauseMenu.Open) return;   // (Enter and clicks press the pause menu's buttons)
             var kb = Keyboard.current;
             var pad = Gamepad.current;
             var mouse = Mouse.current;

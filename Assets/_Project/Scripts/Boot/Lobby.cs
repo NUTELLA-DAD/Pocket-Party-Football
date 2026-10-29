@@ -145,6 +145,7 @@ namespace PocketFootball.Boot
 
         void Update()
         {
+            if (PauseMenu.Open) return;   // (the menu's keys and clicks are its own; a waiting team pick waits too)
             var kb = Keyboard.current;
             if (kb != null && kb.kKey.wasPressedThisFrame && Holding) KickOff();
             if (!FullScreen || !CanPick || switching) return;
