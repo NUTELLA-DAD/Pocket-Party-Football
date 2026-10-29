@@ -122,12 +122,12 @@ namespace PocketFootball.Boot
             note ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.UpperCenter, richText = true, wordWrap = true };
             head.fontSize = Mathf.RoundToInt(36 * s);
             line.fontSize = Mathf.RoundToInt(23 * s);
-            note.fontSize = Mathf.RoundToInt(19 * s);
+            note.fontSize = Mathf.RoundToInt(22 * s);
             head.normal.textColor = gold;
             line.normal.textColor = Color.white;
             note.normal.textColor = muted;
 
-            float pad = 22 * s, headH = 52 * s, stepH = 62 * s, nameH = 52 * s, hintH = HotspotUp ? 0f : 78 * s, gap = 12 * s;
+            float pad = 22 * s, headH = 52 * s, stepH = 62 * s, nameH = 60 * s, hintH = HotspotUp ? 0f : 90 * s, gap = 12 * s;
             int codes = gameQr != null ? 2 : 1;
             float fixedH = 2 * pad + headH + stepH * 2 + nameH + hintH + (gap + 16 * s) * codes;
             float q = Mathf.Max(40 * s, Mathf.Min(qrMax, c.width - 2 * pad - 16 * s, (c.height - fixedH) / codes));
@@ -138,11 +138,13 @@ namespace PocketFootball.Boot
             GUI.Label(new Rect(x, y, w, stepH), "<b>1.</b> Scan to join the TV's Wi-Fi", line);
             y += stepH;
             y = Code(wifiQr, c.center.x, y, q, s) + gap;
+            note.normal.textColor = Color.white;   // (the name and password: read from across the room)
             GUI.Label(new Rect(x, y, w, nameH), "<b>" + wifiName + "</b>" + (string.IsNullOrEmpty(wifiPass) ? "" : "\npassword <b>" + wifiPass + "</b>"), note);
             y += nameH;
             GUI.Label(new Rect(x, y, w, stepH), gameQr != null ? "<b>2.</b> Then scan this one" : "<b>2.</b> Then scan the game code", line);
             y += stepH;
             if (gameQr != null) y = Code(gameQr, c.center.x, y, q, s) + gap;
+            note.normal.textColor = Color.Lerp(muted, Color.white, 0.5f);
             if (!HotspotUp)
                 GUI.Label(new Rect(x, y, w, hintH), "Hosting the hotspot on this PC? Turn on <b>Mobile hotspot</b> in Windows Settings first.", note);
         }

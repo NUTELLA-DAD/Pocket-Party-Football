@@ -613,7 +613,7 @@ namespace PocketFootball.Boot
             int rows = Mathf.Max(1, lc.listRows);
             float lh = 34 * s;
             if (lines.Count == 0)
-                Text(new Rect(x, y, w, 64 * s), "Nobody yet. Bots play every spot.\nPick this side on your phone!", small, 26 * s, new Color(0.88f, 0.91f, 1f));
+                Text(new Rect(x, y, w, 110 * s), "Nobody yet. Bots play every spot.\nPick this side on your phone!", small, 26 * s, new Color(0.88f, 0.91f, 1f));   // (room for 3 lines: narrow cards beside the NO WI-FI? card)
             for (int i = 0; i < lines.Count && i < rows; i++)
             {
                 bool more = i == rows - 1 && lines.Count > rows;
