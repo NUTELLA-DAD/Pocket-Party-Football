@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using PocketFootball.Sim;
+using PocketFootball.View;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -58,6 +59,7 @@ namespace PocketFootball.Boot
 
         void OnGUI()
         {
+            UiFont.Use();   // (FEATURES.toonHud: the game's own lettering)
             if (!shown || string.IsNullOrEmpty(line)) return;
             if (style == null) style = new GUIStyle(GUI.skin.label) { fontSize = 18, normal = { textColor = Color.white } };
             var r = new Rect(12, 8, 1100, 28);

@@ -140,6 +140,7 @@ namespace PocketFootball.View
         // ARR 14 | GRN 21 | 3RD 2:18 | 2ND & 10, at the top centre. s = screen scale (height / 1080).
         public static void Scoreboard(GameConfig cfg, int[] score, string quarter, string clock, string down, float s)
         {
+            if (cfg.Feature("toonHud") && UiFont.On) { ToonHud.Scoreboard(cfg, score, quarter, clock, down, s); return; }   // FEATURES.toonHud
             Init();
             s *= 1.12f;
             float h = 70 * s, y = 16 * s;

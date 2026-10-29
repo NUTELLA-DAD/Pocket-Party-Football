@@ -161,6 +161,7 @@ namespace PocketFootball.Boot
 
         void OnGUI()
         {
+            UiFont.Use();   // (FEATURES.toonHud: the game's own lettering)
             if (Lab == null) return;
             float s = Screen.height / 1080f;
             title ??= new GUIStyle(GUI.skin.label) { fontStyle = FontStyle.Bold, richText = true };

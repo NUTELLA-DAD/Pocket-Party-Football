@@ -141,6 +141,7 @@ namespace PocketFootball.Boot
 
         void OnGUI()
         {
+            UiFont.Use();   // (FEATURES.toonHud: the game's own lettering)
             if (string.IsNullOrEmpty(Text)) return;
             GUI.depth = -20;   // over the post-game screen
             float W = Screen.width, H = Screen.height, s = H / 1080f;

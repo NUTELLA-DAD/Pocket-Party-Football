@@ -412,6 +412,7 @@ namespace PocketFootball.Boot
 
         void OnGUI()
         {
+            UiFont.Use();   // (FEATURES.toonHud: the game's own lettering)
             if (!Holding) return;
             if (cfg.Feature("lobbyScreen")) { JoinScreen(); return; }
             float s = Screen.height / 1080f;

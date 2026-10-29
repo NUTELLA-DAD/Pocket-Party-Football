@@ -31,6 +31,7 @@ namespace PocketFootball.View
 
         void OnGUI()
         {
+            UiFont.Use();   // (FEATURES.toonHud: the game's own lettering)
             if (world == null || players == null || !Kicking.On(world) || Replay.OnScreen) return;
             var cam = Camera.main;
             if (cam == null) return;
