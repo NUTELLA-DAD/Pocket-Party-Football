@@ -130,5 +130,34 @@ namespace PocketFootball.Tests.EditMode
             CollectionAssert.AreEquivalent(Six, a.Seeds);
             CollectionAssert.AreEqual(Six, Cup.Draw(Six, 42, false).Seeds, "no draw: the order given");
         }
+
+        [Test]
+        public void NewTeamsFillTheByesOfASavedCup()
+        {
+            // a six-team cup saved before two teams joined the league: they take the byes as seeds 7 and 8
+            var cup = Cup.Load(new Cup(Six).Save());
+            Assert.IsTrue(cup.AddTeam("N7"));
+            Assert.IsTrue(cup.AddTeam("N8"));
+            Assert.IsFalse(cup.AddTeam("N9"), "the bracket is full");
+            Assert.IsFalse(cup.AddTeam("S1"), "already in");
+            Assert.AreEqual(8, cup.Seeds.Count);
+            Assert.AreEqual(8, cup.Size, "same bracket");
+            Assert.IsFalse(cup.IsBye(0, 0, 1)); Assert.AreEqual("N8", cup.Team(0, 0, 1));
+            Assert.IsFalse(cup.IsBye(0, 2, 1)); Assert.AreEqual("N7", cup.Team(0, 2, 1));
+            Assert.AreEqual("N8", cup.Next().Away, "1 v 8 is now a game");
+            Assert.AreEqual("S1", cup.Next().Home);
+            var back = Cup.Load(cup.Save());
+            CollectionAssert.AreEqual(cup.Seeds, back.Seeds, "the new teams are saved");
+            int games = 0;
+            while (cup.Next() != null) { cup.Record(0, 7); games++; }
+            Assert.AreEqual(7, games, "eight teams: four quarterfinals, two semifinals, the final");
+
+            // once the top seed has played its semifinal, its bye can't be handed out any more
+            var late = new Cup(Six);
+            for (int i = 0; i < 3; i++) late.Record(0, 7);   // 4 v 5, 3 v 6, then semifinal 1 v 4
+            Assert.IsTrue(late.AddTeam("N7"), "2's semifinal is still to play");
+            Assert.IsFalse(late.AddTeam("N8"), "1 already played its semifinal");
+            Assert.AreEqual("N7", late.Next().Away);
+        }
     }
 }
