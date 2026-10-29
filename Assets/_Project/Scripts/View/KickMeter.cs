@@ -197,10 +197,11 @@ namespace PocketFootball.View
             float power = after ? k.Power : stage == Kicking.SweepStage.Power ? Kicking.SweepNow(w) : stage == Kicking.SweepStage.Pitch ? k.ChosenPower : 0f;
             float pitch = after ? k.Pitch : stage == Kicking.SweepStage.Pitch ? Kicking.PitchDeg(c, Kicking.SweepNow(w)) : c.arcMinPitchDeg;
 
-            // the POWER meter, then the PITCH ANGLE dial to its right, both at the right of the picture
+            // the POWER meter, then the PITCH ANGLE dial to its right, both low at the right of the picture
             float ph = 360 * s, pw = ph * art.power.width / art.power.height;
             float dh = 300 * s, dw = dh * art.dial.width / art.dial.height;
-            float x = Screen.width - 40 * s - dw - 16 * s - pw, y = (Screen.height - ph) * 0.5f;
+            float hw = pw + 16 * s + dw, y = Screen.height - ph - 50 * s;   // (low on the right, clear of the join panel)
+            float x = Hud.Clear(new Rect(Screen.width - 40 * s - hw, y, hw, ph), 16f * s).x;
             var pr = new Rect(x, y, pw, ph);
             GUI.DrawTexture(pr, art.power);
             float cl = pr.x + pw * art.chanL, cw = pw * (art.chanR - art.chanL), y0 = pr.y + ph * art.zeroY, full = ph * (art.zeroY - art.fullY);

@@ -12,7 +12,8 @@ namespace PocketFootball.Boot
     // that). Drawing only: it reads the sim and never writes to it.
     public sealed class KickArcView : MonoBehaviour
     {
-        const float EveryS = 0.05f, GroundEveryM = 0.5f, Lift = 0.04f, HeadLenM = 2.2f, HeadHalfM = 1.3f, PastPostsYd = 3f;
+        // (Lift: above the grass shader's blades, which hide a ribbon lying lower from the low field goal camera)
+        const float EveryS = 0.05f, GroundEveryM = 0.5f, Lift = 0.15f, HeadLenM = 2.2f, HeadHalfM = 1.3f, PastPostsYd = 3f;
         static readonly Color Gold = new Color(1f, 0.84f, 0.2f), Hot = new Color(0.95f, 0.3f, 0.22f), Sky = new Color(1f, 0.97f, 0.85f);
 
         PartyHost host;
