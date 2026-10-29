@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace PocketFootball.Tests.EditMode
 {
-    // FEATURES.teamPick (Sim/TeamPick.cs): four teams in the league, any two play. The game only ever sees the two
+    // FEATURES.teamPick (Sim/TeamPick.cs): eight teams in the league, any two play. The game only ever sees the two
     // picked (cfg.teams: away, home); NO_TEAM_PICK=1 keeps game.json's own two.
     public sealed class TeamPickTests
     {
@@ -22,11 +22,11 @@ namespace PocketFootball.Tests.EditMode
         }
 
         [Test]
-        public void TheLeagueIsSixTeamsWithTheirOwnCodes()
+        public void TheLeagueIsEightTeamsWithTheirOwnCodes()
         {
             var cfg = ConfigTests.Load();
             var league = TeamPick.League(cfg);
-            Assert.AreEqual(6, league.Count);
+            Assert.AreEqual(8, league.Count);
             Assert.AreEqual(2, cfg.teams.Count, "only two ever play");
             Assert.AreSame(cfg.teams[0], league[0]);
             Assert.AreSame(cfg.teams[1], league[1]);
@@ -83,8 +83,8 @@ namespace PocketFootball.Tests.EditMode
         {
             var cfg = ConfigTests.Load();
             Assert.AreEqual(2, TeamPick.Step(cfg, 0, 1, +1), "away from 0 skips home's 1");
-            Assert.AreEqual(5, TeamPick.Step(cfg, 0, 1, -1), "and wraps round backwards");
-            Assert.AreEqual(0, TeamPick.Step(cfg, 5, 1, +1), "and forwards");
+            Assert.AreEqual(7, TeamPick.Step(cfg, 0, 1, -1), "and wraps round backwards");
+            Assert.AreEqual(0, TeamPick.Step(cfg, 7, 1, +1), "and forwards");
             Assert.IsTrue(TeamPick.ParsePair("CAC, WHL", out var a, out var h));
             Assert.AreEqual("CAC", a);
             Assert.AreEqual("WHL", h);
