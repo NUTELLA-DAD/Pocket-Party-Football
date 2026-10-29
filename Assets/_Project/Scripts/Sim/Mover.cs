@@ -18,7 +18,7 @@ namespace PocketFootball.Sim
             p.Sprinting = input.Sprint && m > 0f && !p.Tired && p.Stamina > 0f;
             if (p.Sprinting)
             {
-                p.Stamina -= c.staminaDrainPerS * dt;
+                p.Stamina -= c.staminaDrainPerS * Weather.Stamina(w) * dt;   // FEATURES.weather / sandField
                 if (p.Stamina <= 0f) { p.Stamina = 0f; p.Tired = true; p.Sprinting = false; }
             }
             else if (p.Stamina < 1f) p.Stamina = Math.Min(1f, p.Stamina + c.staminaRegenPerS * dt);
@@ -28,16 +28,18 @@ namespace PocketFootball.Sim
             top *= Ratings.SpeedFrac(w, p);   // FEATURES.ratings: a running back is quicker than a lineman
             if (p.StumbleTicks > 0) top *= w.Cfg.play.stumbleSpeedFrac;   // a missed tackle: on the turf for a moment
             if (p.OffBalanceTicks > 0) top *= w.Cfg.hit.offBalanceSpeedFrac;   // FEATURES.hitAngle: a glancing blow
+            top *= Weather.TopSpeed(w);   // FEATURES.weather / sandField: rain, snow and sand are slower going
             float wantX = mx * top, wantZ = mz * top;
             float dx = wantX - p.VX, dz = wantZ - p.VZ;
             float d = (float)Math.Sqrt(dx * dx + dz * dz);
             if (d > 0f)
             {
                 bool speedingUp = wantX * p.VX + wantZ * p.VZ >= 0f && wantX * wantX + wantZ * wantZ > p.VX * p.VX + p.VZ * p.VZ;
-                float step = (speedingUp ? c.accelYdS2 : c.decelYdS2) * dt;
+                float step = (speedingUp ? c.accelYdS2 * Weather.Accel(w) : c.decelYdS2 * Weather.Decel(w)) * dt;   // (a slick field: he slides on past a cut)
                 if (step >= d) { p.VX = wantX; p.VZ = wantZ; }
                 else { p.VX += dx / d * step; p.VZ += dz / d * step; }
             }
+            Weather.Slip(w, p, wantX, wantZ);   // FEATURES.weather / sandField: a hard cut on a slick field
             p.X += p.VX * dt;
             p.Z += p.VZ * dt;
         }

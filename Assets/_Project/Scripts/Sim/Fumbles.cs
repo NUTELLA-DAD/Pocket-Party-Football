@@ -27,6 +27,7 @@ namespace PocketFootball.Sim
             float chance = c.fumbleChance;
             if (!CarrierMoves.InFront(tackler, carrier)) chance += c.fumbleBlindsideBonus;
             chance *= mul;   // FEATURES.hitAngle: a big hit shakes it loose more often
+            chance *= Weather.Fumble(w);   // FEATURES.weather: a wet or frozen ball squirts out more often
             if (w.Rng.Value() >= chance) return false;
             Pop(w, tackler, carrier);
             return true;

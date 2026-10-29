@@ -194,7 +194,7 @@ namespace PocketFootball.Sim
                 {
                     w.CatchTried.Add(near.Slot);
                     bool offense = near.Team == w.Offense;
-                    if (w.Rng.Value() < Receiving.Chance(w, near, Ratings.Catch(w, near, offense ? c.catchChanceOffense : c.catchChanceDefense)))   // WS-05: CATCH timing
+                    if (w.Rng.Value() < Receiving.Chance(w, near, Weather.Catch(w, Ratings.Catch(w, near, offense ? c.catchChanceOffense : c.catchChanceDefense))))   // WS-05: CATCH timing; FEATURES.weather: a wet ball
                     {
                         // FEATURES.oobIncomplete: a catch with his feet out of bounds is no catch (no gain, no first
                         // down, no interception): incomplete, the ball falls on past him and goes back to the line
