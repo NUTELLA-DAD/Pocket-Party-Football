@@ -1238,7 +1238,7 @@
     "wallGapYd": 4
   },
   "catchPlay": {
-    "diveReachYd": 1.2,
+    "diveReachYd": 0.9,
     "diveMaxHeightYd": 1.1,
     "diveMinSpeedYdS": 4,
     "diveChanceMul": 0.55,
@@ -1252,9 +1252,9 @@
   "pursuit": {
     "leadMaxS": 2.0,
     "laneGapYd": 2.6,
-    "laneMaxYd": 8,
+    "laneMaxYd": 6,
     "spreadYd": 12,
-    "convergeYd": 4,
+    "convergeYd": 6,
     "behindYd": 1,
     "trailLead": 0.55,
     "trailLane": 0.7,
