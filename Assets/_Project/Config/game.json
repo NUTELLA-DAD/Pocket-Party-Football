@@ -1295,7 +1295,7 @@
     "trailLane": 0.7,
     "sepYd": 3.0,
     "sepPush": 0.4,
-    "openPastLosYd": 5
+    "openPastLosYd": 7
   },
   "weather": {
     "now": "clear",
