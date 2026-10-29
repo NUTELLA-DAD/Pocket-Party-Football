@@ -2,7 +2,8 @@
   "regions": {
     "player": { "helmet": 0.655, "helmetMaxX": 0.42, "pantsHigh": 0.42, "pantsLow": 0.17 },
     "cheer":  { "helmet": 2.0,  "pantsHigh": 0.0,  "pantsLow": -1.0 },
-    "LeanLB": { "helmet": 0.72, "helmetMaxX": 0.31, "pantsHigh": 0.42, "pantsLow": 0.17 }
+    "LeanLB": { "helmet": 0.72, "helmetMaxX": 0.31, "pantsHigh": 0.42, "pantsLow": 0.17 },
+    "Linebacker": { "helmet": 0.74, "helmetMaxX": 0.31, "pantsHigh": 0.42, "pantsLow": 0.17 }
   },
   "teams": {
     "CAC": {
@@ -28,6 +29,18 @@
       "jersey": "#FFFFFF", "trim": "#BFE8F7",
       "pants": "#FFFFFF", "pantsStripe": "#BFE8F7", "socks": "#FFFFFF",
       "cheer": { "main": "#5AA9D6", "accent": "#142C46" }
+    },
+    "CMT": {
+      "helmet": "#6633CC", "helmetTrim": "#FF4FA3",
+      "jersey": "#6633CC", "trim": "#FF4FA3",
+      "pants": "#FFFFFF", "pantsStripe": "#FF4FA3", "socks": "#6633CC",
+      "cheer": { "main": "#6633CC", "accent": "#FF4FA3" }
+    },
+    "COB": {
+      "helmet": "#16151E", "helmetTrim": "#B9EF42",
+      "jersey": "#6436A6", "trim": "#B9EF42",
+      "pants": "#16151E", "pantsStripe": "#B9EF42", "socks": "#16151E",
+      "cheer": { "main": "#6436A6", "accent": "#B9EF42" }
     }
   }
 }

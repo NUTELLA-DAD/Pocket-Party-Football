@@ -1,4 +1,4 @@
-# Every colour map of the new teams (Cacti, Whales, Bats, Snowbirds), from the Chiefs-red maps as they were before the rebrand (they
+# Every colour map of the new teams (Cacti, Whales, Bats, Snowbirds, Comets, Cobras), from the Chiefs-red maps as they were before the rebrand (they
 # still carry the old helmet decal, which tools/rebrand finds and paints out):
 #   1. rebrand.py paints the old decal out and lays the team's emblem on (on a red copy of the map)
 #   2. the same with the emblem in solid magenta, to learn exactly which texels the emblem covers

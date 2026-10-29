@@ -42,6 +42,8 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual(3, TeamPick.Find(cfg, "whl"), "codes match whatever the case");
             Assert.AreEqual(4, TeamPick.Find(cfg, "BAT"));
             Assert.AreEqual(5, TeamPick.Find(cfg, "SNB"));
+            Assert.AreEqual(6, TeamPick.Find(cfg, "CMT"));
+            Assert.AreEqual(7, TeamPick.Find(cfg, "cob"));
             Assert.AreEqual(-1, TeamPick.Find(cfg, "XYZ"));
         }
 
@@ -54,7 +56,7 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual(2, cfg.teams.Count);
             Assert.AreEqual("WHALES", cfg.teams[0].name, "away");
             Assert.AreEqual("CACTI", cfg.teams[1].name, "home");
-            Assert.AreEqual(6, TeamPick.League(cfg).Count, "the league stays whole after a pick");
+            Assert.AreEqual(8, TeamPick.League(cfg).Count, "the league stays whole after a pick");
             Assert.IsTrue(TeamPick.Apply(cfg, league[1].@short, league[2].@short), "a new team can play an old one");
             Assert.AreSame(league[1], cfg.teams[0]);
 

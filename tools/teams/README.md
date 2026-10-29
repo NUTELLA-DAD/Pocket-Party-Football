@@ -1,4 +1,4 @@
-# New teams (Cacti, Whales, Bats, Snowbirds)
+# New teams (Cacti, Whales, Bats, Snowbirds, Comets, Cobras)
 
 FEATURES.teamPick: the league is game.json's `teams` (the default match, away then home) and `moreTeams`; the title's
 SETTINGS page picks any two (AWAY / HOME rows, saved), and `PP_TEAMS=CAC,WHL` picks them for one run.
@@ -19,8 +19,15 @@ only: `python3 tools/teams/build.py <work dir> [CAC WHL]`.
 - A model added after the source revision (`SRC_LATER` in build.py, e.g. LeanLB): put its red map as `marks.py` left it
   (numbers and irises painted out, the old helmet decal still on) in `<work dir>/src/<folder>/`. `MODELS=LeanLB` builds
   only that model's maps. A `regions` entry named after a model folder overrides `player` for it (LeanLB's shoulder pads
-  reach above the usual helmet line).
+  reach above the usual helmet line; the Linebacker's too, or a dark helmet colour bands its shoulders).
 
 The Bats (`BAT`) and Snowbirds (`SNB`): marks from Kenny's mascot-only pictures (`emblems/BAT.png` the crimson-winged
 bat, `emblems/SNB.png` the owl helmet emblem); the pictures with the team name under them are the join screen's.
 Black helmets, crimson jerseys, black pants, white numbers; all white with ice-blue stripes and navy numbers.
+
+The Comets (`CMT`) and Cobras (`COB`): marks from Kenny's wordless emblems (`emblems/CMT.png` the pink-tailed comet,
+`emblems/COB.png` the coiled cobra); the wordmark pictures are the join screen's (`wordmarks.py`). Purple helmets and
+jerseys with hot-pink trim, white pants with pink stripes, white numbers edged pink; near-black helmets and pants, purple
+jerseys, electric-lime trim and stripes, lime numbers edged near-black. LeanLB's red source map (`<work>/src/LeanLB/`) is
+the 0.jpg colour map inside Hi3D_Untitled_allparts_20261028_084912.fbx at 2048 px, with LeanLB_BaseColor.png's texels
+copied in wherever LeanLB_Marks.png has a zone (numbers and irises painted out), the old decal still on.
