@@ -414,8 +414,8 @@
     {
       "name": "COMETS",
       "short": "CMT",
-      "color": "#6633cc",
-      "color2": "#ff4fa3",
+      "color": "#ff4fa3",
+      "color2": "#6633cc",
       "model": "Models/Player24/Player24_Rigged",
       "modelTexture": "Models/Player24/Player24CMT_BaseColor",
       "posModels": [
@@ -432,7 +432,7 @@
       "cheerModel": "Models/Cheerleader/Cheerleader_Rigged",
       "cheerTexture": "Models/Cheerleader/CheerleaderCMT_BaseColor",
       "numberFill": "#ffffff",
-      "numberEdge": "#ff4fa3"
+      "numberEdge": "#6633cc"
     },
     {
       "name": "COBRAS",
