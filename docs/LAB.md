@@ -15,6 +15,8 @@ A test bench for the game's mechanics without a whole game: one drill on the fie
 | Running and juking | RB | Three defenders chase you; juke timing |
 | Cutting and reversing | WR | Just you: run, cut back and forth, turn right around; the momentum lean (FEATURES.momentumLean) |
 | ... with the ball | RB | The same carrying the ball |
+| Pursuit: all eleven chase you | RB | You start in the open, already running; the whole defense chases you in lanes (FEATURES.pursuitLanes) |
+| Watch a pursuit | nobody | The same with a bot runner: angles, lanes, and the man who breaks down for the tackle |
 | Full scrimmage | QB | All 22, Slants vs Cover 3 |
 | Watch the bots | nobody | Bots only, for watching hitboxes in slow motion |
 
@@ -66,3 +68,29 @@ around the runner, with a CSV of his speed, facing and lean. `tools/motion.ps1 -
 TV camera, a close look from the TV side, from behind) and makes one contact sheet per part of the run in
 `.shots\motion\round-N\`. The lean itself: `Scripts/View/Momentum.cs` (tests: `MomentumTests`), tuned by the `turn*`,
 `lean*`, `plantFrom` and `cutSpreadDeg` numbers in game.json's `anim` block.
+
+## The pursuit gauntlet (`tools/pursuit.ps1`)
+
+`Scripts/Boot/PursuitReel.cs` drives the ball carrier in the "pursuit" drill along four set runs, one a rep: straight
+down the field, a sweep to the far sideline, a cut back across the field, a zigzag. All eleven defenders chase him
+from where cover 3 lines them up. It saves a picture every few ticks and a CSV of every chaser's spot each tick.
+`tools/pursuit.ps1 -Round N` runs it for two cameras (`top`: straight down over the chase; `close`: from the TV side on
+the carrier and the chaser nearest him, for the body: the stride, the breakdown, the tackle; `tv` too if asked) and
+writes into `.shots\pursuit\round-N\`:
+
+- `trails.png`: the chase from above, one row a run: the carrier white, each chaser in his own colour, a dot every half
+  second, and how many tick-pairs of chasers were bunched up (two closer than about a yard and a half, both away from
+  the ball). `-Compare` runs the game as it was before as well (NO_PURSUIT_LANES, NO_BREAKDOWN, NO_STRIDE_HIPS,
+  NO_SPINE_CHAIN) and puts it on the left.
+- `<now|before>-<cam>-<run>.png`: contact sheets of the pictures; an `.mp4` of each too if ffmpeg is already installed.
+- `summary.txt`: one line a run: how it ended, how long, bunched pair-ticks, the closest two chasers ever got, the
+  average gap to the nearest team-mate.
+
+What it tunes:
+- the lanes: game.json `pursuit` (`Sim/Pursuit.cs`, tests `PursuitTests`): how far apart the lanes are, how far out they
+  go, where they close in, how a chaser behind the carrier trails on his inside hip;
+- the body (tests `BodyMotionTests`): `anim.spineBendShare`/`spineTwistShare`/`neckShare` (FEATURES.spineChain: the model's
+  spine bends through Spine, Chest and UpperChest instead of as one plank at the waist), `anim.strideHipYawDeg`/
+  `strideHipRollDeg` (FEATURES.strideHips: the pelvis turns with the leg reaching forward and dips on the swinging side),
+  `anim.gather*` (FEATURES.breakdown: a defender closing on the carrier sinks his hips, chops his feet and brings his
+  arms up to wrap; one coming from behind runs on through).
