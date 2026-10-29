@@ -48,10 +48,10 @@ Optional, `"formation": "<set id>"` (FEATURES.formations, `NO_FORMATIONS=1` turn
 | Offense set | Look |
 | --- | --- |
 | `shotgun` | QB 5 deep, RB beside him; 2 wide, slot, inline TE (HB Screen) |
-| `iform` | QB under center, the slot WR as fullback, RB 7 deep (HB Dive, Toss Sweep) |
+| `iform` | QB under center, the slot WR as an offset fullback, RB 7 deep (HB Dive, Toss Sweep) |
 | `singleback` | QB under center, RB 6 deep, tight slot (PA Boot) |
 | `trips` | gun; three receivers to the far side, one alone on the near side (Slants) |
-| `empty` | gun, RB split out wide: five receivers (Four Verticals) |
+| `spread` | gun, 2x2: the TE split out as a second slot (Four Verticals) |
 | `jumbo` | under center, the WRs in tight as extra tight ends and a wing (QB Sneak) |
 | `punt`, `fieldgoal` | the kicking line-ups (Kicking.cs still places the punter, holder and kicker) |
 
@@ -59,7 +59,7 @@ Optional, `"formation": "<set id>"` (FEATURES.formations, `NO_FORMATIONS=1` turn
 | --- | --- |
 | `twohigh` | 4-3, two deep safeties (Cover 2) |
 | `singlehigh` | 4-3, one safety deep, the other walked down (Cover 3) |
-| `blitzlook` | outside LBs walked up showing blitz, a single high safety (Zone Blitz) |
+| `blitzlook` | outside LBs walked up a step showing blitz, a single high safety (Zone Blitz) |
 | `press` | corners pressed on the receivers, safeties down, no deep help (Man Blitz) |
 | `goalline` | everyone close, corners pressed (Goal Line) |
 | `prevent` | corners 10 off, safeties 20 deep (Prevent) |

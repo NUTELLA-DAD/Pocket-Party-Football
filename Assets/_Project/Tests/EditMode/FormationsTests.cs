@@ -77,11 +77,11 @@ namespace PocketFootball.Tests.EditMode
         {
             var dive = Called("dive", "goalline");
             var verts = Called("verts", "prevent");
-            // I-Form: the QB under center, the RB 7 deep behind him. Empty: the QB in the gun and the RB split out wide.
+            // I-Form: the QB under center, the RB 7 deep behind him. Spread: the QB in the gun and the TE split out wide.
             Assert.AreEqual(2f, At(dive, dive.Offense, 0)[0], 1e-3f);
             Assert.AreEqual(7f, At(dive, dive.Offense, 1)[0], 1e-3f);
             Assert.AreEqual(5f, At(verts, verts.Offense, 0)[0], 1e-3f);
-            Assert.AreEqual(-13f, At(verts, verts.Offense, 1)[1], 1e-3f);
+            Assert.AreEqual(-12f, At(verts, verts.Offense, 5)[1], 1e-3f);
             // Goal line: corners pressed up close. Prevent: the safeties 20 deep.
             Assert.AreEqual(1.5f, At(dive, dive.Defense, 1)[0], 1e-3f);
             Assert.AreEqual(20f, At(verts, verts.Defense, 3)[0], 1e-3f);
@@ -114,7 +114,7 @@ namespace PocketFootball.Tests.EditMode
             var w = Called("dive", "cover2");
             Assert.AreEqual(7f, At(w, w.Offense, 1)[0], 1e-3f);
             Assert.IsTrue(Audibles.Call(w, Qb, "verts"));
-            Assert.AreEqual(-13f, At(w, w.Offense, 1)[1], 1e-3f, "the RB splits out for Empty");
+            Assert.AreEqual(-12f, At(w, w.Offense, 5)[1], 1e-3f, "the TE splits out for Spread");
             Assert.AreEqual(5f, At(w, w.Offense, 0)[0], 1e-3f, "the QB backs into the gun");
             Assert.AreEqual(LivePlay.Qb(w).Slot, w.Ball.Carrier);
         }
