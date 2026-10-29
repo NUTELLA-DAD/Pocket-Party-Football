@@ -1239,7 +1239,7 @@
     "diveChanceMul": 0.55,
     "diveDownS": 0.7,
     "contestYd": 1.4,
-    "contestChanceMul": 0.7,
+    "contestChanceMul": 0.8,
     "tangleS": 0.9
   },
   "pursuit": {
