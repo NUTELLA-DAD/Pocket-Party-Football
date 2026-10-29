@@ -23,6 +23,7 @@ namespace PocketFootball.View
 
         public static WeatherView Attach(GameObject on, GameConfig cfg, CameraRig rig, Material fallback, System.Func<World> world)
         {
+            if (Weather.Any(cfg)) Debug.Log("[weather] " + Weather.Name(Weather.Now(cfg)) + (Weather.Sand(cfg) ? " on sand" : ""));
             var look = Weather.Look(cfg);
             var box = cfg.weatherLook.boxM;
             if (look == null || look.count <= 0 || box == null || box.Length < 3) return null;
@@ -30,7 +31,6 @@ namespace PocketFootball.View
             v.cfg = cfg; v.look = look; v.rig = rig; v.world = world;
             v.snow = Weather.Now(cfg) == Sky.Snow;
             v.Build(Looks.Glow(fallback));
-            Debug.Log("[weather] " + Weather.Name(Weather.Now(cfg)) + (Weather.Sand(cfg) ? " on sand" : ""));
             return v;
         }
 
