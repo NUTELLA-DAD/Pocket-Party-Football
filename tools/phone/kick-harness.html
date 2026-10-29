@@ -13,11 +13,14 @@
 <button onclick="ui('kick'); sweepMeter('aim')">field goal: two taps</button>
 <button onclick="ui('kick'); meter(true, 'KICKOFF', 0)">kickoff</button>
 <button onclick="ui('kick'); meter(true, 'PUNT', 0)">punt</button>
+<button onclick="ui('kick'); arcMeter('PUNT', 'aim')">punt: arc</button>
+<button onclick="ui('kick'); arcMeter('FIELD GOAL', 'aim')">field goal: arc</button>
 <button onclick="ui('walk'); meter(false)">done</button>
 </div>
 <script>
   // what the game would send; window.sent collects what the phone sends back
   window.sent = [];
+  window.PPKickArt = '../../Assets/StreamingAssets/phone/kick/';
   var aid = 'a1', n = 1;
   window.PP = { send: function (m) { window.sent.push(m); }, aid: function () { return aid; } };
   function ui(layout) { aid = layout + (++n); PPKick.onMessage({ t: 'ui', layout: layout, aid: aid }); }
@@ -33,6 +36,14 @@
     var sw = { stage: stage, aimS: 2.2, powerS: 1.6, need: 0.69, shank: 0.94, t: t, maxDeg: 15, postsYd: 3.08, distYd: 42 };
     if (typeof aim === 'number') sw.aim = aim;
     PPKick.onMessage({ t: 'kickmeter', on: true, kind: 'FIELD GOAL', yards: 42, sweep: sw, wind: { mph: 11, right: 0.8, along: -0.6 } });
+  }
+  // a punt or a field goal with the game's kickArc (extra: power, clear, t, aim)
+  function arcMeter(kind, stage, extra) {
+    var goal = kind !== 'PUNT';
+    var sw = { arc: true, stage: stage, powerS: 1.6, pitchS: 1.3, minDeg: 15, maxDeg: 75, aimDeg: 15, shank: 0.94 };
+    if (goal) sw.need = 0.62; else sw.good = [45, 62];
+    for (var key in (extra || {})) sw[key] = extra[key];
+    PPKick.onMessage({ t: 'kickmeter', on: true, kind: kind, yards: goal ? 42 : 0, sweep: sw, wind: goal ? { mph: 9, right: -0.9, along: 0.2 } : undefined });
   }
 </script>
 <script src="../../Assets/StreamingAssets/phone/kick.js"></script>
