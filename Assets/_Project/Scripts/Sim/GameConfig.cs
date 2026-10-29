@@ -47,6 +47,7 @@ namespace PocketFootball.Sim
         public ReactionsConfig reactions = new ReactionsConfig();   // FEATURES.faceReactions / grassStains / nameBars (View/Reactions.cs)
         public BotsV3Config botsV3 = new BotsV3Config();   // bots v3: reactions, blocking assignments, kick lanes (BotsV3.cs, FEATURES.botsV3)
         public CupConfig cup = new CupConfig();   // FEATURES.cup: the Pocket Cup bracket (Cup.cs, Boot/CupHost.cs)
+        public RosterConfig roster = new RosterConfig();   // FEATURES.rosterPage: the title's ROSTER page (RosterCards.cs, Boot/RosterPage.cs)
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 

@@ -7,13 +7,14 @@ using UnityEngine.SceneManagement;
 namespace PocketFootball.Boot
 {
     // The title screen (FEATURES.titleScreen, NO_TITLE_SCREEN=1 goes straight to the lobby). Kenny's logo and the
-    // buttons: PLAY, POCKET CUP (FEATURES.cup: the bracket page, CupHost.cs), HOW TO PLAY, SETTINGS. Behind them the
+    // buttons: PLAY, POCKET CUP (FEATURES.cup: the bracket page, CupHost.cs), ROSTER (FEATURES.rosterPage: every player
+    // model with its positions and ratings, TitleScreen.Roster.cs), HOW TO PLAY, SETTINGS. Behind them the
     // bots play a game of their own (attract mode), filmed from a new angle every play (title.shots,
     // View/TitleShots.cs). That game is only for show: no lobby, no game clock, no replays, no game log, no pads
     // joining, and a new seed every time. PLAY loads the Boot scene again, so the real
     // game starts fresh (a new world, a new room code) at the lobby; the title shows once per run.
     // Mouse, keyboard (arrows, Enter, Esc) or an Xbox pad (d-pad or stick, A, B). Esc on the menu quits as before.
-    public sealed class TitleScreen : MonoBehaviour
+    public sealed partial class TitleScreen : MonoBehaviour
     {
         public static TitleScreen Instance { get; private set; }
         public static bool Showing => Instance != null;
@@ -46,8 +47,8 @@ namespace PocketFootball.Boot
         int SettingsRows => HelperRow + FlightMarks.Switches.Length + 1;
         int away, home;   // the picked teams, as league indexes (saved at once; the game after PLAY wears them)
 
-        enum Page { Menu, HowTo, Settings, Cup }
-        enum Item { Play, Cup, HowTo, Settings }
+        enum Page { Menu, HowTo, Settings, Cup, Roster }
+        enum Item { Play, Cup, HowTo, Settings, Roster }
 
         GameConfig cfg;
         PartyHost host;
@@ -90,7 +91,12 @@ namespace PocketFootball.Boot
             t.host = host;
             t.rig = rig;
             t.logo = Resources.Load<Texture2D>("Title/TitleArt");
-            t.items = CupHost.On(cfg) ? new[] { Item.Play, Item.Cup, Item.HowTo, Item.Settings } : new[] { Item.Play, Item.HowTo, Item.Settings };
+            var list = new System.Collections.Generic.List<Item> { Item.Play };
+            if (CupHost.On(cfg)) list.Add(Item.Cup);
+            if (RosterCards.On(cfg)) list.Add(Item.Roster);
+            list.Add(Item.HowTo);
+            list.Add(Item.Settings);
+            t.items = list.ToArray();
             t.buttons = new Texture2D[t.items.Length];
             t.hit = new Rect[t.items.Length];
             for (int i = 0; i < t.items.Length; i++) t.buttons[i] = Resources.Load<Texture2D>(ButtonArt[(int)t.items[i]]);
@@ -103,13 +109,14 @@ namespace PocketFootball.Boot
             if (startPage == "howto") t.page = Page.HowTo;
             else if (startPage == "settings") t.page = Page.Settings;
             else if (startPage == "cup" && System.Array.IndexOf(t.items, Item.Cup) >= 0) { t.page = Page.Cup; t.cup = CupHost.Load(cfg); }
+            else if (startPage != null && startPage.StartsWith("roster") && System.Array.IndexOf(t.items, Item.Roster) >= 0) t.OpenRoster(startPage);
             Instance = t;
             Debug.Log("[title] title screen up (attract mode behind it)");
             return t;
         }
 
-        static readonly string[] ButtonArt = { "Title/ButtonPlay", "Title/ButtonCup", "Title/ButtonHowToPlay", "Title/ButtonSettings" };   // by Item
-        static readonly string[] ButtonText = { "PLAY", "POCKET CUP", "HOW TO PLAY", "SETTINGS" };
+        static readonly string[] ButtonArt = { "Title/ButtonPlay", "Title/ButtonCup", "Title/ButtonHowToPlay", "Title/ButtonSettings", "Title/ButtonRoster" };   // by Item
+        static readonly string[] ButtonText = { "PLAY", "POCKET CUP", "HOW TO PLAY", "SETTINGS", "ROSTER" };
 
         void OnDestroy() { if (Instance == this) Instance = null; }
 
@@ -192,6 +199,11 @@ namespace PocketFootball.Boot
                 CupInput(up || left, down || right, ok, click, moved, mp);
                 return;
             }
+            if (page == Page.Roster)
+            {
+                RosterInput(left, right, up, down, ok, click, moved, mp);
+                return;
+            }
 
             // settings: 0 sound, the teams, full screen, the helpers, back
             int rowsN = SettingsRows;
@@ -226,6 +238,7 @@ namespace PocketFootball.Boot
         {
             if (i == Item.Play) { CupHost.SetLive(false); fadeT = 0f; Debug.Log("[title] PLAY"); }
             else if (i == Item.Cup) { cup = CupHost.Load(cfg); Open(Page.Cup); }
+            else if (i == Item.Roster) OpenRoster(null);
             else Open(i == Item.HowTo ? Page.HowTo : Page.Settings);
         }
 
@@ -233,11 +246,13 @@ namespace PocketFootball.Boot
         {
             if (p == Page.Menu)
             {
-                var from = page == Page.HowTo ? Item.HowTo : page == Page.Settings ? Item.Settings : page == Page.Cup ? Item.Cup : Item.Play;
+                var from = page == Page.HowTo ? Item.HowTo : page == Page.Settings ? Item.Settings : page == Page.Cup ? Item.Cup
+                    : page == Page.Roster ? Item.Roster : Item.Play;
                 pick = Mathf.Max(0, System.Array.IndexOf(items, from));
             }
             else pick = 0;
             confirmNew = false;
+            if (p != Page.Roster && stage != null) stage.Hide();
             page = p;
         }
 
@@ -340,6 +355,7 @@ namespace PocketFootball.Boot
             if (page == Page.Menu) DrawMenu(W, H, s, t);
             else if (page == Page.HowTo) DrawHowTo(W, H, s);
             else if (page == Page.Cup) DrawCup(W, H, s);
+            else if (page == Page.Roster) DrawRoster(W, H, s);
             else DrawSettings(W, H, s);
 
             if (fadeT >= 0f)

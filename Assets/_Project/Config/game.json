@@ -1129,6 +1129,31 @@
     "barLiveAlpha": 0.55,
     "barAboveM": 0.9
   },
+  "roster": {
+    "positions": ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "CB", "S", "K"],
+    "posNames": {
+      "QB": "QUARTERBACK", "RB": "RUNNING BACK", "WR": "WIDE RECEIVER", "TE": "TIGHT END", "OL": "OFFENSIVE LINE",
+      "DL": "DEFENSIVE LINE", "LB": "LINEBACKER", "CB": "CORNERBACK", "S": "SAFETY", "K": "KICKER"
+    },
+    "posNotes": {
+      "K": "Kicks the field goals, extra points, punts and kickoffs."
+    },
+    "models": [
+      { "model": "Models/QB/QB_Rigged", "name": "QUARTERBACK", "number": 9 },
+      { "model": "Models/Player24/Player24_Rigged", "name": "ATHLETE", "number": 21 },
+      { "model": "Models/WR/WR_Rigged", "name": "RECEIVER", "number": 11 },
+      { "model": "Models/TE/TE_Rigged", "name": "TIGHT END", "number": 87 },
+      { "model": "Models/Linebacker/Linebacker_Rigged", "name": "LINEBACKER", "number": 54 },
+      { "model": "Models/LeanLB/LeanLB_Rigged", "name": "LEAN LINEBACKER", "number": 50 },
+      { "model": "Models/Kicker/Kicker_Rigged", "name": "KICKER", "number": 9 }
+    ],
+    "ratingMax": 10,
+    "fovDeg": 30,
+    "turnDeg": 25,
+    "frameMargin": 1.18,
+    "backdrop": "#13275e",
+    "floor": "#ffc81f"
+  },
   "cup": {
     "maxTeams": 8,
     "randomDraw": true
@@ -1261,6 +1286,7 @@
     "oobIncomplete": true,
     "jumpAnytime": true,
     "cup": true,
+    "rosterPage": true,
     "fgHolder": true,
     "kickSweep": true,
     "wind": true,
