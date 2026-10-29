@@ -28,6 +28,12 @@
     if (typeof aim === 'number') sw.aim = aim;
     PPKick.onMessage({ t: 'kickmeter', on: true, kind: 'FIELD GOAL', yards: 42, sweep: sw, wind: { mph: 11, right: 0.8, along: -0.6 } });
   }
+  // the same with the game's kickSync: its sweep clock t, the real widest aim and the posts to scale
+  function syncMeter(stage, t, aim) {
+    var sw = { stage: stage, aimS: 2.2, powerS: 1.6, need: 0.69, shank: 0.94, t: t, maxDeg: 15, postsYd: 3.08, distYd: 42 };
+    if (typeof aim === 'number') sw.aim = aim;
+    PPKick.onMessage({ t: 'kickmeter', on: true, kind: 'FIELD GOAL', yards: 42, sweep: sw, wind: { mph: 11, right: 0.8, along: -0.6 } });
+  }
 </script>
 <script src="../../Assets/StreamingAssets/phone/kick.js"></script>
 </body>

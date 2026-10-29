@@ -81,6 +81,7 @@ namespace PocketFootball.Sim
         public float NextLos;                          // where the next play starts (yards)
         public bool Thrown;                            // the ball has been thrown this play
         public bool StickThrow;                        // ...with the throw stick, to a spot (ThrowStick.cs)
+        public int PassTarget = -1;                    // ...with a receiver button: his slot (FEATURES.passTarget, Bots.Intended)
         public bool Intercepted;                       // a defender caught it and is running it back (FEATURES.intreturn)
         public readonly HashSet<int> CatchTried = new HashSet<int>();
         public readonly ReceivingState Recv = new ReceivingState();   // WS-05: this play's calls and catch taps (Receiving.cs); not hashed

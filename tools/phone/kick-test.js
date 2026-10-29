@@ -97,6 +97,27 @@ const { chromium } = require('playwright');
     await page.locator('.ktap').dispatchEvent('pointerdown', { pointerId: 6 });
     sent = await page.evaluate(() => window.sent);
     ok(sent.length === 1 && sent[0].t === 'kick' && sent[0].aim === -0.4, tag + ': kicks with the game\'s aim ' + JSON.stringify(sent));
+    // kickSync: the arrow runs on the game's clock. 0.55 s in, the game's arrow is all the way right (aim 1)
+    await page.evaluate(() => { meter(false); ui('walk'); window.sent = []; ui('kick'); syncMeter('aim', 0.55); syncMeter('aim', 0.55); });
+    await page.waitForTimeout(300);
+    // (the same t twice: the game's clock stands still, so the arrow holds at full right)
+    const lean = await page.evaluate(() => document.querySelector('.kaimline').style.transform);
+    ok(/rotate\(15deg\)/.test(lean), tag + ': the arrow leans as far as the kick really goes (15 deg), on the game\'s clock: ' + lean);
+    const postsW = await page.evaluate(() => parseFloat(document.querySelector('.kposts').style.width));
+    const fieldH = (await page.locator('.kfield').boundingBox()).height;
+    const want = 2 * Math.max(10, Math.max(40, fieldH - 8 - 60) * 0.69 * 3.08 / 42);
+    ok(Math.abs(postsW - want) < 6, tag + ': the posts drawn to scale with the arrow ' + postsW + ' vs ' + want);
+    await page.screenshot({ path: path.resolve(__dirname, '../../.shots/phone-kick-' + tag + '-synced.png') });
+    await page.locator('.ktap').dispatchEvent('pointerdown', { pointerId: 7 });
+    sent = await page.evaluate(() => window.sent);
+    ok(sent.length === 1 && sent[0].t === 'kickaim' && sent[0].st === 0.55 && sent[0].aim === 1, tag + ': the tap says which second it showed ' + JSON.stringify(sent));
+    // a late word about the aim (sent before the game had the tap) changes nothing; the game's power clock is taken
+    await page.evaluate(() => syncMeter('aim', 0.8));
+    ok((await state()).stage === 'power', tag + ': a late aim sync does not undo the tap');
+    await page.evaluate(() => { syncMeter('power', 0.4, 1); syncMeter('power', 0.4, 1); });
+    await page.locator('.ktap').dispatchEvent('pointerdown', { pointerId: 8 });
+    sent = await page.evaluate(() => window.sent);
+    ok(sent.length === 2 && sent[1].t === 'kick' && sent[1].st === 0.4 && sent[1].power === 0.5 && sent[1].aim === 1, tag + ': the kick on the game\'s power clock ' + JSON.stringify(sent));
     // and a kickoff after it is the swipe again
     await page.evaluate(() => { meter(false); ui('walk'); ui('kick'); meter(true, 'KICKOFF', 0); });
     s = await state();

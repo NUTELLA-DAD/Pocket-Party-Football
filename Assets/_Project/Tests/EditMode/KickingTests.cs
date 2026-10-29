@@ -648,6 +648,48 @@ namespace PocketFootball.Tests.EditMode
         }
 
         [Test]
+        public void APhoneTapTakesTheArrowWhereThePhoneShowedIt()
+        {
+            var cfg = On();
+            Assert.IsTrue(cfg.Feature("kickSync"), "FEATURES.kickSync ships on");
+            Assert.AreEqual("NO_KICK_SYNC", ConfigLoader.EnvName("kickSync"));
+            var w = FieldGoal(cfg, out var kicker);
+            var c = cfg.kicking;
+            Assert.Greater(c.phoneSyncS, 0f);
+            Assert.Greater(c.tapSlackS, 0f);
+            for (int i = 0; i < 30; i++) w.Step(null);
+            // the game's own clock for the sweep (the phone runs its arrow from it)
+            float now = Kicking.SweepSeconds(w);
+            Assert.AreEqual((w.Tick - w.Kick.AimTick) / (float)cfg.sim.tickHz, now, 1e-5f);
+            Assert.AreEqual(Kicking.AimSweep(c, now), Kicking.SweepNow(w), 1e-5f);
+            // the phone showed its arrow a tenth of a second ago (the trip over the wifi): that aim is the aim
+            float st = now - 0.1f;
+            Assert.IsTrue(Kicking.TapAt(w, kicker.Slot, st), "the first tap");
+            Assert.AreEqual(Kicking.AimSweep(c, st), w.Kick.Aim, 1e-5f, "the aim the phone showed");
+            Assert.AreEqual(Kicking.SweepStage.Power, Kicking.Stage(w));
+            for (int i = 0; i < 9; i++) w.Step(null);
+            now = Kicking.SweepSeconds(w);
+            Assert.AreEqual(9f / cfg.sim.tickHz, now, 1e-5f, "the power's clock starts at the first tap");
+            // a phone claiming a second ahead of the game's clock gets the game's arrow now, never a later one
+            Assert.IsTrue(Kicking.TapAt(w, kicker.Slot, now + 5f), "the second tap kicks");
+            Assert.AreEqual(Kicking.PowerSweep(c, now), w.Kick.PendingPower, 1e-5f);
+        }
+
+        [Test]
+        public void APhoneTapFarBehindTheGameIsHeldToTheSlack()
+        {
+            var cfg = On();
+            var w = FieldGoal(cfg, out var kicker);
+            var c = cfg.kicking;
+            for (int i = 0; i < 40; i++) w.Step(null);
+            float now = Kicking.SweepSeconds(w);
+            Assert.Greater(now, c.tapSlackS + 0.2f);
+            Assert.IsTrue(Kicking.TapAt(w, kicker.Slot, 0f));
+            Assert.AreEqual(Kicking.AimSweep(c, now - c.tapSlackS), w.Kick.Aim, 1e-5f, "at most tapSlackS behind the game");
+            Assert.IsFalse(Kicking.TapAt(w, 501, 0f), "only the kicker taps");
+        }
+
+        [Test]
         public void TooSlowToAimAndTheSnapComesAnyway()
         {
             var cfg = On();
