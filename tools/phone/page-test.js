@@ -38,6 +38,7 @@ const LAYOUTS = ['wait', 'qbpre', 'qb', 'carrier', 'route', 'block', 'rush', 'lb
       const file = path.join(DIR, f);
       if (!fs.existsSync(file)) return route.fulfill({ status: 404, body: 'nope' });
       if (f.endsWith('.png')) return route.fulfill({ status: 200, contentType: 'image/png', body: fs.readFileSync(file) });
+      if (f.endsWith('.ttf')) return route.fulfill({ status: 200, contentType: 'font/ttf', body: fs.readFileSync(file) });
       const type = f.endsWith('.js') ? 'text/javascript' : f.endsWith('.css') ? 'text/css' : 'text/html';
       route.fulfill({ status: 200, contentType: type + '; charset=utf-8', body: fs.readFileSync(file) });
     });

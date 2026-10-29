@@ -6,14 +6,14 @@
   var SVG = 'http' + '://www.w3.org/2000/svg';   // the SVG namespace name (not a download)
   var H = { plays: [], spots: [], opp: [], me: 0, caller: false, locked: false, mine: '', pick: '', thumbs: {}, side: '', ends: 0, tab: '' };
   var P = { lineup: null, open: false, asked: -1 };   // FEATURES.huddleSwitch: the team's spots, and the position picker
-  var clockTimer = null;
+  var clockTimer = null, turfN = 0;
 
   // ---- the playbook picture: a coach's chalkboard on grass. Offense = cream O's, defense = red X's, jobs = yellow arrows. ----
   // Play frame: [ahead, z] yards from the ball, ahead = the offense's direction, +z = the far sideline on the TV.
   // Drawn like a real playbook: forward is UP, the TV's far sideline is on the left (the TV picture turned a quarter turn).
   // Not to scale, on purpose: the line is spread out so eleven circles fit side by side, and deep routes are squeezed.
   var S = 10, SIDE = 26.7;                    // SVG units per yard; the sideline, yards from the middle
-  var C = { grass: '#2a8a3e', grassOut: '#1f6e31', tuft: '#46a852', chalk: '#efe8c8', line: '#f6f1de',
+  var C = { grass: '#12932f', grassOut: '#0a4a1a', zone: '#ffa04a', zoneInk: '#e2560a', chalk: '#efe8c8', line: '#f6f1de',
             o: '#f7efd2', ink: '#14203a', x: '#ee4a3c', xInk: '#6e1414', route: '#ffd21f' };
   function wz(z) { var a = Math.abs(z), d = a <= 5 ? a * 2.4 : 12 + (a - 5) * 0.68; return z < 0 ? d : -d; }   // across (yards)
   function wa(a) { var d = Math.abs(a), v = d <= 2 ? d * 3.5 : d <= 12 ? 7 + (d - 2) * 1.5 : 22 + (d - 12) * 0.55; return a < 0 ? -v : v; }   // ahead (yards)
@@ -54,16 +54,15 @@
     var svg = el('svg', { viewBox: '0 0 ' + f1(W) + ' ' + f1(H), class: 'mini', role: 'img',
       'aria-label': (whole ? 'The play' : 'Your job') + ': forward is up, your spot says YOU' });
     // grass, out of bounds past the sidelines, then the chalk
-    el('rect', { width: f1(W), height: f1(H), fill: C.grassOut }, svg);
+    // the grass is Kenny's turf picture (turf.png), tiled at a fixed size so every card has the same blades
+    var pid = 'turf' + (++turfN), pat = el('pattern', { id: pid, patternUnits: 'userSpaceOnUse', width: S * 30, height: f1(S * 30 * 406 / 512) }, el('defs', {}, svg));
+    el('rect', { width: S * 30, height: f1(S * 30 * 406 / 512), fill: C.grass }, pat);
+    el('image', { href: 'turf.png', width: S * 30, height: f1(S * 30 * 406 / 512), preserveAspectRatio: 'none' }, pat);
+    el('rect', { width: f1(W), height: f1(H), fill: 'url(#' + pid + ')' }, svg);
     var xl = X(wz(SIDE)), xr = X(wz(-SIDE));
-    el('rect', { x: Math.max(0, xl), y: 0, width: f1(Math.min(W, xr) - Math.max(0, xl)), height: f1(H), fill: C.grass }, svg);
-    var seed = 7;
-    function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }   // fixed seed: the same tufts every time
-    for (var n = Math.round(W * H / 9000); n > 0; n--) {
-      var tx = rnd() * W, ty = rnd() * H, k = S * (0.5 + rnd() * 0.4);
-      el('path', { d: 'M' + f1(tx - k) + ' ' + f1(ty - k) + 'L' + f1(tx) + ' ' + f1(ty) + 'L' + f1(tx + k * 0.3) + ' ' + f1(ty - k * 1.3) + 'M' + f1(tx) + ' ' + f1(ty) + 'L' + f1(tx + k) + ' ' + f1(ty - k * 0.8),
-        stroke: C.tuft, 'stroke-width': f1(S * 0.22), fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, svg);
-    }
+    // out of bounds past the sidelines: the same grass, darker
+    if (xl > 0) el('rect', { width: xl, height: f1(H), fill: C.grassOut, 'fill-opacity': '.55' }, svg);
+    if (xr < W) el('rect', { x: xr, width: f1(W - xr), height: f1(H), fill: C.grassOut, 'fill-opacity': '.55' }, svg);
     if (xl > 0) el('line', { x1: xl, y1: 0, x2: xl, y2: f1(H), stroke: C.chalk, 'stroke-width': f1(S * 0.5) }, svg);
     if (xr < W) el('line', { x1: xr, y1: 0, x2: xr, y2: f1(H), stroke: C.chalk, 'stroke-width': f1(S * 0.5) }, svg);
     var a0 = Math.ceil(-40 / 5) * 5;
@@ -128,8 +127,8 @@
     jobs.forEach(function (j, i) {
       if ((whole || i === me) && j.kind === 'zone' && j.pts && j.pts.length) {
         var c = xy(j.pts[0][0], j.pts[0][1]), mine = i === me;
-        el('ellipse', { cx: c[0], cy: c[1], rx: f1(j.radius * S * 0.9), ry: f1(j.radius * S), fill: C.route, 'fill-opacity': mine ? '.32' : '.14',
-          stroke: mine ? C.route : C.chalk, 'stroke-opacity': mine ? '1' : '.6', 'stroke-width': f1(S * (mine ? 0.4 : 0.25)), 'stroke-dasharray': f1(S * 1) + ' ' + f1(S * 0.7) }, svg);
+        el('ellipse', { cx: c[0], cy: c[1], rx: f1(j.radius * S * 0.9), ry: f1(j.radius * S), fill: C.zone, 'fill-opacity': mine ? '.6' : '.3',   // Kenny's zones: orange, dashed
+          stroke: C.zoneInk, 'stroke-opacity': mine ? '1' : '.7', 'stroke-width': f1(S * (mine ? 0.55 : 0.35)), 'stroke-linecap': 'round', 'stroke-dasharray': f1(S * 1) + ' ' + f1(S * 0.9) }, svg);
       }
     });
 

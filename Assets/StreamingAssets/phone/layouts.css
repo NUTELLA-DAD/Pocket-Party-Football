@@ -97,3 +97,30 @@
 }
 .kickpad .khint { position: absolute; left: 0; right: 0; bottom: 52px; text-align: center; color: var(--muted); font-size: 14px; }
 .kickpad.done { opacity: .6; }
+
+/* ---- the gems are Kenny's art: blank faces (one picture per colour), the words written on top in Pocket Block ---- */
+.cluster .gem {
+  border: 0; box-shadow: none; overflow: visible;
+  background: url("gem-teal.png") center / 100% 100% no-repeat;
+  filter: drop-shadow(0 4px 0 rgba(6,13,43,.8));
+  font-family: var(--block); font-weight: 400; letter-spacing: .02em;
+  color: var(--g-ink); text-shadow: none;
+}
+.cluster .gem.g-red    { background-image: url("gem-red.png"); }
+.cluster .gem.g-yellow { background-image: url("gem-yellow.png"); }
+.cluster .gem.g-purple { background-image: url("gem-purple.png"); }
+.cluster .gem.g-orange { background-image: url("gem-orange.png"); }
+.cluster .gem.g-blue   { background-image: url("gem-blue.png"); }
+/* light words get a navy edge, like the art's B and X; dark words sit straight on the face like its A and Y */
+.cluster .gem.g-red, .cluster .gem.g-purple, .cluster .gem.g-orange, .cluster .gem.g-blue {
+  --g-ink: var(--chalk);
+  text-shadow: 0 2px 0 var(--edge), 0 -1px 0 var(--edge), 1.5px 0 0 var(--edge), -1.5px 0 0 var(--edge), 0 3px 0 var(--edge);
+}
+.cluster .gem.g-red .ic, .cluster .gem.g-purple .ic, .cluster .gem.g-orange .ic, .cluster .gem.g-blue .ic { filter: drop-shadow(0 2px 0 var(--edge)); }
+.cluster .gem .lb { max-width: 74%; overflow-wrap: anywhere; }
+.cluster .gem.on, .cluster .gem:active {
+  transform: translateY(3px) scale(.97); box-shadow: none;
+  filter: brightness(1.12) drop-shadow(0 1px 0 rgba(6,13,43,.8));
+}
+.tstick .ttag { font-family: var(--block); font-weight: 400; text-shadow: 0 2px 0 var(--edge); }
+.tstick .tknob { background: url("stick-cap-gold.png") center / 100% 100% no-repeat; }
