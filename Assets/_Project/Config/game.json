@@ -1517,6 +1517,6 @@
     "pauseQr": true,
     "hotspotQr": true,
     "kickArc": true,
-    "driveBlock": false
+    "driveBlock": true
   }
 }
