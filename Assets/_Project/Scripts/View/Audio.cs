@@ -30,6 +30,7 @@ namespace PocketFootball.View
                 case EventKind.MissedTackle: return new[] { Sound.Whoosh };
                 case EventKind.Tackle: return new[] { Sound.Hit };
                 case EventKind.Stumble: return new[] { Sound.Hit };   // FEATURES.hitAngle: a glancing blow
+                case EventKind.Slip: return new[] { Sound.Whoosh };   // FEATURES.weather: a slip on a slick field
                 case EventKind.Sack: return new[] { Sound.BigHit, Sound.Crowd };
                 case EventKind.Touchdown: return new[] { Sound.Sting, Sound.Crowd };
                 case EventKind.OutOfBounds: return new[] { Sound.Hit };

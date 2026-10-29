@@ -24,6 +24,7 @@ namespace PocketFootball.Sim
         FirstDown,      // Team: the team with the ball, at the new spot
         Turnover,       // Team: the team that gets the ball, Text: TURNOVER or TURNOVER ON DOWNS
         Stumble,        // Slot: the ball carrier, Other: the tackler whose glancing blow knocked him off balance (FEATURES.hitAngle)
+        Slip,           // Slot: the player who slipped on a slick field cutting hard (FEATURES.weather / sandField, Weather.cs)
     }
 
     public struct GameEvent

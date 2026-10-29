@@ -47,6 +47,8 @@ namespace PocketFootball.Sim
         public ReactionsConfig reactions = new ReactionsConfig();   // FEATURES.faceReactions / grassStains / nameBars (View/Reactions.cs)
         public BotsV3Config botsV3 = new BotsV3Config();   // bots v3: reactions, blocking assignments, kick lanes (BotsV3.cs, FEATURES.botsV3)
         public CupConfig cup = new CupConfig();   // FEATURES.cup: the Pocket Cup bracket (Cup.cs, Boot/CupHost.cs)
+        public WeatherConfig weather = new WeatherConfig();   // FEATURES.weather / sandField: rain, snow, a sand field (Weather.cs)
+        public WeatherLookConfig weatherLook = new WeatherLookConfig();   // ...and how they look on the TV (View/WeatherView.cs)
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 
@@ -181,6 +183,8 @@ namespace PocketFootball.Sim
         public string cheerModel, cheerTexture;
         // FEATURES.jerseyNumbers: the players' numbers, white (numberFill) with a thin edge (numberEdge) in the team's trim
         public string numberFill, numberEdge;
+        // FEATURES.sandField: "sand" when the team's home field is sand (Weather.cs, View/FieldCover.cs); else grass
+        public string field;
 
         // The model and colour map a player at this position wears.
         public void ModelFor(string pos, bool byPos, out string m, out string tex) => ModelFor(pos, byPos, out m, out tex, out _);

@@ -184,7 +184,7 @@ namespace PocketFootball.Sim
             var c = w.Cfg.kicking;
             int spell = c.windEveryHuddles > 0 ? w.HuddleNumber / c.windEveryHuddles : 0;
             uint h = Mix((uint)w.Seed, (uint)spell);
-            float speed = c.windMaxYdS * Unit(h);
+            float speed = c.windMaxYdS * Unit(h) * Weather.Wind(w);   // FEATURES.weather: a storm blows harder
             float turn = (float)(Math.PI + Math.PI) * Unit(Mix(h, (uint)spell));
             x = speed * (float)Math.Cos(turn);
             z = speed * (float)Math.Sin(turn);
@@ -412,7 +412,7 @@ namespace PocketFootball.Sim
             var k = w.Kick;
             power = Clamp(power, 0f, 1f);
             aim = Clamp(aim, -1f, 1f);
-            float speed = Speed(c, power);
+            float speed = Speed(w, power);
             float aimDeg = aim * c.maxAimDeg;
             if (!exact && power >= c.shankFromPower) aimDeg += w.Rng.Range(-c.shankAimDeg, c.shankAimDeg);   // too much: it hooks
             float climb = Climb(w, kind, power) * Rad, yaw = aimDeg * Rad;
@@ -440,7 +440,12 @@ namespace PocketFootball.Sim
         static float Angle(KickingConfig c, KickKind kind) =>
             kind == KickKind.Punt ? c.puntAngleDeg : kind == KickKind.FieldGoal ? c.fieldGoalAngleDeg : c.kickoffAngleDeg;
 
-        static float Speed(KickingConfig c, float power) => c.minSpeedYdS + (c.maxSpeedYdS - c.minSpeedYdS) * power;
+        // (FEATURES.weather / sandField: a cold, wet or sandy ball flies a little shorter for the same power)
+        static float Speed(World w, float power)
+        {
+            var c = w.Cfg.kicking;
+            return (c.minSpeedYdS + (c.maxSpeedYdS - c.minSpeedYdS) * power) * Weather.KickSpeed(w);
+        }
 
         // The climb (degrees): with FEATURES.kickSweep a field goal's arc rises with its power, else the kind's own.
         public static float Climb(World w, KickKind kind, float power)
@@ -477,7 +482,7 @@ namespace PocketFootball.Sim
                 Wind(w, out float wx, out float wz);
                 float p0 = FieldGoalPower(w, d, c.botFieldGoalClearYd);
                 float climb = Climb(w, kind, p0) * Rad;
-                float t = d / Math.Max(c.minSpeedYdS, Speed(c, p0) * (float)Math.Cos(climb));
+                float t = d / Math.Max(c.minSpeedYdS, Speed(w, p0) * (float)Math.Cos(climb));
                 float push = 0.5f * c.windPush * t * t * c.botWindRead;
                 power = FieldGoalPower(w, Math.Max(0f, d - wx * w.Dir * push), c.botFieldGoalClearYd) + c.botFieldGoalExtraPower;
                 aimDeg = (float)Math.Atan2((fromZ + wz * push) * w.Dir, d) / Rad;
@@ -512,7 +517,7 @@ namespace PocketFootball.Sim
         {
             var c = w.Cfg.kicking;
             float climb = Climb(w, KickKind.FieldGoal, power) * Rad;
-            float v = Speed(c, power), cos = (float)Math.Cos(climb);
+            float v = Speed(w, power), cos = (float)Math.Cos(climb);
             if (v <= 0f || cos <= 0f) return 0f;
             float t = d / (v * cos);
             return c.kickHeightYd + v * (float)Math.Sin(climb) * t - 0.5f * w.Cfg.ball.gravityYdS2 * t * t;

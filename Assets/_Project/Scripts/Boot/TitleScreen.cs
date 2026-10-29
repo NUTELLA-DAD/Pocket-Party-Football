@@ -37,14 +37,17 @@ namespace PocketFootball.Boot
 
         const string VolumeKey = "pp.volume", HelperKey = "pp.";   // (a helper switch saves as pp.<name>: 1 on, 0 off)
         const string AwayKey = "pp.team.away", HomeKey = "pp.team.home";   // FEATURES.teamPick: the two teams' short codes
+        const string WeatherKey = "pp.weather";   // FEATURES.weather: clear, rain, snow or random
         public static readonly string[] HelperNames = { "FLIGHT LINE", "LANDING RING", "TACKLE RING" };   // FlightMarks.Switches, in order
-        // settings rows: 0 sound, then (FEATURES.teamPick, more than two teams) away and home, full screen, the
-        // helpers, back
+        // settings rows: 0 sound, then (FEATURES.teamPick, more than two teams) away and home, (FEATURES.weather) the
+        // weather, full screen, the helpers, back
         int TeamRows => cfg.Feature("teamPick") && TeamPick.League(cfg).Count > 2 ? 2 : 0;
-        int ScreenRow => 1 + TeamRows;
+        int WeatherRow => Weather.On(cfg) ? 1 + TeamRows : -1;
+        int ScreenRow => 1 + TeamRows + (Weather.On(cfg) ? 1 : 0);
         int HelperRow => ScreenRow + 1;
         int SettingsRows => HelperRow + FlightMarks.Switches.Length + 1;
         int away, home;   // the picked teams, as league indexes (saved at once; the game after PLAY wears them)
+        string weatherPick;   // FEATURES.weather: the picked weather (saved at once; the game after PLAY plays in it)
 
         enum Page { Menu, HowTo, Settings, Cup }
         enum Item { Play, Cup, HowTo, Settings }
@@ -99,6 +102,7 @@ namespace PocketFootball.Boot
             t.away = Mathf.Max(0, TeamPick.Find(cfg, cfg.teams.Count > 0 ? cfg.teams[0].@short : null));
             t.home = Mathf.Max(0, TeamPick.Find(cfg, cfg.teams.Count > 1 ? cfg.teams[1].@short : null));
             if (t.home == t.away) t.home = TeamPick.Step(cfg, t.home, t.away, +1);
+            t.weatherPick = PlayerPrefs.GetString(WeatherKey, "clear");
             if (returnPage != null) { startPage = returnPage; returnPage = null; }
             if (startPage == "howto") t.page = Page.HowTo;
             else if (startPage == "settings") t.page = Page.Settings;
@@ -124,6 +128,12 @@ namespace PocketFootball.Boot
             else if (TeamPick.ParsePair(System.Environment.GetEnvironmentVariable("PP_TEAMS"), out string a, out string h)) TeamPick.Apply(cfg, a, h);
             else if (!Application.isBatchMode) TeamPick.Apply(cfg, PlayerPrefs.GetString(AwayKey, ""), PlayerPrefs.GetString(HomeKey, ""));
             if (cfg.teams.Count >= 2) Debug.Log("[title] teams: " + cfg.teams[0].name + " at " + cfg.teams[1].name);
+            // FEATURES.weather: the SETTINGS pick, RANDOM rolled now (PP_WEATHER=clear|rain|snow|random beats it; the
+            // tests keep game.json's)
+            string pick = System.Environment.GetEnvironmentVariable("PP_WEATHER");
+            if (string.IsNullOrEmpty(pick) && !Application.isBatchMode) pick = PlayerPrefs.GetString(WeatherKey, "");
+            if (!string.IsNullOrEmpty(pick)) cfg.weather.now = Weather.Name(Weather.Resolve(cfg, pick, Random.value));
+            if (Weather.On(cfg)) Debug.Log("[title] weather: " + cfg.weather.now + (string.IsNullOrEmpty(pick) ? "" : " (picked " + pick + ")"));
         }
 
         // The lobby screen's pick (FEATURES.lobbyScreen): saved for later runs, like the SETTINGS page, and kept for this
@@ -205,6 +215,12 @@ namespace PocketFootball.Boot
                 if (left || (clickRow && mp.x < rows[0].center.x)) Volume(-1);
                 if (right || ok || (clickRow && mp.x >= rows[0].center.x)) Volume(+1);
             }
+            else if (pick == WeatherRow)
+            {
+                bool clickRow = click && rows[pick].Contains(mp);
+                if (left || (clickRow && mp.x < rows[pick].center.x)) StepWeather(-1);
+                if (right || ok || (clickRow && mp.x >= rows[pick].center.x)) StepWeather(+1);
+            }
             else if (pick >= 1 && pick < ScreenRow)
             {
                 bool clickRow = click && rows[pick].Contains(mp);
@@ -264,6 +280,14 @@ namespace PocketFootball.Boot
             PlayerPrefs.Save();
         }
 
+        // FEATURES.weather: the next or last weather (CLEAR, RAIN, SNOW, RANDOM), saved for the game after PLAY.
+        void StepWeather(int dir)
+        {
+            weatherPick = Weather.Step(weatherPick, dir);
+            PlayerPrefs.SetString(WeatherKey, weatherPick);
+            PlayerPrefs.Save();
+        }
+
         // One helper on or off: saved for every later game (the show game behind the title switches it right away too).
         void Toggle(int i) => ToggleHelper(cfg, i);
 
@@ -316,7 +340,7 @@ namespace PocketFootball.Boot
 
         // ---- the TV ----
         GUIStyle head, body, row, hint, small;
-        readonly Rect[] rows = new Rect[8];
+        readonly Rect[] rows = new Rect[10];
 
         void OnGUI()
         {
@@ -433,18 +457,19 @@ namespace PocketFootball.Boot
                 text[1] = "AWAY   ◄  " + league[away].name + "  ►";
                 text[2] = "HOME   ◄  " + league[home].name + "  ►";
             }
+            if (WeatherRow >= 0) text[WeatherRow] = "WEATHER   ◄  " + (weatherPick ?? "clear").ToUpperInvariant() + "  ►";
             text[ScreenRow] = "FULL SCREEN   " + (Screen.fullScreen ? "ON" : "OFF");
             for (int i = 0; i < HelperNames.Length; i++) text[HelperRow + i] = HelperNames[i] + "   " + (cfg.Feature(FlightMarks.Switches[i]) ? "ON" : "OFF");
             text[text.Length - 1] = "BACK";
-            bool tight = text.Length > 6;   // (the team rows: a little less room each, so all fit above the hint)
-            float rw = Mathf.Min(r.width - 120 * s, 760 * s), rh = (tight ? 62 : 70) * s, gap = (tight ? 10 : 14) * s, y = r.y + 150 * s;
+            bool tight = text.Length > 6, tighter = text.Length > 8;   // (the team and weather rows: a little less room each, so all fit above the hint)
+            float rw = Mathf.Min(r.width - 120 * s, 760 * s), rh = (tighter ? 58 : tight ? 62 : 70) * s, gap = (tighter ? 8 : tight ? 10 : 14) * s, y = r.y + (tighter ? 135 : 150) * s;
             for (int i = 0; i < text.Length; i++)
             {
                 var rr = new Rect((W - rw) * 0.5f, y, rw, rh);
                 rows[i] = rr;
                 bool on = i == pick;
                 Fill(rr, on ? new Color(1f, 0.78f, 0.12f, 1f) : new Color(1f, 1f, 1f, 0.08f));
-                if (i >= 1 && i < ScreenRow)
+                if (i >= 1 && i < 1 + TeamRows)
                 {
                     // the team's two colours, a stripe each at the row's left end
                     var t = league[i == 1 ? away : home];

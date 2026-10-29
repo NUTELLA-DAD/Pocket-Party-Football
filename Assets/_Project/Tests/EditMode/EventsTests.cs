@@ -47,7 +47,7 @@ namespace PocketFootball.Tests.EditMode
         // Kinds a bot game need not fire, each proved by a scripted test below: bots don't juke yet (WS-04 and WS-06
         // give them moves), and since the bigger players (PR #2) the line holds every rush and nobody runs out of
         // bounds, so sacks and out of bounds are left to the bot coach's tuning.
-        static readonly EventKind[] Scripted = { EventKind.Juke, EventKind.Sack, EventKind.OutOfBounds };
+        static readonly EventKind[] Scripted = { EventKind.Juke, EventKind.Sack, EventKind.OutOfBounds, EventKind.Slip };   // (Slip: only in rain or snow, WeatherTests)
 
         [Test]
         public void TenMinuteBotGamesFireEveryKind()

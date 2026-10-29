@@ -135,6 +135,10 @@ namespace PocketFootball.View
             float stripeSoft = v2 ? pp.stripeSoftYd / f.stripeYd : 0f;
             float wash = Mathf.Max(pp.washYd * PxPerYd, 1f), washZ = wash * Mathf.Max(pp.washStretch, 0.01f);
             float sun = Mathf.Max(pp.lightYd * PxPerYd, 1f);
+            // FEATURES.weather: in the snow, snow lies on the grass in patches (weatherLook.snow), under the lines
+            var snow = Weather.Now(cfg) == Sky.Snow ? Weather.Look(cfg) : null;
+            Color snowCol = snow != null ? Colors.Hex(snow.coverColor) : Color.white;
+            float snowPatch = snow != null ? Mathf.Max(snow.coverPatchYd * PxPerYd, 1f) : 1f;
             for (int y = z0; y < z1; y++)
             {
                 float zd = y / (float)PxPerYd - hz;
@@ -158,6 +162,7 @@ namespace PocketFootball.View
                     }
                     // (a lighter dab is a touch warmer, a darker one a touch cooler)
                     p.Px[y * w + x] = new Color(c.r * (1 + n + olive + v * 1.25f), c.g * (1 + n + v), c.b * (1 + n + v * 0.5f - olive * 0.5f), 1f);
+                    if (snow != null) p.Px[y * w + x] = SnowOn(p.Px[y * w + x], snow, snowCol, x / snowPatch, y / (snowPatch * pp.washStretch), n);
                 }
             }
 
@@ -214,6 +219,17 @@ namespace PocketFootball.View
                 CentreMark(p, TeamMarks.For(home), new Vector2(px(0), pz(0)), pp.logoWidthYd * PxPerYd, pp.logoHeightYd * PxPerYd, light, dark, pp.logoSplit, pp.logoAlpha);
             }
             return p.ToTexture("FieldPaint");
+        }
+
+        // A pixel of grass with snow on it: two sizes of soft noise, over (1 - cover) is snow, its edge coverEdge sharp;
+        // the snow keeps a little of the grass's shading (n).
+        static Color SnowOn(Color grass, WeatherSkyLook snow, Color snowCol, float x, float y, float n)
+        {
+            float b = Blotch(x + 13.7f, y + 2.1f) * 0.7f + Blotch(x * 3.3f + 5.2f, y * 3.3f + 8.8f) * 0.3f;
+            float k = Mathf.Clamp01(0.5f + (b - (1f - snow.cover)) * snow.coverEdge);
+            var lying = snowCol * (1f + n * 0.6f);
+            lying.a = 1f;
+            return Color.Lerp(grass, lying, k);
         }
 
         // Which stripe colour at s stripes from the goal line: 0 or 1, blended over `edge` stripes either side of a
