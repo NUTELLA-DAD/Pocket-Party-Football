@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace PocketFootball.Sim
 {
     // Where each formation spot stands on the field, from the line of scrimmage and the offense's direction.
@@ -5,9 +7,61 @@ namespace PocketFootball.Sim
     // the right one each time the team lines up. A person's own picks (Player.OffenseSpot / DefenseSpot) win; everyone
     // else on the team (bots, people who have not picked) keeps the spot they have and only moves off a picked one.
     // With no picks nobody ever moves, so every game without a lobby (bot games, tests) is the same with it on or off.
+    //
+    // FEATURES.formations (NO_FORMATIONS=1): each play names a formation (formation.sets in game.json). In the huddle
+    // everyone stands in the base line-up; once the calls are in (Phase.Set) each team lines up in its play's formation,
+    // and an audible shifts the team into the new play's one. Spot order (who is who) never changes, only where they stand.
     public static class Formation
     {
         public static bool TwoWay(World w) => w.Cfg.Feature("lobby");
+
+        public static bool SetsOn(World w) => w.Cfg.Feature("formations");
+
+        // Where the team's spots are right now: the called play's formation at the line, else the base line-up.
+        public static List<SpotConfig> SpotsOf(World w, int team)
+        {
+            bool offense = team == w.Offense;
+            var baseSpots = offense ? w.Cfg.formation.offense : w.Cfg.formation.defense;
+            if (!SetsOn(w) || w.Phase == Phase.Huddle || team < 0 || team >= w.Calls.Length || w.Calls[team] == null) return baseSpots;
+            return For(w.Cfg, Huddle.Find(w, w.Calls[team]), offense) ?? baseSpots;
+        }
+
+        // The play's formation as full spots, or null (no formation, an unknown one, the wrong side or the wrong count).
+        public static List<SpotConfig> For(GameConfig cfg, PlayConfig play, bool offense)
+        {
+            if (play == null || string.IsNullOrEmpty(play.formation)) return null;
+            if (!cfg.formation.sets.TryGetValue(play.formation, out var set) || set.side != (offense ? "offense" : "defense")) return null;
+            if (set.Built != null) return set.Built;
+            var baseSpots = offense ? cfg.formation.offense : cfg.formation.defense;
+            if (set.spots.Count != baseSpots.Count) return null;
+            var built = new List<SpotConfig>();
+            for (int i = 0; i < baseSpots.Count; i++)
+            {
+                var b = baseSpots[i];
+                var at = set.spots[i];
+                built.Add(new SpotConfig { pos = b.pos, number = b.number, back = at.Length > 0 ? at[0] : b.back, z = at.Length > 1 ? at[1] : b.z });
+            }
+            set.Built = built;
+            return built;
+        }
+
+        // An audible changed the team's call at the line: the team shifts into the new play's formation.
+        public static void Shift(World w, int team)
+        {
+            if (!SetsOn(w)) return;
+            foreach (var p in w.Players)
+            {
+                if (p.Team != team) continue;
+                Place(w, p);
+                p.X = p.HomeX; p.Z = p.HomeZ; p.VX = p.VZ = 0;
+                p.GoalX = p.X; p.GoalZ = p.Z;
+            }
+            if (team != w.Offense) return;
+            // the ball back to the QB, and a punt or field goal line-up is redone next tick (Kicking.Align)
+            w.Ball.Reset();
+            foreach (var p in w.Players) if (p.Team == team && p.Spot == 0) w.Ball.GiveTo(p, w.Cfg.ball);
+            w.Kick.Placed = false;
+        }
 
         public static void Place(World w, Player p)
         {

@@ -15,8 +15,16 @@ const OFF = [['QB', 15, 5, 0], ['RB', 21, 7, 0], ['WR', 11, 0, -20], ['WR', 17, 
 const DEF = [['MLB', 54, 5, 0], ['CB', 24, 6, -19], ['CB', 22, 6, 19], ['S', 31, 12, -9], ['S', 33, 12, 9], ['LB', 50, 5, -4.5],
              ['LB', 52, 5, 4.5], ['DL', 90, 1, -1], ['DL', 92, 1, 1], ['DL', 94, 1, -3.5], ['DL', 96, 1, 3.5]]
   .map(([pos, number, back, z]) => ({ pos, number, ahead: back, z }));
+// FEATURES.formations: each card carries its own line-up, as Messages.Play sends it (pos and number from the base list)
+const SETS = JSON.parse(fs.readFileSync(path.join(PLAYS, '..', 'game.json'), 'utf8')).formation.sets || {};
+function withSpots(p) {
+  const set = SETS[p.formation], base = p.side === 'offense' ? OFF : DEF;
+  if (!set || set.side !== p.side || set.spots.length !== base.length) return p;
+  const spots = set.spots.map(([back, z], i) => ({ pos: base[i].pos, number: base[i].number, ahead: p.side === 'offense' ? -back : back, z }));
+  return Object.assign({}, p, { spots, formationName: set.name });
+}
 const all = fs.readdirSync(PLAYS).filter(f => f.endsWith('.json') && f !== 'boot.json')
-  .map(f => JSON.parse(fs.readFileSync(path.join(PLAYS, f), 'utf8')));
+  .map(f => withSpots(JSON.parse(fs.readFileSync(path.join(PLAYS, f), 'utf8'))));
 const ME = { offense: 2, defense: 1 };   // a wide receiver; a cornerback
 
 (async () => {
@@ -84,7 +92,7 @@ const ME = { offense: 2, defense: 1 };   // a wide receiver; a cornerback
       }
       ok(seen === plays.length, tag + ' ' + side + ': ' + seen + ' of ' + plays.length + ' plays on the tabs');
       await page.screenshot({ path: path.join(SHOTS, 'playbook-' + tag + '-huddle-' + side + '.png') });
-      send({ t: 'job', side, play: plays[0], spots, opp, me });
+      send({ t: 'job', side, play: plays[0], spots: plays[0].spots || spots, opp, me });
       send({ t: 'ui', layout: 'wait', aid: 'r1' });   // the job card shows before the snap
       await page.waitForTimeout(80);
       await page.screenshot({ path: path.join(SHOTS, 'playbook-' + tag + '-job-' + side + '.png') });

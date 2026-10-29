@@ -25,6 +25,7 @@ foreach ($f in $Fixtures) {
         'title_roster'    { @('-title','-title-page','roster') }
         'title_roster_lb' { @('-title','-title-page','roster:4:GRN') }
         'lobby'           { @('-lobby') }
+        { $_ -like 'formation_*' } { @('-formation-demo', (($f -replace '^formation_', '') -replace '-', ':')) }   # formation_dive-goalline
         'lobby_hotspot'   { @('-lobby') }
         'title_hotspot'   { @('-title','-title-page','hotspot') }
         default           { }

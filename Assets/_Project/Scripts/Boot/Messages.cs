@@ -68,7 +68,7 @@ namespace PocketFootball.Boot
         public static string HuddleFor(World w, int team, Player me)
         {
             var plays = new JArray();
-            foreach (var p in Huddle.Playbook(w, team)) plays.Add(Play(p));
+            foreach (var p in Huddle.Playbook(w, team)) plays.Add(Play(w, team, p));
             var caller = Huddle.Caller(w, team);
             w.Suggestions.TryGetValue(me.Slot, out var mine);
             return PhoneProtocol.Text(new JObject
@@ -95,14 +95,25 @@ namespace PocketFootball.Boot
             if (play == null) return null;
             return PhoneProtocol.Text(new JObject
             {
-                ["t"] = "job", ["side"] = Huddle.SideOf(w, team), ["play"] = Play(play),
+                ["t"] = "job", ["side"] = Huddle.SideOf(w, team), ["play"] = Play(w, team, play),
                 ["spots"] = Spots(w, team), ["opp"] = Spots(w, Other(w, team)), ["me"] = me.Spot,
             });
         }
 
         static int Other(World w, int team) => team == w.Offense ? w.Defense : w.Offense;
 
-        static JObject Play(PlayConfig p) => JObject.FromObject(p);
+        // FEATURES.formations: each card carries where the team lines up for it ("spots", the same frame as Spots below)
+        // and the formation's name, so the playbook picture is the line-up the TV will show.
+        static JObject Play(World w, int team, PlayConfig p)
+        {
+            var o = JObject.FromObject(p);
+            bool offense = team == w.Offense;
+            var set = Formation.SetsOn(w) ? Formation.For(w.Cfg, p, offense) : null;
+            if (set == null) { o.Remove("formation"); return o; }
+            o["spots"] = SpotsJson(set, offense);
+            o["formationName"] = w.Cfg.formation.sets[p.formation].name ?? "";
+            return o;
+        }
 
         static JObject Counts(World w, int team)
         {
@@ -112,11 +123,12 @@ namespace PocketFootball.Boot
         }
 
         // The team's formation in the play frame: [ahead, z] from the ball, ahead = the offense's direction.
-        static JArray Spots(World w, int team)
+        static JArray Spots(World w, int team) => SpotsJson(w.Spots(team), team == w.Offense);
+
+        static JArray SpotsJson(System.Collections.Generic.List<SpotConfig> spots, bool offense)
         {
             var a = new JArray();
-            bool offense = team == w.Offense;
-            foreach (var s in w.Spots(team))
+            foreach (var s in spots)
                 a.Add(new JObject { ["pos"] = s.pos, ["number"] = s.number, ["ahead"] = offense ? -s.back : s.back, ["z"] = s.z });
             return a;
         }

@@ -111,6 +111,16 @@ namespace PocketFootball.Sim
         public int offenseTeam;
         public List<SpotConfig> offense = new List<SpotConfig>();
         public List<SpotConfig> defense = new List<SpotConfig>();
+        public SortedDictionary<string, FormationSetConfig> sets = new SortedDictionary<string, FormationSetConfig>();   // FEATURES.formations
+    }
+
+    // A named formation (FEATURES.formations): a play's "formation" picks one. spots: [back, z] per formation spot, in
+    // the same order as formation.offense / defense (who is who stays the same; only where they stand changes).
+    public sealed class FormationSetConfig
+    {
+        public string name, side;
+        public List<float[]> spots = new List<float[]>();
+        internal List<SpotConfig> Built;    // the spots with pos and number filled in from the base list (Formation.SpotsOf)
     }
 
     // The ball flies in 3D: Y is height in yards. A pass lands at catchHeightYd.
@@ -160,6 +170,7 @@ namespace PocketFootball.Sim
     public sealed class PlayConfig
     {
         public string id, name, side, desc;
+        public string formation;            // FEATURES.formations: a formation.sets id; none = the base line-up
         public int runner = -1;
         public List<JobConfig> jobs = new List<JobConfig>();
     }
