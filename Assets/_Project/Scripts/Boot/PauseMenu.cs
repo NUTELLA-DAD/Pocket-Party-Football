@@ -12,6 +12,7 @@ namespace PocketFootball.Boot
     // Esc again (or CONTINUE) carries on where it stopped. The keyboard or the mouse only: a pad's START joins the game
     // and its buttons play, so the pads never open it. Not in the lab (P pauses there), nor in tool runs.
     // The look is the title's pages: a navy panel with gold edges, the highlighted row gold, in the game's lettering.
+    // FEATURES.pauseQr: the join QR code sits in a card beside it (the game screen no longer shows it).
     public sealed class PauseMenu : MonoBehaviour
     {
         public static PauseMenu Instance { get; private set; }
@@ -188,10 +189,27 @@ namespace PocketFootball.Boot
                 pick = menu.Pick;
             }
 
-            // the panel: as tall as its rows
+            // the panel: as tall as its rows. FEATURES.pauseQr: the join card stands to its right, the pair centred.
+            bool qrCard = host != null && PauseMenuModel.QrInMenu(cfg, true);
+            // FEATURES.hotspotQr: with a hotspot saved, its NO WI-FI? card stands right of the join card
+            var hotspot = qrCard && HotspotJoin.Instance != null && HotspotJoin.Instance.Shown ? HotspotJoin.Instance : null;
+            float qr = cfg.view.pauseQrPx * s, cpad = 28 * s, cgap = qrCard ? 36 * s : 0f;
+            float one = qr + 2 * cpad, cw = qrCard ? one + (hotspot != null ? cgap * 0.5f + one : 0f) : 0f;
             float rh = 70 * s, gap = 14 * s, top = 130 * s, bottom = 100 * s;
-            float pw = Mathf.Min(W - 64 * s, 900 * s), ph = top + text.Length * (rh + gap) - gap + bottom;
-            var r = new Rect((W - pw) * 0.5f, (H - ph) * 0.5f, pw, ph);
+            float pw = Mathf.Min(W - 64 * s - cw - cgap, 900 * s), ph = top + text.Length * (rh + gap) - gap + bottom;
+            var r = new Rect((W - pw - cgap - cw) * 0.5f, (H - ph) * 0.5f, pw, ph);
+            if (qrCard)
+            {
+                var jc = JoinCard(new Rect(r.xMax + cgap, 0f, one, 0f), qr, cpad, H, s, hotspot != null);
+                if (hotspot != null)
+                {
+                    var hc = new Rect(jc.xMax + cgap * 0.5f, jc.y, one, jc.height);
+                    Fill(hc, CupColors.Navy);
+                    Fill(new Rect(hc.x, hc.y, hc.width, 6 * s), CupColors.Gold);
+                    Fill(new Rect(hc.x, hc.yMax - 6 * s, hc.width, 6 * s), CupColors.Gold);
+                    hotspot.DrawCard(hc, s, qr, CupColors.GoldText, new Color(0.66f, 0.72f, 0.89f, 1f));
+                }
+            }
             Fill(r, CupColors.Navy);
             Fill(new Rect(r.x, r.y, r.width, 6 * s), CupColors.Gold);
             Fill(new Rect(r.x, r.yMax - 6 * s, r.width, 6 * s), CupColors.Gold);
@@ -201,7 +219,7 @@ namespace PocketFootball.Boot
             for (int i = 0; i < rows.Length; i++) rows[i] = Rect.zero;
             for (int i = 0; i < text.Length; i++)
             {
-                var rr = new Rect((W - rw) * 0.5f, y, rw, rh);
+                var rr = new Rect(r.x + (r.width - rw) * 0.5f, y, rw, rh);
                 rows[i] = rr;
                 bool on = i == pick;
                 Fill(rr, on ? CupColors.Gold : new Color(1f, 1f, 1f, 0.08f));
@@ -211,6 +229,30 @@ namespace PocketFootball.Boot
             }
             Shadowed(new Rect(r.x + 24 * s, r.yMax - 76 * s, r.width - 48 * s, 56 * s),
                 settings ? "Up / Down to pick, Left / Right to change, Esc to go back" : "Up / Down to pick, Enter or click to press, Esc to carry on", hint);
+        }
+
+        // the join card: the QR code on white, the address and room code under it, navy with gold edges like the panel.
+        // (The game screen no longer shows it, so a late joiner presses Esc and scans.)
+        GUIStyle cardHead, cardText;
+        // (sameWifi: the hotspot card stands beside it, so this one says it needs the TV's Wi-Fi.) Returns the card.
+        Rect JoinCard(Rect at, float qr, float pad, float H, float s, bool sameWifi)
+        {
+            cardHead ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, richText = true };
+            cardText ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.UpperCenter, richText = true, wordWrap = true };
+            cardHead.fontSize = Mathf.RoundToInt(36 * s);
+            cardText.fontSize = Mathf.RoundToInt(26 * s);
+            cardText.normal.textColor = Color.white;
+            float headH = 70 * s, textH = 190 * s, ch = pad + headH + qr + 16 * s + textH + pad;
+            var c = new Rect(at.x, (H - ch) * 0.5f, at.width, ch);
+            Fill(c, CupColors.Navy);
+            Fill(new Rect(c.x, c.y, c.width, 6 * s), CupColors.Gold);
+            Fill(new Rect(c.x, c.yMax - 6 * s, c.width, 6 * s), CupColors.Gold);
+            UiFont.Toon(new Rect(c.x, c.y + pad, c.width, headH), sameWifi ? "SAME WI-FI?" : "JOIN THE GAME", cardHead, CupColors.GoldText, UiFont.On ? 2f * s : 0f);
+            var q = new Rect(c.x + pad, c.y + pad + headH, qr, qr);
+            Fill(new Rect(q.x - 8 * s, q.y - 8 * s, qr + 16 * s, qr + 16 * s), Color.white);
+            if (host.Qr != null) GUI.DrawTexture(q, host.Qr);
+            GUI.Label(new Rect(c.x + pad, q.yMax + 16 * s, qr, textH), host.JoinText(s), cardText);
+            return c;
         }
 
         void Fill(Rect r, Color c)

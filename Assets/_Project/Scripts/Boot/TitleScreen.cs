@@ -41,16 +41,17 @@ namespace PocketFootball.Boot
         const string WeatherKey = "pp.weather";   // FEATURES.weather: clear, rain, snow or random
         public static readonly string[] HelperNames = { "FLIGHT LINE", "LANDING RING", "TACKLE RING" };   // FlightMarks.Switches, in order
         // settings rows: 0 sound, then (FEATURES.teamPick, more than two teams) away and home, (FEATURES.weather) the
-        // weather, full screen, the helpers, back
+        // weather, full screen, the helpers, (FEATURES.hotspotQr) the hotspot, back
         int TeamRows => cfg.Feature("teamPick") && TeamPick.League(cfg).Count > 2 ? 2 : 0;
         int WeatherRow => Weather.On(cfg) ? 1 + TeamRows : -1;
         int ScreenRow => 1 + TeamRows + (Weather.On(cfg) ? 1 : 0);
         int HelperRow => ScreenRow + 1;
-        int SettingsRows => HelperRow + FlightMarks.Switches.Length + 1;
+        int HotspotRow => HotspotJoin.On(cfg) ? HelperRow + FlightMarks.Switches.Length : -1;
+        int SettingsRows => HelperRow + FlightMarks.Switches.Length + (HotspotRow >= 0 ? 1 : 0) + 1;
         int away, home;   // the picked teams, as league indexes (saved at once; the game after PLAY wears them)
         string weatherPick;   // FEATURES.weather: the picked weather (saved at once; the game after PLAY plays in it)
 
-        enum Page { Menu, HowTo, Settings, Cup, Roster }
+        enum Page { Menu, HowTo, Settings, Cup, Roster, Hotspot }
         enum Item { Play, Cup, HowTo, Settings, Roster }
 
         GameConfig cfg;
@@ -112,6 +113,7 @@ namespace PocketFootball.Boot
             if (returnPage != null) { startPage = returnPage; returnPage = null; }
             if (startPage == "howto") t.page = Page.HowTo;
             else if (startPage == "settings") t.page = Page.Settings;
+            else if (startPage == "hotspot" && HotspotJoin.On(cfg)) t.OpenHotspot();
             else if (startPage == "cup" && System.Array.IndexOf(t.items, Item.Cup) >= 0) { t.page = Page.Cup; t.cup = CupHost.Load(cfg); }
             else if (startPage != null && startPage.StartsWith("roster") && System.Array.IndexOf(t.items, Item.Roster) >= 0) t.OpenRoster(startPage);
             Instance = t;
@@ -166,6 +168,7 @@ namespace PocketFootball.Boot
                 if (fadeT >= cfg.title.fadeS) StartGame();
                 return;
             }
+            if (page == Page.Hotspot) { HotspotInput(); return; }   // (typing: the letter keys don't move the highlight)
             var kb = Keyboard.current;
             var pad = Gamepad.current;
             bool up = (kb != null && (kb.upArrowKey.wasPressedThisFrame || kb.wKey.wasPressedThisFrame)) || (pad != null && (pad.dpad.up.wasPressedThisFrame || pad.leftStick.up.wasPressedThisFrame));
@@ -240,7 +243,8 @@ namespace PocketFootball.Boot
                 if (right || ok || (clickRow && mp.x >= rows[pick].center.x)) PickTeam(pick == 1, +1);
             }
             else if (pick == ScreenRow && (ok || left || right || (click && rows[pick].Contains(mp)))) Screen.fullScreen = !Screen.fullScreen;
-            else if (pick >= HelperRow && pick < rowsN - 1 && (ok || left || right || (click && rows[pick].Contains(mp)))) Toggle(pick - HelperRow);
+            else if (pick == HotspotRow && (ok || (click && rows[pick].Contains(mp)))) OpenHotspot();
+            else if (pick >= HelperRow && pick < HelperRow + FlightMarks.Switches.Length && (ok || left || right || (click && rows[pick].Contains(mp)))) Toggle(pick - HelperRow);
             else if (pick == rowsN - 1 && (ok || (click && rows[rowsN - 1].Contains(mp)))) Open(Page.Menu);
         }
 
@@ -355,7 +359,7 @@ namespace PocketFootball.Boot
 
         // ---- the TV ----
         GUIStyle head, body, row, hint, small;
-        readonly Rect[] rows = new Rect[10];
+        readonly Rect[] rows = new Rect[12];
 
         void OnGUI()
         {
@@ -380,6 +384,7 @@ namespace PocketFootball.Boot
             else if (page == Page.HowTo) DrawHowTo(W, H, s);
             else if (page == Page.Cup) DrawCup(W, H, s);
             else if (page == Page.Roster) DrawRoster(W, H, s);
+            else if (page == Page.Hotspot) DrawHotspot(W, H, s);
             else DrawSettings(W, H, s);
 
             if (fadeT >= 0f)
@@ -439,7 +444,7 @@ namespace PocketFootball.Boot
 
         static readonly string[] HowTo =
         {
-            "<b>1. Join.</b> Press PLAY. Everyone scans the QR code on the TV with their phone (same Wi-Fi as the TV).",
+            "<b>1. Join.</b> Press PLAY. Everyone scans the QR code on the TV with their phone (same Wi-Fi as the TV). No Wi-Fi? Turn on this PC's Mobile hotspot and set it up under SETTINGS > HOTSPOT WI-FI.",
             "<b>2. Pick a side.</b> The two teams on the TV (change them with the arrows on the join screen or under SETTINGS, or play through the POCKET CUP). Bots play every spot nobody took.",
             "<b>3. Lobby.</b> Pick your offense spot and your defense spot. Any phone taps KICK OFF to start.",
             "<b>4. Huddle.</b> Call a play on your phone in secret. The TV only shows CALLED, never which play.",
@@ -476,6 +481,7 @@ namespace PocketFootball.Boot
             if (WeatherRow >= 0) text[WeatherRow] = "WEATHER   ◄  " + (weatherPick ?? "clear").ToUpperInvariant() + "  ►";
             text[ScreenRow] = "FULL SCREEN   " + (Screen.fullScreen ? "ON" : "OFF");
             for (int i = 0; i < HelperNames.Length; i++) text[HelperRow + i] = HelperNames[i] + "   " + (cfg.Feature(FlightMarks.Switches[i]) ? "ON" : "OFF");
+            if (HotspotRow >= 0) text[HotspotRow] = "HOTSPOT WI-FI   " + (HotspotJoin.SavedName.Trim().Length > 0 ? HotspotJoin.SavedName.Trim() : "OFF");
             text[text.Length - 1] = "BACK";
             bool tight = text.Length > 6, tighter = text.Length > 8;   // (the team and weather rows: a little less room each, so all fit above the hint)
             float rw = Mathf.Min(r.width - 120 * s, 760 * s), rh = (tighter ? 58 : tight ? 62 : 70) * s, gap = (tighter ? 8 : tight ? 10 : 14) * s, y = r.y + (tighter ? 135 : 150) * s;

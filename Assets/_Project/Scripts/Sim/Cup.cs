@@ -60,6 +60,19 @@ namespace PocketFootball.Sim
             return o.ToArray();
         }
 
+        // A team that joined the league after the draw takes the next empty slot as the lowest seed, so the top seed
+        // it was a bye for now has a game. Only while that bye's winner hasn't played the next round; returns false
+        // (and changes nothing) when the team is already in, the bracket is full, or that slot's game is past.
+        public bool AddTeam(string code)
+        {
+            if (string.IsNullOrEmpty(code) || SeedOf(code) > 0 || Seeds.Count >= Size) return false;
+            int seed = Seeds.Count + 1, slot = System.Array.IndexOf(order, seed), match = slot >> 1;
+            if (won[0][match] != null) return false;
+            if (Rounds > 1 && won[1][match >> 1] != null) return false;
+            Seeds.Add(code);
+            return true;
+        }
+
         public int Matches(int round) => round >= 0 && round < Rounds ? won[round].Length : 0;
 
         // 1 for the best seed, 0 for a code not in the cup.
