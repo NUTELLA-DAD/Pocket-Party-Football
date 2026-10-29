@@ -19,7 +19,7 @@ namespace PocketFootball.Sim
         // scaled by play.throwMaxYards from the QB. Arc: 0 = flat bullet .. 1 = high lob.
         public bool ThrowAt;
         public float AimX, AimZ, Arc;
-        public float DriveX, DriveZ;   // FEATURES.driveBlock: the drive stick while BLOCK is held, in the MoveX / MoveZ frame (DriveBlock.cs)
+        public float DriveX, DriveZ;   // FEATURES.driveBlock / driveRush: the drive stick while BLOCK or BULL RUSH is held, in the MoveX / MoveZ frame (DriveBlock.cs, DriveRush.cs)
     }
 
     public sealed class Player
@@ -99,6 +99,7 @@ namespace PocketFootball.Sim
         public readonly CatchNote CatchNote = new CatchNote();   // FEATURES.catchPlay: the last catch try, for the TV (CatchPlay.cs); not hashed
         public readonly Pursuit.Plan ChasePlan = new Pursuit.Plan();   // FEATURES.pursuitLanes: this tick's chase (Pursuit.cs); not hashed, rebuilt every tick
         public readonly DriveBlock.State Drive = new DriveBlock.State();   // FEATURES.driveBlock: this tick's shoves, for the TV (DriveBlock.cs); not hashed
+        public readonly DriveRush.State Rush = new DriveRush.State();      // FEATURES.driveRush: the rushers' shoves this tick, for the TV (DriveRush.cs); not hashed
 
         public World(GameConfig cfg, int seed)
         {
@@ -247,6 +248,7 @@ namespace PocketFootball.Sim
             Mover.Bump(this);
             Blocking.Step(this);
             DriveBlock.Step(this, inputs);   // FEATURES.driveBlock: a person holding BLOCK shoves his man with the drive stick
+            DriveRush.Step(this, inputs);    // FEATURES.driveRush: a person held up shoves his blocker with the BULL RUSH stick
             Mover.Bounds(this);
             Mover.Onside(this);   // FEATURES.stayOnside: no person past the line before the snap
             Ball.Step(this, dt);

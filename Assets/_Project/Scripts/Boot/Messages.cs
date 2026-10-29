@@ -44,7 +44,7 @@ namespace PocketFootball.Boot
             if (receivers != null) o["receivers"] = receivers;
             if (line != null) o["line"] = line;
             if (throwStick) o["throwStick"] = true;   // the QB's aim-and-throw stick (FEATURES.throwStick)
-            if (driveStick) o["driveStick"] = true;   // the lineman's BLOCK button is a drive stick (FEATURES.driveBlock)
+            if (driveStick) o["driveStick"] = true;   // the lineman's BLOCK (FEATURES.driveBlock) or BULL RUSH (FEATURES.driveRush) button is a drive stick
             return PhoneProtocol.Text(o);
         }
 

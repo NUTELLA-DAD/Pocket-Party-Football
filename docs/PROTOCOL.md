@@ -118,8 +118,8 @@ Actions the page already sends but the game ignores (reserved for the workstream
 ### `kick`
 `{power: 0..1, aim: -1..1, aid}`. Sent by the kick meter (`kick.js`) or the `kick` layout's pad in `layouts.js`; only the kicker's, with the aid of the screen on show (`Boot/KickPhones.cs`). On a field goal with `FEATURES.kickSweep` it is the second tap: the aim set by `kickaim` stands.
 
-### `drive` (`FEATURES.driveBlock`)
-`{x: -1..1, y: -1..1, aid}`, x right and y down like `stick`. The lineman's BLOCK stick (`driveblock.js`, on the `block` layout when `ui` carries `driveStick`): streamed about 20 times a second while it is held, and once more as `0, 0` on release, just before the `btn` `block` release. It only counts while `block` is held (`PhoneSource.OnDrive`); the man that player has held up is shoved that way (`Sim/DriveBlock.cs`). Same aid guard as the buttons. Nothing goes back to any phone.
+### `drive` (`FEATURES.driveBlock`, `FEATURES.driveRush`)
+`{x: -1..1, y: -1..1, aid}`, x right and y down like `stick`. The lineman's BLOCK stick (`driveblock.js`, on the `block` layout when `ui` carries `driveStick`): streamed about 20 times a second while it is held, and once more as `0, 0` on release, just before the `btn` `block` release. It only counts while `block` is held (`PhoneSource.OnDrive`); the man that player has held up is shoved that way (`Sim/DriveBlock.cs`). With `FEATURES.driveRush` the defender's BULL RUSH stick (the `rush` layout with `driveStick`) sends the same messages around the `btn` `bull` press and release: while `bull` is held, the blocker who has that player held up is shoved that way (`Sim/DriveRush.cs`). Same aid guard as the buttons. Nothing goes back to any phone.
 
 ### `kickaim` (`FEATURES.kickSweep`)
 `{aim: -1..1, aid}`. A field goal's first tap: the aim the phone's sweeping arrow showed (the kicker's left is -1). It snaps the ball to the holder. Only the kicker, only while lined up (`Kicking.SetAim`).
@@ -153,7 +153,7 @@ Which screen to show.
 | `layout` | `pick`, `huddle`, `walk`, or one of the play layouts `qbpre qb carrier route block rush lb cover wait`, `kick` (the kicker) or `hold` (a field goal's holder, `FEATURES.fgHolder`) (see `PhoneLayouts.cs`). |
 | `aid` | A new id every time (`<layout><counter>`). Presses must echo it. |
 | `receivers` | `qb` only: `[{shape, label}]` in throw order. `shape` comes from `game.json` `play.shapes`, `label` like `WR #11`. |
-| `driveStick` | `block` only, `FEATURES.driveBlock`: draw the BLOCK button as a stick that also sends `drive`. |
+| `driveStick` | `block` (`FEATURES.driveBlock`) and `rush` (`FEATURES.driveRush`) only: draw the BLOCK or BULL RUSH button as a stick that also sends `drive`. |
 | `line` | `wait` during the whistle only: what happened, for example `Tackled! Back to the huddle...`. |
 
 ### `kickmeter` (the kicker's phone only, WS-01)
