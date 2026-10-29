@@ -163,10 +163,12 @@ namespace PocketFootball.Tests.EditMode
             for (int seed = 1; seed <= 6; seed++)
             {
                 var w = WorldTests.Full(BotCoachTests.On(), seed);
+                int seen = w.CatchNote.Tick;
                 for (int i = 0; i < 10 * 60 * w.Cfg.sim.tickHz; i++)
                 {
                     w.Step(null);
-                    if (w.CatchNote.Tick != w.Tick) continue;
+                    if (w.CatchNote.Tick == seen) continue;   // (a try is stamped with its own tick, before World.Step moves Tick on)
+                    seen = w.CatchNote.Tick;
                     tried[w.CatchNote.Style]++;
                     if (w.CatchNote.Caught) made[w.CatchNote.Style]++;
                 }
