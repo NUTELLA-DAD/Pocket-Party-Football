@@ -69,6 +69,23 @@ namespace PocketFootball.View
 
         public FootballFigure Figure(int slot) => bodies.TryGetValue(slot, out var f) ? f : null;
 
+        // FEATURES.breakdown (NO_BREAKDOWN=1): how far a defender closing on the ball carrier has gathered himself for the
+        // tackle, 0..1: none from anim.gatherFromYd away, all of it at gatherToYd; a man coming from behind the carrier
+        // runs on through (none past gatherBehindCos behind his way, eased in from there to square on his side).
+        public static float Breakdown(World w, Player p, GameConfig cfg)
+        {
+            if (!cfg.Feature("breakdown") || w.Phase != Phase.Live || w.Ball.State != BallState.Held || w.Ball.Carrier == p.Slot) return 0f;
+            var c = w.Find(w.Ball.Carrier);
+            if (c == null || c.Team == p.Team) return 0f;
+            var a = cfg.anim;
+            float dx = p.X - c.X, dz = p.Z - c.Z, d = Mathf.Sqrt(dx * dx + dz * dz);
+            if (d >= a.gatherFromYd || d <= 0f) return 0f;
+            float g = Mathf.Clamp01((a.gatherFromYd - d) / Mathf.Max(0.01f, a.gatherFromYd - a.gatherToYd));
+            float cs = Mathf.Sqrt(c.VX * c.VX + c.VZ * c.VZ);
+            if (cs > 1f && a.gatherBehindCos > 0f) g *= Mathf.Clamp01(((dx * c.VX + dz * c.VZ) / (d * cs) + a.gatherBehindCos) / a.gatherBehindCos);
+            return g;
+        }
+
         // The facing and lean state a player's figure carries (FEATURES.momentumLean), for the motion reel.
         public bool MomentumOf(int slot, out MomentumState s) => carry.TryGetValue(slot, out s);
         // FEATURES.strideCycle: where a man is in his stride (0..1, the left foot down at 0), -1 if he hasn't run yet
@@ -101,7 +118,9 @@ namespace PocketFootball.View
             {
                 var fig = Body(w, p);
                 var move = PoseOverride.ContainsKey(p.Slot) ? default : Moves.Of(w, p);
-                bool down = move.Kind == Move.Tackle || move.Kind == Move.Tackled;
+                // (FEATURES.catchPlay: a tangled pair go down like a tackle, apart and facing off each other; on his run's
+                // facing the catcher fell on his face straight through the other man)
+                bool down = move.Kind == Move.Tackle || move.Kind == Move.Tackled || move.Kind == Move.Tangle;
                 Vector2 now = new Vector2(p.X, p.Z);
                 Vector2 was = prev.TryGetValue(p.Slot, out var v) ? v : now;
                 Vector2 at = Vector2.Lerp(was, now, alpha);
@@ -162,12 +181,12 @@ namespace PocketFootball.View
                 else
                 {
                     downStart.Remove(p.Slot);
-                    pos.y += DefenseMovesView.LiftYd(w, p) * yd;   // a defender's JUMP leaves the grass
+                    pos.y += (DefenseMovesView.LiftYd(w, p) + Moves.LiftYd(w, p.Slot)) * yd;   // a defender's JUMP, a jump ball (FEATURES.catchPlay) leave the grass
                 }
                 t.localPosition = pos;
                 t.localRotation = Quaternion.Euler(0f, yaw, 0f);
                 fig.Carry(0f, 0f, 0f, 0f, 0f);
-                fig.Stride(false, default); fig.Settle(0f);
+                fig.Stride(false, default); fig.Settle(0f); fig.Gather(0f, null);
 
                 if (PoseOverride.TryGetValue(p.Slot, out var held)) { fig.Idle(0f, 0f); fig.Pose(held, PoseFrameOverride.TryGetValue(p.Slot, out int hf) ? hf : 0); continue; }
                 travelled[p.Slot] = (travelled.TryGetValue(p.Slot, out float d) ? d : 0f) + moved;
@@ -212,18 +231,23 @@ namespace PocketFootball.View
                     if (move.Kind == Move.None && speed <= 0.5f && plant > 0f)
                     { fig.Idle(0f, 0f); fig.Pose(carrier ? FootballFigure.PoseKind.Carry : FootballFigure.PoseKind.Run, frame); continue; }
                 }
+                // FEATURES.breakdown: closing on the ball carrier, he gathers himself for the tackle
+                float gather = free ? Breakdown(w, p, cfg) : 0f;
+                fig.Gather(gather, cfg.anim);
                 // the stride (FEATURES.strideCycle): its phase moves with the distance run (held through a plant)
                 if (striding)
                 {
-                    phase = Stride.Advance(phase, cfg.anim, cfg.players, speed, strideMoved / yd);
+                    // (breaking down: short choppy steps, a jog's stride at his speed)
+                    float gait = gather > 0f ? Mathf.Lerp(speed, Mathf.Min(speed, cfg.anim.gatherGaitYdS), gather) : speed;
+                    phase = Stride.Advance(phase, cfg.anim, cfg.players, gait, strideMoved / yd);
                     stridePhase[p.Slot] = phase;
                     // braking hard (a stop takes a tick or two) a stride smaller than a walk's shrinks over StrideShrinkTicks, not at once,
                     // so the last stride pose the stop eases from still has bent legs
-                    float shown = speed;
+                    float shown = gait;
                     if (strideShown.TryGetValue(p.Slot, out var drawn))
-                        shown = Mathf.Max(speed, Mathf.Min(drawn.speed, cfg.anim.strideWalkYdS) * (1f - (w.Tick - drawn.tick) / StrideShrinkTicks));
+                        shown = Mathf.Max(gait, Mathf.Min(drawn.speed, cfg.anim.strideWalkYdS) * (1f - (w.Tick - drawn.tick) / StrideShrinkTicks));
                     if (drawn.tick != w.Tick) strideShown[p.Slot] = (shown, w.Tick);
-                    fig.Stride(true, Stride.Pose(cfg.anim, cfg.players, fig.Legs, phase, shown, yd * FootballFigure.RigHeight / cfg.view.playerHeightM, cfg.Feature("footFlex")));
+                    fig.Stride(true, Stride.Pose(cfg.anim, cfg.players, fig.Legs, phase, shown, yd * FootballFigure.RigHeight / cfg.view.playerHeightM, cfg.Feature("footFlex"), cfg.Feature("strideHips"), gather));
                     strideLast[p.Slot] = w.Tick;
                 }
                 else if (!down && move.Kind == Move.None && strideLast.TryGetValue(p.Slot, out int last))
@@ -324,7 +348,23 @@ namespace PocketFootball.View
                 case Move.Handoff: kind = FootballFigure.PoseKind.Handoff; return true;
                 case Move.Snap: kind = FootballFigure.PoseKind.Stance; return true;
                 case Move.TakeSnap: kind = FootballFigure.PoseKind.Handoff; return true;   // hands out in front for it
-                case Move.Reach: kind = FootballFigure.PoseKind.Reach; frame = stride; return true;
+                // FEATURES.catchPlay: one hand up for a ball out to his side (ReachOne: 0-1 his left, 2-3 his right, by stride frame)
+                case Move.Reach: kind = m.Hand == 0 ? FootballFigure.PoseKind.Reach : FootballFigure.PoseKind.ReachOne; frame = (m.Hand == 2 ? 2 : 0) + stride; return true;
+                // FEATURES.catchPlay: up for a jump ball (gathered, then in the air); laid out for a low ball, then on his
+                // belly, up on a knee at the end; two men tangled after a jump ball: arms up, then the one with the ball
+                // pulls it in and lands on a knee, the other goes over (backwards, or on his face if it was his catch to make)
+                case Move.Leap: kind = FootballFigure.PoseKind.Leap; frame = Mathf.Min(1, m.Frame); return true;
+                case Move.DiveCatch:
+                    if (m.GettingUp) kind = m.UpFrame < 2 ? FootballFigure.PoseKind.Kneel : FootballFigure.PoseKind.Ready;
+                    else kind = m.Frame < 2 ? FootballFigure.PoseKind.Dive : FootballFigure.PoseKind.Prone;
+                    return true;
+                case Move.Tangle:
+                    if (m.GettingUp) { kind = m.UpFrame < 2 ? FootballFigure.PoseKind.Kneel : FootballFigure.PoseKind.Ready; return true; }
+                    if (m.Frame == 0) { kind = FootballFigure.PoseKind.Leap; frame = 1; return true; }
+                    if (m.Won) { kind = m.Frame < 3 ? FootballFigure.PoseKind.Secure : FootballFigure.PoseKind.Kneel; return true; }
+                    if (m.Frame < 3) { kind = m.OnBack ? FootballFigure.PoseKind.FallBack : FootballFigure.PoseKind.FallFront; frame = m.Frame - 1; }
+                    else kind = m.OnBack ? FootballFigure.PoseKind.Supine : FootballFigure.PoseKind.Prone;
+                    return true;
                 case Move.Secure: kind = FootballFigure.PoseKind.Secure; frame = stride; return true;
                 case Move.Bobble: kind = FootballFigure.PoseKind.Bobble; frame = Mathf.Min(1, m.Frame / 2); return true;
                 case Move.Juke: kind = FootballFigure.PoseKind.Juke; frame = Mathf.Min(1, m.Frame); return true;

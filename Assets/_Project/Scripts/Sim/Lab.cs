@@ -29,6 +29,10 @@ namespace PocketFootball.Sim
         public float throwAtS = -1;
         public int throwTo = 1;
         public List<string> throwKinds = new List<string>();
+        // the pursuit drills: the carrier starts out in the open at [yards past the line, z], already running carrierRunYdS
+        // down the field (empty: at his formation spot, standing)
+        public List<float> carrierAt = new List<float>();
+        public float carrierRunYdS;
     }
 
     // The practice lab: sets up one drill on a World and runs it again after every whistle. Uses only the game's own
@@ -124,6 +128,12 @@ namespace PocketFootball.Sim
             Place(w.Defense, d.defense, d.you == "defense", d.youSpot, ref bot);
             w.LineUp();
             var holder = LivePlay.SpotOf(w, w.Offense, d.carrier);
+            if (holder != null && d.carrierAt.Count > 1)   // [x, z]
+            {
+                holder.X = holder.HomeX = w.LineOfScrimmageX + w.Dir * d.carrierAt[0];
+                holder.Z = holder.HomeZ = d.carrierAt[1];
+                holder.VX = w.Dir * d.carrierRunYdS; holder.VZ = 0f;
+            }
             if (holder != null) w.Ball.GiveTo(holder, w.Cfg.ball);
 
             if (d.live) LivePlay.Hike(w);

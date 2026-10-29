@@ -190,11 +190,19 @@ namespace PocketFootball.Sim
                     float dx = p.X - w.Ball.X, dz = p.Z - w.Ball.Z, d = (float)Math.Sqrt(dx * dx + dz * dz);
                     if (d <= c.catchRadiusYd && d < nd) { near = p; nd = d; }
                 }
+                // FEATURES.catchPlay: nobody in the circle, a man running at a low ball can lay out for it
+                bool dive = false;
+                if (near == null && CatchPlay.On(w)) { near = CatchPlay.Diver(w, hisBall, meant); dive = near != null; }
                 if (near != null)
                 {
                     w.CatchTried.Add(near.Slot);
                     bool offense = near.Team == w.Offense;
-                    if (w.Rng.Value() < Receiving.Chance(w, near, Weather.Catch(w, Ratings.Catch(w, near, offense ? c.catchChanceOffense : c.catchChanceDefense))))   // WS-05: CATCH timing; FEATURES.weather: a wet ball
+                    var rival = CatchPlay.On(w) ? CatchPlay.Rival(w, near) : null;   // FEATURES.catchPlay: a jump ball
+                    float chance = Receiving.Chance(w, near, Weather.Catch(w, Ratings.Catch(w, near, offense ? c.catchChanceOffense : c.catchChanceDefense)));   // WS-05: CATCH timing; FEATURES.weather: a wet ball
+                    if (CatchPlay.On(w)) chance = CatchPlay.Chance(w, chance, dive, rival != null);
+                    bool caught = w.Rng.Value() < chance;
+                    if (CatchPlay.On(w)) CatchPlay.After(w, near, rival, dive, caught);
+                    if (caught)
                     {
                         // FEATURES.oobIncomplete: a catch with his feet out of bounds is no catch (no gain, no first
                         // down, no interception): incomplete, the ball falls on past him and goes back to the line

@@ -85,6 +85,59 @@
       "live": true, "endOnCatch": false, "maxS": 0
     },
     {
+      "id": "pursuit",
+      "name": "Pursuit: all eleven chase you",
+      "help": "You broke into the open with the ball and the whole defense chases you. Watch them take angles and keep their lanes instead of piling into one clump behind you. SHIFT sprints, E jukes.",
+      "note": "FEATURES.pursuitLanes (Sim/Pursuit.cs). tools/pursuit.ps1 drives the runner here along set runs for the pursuit gauntlet.",
+      "offensePlay": "dive", "defensePlay": "cover3",
+      "you": "offense", "youSpot": 1, "carrier": 1,
+      "offense": [1], "defense": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "carrierAt": [6, -3], "carrierRunYdS": 8,
+      "live": true, "endOnCatch": false, "maxS": 8
+    },
+    {
+      "id": "breakaway",
+      "name": "Breakaway: you are past them all",
+      "help": "You broke clean through, past the safeties, and all eleven chase you from behind. Watch them run their own lanes after you instead of one line in your tracks. SHIFT sprints.",
+      "note": "FEATURES.pursuitLanes. tools/pursuit.ps1 -Drill breakaway films the long open-field chase.",
+      "offensePlay": "dive", "defensePlay": "cover3",
+      "you": "offense", "youSpot": 1, "carrier": 1,
+      "offense": [1], "defense": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "carrierAt": [15, -3], "carrierRunYdS": 8,
+      "live": true, "endOnCatch": false, "maxS": 8
+    },
+    {
+      "id": "watchpursuit",
+      "name": "Watch a pursuit",
+      "help": "Bots only: a runner breaks into the open and all eleven chase him. Slow it down ([ and ]) and watch the angles, the lanes and the man who breaks down to make the tackle.",
+      "offensePlay": "dive", "defensePlay": "cover3",
+      "you": "none", "youSpot": 0, "carrier": 1,
+      "offense": [1], "defense": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "carrierAt": [6, -3], "carrierRunYdS": 8,
+      "live": true, "endOnCatch": false, "maxS": 8
+    },
+    {
+      "id": "jumpball",
+      "name": "Jump ball: a lob up the sideline, a man on you",
+      "help": "You are the receiver going deep with a corner right on your hip. Run under the lob: with him close you both go up for it and come down tangled. Run at a ball that is getting away from you and you lay out for it.",
+      "note": "FEATURES.catchPlay (Sim/CatchPlay.cs, View/Moves.cs). The lab throws a lob at throwAtS if the bot QB has not thrown by then.",
+      "offensePlay": "verts", "defensePlay": "mblitz",
+      "you": "offense", "youSpot": 2, "carrier": 0,
+      "offense": [0, 2], "defense": [1],
+      "live": true, "endOnCatch": false, "maxS": 7,
+      "throwAtS": 2.2, "throwTo": 1, "throwKinds": ["lob"]
+    },
+    {
+      "id": "watchjumpball",
+      "name": "Watch a jump ball",
+      "help": "Bots only: a lob up the sideline to a receiver with a corner on him. Watch them both go up for it, the one-handed grabs, the dives and the tangles. Slow it down with [ and ].",
+      "offensePlay": "verts", "defensePlay": "mblitz",
+      "you": "none", "youSpot": 0, "carrier": 0,
+      "offense": [0, 2], "defense": [1],
+      "live": true, "endOnCatch": false, "maxS": 7,
+      "throwAtS": 2.2, "throwTo": 1, "throwKinds": ["lob"]
+    },
+    {
       "id": "scrimmage",
       "name": "Full scrimmage",
       "help": "All 22 players, Slants against Cover 3, you at QB. A normal play from the snap to the whistle, then it starts again.",

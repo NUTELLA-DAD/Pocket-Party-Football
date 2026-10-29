@@ -46,6 +46,8 @@ namespace PocketFootball.Sim
         public MarksConfig marks = new MarksConfig();   // FEATURES.jerseyNumbers / eyesLook: the players' numbers and eyes (View/JerseyMarks.cs)
         public ReactionsConfig reactions = new ReactionsConfig();   // FEATURES.faceReactions / grassStains / nameBars (View/Reactions.cs)
         public BotsV3Config botsV3 = new BotsV3Config();   // bots v3: reactions, blocking assignments, kick lanes (BotsV3.cs, FEATURES.botsV3)
+        public CatchPlayConfig catchPlay = new CatchPlayConfig();   // FEATURES.catchPlay: diving and contested catches (CatchPlay.cs)
+        public PursuitConfig pursuit = new PursuitConfig();   // FEATURES.pursuitLanes: chasing the ball carrier in lanes (Pursuit.cs)
         public CupConfig cup = new CupConfig();   // FEATURES.cup: the Pocket Cup bracket (Cup.cs, Boot/CupHost.cs)
         public WeatherConfig weather = new WeatherConfig();   // FEATURES.weather / sandField: rain, snow, a sand field (Weather.cs)
         public WeatherLookConfig weatherLook = new WeatherLookConfig();   // ...and how they look on the TV (View/WeatherView.cs)
@@ -368,6 +370,24 @@ namespace PocketFootball.Sim
         // the hand spread open (handCurlOpenDeg, - bends back), relaxed (handCurlRelaxedDeg) and shut on the ball
         // (handCurlShutDeg); a grip between them blends them.
         public float[] handCurlOpenDeg, handCurlRelaxedDeg, handCurlShutDeg;
+        // FEATURES.spineChain (View/ModelSkin.cs): the model's spine bends as a curve, its bend over the hips shared out
+        // along Spine, Chest and UpperChest by spineBendShare (forward and to the side) and spineTwistShare (turning about
+        // the spine); the neck takes neckShare of the head's turn
+        public float[] spineBendShare, spineTwistShare;
+        public float neckShare;
+        // FEATURES.strideHips (View/Stride.cs): in a stride the pelvis turns strideHipYawDeg each way with the leg reaching
+        // forward and dips strideHipRollDeg on the swinging side (walk, jog, sprint)
+        public float[] strideHipYawDeg, strideHipRollDeg;
+        // FEATURES.breakdown (View/PlayersView.cs): a defender closing on the ball carrier breaks down for the tackle,
+        // from gatherFromYd away (none) to gatherToYd (all of it), not when he comes from more than gatherBehindCos behind
+        // the carrier's way: planted knees gatherKneeDeg more bent, the chest gatherLeanDeg further over, the feet
+        // gatherWideDeg wider, the arms up gatherArmDeg in front (gatherArmOutDeg out, elbows gatherForeDeg), short steps
+        // (a stride for gatherGaitYdS at most)
+        public float gatherFromYd, gatherToYd, gatherBehindCos, gatherKneeDeg, gatherLeanDeg, gatherWideDeg, gatherArmDeg, gatherArmOutDeg, gatherForeDeg, gatherGaitYdS;
+        // FEATURES.catchPlay (View/Moves.cs): a man reaching for a ball more than oneHandYd out to his side of his run goes
+        // for it one-handed; two men of both teams within catchPlay.contestYd + leapCloseYd of each other go up for it
+        // together, a hop of leapS seconds and leapYd at the top
+        public float leapS, leapYd, leapCloseYd, oneHandYd;
     }
 
     // WS-07 the lobby (FEATURES.lobby): each person picks an offense spot and a defense spot before kickoff. The game

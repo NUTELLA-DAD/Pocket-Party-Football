@@ -55,6 +55,15 @@ namespace PocketFootball.View
         bool fixArms = true;
         SkinnedMeshRenderer body;
 
+        // FEATURES.spineChain: the model's spine (Spine, Chest, UpperChest) bends as a curve instead of as one plank at
+        // the waist, and its neck takes a share of the head's turn; null: one plank (the switch off, or a model without them)
+        Transform[] spine;     // Spine, Chest, UpperChest, Neck
+        Quaternion[] spineRest;   // each one's turn on the bone above it at rest (the Spine's on the Hips)
+        Quaternion headRest;      // the Head's on the Neck
+        float[] bendShare, twistShare;
+        float neckShare;
+        public bool Curved => spine != null;
+
         // FEATURES.eyesLook: where his eyes look (iris radii: x to his left, y up) and how shut his lids are (0..1)
         public void Eyes(float x, float y, float blink, float mood = 0f) => JerseyMarks.SetEyes(body, x, y, blink, mood);
         public void Stain(float amount) => JerseyMarks.SetStain(body, amount);   // the helmeted players' arm fixes (Adapt, Splay); the cheerleaders have no helmet
@@ -65,6 +74,7 @@ namespace PocketFootball.View
             if (string.IsNullOrEmpty(model)) { Debug.LogError("[model] team " + team.@short + " has no \"model\" in game.json; its players don't show"); return false; }
             var skin = Wear(fig, model, modelTexture, kit, true, cfg.Feature("narrowLegs"), cfg, team);
             if (skin != null && cfg.Feature("handCurl")) skin.Hands(cfg.anim);
+            if (skin != null && cfg.Feature("spineChain")) skin.Spine(cfg.anim);
             if (skin != null) { var legs = fig.Legs; legs.Bend = bend; fig.Legs = legs; }
             return skin != null;
         }
@@ -274,7 +284,12 @@ namespace PocketFootball.View
             feet[1].localRotation = footRest[1];
             toes[0].localRotation = toeRest[0];
             toes[1].localRotation = toeRest[1];
-            for (int i = 0; i < from.Length; i++) to[i].rotation = from[i].rotation * offset[i];
+            for (int i = 0; i < from.Length; i++)
+            {
+                to[i].rotation = from[i].rotation * offset[i];
+                if (spine != null && i == 1) Bow();
+                if (spine != null && i == 2) Nod();
+            }
             if (fixArms)
             {
                 Adapt(to[3], to[4], handL, shoulderL, 1f);
@@ -288,6 +303,64 @@ namespace PocketFootball.View
             Bend(0, fig.BallL);
             Bend(1, fig.BallR);
             Curl();
+        }
+
+        // FEATURES.spineChain: the spine's shares from game.json, on a model whose Spine > Chest > UpperChest > Neck > Head
+        // hang one from the next (any other: one plank, as before)
+        void Spine(AnimConfig a)
+        {
+            var t = new[] { to[0], to[1], Find(transform, "Chest"), Find(transform, "UpperChest"), Find(transform, "Neck"), to[2] };
+            for (int i = 1; i < t.Length; i++)
+                if (t[i] == null || t[i].parent != t[i - 1]) { Debug.LogWarning("[model] " + name + ": no Hips > Spine > Chest > UpperChest > Neck > Head; its spine stays one piece"); return; }
+            if (a.spineBendShare == null || a.spineBendShare.Length < 3 || a.spineTwistShare == null || a.spineTwistShare.Length < 3) return;
+            // the rest turns: the chest, upper chest and neck as modelled (nothing has turned them yet), the Spine and Head
+            // as the figure at rest puts them
+            fig.Pose((FootballFigure.PoseKind)(-1), 0);
+            to[0].rotation = from[0].rotation * offset[0];
+            to[1].rotation = from[1].rotation * offset[1];
+            to[2].rotation = from[2].rotation * offset[2];
+            spine = new[] { t[1], t[2], t[3], t[4] };
+            spineRest = new Quaternion[4];
+            for (int i = 0; i < 4; i++) spineRest[i] = spine[i].localRotation;
+            headRest = to[2].localRotation;
+            bendShare = a.spineBendShare; twistShare = a.spineTwistShare; neckShare = a.neckShare;
+            fig.Pose(FootballFigure.PoseKind.Ready, 0);
+            Follow();
+        }
+
+        // The spine's bend over the hips (the figure's Torso against its Hips, as it set the Spine bone) shared out along
+        // Spine, Chest and UpperChest: the forward and side bend by bendShare (most of it low, in the small of the back),
+        // the turn about the spine by twistShare (most of it high, through the chest). UpperChest ends exactly where the
+        // one-piece spine had it, so the shoulders and arms carry on from the same place.
+        void Bow()
+        {
+            Quaternion straight = to[0].rotation * spineRest[0];          // the Spine with no bend at all
+            Quaternion all = to[1].rotation * Quaternion.Inverse(straight);
+            Vector3 axis = fig.Hips.up;
+            Vector3 v = new Vector3(all.x, all.y, all.z);
+            Vector3 along = Vector3.Project(v, axis);
+            var twist = new Quaternion(along.x, along.y, along.z, all.w);
+            float n = Mathf.Sqrt(twist.x * twist.x + twist.y * twist.y + twist.z * twist.z + twist.w * twist.w);
+            twist = n > 1e-6f ? new Quaternion(twist.x / n, twist.y / n, twist.z / n, twist.w / n) : Quaternion.identity;
+            Quaternion swing = all * Quaternion.Inverse(twist);
+            float b = 0f, t = 0f;
+            Quaternion rest = straight;
+            for (int i = 0; i < 3; i++)
+            {
+                if (i > 0) rest = rest * spineRest[i];
+                b += bendShare[i]; t += twistShare[i];
+                spine[i].rotation = i == 2 ? all * rest : Quaternion.Slerp(Quaternion.identity, swing, b) * Quaternion.Slerp(Quaternion.identity, twist, t) * rest;
+            }
+        }
+
+        // The neck takes neckShare of the head's turn from the chest (the head itself stays where the figure has it).
+        void Nod()
+        {
+            Quaternion head = to[2].rotation;
+            Quaternion neck = spine[2].rotation * spineRest[3];               // the neck straight on the chest
+            Quaternion turn = head * Quaternion.Inverse(neck * headRest);     // the head's turn from straight on it
+            spine[3].rotation = Quaternion.Slerp(Quaternion.identity, turn, neckShare) * neck;
+            to[2].rotation = head;
         }
 
         // FEATURES.handCurl: the curls to take from game.json (off, the fingers stay as modelled)
