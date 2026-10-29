@@ -25,6 +25,10 @@ namespace PocketFootball.Sim
         static float Size(World w, Player p) { var r = Of(w, p); return r == null ? 0f : r.size - w.Cfg.ratings.neutral; }
         static float Hands(World w, Player p) { var r = Of(w, p); return r == null ? 0f : r.hands - w.Cfg.ratings.neutral; }
 
+        // The position's speed on the 1..10 scale (neutral when it has none), switch on or off: who is quick enough
+        // to return a kick (Kicking, FEATURES.fastReturner).
+        public static int SpeedRating(World w, Player p) { var r = Of(w, p); return r != null ? r.speed : (int)w.Cfg.ratings.neutral; }
+
         // Mover: the share of the plain top speed this man runs at.
         public static float SpeedFrac(World w, Player p) => On(w) ? Math.Max(0f, 1f + w.Cfg.ratings.speedPerPoint * Speed(w, p)) : 1f;
 

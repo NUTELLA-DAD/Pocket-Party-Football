@@ -180,6 +180,39 @@ namespace PocketFootball.Tests.EditMode
             Assert.IsTrue(Kicking.ShowsKicker(w3, Kicking.Kicker(w3)), "the kicker takes the opening kickoff");
         }
 
+        // FEATURES.fastReturner: the deepest kickoff receivers are the quickest (corners), the front line the big men;
+        // with the switch off the places still go by spot (the middle linebacker deepest).
+        [Test]
+        public void KickoffReturnersAreTheQuickMen()
+        {
+            foreach (bool fast in new[] { true, false })
+            {
+                var cfg = On();
+                cfg.features["fastReturner"] = fast;
+                var w = WorldTests.Full(cfg);
+                w.Step(null);
+                Assert.IsTrue(w.Kick.Kickoff);
+                Player deepest = null, nearest = null;
+                foreach (var p in w.Players)
+                {
+                    if (p.Team != w.Defense) continue;
+                    float ahead = (p.X - w.LineOfScrimmageX) * w.Dir;
+                    if (deepest == null || ahead > (deepest.X - w.LineOfScrimmageX) * w.Dir) deepest = p;
+                    if (nearest == null || ahead < (nearest.X - w.LineOfScrimmageX) * w.Dir) nearest = p;
+                }
+                if (fast)
+                {
+                    Assert.AreEqual("CB", deepest.Pos, "a corner stands deepest to take the kickoff");
+                    Assert.AreNotEqual("CB", nearest.Pos, "the front line is not the quick men");
+                    int deep = 0;
+                    foreach (var p in w.Players)
+                        if (p.Team == w.Defense && (p.X - w.LineOfScrimmageX) * w.Dir > 40f) { deep++; Assert.AreEqual("CB", p.Pos, "both deep men are corners"); }
+                    Assert.AreEqual(2, deep);
+                }
+                else Assert.AreEqual(0, deepest.Spot, "switch off: the places go by spot");
+            }
+        }
+
         [Test]
         public void FourthAndLongPunts()
         {
@@ -193,8 +226,9 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual(KickKind.Punt, Kicking.Mode(w));
             var punter = Kicking.Kicker(w);
             Assert.AreEqual(w.LineOfScrimmageX - w.Dir * cfg.kicking.puntBackYd, punter.X, 1e-3f, "the punter stands deep");
-            var returner = LivePlay.SpotOf(w, w.Defense, cfg.kicking.returnerSpot);
+            var returner = Kicking.PuntReturner(w);
             Assert.Greater((returner.X - w.LineOfScrimmageX) * w.Dir, cfg.kicking.puntBackYd, "a returner waits deep");
+            Assert.AreEqual("CB", returner.Pos, "FEATURES.fastReturner: a quick man fields the punt, not a linebacker");
 
             int kicking = w.Offense, other = w.Defense;
             float los = w.LineOfScrimmageX, dir = w.Dir;
