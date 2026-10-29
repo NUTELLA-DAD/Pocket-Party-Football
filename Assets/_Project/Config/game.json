@@ -1217,6 +1217,7 @@
     "kickSweep": true,
     "wind": true,
     "kickCam": true,
+    "pauseMenu": true,
     "toonHud": true
   }
 }

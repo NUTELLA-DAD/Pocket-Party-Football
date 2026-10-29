@@ -42,6 +42,7 @@ namespace PocketFootball.Boot
             Host = PartyHost.Create(gameObject, Config, baseMaterial, Rig, Args);
             if (LabMode.Requested()) Lab = LabMode.Create(gameObject, Config, baseMaterial, Host, Rig, ConfigDir);
             if (title) Title = TitleScreen.Attach(gameObject, Config, Host, Rig, Args.TitlePage);
+            if (PauseMenu.Requested(Config, Args, title)) PauseMenu.Attach(gameObject, Config, Host);   // Esc in the game: the pause menu
             FrameMeter.Attach(gameObject, Config, Args.Fps);   // F3: frames a second on the TV; a line in the log every perfLogEveryS
 
             if (!string.IsNullOrEmpty(Args.ShotsDir))
@@ -114,7 +115,8 @@ namespace PocketFootball.Boot
         void Update()
         {
             var kb = Keyboard.current;
-            if (kb != null && kb.escapeKey.wasPressedThisFrame && !TitleScreen.HoldsEscape) Application.Quit(0);   // (Esc on a title page goes back)
+            // (Esc on a title page goes back; in the game it opens the pause menu, which has QUIT GAME)
+            if (kb != null && kb.escapeKey.wasPressedThisFrame && !TitleScreen.HoldsEscape && PauseMenu.Instance == null) Application.Quit(0);
         }
     }
 }

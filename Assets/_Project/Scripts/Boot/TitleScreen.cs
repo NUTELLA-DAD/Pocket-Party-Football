@@ -37,7 +37,7 @@ namespace PocketFootball.Boot
 
         const string VolumeKey = "pp.volume", HelperKey = "pp.";   // (a helper switch saves as pp.<name>: 1 on, 0 off)
         const string AwayKey = "pp.team.away", HomeKey = "pp.team.home";   // FEATURES.teamPick: the two teams' short codes
-        static readonly string[] HelperNames = { "FLIGHT LINE", "LANDING RING", "TACKLE RING" };   // FlightMarks.Switches, in order
+        public static readonly string[] HelperNames = { "FLIGHT LINE", "LANDING RING", "TACKLE RING" };   // FlightMarks.Switches, in order
         // settings rows: 0 sound, then (FEATURES.teamPick, more than two teams) away and home, full screen, the
         // helpers, back
         int TeamRows => cfg.Feature("teamPick") && TeamPick.League(cfg).Count > 2 ? 2 : 0;
@@ -241,7 +241,10 @@ namespace PocketFootball.Boot
             page = p;
         }
 
-        void Volume(int dir)
+        void Volume(int dir) => StepVolume(cfg, dir);
+
+        // The sound one step up or down, saved for every later run (also the pause menu's SETTINGS).
+        public static void StepVolume(GameConfig cfg, int dir)
         {
             float step = Mathf.Max(0.01f, cfg.title.volumeStep);
             float v = Mathf.Clamp01(Mathf.Round((AudioListener.volume + dir * step) / step) * step);
@@ -262,7 +265,10 @@ namespace PocketFootball.Boot
         }
 
         // One helper on or off: saved for every later game (the show game behind the title switches it right away too).
-        void Toggle(int i)
+        void Toggle(int i) => ToggleHelper(cfg, i);
+
+        // (also the pause menu's SETTINGS: the game on the TV switches it right away)
+        public static void ToggleHelper(GameConfig cfg, int i)
         {
             string name = FlightMarks.Switches[i];
             bool on = !cfg.Feature(name);
