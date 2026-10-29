@@ -25,10 +25,11 @@ MAPS = [('Player24', 'Chiefs24_BaseColor', 'Player24{T}_BaseColor', False),
         ('TE', 'TE_BaseColor', 'TE{T}_BaseColor', False),
         ('Kicker', 'Kicker_BaseColor', 'Kicker{T}_BaseColor', False),
         ('LeanLB', 'LeanLB_BaseColor', 'LeanLB{T}_BaseColor', False),
+        ('CB', 'CB_BaseColor', 'CB{T}_BaseColor', False),
         ('Cheerleader', 'Cheerleader_BaseColor', 'Cheerleader{T}_BaseColor', True)]
 
 SRC_FOLDER = {'Player24': 'Chiefs24'}   # (the folder's name at SRC_REV, before the rename)
-SRC_LATER = {'LeanLB'}                   # (models added after SRC_REV: their red map comes from <work dir>/src)
+SRC_LATER = {'LeanLB', 'CB'}           # (models added after SRC_REV: their red map comes from <work dir>/src)
 if os.environ.get('MODELS'): MAPS = [m for m in MAPS if m[0] in os.environ['MODELS'].split(',')]
 
 def run(*a):

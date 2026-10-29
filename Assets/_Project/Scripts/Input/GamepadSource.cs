@@ -69,6 +69,7 @@ namespace PocketFootball.Input
         // The last kick swipe (the "kick" command): power 0..1 from how long A was held, aim -1..1 from the stick.
         public float KickPower { get; private set; }
         public float KickAim { get; private set; }
+        public float StickX => stickX;   // (FEATURES.kickArc: the stick steers the kick's arc)
         int aidCounter;
 
         public GamepadSource(Seat seat, GamepadConfig cfg, IList<string> shapes)
@@ -242,8 +243,11 @@ namespace PocketFootball.Input
 
         // The kicker's pad kicks, like the phone's swipe (Kicking.Kick checks it is the kicker and the moment). With
         // FEATURES.kickSweep a field goal is two presses of A instead ("kicktap": Tap), and the release kicks nothing.
-        public static bool Kick(World w, int slot, float power, float aim) => !Kicking.SweepOn(w) && Kicking.Kick(w, slot, power, aim);
-        public static bool KickTap(World w, int slot) => Kicking.SweepOn(w) && Kicking.Tap(w, slot);
+        // FEATURES.kickArc: the same presses (A snaps, then sets the power, then the pitch), and the stick steers the arc.
+        public static bool Kick(World w, int slot, float power, float aim) => !Kicking.TapsOn(w) && Kicking.Kick(w, slot, power, aim);
+        public static bool KickTap(World w, int slot) => Kicking.TapsOn(w) && Kicking.Tap(w, slot);
+        public static bool KickSteer(World w, int slot, float stickX, float seconds) =>
+            Kicking.Stage(w) == Kicking.SweepStage.Aim && Kicking.Steer(w, slot, w.Kick.Aim + stickX * w.Cfg.kicking.arcSteerPerS * seconds);
 
         public static bool Agree(World w, int slot)
         {

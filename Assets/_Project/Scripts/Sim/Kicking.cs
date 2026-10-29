@@ -31,6 +31,13 @@ namespace PocketFootball.Sim
     //   FEATURES.kickSync (NO_KICK_SYNC=1): the kicker's phone runs its arrow from the game's own sweep clock (sent
     //     again every phoneSyncS), and a tap takes the arrow where the phone showed it (TapAt), so the phone, the TV
     //     and the kick agree even when the game's clock runs behind the phone's.
+    //   FEATURES.kickArc (NO_KICK_ARC=1): punts and field goals get the arc instead (it takes over from kickSweep).
+    //     Lined up, a shaded arc on the field shows the kick; the kicker steers it left and right (Steer: the phone's
+    //     arrows or a drag, the pad's stick) and snaps the ball himself (the meter's HIKE: SetAim with that aim).
+    //     Then two taps: the POWER meter runs up and down (powerSweepS) and the first tap stops it (SetPower); then the
+    //     PITCH ANGLE needle runs up and down (pitchSweepS, arcMinPitchDeg..arcMaxPitchDeg) and the second tap stops it
+    //     and kicks at that power and that climb (KickPitched). The top of the power (shankFromPower) still hooks.
+    //     With kickSync the phone's taps carry the second its meter showed (TapAt), like the sweep's.
     //   FEATURES.wind (NO_WIND=1): a wind of up to windMaxYdS from any side, new every windEveryHuddles huddles, drawn
     //     from the game's seed (no draw from the sim's random numbers); it pushes a field goal in the air by windPush
     //     per yard a second. The flags on top of the posts show it (View/Stadium.cs).
@@ -82,6 +89,11 @@ namespace PocketFootball.Sim
             return p != null && p == Kicker(w);
         }
 
+        // A person is kicking this one, not the bot standing in for an idle person (the same rule as LiveStep's: with
+        // taps a person counts as idle only once the line-up ran out on him). The TV shows the meters only for a person.
+        public static bool PersonKicks(World w, Player kicker) =>
+            kicker != null && kicker.Human && !(kicker.BotHelp && (!TapsOn(w) || w.Kick.AutoSnap));
+
         // ---- the hold (FEATURES.fgHolder) ----
 
         public static bool HolderOn(World w) => w.Cfg.Feature("fgHolder") && Mode(w) == KickKind.FieldGoal;
@@ -102,17 +114,29 @@ namespace PocketFootball.Sim
 
         // ---- the two taps (FEATURES.kickSweep) ----
 
-        public static bool SweepOn(World w) => w.Cfg.Feature("kickSweep") && Mode(w) == KickKind.FieldGoal;
+        public static bool SweepOn(World w) => w.Cfg.Feature("kickSweep") && !w.Cfg.Feature("kickArc") && Mode(w) == KickKind.FieldGoal;
 
-        public enum SweepStage { None, Aim, Power }
+        // FEATURES.kickArc: a punt or a field goal is steered, snapped and then two taps (see the top).
+        public static bool ArcOn(World w)
+        {
+            if (!w.Cfg.Feature("kickArc")) return false;
+            var kind = Mode(w);
+            return kind == KickKind.Punt || kind == KickKind.FieldGoal;
+        }
 
-        // Where the kicker is in his two taps: Aim while he lines up (the first tap snaps it), Power until the kick.
+        // Taps instead of a swipe this play (the sweep or the arc).
+        public static bool TapsOn(World w) => SweepOn(w) || ArcOn(w);
+
+        public enum SweepStage { None, Aim, Power, Pitch }
+
+        // Where the kicker is in his taps: Aim while he lines up (the sweep's first tap, or the arc's HIKE, snaps it),
+        // Power until the next tap; with the arc, then Pitch until the kick.
         public static SweepStage Stage(World w)
         {
             var k = w.Kick;
-            if (!SweepOn(w) || k.Kicked || k.Approach || !k.Placed) return SweepStage.None;
+            if (!TapsOn(w) || k.Kicked || k.Approach || !k.Placed) return SweepStage.None;
             if (w.Phase == Phase.Set && !k.AimSet) return SweepStage.Aim;
-            if (w.Phase == Phase.Live && k.AimSet) return SweepStage.Power;
+            if (w.Phase == Phase.Live && k.AimSet) return k.PowerSet && ArcOn(w) ? SweepStage.Pitch : SweepStage.Power;
             return SweepStage.None;
         }
 
@@ -135,6 +159,12 @@ namespace PocketFootball.Sim
         // The power arrow, `seconds` into its sweep: 0 .. 1 and back, starting at nothing.
         public static float PowerSweep(KickingConfig c, float seconds) => Triangle(seconds, c.powerSweepS);
 
+        // FEATURES.kickArc: the pitch needle, `seconds` into its sweep: 0 (arcMinPitchDeg) .. 1 (arcMaxPitchDeg) and back.
+        public static float PitchSweep(KickingConfig c, float seconds) => Triangle(seconds, c.pitchSweepS);
+
+        // The needle's share (0..1) as the climb in degrees.
+        public static float PitchDeg(KickingConfig c, float share) => c.arcMinPitchDeg + (c.arcMaxPitchDeg - c.arcMinPitchDeg) * Clamp(share, 0f, 1f);
+
         // Game seconds into the arrow that is sweeping now (0 when none). The phone runs its arrow from this, so it shows
         // the same arrow as the TV even when the game's clock runs behind the phone's (a slow frame, the pause menu).
         public static float SweepSeconds(World w)
@@ -143,8 +173,9 @@ namespace PocketFootball.Sim
             float hz = w.Cfg.sim.tickHz;
             switch (Stage(w))
             {
-                case SweepStage.Aim: return (w.Tick - k.AimTick) / hz;
+                case SweepStage.Aim: return ArcOn(w) ? 0f : (w.Tick - k.AimTick) / hz;   // (the arc's aim is steered, not swept)
                 case SweepStage.Power: return (w.Tick - k.PowerTick) / hz;
+                case SweepStage.Pitch: return (w.Tick - k.PitchTick) / hz;
             }
             return 0f;
         }
@@ -155,10 +186,59 @@ namespace PocketFootball.Sim
             var c = w.Cfg.kicking;
             switch (Stage(w))
             {
-                case SweepStage.Aim: return AimSweep(c, SweepSeconds(w));
+                case SweepStage.Aim: return ArcOn(w) ? w.Kick.Aim : AimSweep(c, SweepSeconds(w));
                 case SweepStage.Power: return PowerSweep(c, SweepSeconds(w));
+                case SweepStage.Pitch: return PitchSweep(c, SweepSeconds(w));
             }
             return 0f;
+        }
+
+        // FEATURES.kickArc: the kick the TV's arc shows now. Lined up: arcPreviewPower at the kind's own climb; then
+        // the power running; then the power he stopped with and the pitch running.
+        public static void ArcNow(World w, out float power, out float pitchDeg)
+        {
+            var c = w.Cfg.kicking;
+            var k = w.Kick;
+            var stage = Stage(w);
+            power = stage == SweepStage.Power ? SweepNow(w) : stage == SweepStage.Pitch ? k.ChosenPower : c.arcPreviewPower;
+            pitchDeg = stage == SweepStage.Pitch ? PitchDeg(c, SweepNow(w)) : Angle(c, Mode(w));
+        }
+
+        // FEATURES.kickArc: lined up, the kicker steers his arc left (-1) and right (1). False when he can't now.
+        public static bool Steer(World w, int slot, float aim)
+        {
+            var kicker = Kicker(w);
+            if (!ArcOn(w) || Stage(w) != SweepStage.Aim || kicker == null || kicker.Slot != slot) return false;
+            w.Kick.Aim = Clamp(aim, -1f, 1f);
+            kicker.IdleTicks = 0;   // (steering is a touch of the phone, like the stick)
+            return true;
+        }
+
+        // FEATURES.kickArc: the first tap after the snap stops the power meter; the pitch needle starts.
+        public static bool SetPower(World w, int slot, float power)
+        {
+            var k = w.Kick;
+            var kicker = Kicker(w);
+            if (!ArcOn(w) || Stage(w) != SweepStage.Power || kicker == null || kicker.Slot != slot) return false;
+            k.PowerSet = true;
+            k.ChosenPower = Clamp(power, 0f, 1f);
+            k.PitchTick = w.Tick;
+            kicker.IdleTicks = 0;
+            return true;
+        }
+
+        // FEATURES.kickArc: the second tap stops the pitch needle (share 0..1) and kicks at the power and aim he set.
+        public static bool KickPitched(World w, int slot, float share)
+        {
+            var k = w.Kick;
+            if (!ArcOn(w) || Stage(w) != SweepStage.Pitch) return false;
+            var kicker = Kicker(w);
+            if (kicker == null || kicker.Slot != slot) return false;
+            k.PitchSet = true;
+            k.Pitch = PitchDeg(w.Cfg.kicking, share);
+            if (Kick(w, slot, k.ChosenPower, k.Aim)) return true;
+            k.PitchSet = false;
+            return false;
         }
 
         // The first tap: the aim is set and the ball is snapped. False when this person isn't the kicker lining up.
@@ -171,6 +251,7 @@ namespace PocketFootball.Sim
             k.Aim = Clamp(aim, -1f, 1f);
             LivePlay.Hike(w);
             k.PowerTick = w.Tick;
+            if (ArcOn(w)) kicker.IdleTicks = 0;   // (FEATURES.kickArc: HIKE is a touch, so the bot doesn't step in for him)
             return true;
         }
 
@@ -179,7 +260,8 @@ namespace PocketFootball.Sim
         {
             var stage = Stage(w);
             if (stage == SweepStage.Aim) return SetAim(w, slot, SweepNow(w));
-            if (stage == SweepStage.Power) return Kick(w, slot, SweepNow(w), w.Kick.Aim);
+            if (stage == SweepStage.Power) return ArcOn(w) ? SetPower(w, slot, SweepNow(w)) : Kick(w, slot, SweepNow(w), w.Kick.Aim);
+            if (stage == SweepStage.Pitch) return KickPitched(w, slot, SweepNow(w));
             return false;
         }
 
@@ -192,13 +274,34 @@ namespace PocketFootball.Sim
             var stage = Stage(w);
             float now = SweepSeconds(w);
             float s = Clamp(seconds, Math.Max(0f, now - c.tapSlackS), now);
-            if (stage == SweepStage.Aim) return SetAim(w, slot, AimSweep(c, s));
-            if (stage == SweepStage.Power) return Kick(w, slot, PowerSweep(c, s), w.Kick.Aim);
+            if (stage == SweepStage.Aim) return SetAim(w, slot, ArcOn(w) ? w.Kick.Aim : AimSweep(c, s));
+            if (stage == SweepStage.Power) return ArcOn(w) ? SetPower(w, slot, PowerSweep(c, s)) : Kick(w, slot, PowerSweep(c, s), w.Kick.Aim);
+            if (stage == SweepStage.Pitch) return KickPitched(w, slot, PitchSweep(c, s));
             return false;
         }
 
-        // The power that just clears the bar from the kick's spot with no wind (the phone marks it on the meter).
-        public static float NeedPower(World w) => FieldGoalPower(w, KickDistance(w), 0f);
+        // The power that just clears the bar from the kick's spot with no wind (the phone marks it on the meter). With
+        // FEATURES.kickArc the climb is his to pick, so it is the power that clears it at the field goal's own climb.
+        public static float NeedPower(World w) => FieldGoalPower(w, KickDistance(w), 0f, ArcOn(w) ? w.Cfg.kicking.fieldGoalAngleDeg : -1f);
+
+        // FEATURES.kickArc: the climbs (degrees, from arcMinPitchDeg up by arcWindowStepDeg) that clear the bar at this
+        // power with no wind, lo..hi. False: none does (too weak, or a punt). The phone and the TV shade it on the dial.
+        public static bool ClearPitch(World w, float power, out float lo, out float hi)
+        {
+            var c = w.Cfg.kicking;
+            lo = hi = 0f;
+            if (Mode(w) != KickKind.FieldGoal || c.arcWindowStepDeg <= 0f) return false;
+            float d = KickDistance(w), need = c.crossbarYd;
+            bool any = false;
+            for (float p = c.arcMinPitchDeg; p <= c.arcMaxPitchDeg; p += c.arcWindowStepDeg)
+            {
+                if (Height(w, d, power, p) < need) continue;
+                if (!any) lo = p;
+                hi = p;
+                any = true;
+            }
+            return any;
+        }
 
         // ---- the wind (FEATURES.wind) ----
 
@@ -386,6 +489,7 @@ namespace PocketFootball.Sim
             var c = w.Cfg.kicking;
             var kind = Mode(w);
             var kicker = Kicker(w);
+            w.Kick.Aim = 0f;   // (FEATURES.kickArc: the arc starts straight down the field)
             if (kind == KickKind.Punt)
             {
                 if (kicker != null) Place(w, kicker, new[] { -c.puntBackYd, 0f });
@@ -429,7 +533,7 @@ namespace PocketFootball.Sim
             var kicker = Kicker(w);
             var k = w.Kick;
             if (kind == KickKind.None || k.Kicked || k.Approach || kicker == null || kicker.Slot != slot) return false;
-            bool sweep = SweepOn(w);
+            bool sweep = TapsOn(w);
             if (sweep && !k.AimSet)
             {
                 // no first tap yet: this kick's aim is the aim (in the line-up it snaps the ball too)
@@ -484,7 +588,7 @@ namespace PocketFootball.Sim
             float speed = Speed(w, power);
             float aimDeg = aim * c.maxAimDeg;
             if (!exact && power >= c.shankFromPower) aimDeg += w.Rng.Range(-c.shankAimDeg, c.shankAimDeg);   // too much: it hooks
-            float climb = Climb(w, kind, power) * Rad, yaw = aimDeg * Rad;
+            float climb = (k.PitchSet ? k.Pitch : Climb(w, kind, power)) * Rad, yaw = aimDeg * Rad;   // (FEATURES.kickArc: his pitch)
             float flat = speed * (float)Math.Cos(climb);
             bool hold = Holder(w) != null;
             b.State = BallState.Flying;
@@ -510,7 +614,7 @@ namespace PocketFootball.Sim
             kind == KickKind.Punt ? c.puntAngleDeg : kind == KickKind.FieldGoal ? c.fieldGoalAngleDeg : c.kickoffAngleDeg;
 
         // (FEATURES.weather / sandField: a cold, wet or sandy ball flies a little shorter for the same power)
-        static float Speed(World w, float power)
+        public static float Speed(World w, float power)
         {
             var c = w.Cfg.kicking;
             return (c.minSpeedYdS + (c.maxSpeedYdS - c.minSpeedYdS) * power) * Weather.KickSpeed(w);
@@ -567,25 +671,26 @@ namespace PocketFootball.Sim
 
         // The power that clears the crossbar by clearYd at d yards, with no wind (1: even as hard as he can won't).
         // The arc can climb with the power (Climb), so it is found by halving: meterSearchSteps halvings.
-        public static float FieldGoalPower(World w, float d, float clearYd)
+        // pitchDeg: the climb (FEATURES.kickArc), or below zero for the climb that goes with the power (Climb).
+        public static float FieldGoalPower(World w, float d, float clearYd, float pitchDeg = -1f)
         {
             var c = w.Cfg.kicking;
             float need = c.crossbarYd + clearYd;
-            if (Height(w, d, 1f) < need) return 1f;
+            if (Height(w, d, 1f, pitchDeg) < need) return 1f;
             float lo = 0f, hi = 1f;
             for (int i = 0; i < c.meterSearchSteps; i++)
             {
                 float mid = (lo + hi) * 0.5f;
-                if (Height(w, d, mid) >= need) hi = mid; else lo = mid;
+                if (Height(w, d, mid, pitchDeg) >= need) hi = mid; else lo = mid;
             }
             return hi;
         }
 
         // How high a field goal kicked at this power is d yards out (no wind; below the grass once it has come down).
-        static float Height(World w, float d, float power)
+        static float Height(World w, float d, float power, float pitchDeg = -1f)
         {
             var c = w.Cfg.kicking;
-            float climb = Climb(w, KickKind.FieldGoal, power) * Rad;
+            float climb = (pitchDeg >= 0f ? pitchDeg : Climb(w, KickKind.FieldGoal, power)) * Rad;
             float v = Speed(w, power), cos = (float)Math.Cos(climb);
             if (v <= 0f || cos <= 0f) return 0f;
             float t = d / (v * cos);
@@ -617,16 +722,17 @@ namespace PocketFootball.Sim
                     return true;
                 }
                 // FEATURES.kickSweep: snapped before the first tap (he ran out of time): the aim stops where it was
-                if (SweepOn(w) && !k.AimSet)
+                // (FEATURES.kickArc: where he steered it)
+                if (TapsOn(w) && !k.AimSet)
                 {
-                    k.Aim = AimSweep(c, (w.Tick - k.AimTick) / (float)w.Cfg.sim.tickHz);
+                    if (!ArcOn(w)) k.Aim = AimSweep(c, (w.Tick - k.AimTick) / (float)w.Cfg.sim.tickHz);
                     k.AimSet = true;
                     k.AutoSnap = true;
                     k.PowerTick = w.Tick;
                 }
                 // (a person tapping through the sweep never moves his stick, so being idle only hands it to the bot if
                 // the line-up ran out on him: else he has humanKickMaxS for the second tap)
-                bool idle = kicker.BotHelp && (!SweepOn(w) || k.AutoSnap);
+                bool idle = kicker.BotHelp && (!TapsOn(w) || k.AutoSnap);
                 bool bot = !kicker.Human || idle || w.PlayTicks >= Huddle.Ticks(w, c.humanKickMaxS);
                 if (bot && w.PlayTicks >= Huddle.Ticks(w, Delay(c, kind))) BotKick(w, kicker, kind);
                 return true;
@@ -900,8 +1006,12 @@ namespace PocketFootball.Sim
         public bool AimSet, AutoSnap, Approach, PendingExact;
         public int AimTick, PowerTick, ApproachTick;
         public float StartX, StartZ, PendingPower, PendingAim;
+        // FEATURES.kickArc: the first tap's power, the second's climb (degrees), and when the pitch needle began
+        public bool PowerSet, PitchSet;
+        public float ChosenPower, Pitch;
+        public int PitchTick;
 
-        public void NewPlay() { Placed = false; Kicked = false; Landed = false; Returned = false; AimSet = false; AutoSnap = false; Approach = false; }
+        public void NewPlay() { Placed = false; Kicked = false; Landed = false; Returned = false; AimSet = false; AutoSnap = false; Approach = false; PowerSet = false; PitchSet = false; }
     }
 
     // Config/game.json "kicking". Yards, seconds and degrees; odds 0..1. Spots are [ahead, z] from the line, ahead =
@@ -926,6 +1036,8 @@ namespace PocketFootball.Sim
         public float holderSideYd, kickerBackYd, kickerSideYd, kickContactYd, approachSpeedYdS, holdReadyS;
         public float aimSweepS, powerSweepS, phoneSyncS, tapSlackS, fgMinAngleDeg, fgMaxAngleDeg, shankFromPower, shankAimDeg;
         public float windMaxYdS, windPush, botWindRead, windMphPerYdS;
+        // FEATURES.kickArc: the pitch needle, the arc lined up, the pad's steering, the punt's good-hang shading
+        public float pitchSweepS, arcMinPitchDeg, arcMaxPitchDeg, arcWindowStepDeg, arcPreviewPower, arcSteerPerS, puntGoodMinDeg, puntGoodMaxDeg;
         public KickCamConfig cam = new KickCamConfig();
         public float[] puntReturner = new float[0];
         public List<float[]> kickoffKicking = new List<float[]>();

@@ -9,6 +9,10 @@ foreach ($f in $Fixtures) {
     $extra = @(switch ($f) {
         'field_goal_line' { @('-look-x','-40') }
         'field_goal_kick' { @('-fg-demo','-warmup','150') }
+        'kick_arc_punt'   { @('-kick-arc-demo','punt') }
+        'kick_arc_fg'     { @('-kick-arc-demo','fg') }
+        'kick_arc_power'  { @('-kick-arc-demo','fg','-kick-arc-taps','1') }
+        'kick_arc_pitch'  { @('-kick-arc-demo','punt','-kick-arc-taps','2') }
         'cheerleaders'    { @('-look-x','18') }
         'ball_flight'     { @('-throw-demo','12','-warmup','24') }
         'bots_wander'     { @('-wander','-warmup','240') }
@@ -25,6 +29,7 @@ foreach ($f in $Fixtures) {
         'title_roster'    { @('-title','-title-page','roster') }
         'title_roster_lb' { @('-title','-title-page','roster:4:GRN') }
         'lobby'           { @('-lobby') }
+        { $_ -like 'formation_*' } { @('-formation-demo', (($f -replace '^formation_', '') -replace '-', ':')) }   # formation_dive-goalline
         'lobby_hotspot'   { @('-lobby') }
         'title_hotspot'   { @('-title','-title-page','hotspot') }
         default           { }

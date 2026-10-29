@@ -52,6 +52,7 @@ namespace PocketFootball.Sim
         public WeatherConfig weather = new WeatherConfig();   // FEATURES.weather / sandField: rain, snow, a sand field (Weather.cs)
         public WeatherLookConfig weatherLook = new WeatherLookConfig();   // ...and how they look on the TV (View/WeatherView.cs)
         public RosterConfig roster = new RosterConfig();   // FEATURES.rosterPage: the title's ROSTER page (RosterCards.cs, Boot/RosterPage.cs)
+        public DriveBlockConfig driveBlock = new DriveBlockConfig();   // FEATURES.driveBlock: shoving your man with the drive stick (DriveBlock.cs)
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 
@@ -113,6 +114,16 @@ namespace PocketFootball.Sim
         public int offenseTeam;
         public List<SpotConfig> offense = new List<SpotConfig>();
         public List<SpotConfig> defense = new List<SpotConfig>();
+        public SortedDictionary<string, FormationSetConfig> sets = new SortedDictionary<string, FormationSetConfig>();   // FEATURES.formations
+    }
+
+    // A named formation (FEATURES.formations): a play's "formation" picks one. spots: [back, z] per formation spot, in
+    // the same order as formation.offense / defense (who is who stays the same; only where they stand changes).
+    public sealed class FormationSetConfig
+    {
+        public string name, side;
+        public List<float[]> spots = new List<float[]>();
+        internal List<SpotConfig> Built;    // the spots with pos and number filled in from the base list (Formation.SpotsOf)
     }
 
     // The ball flies in 3D: Y is height in yards. A pass lands at catchHeightYd.
@@ -162,6 +173,7 @@ namespace PocketFootball.Sim
     public sealed class PlayConfig
     {
         public string id, name, side, desc;
+        public string formation;            // FEATURES.formations: a formation.sets id; none = the base line-up
         public int runner = -1;
         public List<JobConfig> jobs = new List<JobConfig>();
     }
@@ -219,6 +231,7 @@ namespace PocketFootball.Sim
         public float glanceChance, glanceDeg;
         public List<ModelMarksConfig> models = new List<ModelMarksConfig>();
         public List<string> skinTones = new List<string>();   // FEATURES.skinTones: the skin colours players are given, light to dark
+        public List<string> hairColors = new List<string>();  // FEATURES.hairColors: the hair colours players are given, dark to fair
 
         public ModelMarksConfig For(string model)
         {
@@ -246,6 +259,7 @@ namespace PocketFootball.Sim
     {
         public string model, map, iris, lid;
         public string skin;   // the model's own skin colour (marks.py prints it): each man's tone is drawn as a ratio of it
+        public string hair;   // a model with hair showing (the cornerback's braid): its own hair colour (marks.py prints it)
         public int number;
     }
 

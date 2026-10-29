@@ -88,6 +88,7 @@ namespace PocketFootball.Boot
                 if (!pad.Seat.Connected) { pad.Seat.Connected = true; Debug.Log("[pad] " + pad.Seat.Name + " is back"); }
                 pad.Feed(s, GamepadSource.LayoutFor(W, pad.Seat), now);
                 while (pad.TakeCommand(out var cmd)) Command(pad, cmd);
+                if (pad.StickX != 0f && host.World != null) GamepadSource.KickSteer(W, pad.Slot, pad.StickX, Time.unscaledDeltaTime);   // FEATURES.kickArc
                 if (pad.TakeFind()) findUntil[pad.Slot] = now + cfg.view.findMeS;
             }
             foreach (var pad in pads.Values)
@@ -134,7 +135,7 @@ namespace PocketFootball.Boot
                 if (Huddle.IsLocked(W, p.Team)) Broadcast(Messages.Status(W));
             }
             else if (cmd == "kick") GamepadSource.Kick(W, pad.Slot, pad.KickPower, pad.KickAim);
-            else if (cmd == "kicktap") GamepadSource.KickTap(W, pad.Slot);   // FEATURES.kickSweep: A sets the aim, then the power
+            else if (cmd == "kicktap") GamepadSource.KickTap(W, pad.Slot);   // FEATURES.kickSweep: A sets the aim, then the power (kickArc: snap, power, pitch)
             else if (cmd == "kickoff" && W.Tick == 0)
                 host.gameObject.SendMessage("KickOff", SendMessageOptions.DontRequireReceiver);   // the lobby (WS-07), if there is one
         }

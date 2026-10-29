@@ -19,7 +19,10 @@ namespace PocketFootball.Boot
         public float? ThrowDemo;      // -throw-demo <yards>: the QB lobs the ball this far downfield at once (screenshots)
         public string Photo;          // -photo concept04: a frozen photo scene recreating a concept picture (also PP_SHOT=<name>)
         public bool CalledDemo;       // -called-demo: the offense has already called its play (screenshots of the TV banner)
+        public string FormationDemo;  // -formation-demo <offense play>:<defense play>: both called, everyone at the line in those formations (screenshots)
         public bool FieldGoalDemo;    // -fg-demo: no opening kickoff, 4th and 10 on the other team's 25, so the bots kick a field goal (screenshots)
+        public string KickArcDemo;    // -kick-arc-demo punt|fg: a person lines up that kick, steered a little right (FEATURES.kickArc, screenshots)
+        public int KickArcTaps;       // -kick-arc-taps 1|2: ...then HIKE and the power running, or the power set and the pitch running
         public int WarmupTicks;       // -warmup <ticks>: run the sim this many ticks before the first frame
         public bool Title;            // -title: show the title screen in a screenshot run too (TitleScreen.cs)
         public string TitlePage;      // -title-page howto | settings: open on that page (screenshots)
@@ -40,6 +43,9 @@ namespace PocketFootball.Boot
                 else if (s == "-wander") a.Wander = true;
                 else if (s == "-called-demo") a.CalledDemo = true;
                 else if (s == "-fg-demo") a.FieldGoalDemo = true;
+                else if (s == "-kick-arc-demo" && next != null) { a.KickArcDemo = next; i++; }
+                else if (s == "-kick-arc-taps" && next != null && int.TryParse(next, out int kt)) { a.KickArcTaps = kt; i++; }
+                else if (s == "-formation-demo" && next != null) { a.FormationDemo = next; i++; }
                 else if (s == "-title") a.Title = true;
                 else if (s == "-fps") a.Fps = true;
                 else if (s == "-lobby") a.Lobby = true;

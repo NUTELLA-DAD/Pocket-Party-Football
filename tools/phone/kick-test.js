@@ -1,5 +1,6 @@
 // Headless check of the kick meter (phone/kick.js, WS-01) with Playwright + Chromium: it shows only for the 'kick'
 // layout, a swipe up sends one { t:'kick', power, aim, aid }, a tiny swipe sends nothing, and it goes away after.
+// Then the field goal's two taps (kickSweep, kickSync) and the punt's and field goal's arc (kickArc).
 // Run: node tools/phone/kick-test.js   (screenshots to .shots/phone-kick-<size>.png)
 const path = require('path');
 const { chromium } = require('playwright');
@@ -122,6 +123,102 @@ const { chromium } = require('playwright');
     await page.evaluate(() => { meter(false); ui('walk'); ui('kick'); meter(true, 'KICKOFF', 0); });
     s = await state();
     ok(!s.sweep && !(await page.isVisible('.ktap')), tag + ': a kickoff is a swipe again ' + JSON.stringify(s));
+
+    // ---- kickArc: steer the arrow, HIKE, tap the power, tap the pitch ----
+    const shot = name => page.screenshot({ path: path.resolve(__dirname, '../../.shots/phone-kick-' + tag + '-' + name + '.png') });
+    await page.evaluate(() => { meter(false); ui('walk'); window.sent = []; ui('kick'); arcMeter('PUNT', 'aim', { aim: 0 }); });
+    await page.waitForTimeout(200);
+    s = await state();
+    ok(s.shown && s.arc && s.stage === 'aim', tag + ': a punt lines up with the arc ' + JSON.stringify(s));
+    ok(await page.isVisible('.karcfield') && !(await page.isVisible('.kgauges')), tag + ': the little field and its arrow, no meters yet');
+    ok(!(await page.isVisible('.kfield')) && !(await page.isVisible('.ktap')), tag + ': none of the old swipe or sweep');
+    ok((await page.textContent('.karcbtn')).trim() === 'HIKE', tag + ': the big button says HIKE');
+    ok((await page.getAttribute('.ksteer.r', 'aria-label')).length > 0 && (await page.getAttribute('.karcbtn', 'aria-label')).length > 0, tag + ': the buttons name their actions');
+    ok((await page.getAttribute('.kplate', 'src')).endsWith('punt-title.png'), tag + ': the PUNT plate');
+    await shot('arc-punt-aim');
+    // hold the right arrow for half a second: the arc swings right, and the game hears about it
+    await page.locator('.ksteer.r').dispatchEvent('pointerdown', { pointerId: 11 });
+    await page.waitForTimeout(500);
+    await page.locator('.ksteer.r').dispatchEvent('pointerup', { pointerId: 11 });
+    s = await state();
+    ok(s.aim > 0.3 && s.aim <= 1, tag + ': holding the right arrow steers right ' + s.aim);
+    sent = await page.evaluate(() => window.sent);
+    const arcAid = await page.evaluate(() => aid);
+    ok(sent.length >= 2 && sent.every(m => m.t === 'kicksteer' && m.aid === arcAid), tag + ': steering sends kicksteer with the aid ' + JSON.stringify(sent));
+    ok(sent.length > 0 && sent[sent.length - 1].aim === s.aim, tag + ': the last word is where it stopped');
+    ok(sent.length <= 12, tag + ': not a flood of messages (' + sent.length + ')');
+    const arcLean = await page.evaluate(() => document.querySelector('.karrow').style.transform);
+    ok(/rotate\([0-9.]+deg\)/.test(arcLean), tag + ': the arrow leans right ' + arcLean);
+    await shot('arc-punt-steered');
+    // a drag on the field steers too: left by a quarter of its width = half the way left
+    const fb = await page.locator('.karcfield').boundingBox();
+    const was = s.aim;
+    await page.mouse.move(fb.x + fb.width / 2, fb.y + 30); await page.mouse.down();
+    await page.mouse.move(fb.x + fb.width / 4, fb.y + 30, { steps: 5 }); await page.mouse.up();
+    s = await state();
+    ok(Math.abs(s.aim - Math.max(-1, was - 0.5)) < 0.06, tag + ': a drag steers ' + was + ' -> ' + s.aim);
+    // the game echoing an old aim does not yank it back
+    await page.evaluate(() => arcMeter('PUNT', 'aim', { aim: -0.9 }));
+    ok(Math.abs((await state()).aim - s.aim) < 1e-6, tag + ': the game\'s echo does not undo the steering');
+    // HIKE
+    await page.evaluate(() => { window.sent = []; });
+    await page.locator('.karcbtn').dispatchEvent('pointerdown', { pointerId: 12 });
+    sent = await page.evaluate(() => window.sent);
+    ok(sent.length === 1 && sent[0].t === 'kickaim' && sent[0].aim === s.aim && sent[0].aid === arcAid, tag + ': HIKE sends the aim ' + JSON.stringify(sent));
+    s = await state();
+    ok(s.stage === 'power' && await page.isVisible('.kgauges') && !(await page.isVisible('.karcfield')), tag + ': then the power meter ' + JSON.stringify(s));
+    ok((await page.textContent('.karcbtn')).includes('POWER'), tag + ': TAP FOR POWER');
+    // the game's power clock: 0.6 s in (twice: it holds still), the meter is 3/4 full
+    await page.evaluate(() => { arcMeter('PUNT', 'power', { t: 0.6, aim: 0.2 }); arcMeter('PUNT', 'power', { t: 0.6, aim: 0.2 }); });
+    await page.waitForTimeout(150);
+    const clip = await page.evaluate(() => document.querySelector('.kfillart').style.clipPath);
+    ok(/^inset\(25%/.test(clip), tag + ': the colour bar fills three quarters ' + clip);
+    await shot('arc-punt-power');
+    await page.locator('.kgauges').dispatchEvent('pointerdown', { pointerId: 13 });
+    sent = await page.evaluate(() => window.sent);
+    ok(sent.length === 2 && sent[1].t === 'kickpower' && sent[1].power === 0.75 && sent[1].st === 0.6 && sent[1].aid === arcAid, tag + ': a tap stops the power ' + JSON.stringify(sent[1]));
+    s = await state();
+    ok(s.stage === 'pitch' && s.power === 0.75, tag + ': then the pitch ' + JSON.stringify(s));
+    ok((await page.textContent('.karcbtn')).includes('PITCH'), tag + ': TAP FOR PITCH');
+    ok(await page.isVisible('.kwedge'), tag + ': a punt shades the good high hang');
+    await page.evaluate(() => { arcMeter('PUNT', 'pitch', { t: 0.325, power: 0.75, aim: 0.2 }); arcMeter('PUNT', 'pitch', { t: 0.325, power: 0.75, aim: 0.2 }); });
+    await page.waitForTimeout(150);
+    const needle = await page.evaluate(() => document.querySelector('.kneedle').style.transform);
+    ok(/rotate\(-45deg\)/.test(needle), tag + ': a quarter of the pitch sweep in, the needle is at 45 degrees ' + needle);
+    await shot('arc-punt-pitch');
+    await page.locator('.karcbtn').dispatchEvent('pointerdown', { pointerId: 14 });
+    sent = await page.evaluate(() => window.sent);
+    ok(sent.length === 3 && sent[2].t === 'kick' && sent[2].pitch === 0.5 && sent[2].st === 0.325 && sent[2].aid === arcAid, tag + ': the second tap kicks with the pitch ' + JSON.stringify(sent[2]));
+    s = await state();
+    ok(s.done && !(await page.isVisible('.karcbtn')), tag + ': kicked, no more button');
+    await page.locator('.kgauges').dispatchEvent('pointerdown', { pointerId: 15 });
+    ok((await page.evaluate(() => window.sent.length)) === 3, tag + ': one kick');
+    await shot('arc-punt-kicked');
+
+    // a field goal: the FIELD GOAL art, the brackets on the power that clears the bar, the green climbs that clear it
+    await page.evaluate(() => { meter(false); ui('walk'); window.sent = []; ui('kick'); arcMeter('FIELD GOAL', 'aim'); });
+    await page.waitForTimeout(100);
+    ok((await page.getAttribute('.kplate', 'src')).endsWith('fg-title.png'), tag + ': the FIELD GOAL plate');
+    ok(await page.isVisible('.karcfield .kposts'), tag + ': posts on the little field');
+    ok((await page.textContent('.karcfield .kwind')).includes('9 mph'), tag + ': and the wind');
+    await shot('arc-fg-aim');
+    // too slow: the game snapped it, then (say a pad) set the power: the phone follows
+    await page.evaluate(() => arcMeter('FIELD GOAL', 'power', { aim: -0.3 }));
+    s = await state();
+    ok(s.stage === 'power' && Math.abs(s.aim + 0.3) < 1e-6, tag + ': the game snapped it: the power runs ' + JSON.stringify(s));
+    ok(await page.isVisible('.kmark'), tag + ': the brackets mark the power that clears the bar');
+    await page.waitForTimeout(400);
+    await shot('arc-fg-power');
+    await page.evaluate(() => arcMeter('FIELD GOAL', 'pitch', { power: 0.8, clear: [22, 51], aim: -0.3, t: 0.2 }));
+    s = await state();
+    ok(s.stage === 'pitch' && s.power === 0.8, tag + ': straight to the pitch with the game\'s power ' + JSON.stringify(s));
+    ok(await page.isVisible('.kwedge'), tag + ': the climbs that clear the bar are shaded');
+    await page.waitForTimeout(300);
+    await shot('arc-fg-pitch');
+    // and a kickoff after it is the swipe again
+    await page.evaluate(() => { meter(false); ui('walk'); ui('kick'); meter(true, 'KICKOFF', 0); });
+    s = await state();
+    ok(!s.arc && await page.isVisible('.kfield') && !(await page.isVisible('.karc')), tag + ': a kickoff is the swipe again ' + JSON.stringify(s));
 
     ok(errors.length === 0, tag + ': page errors ' + errors.join('; '));
     await page.close();

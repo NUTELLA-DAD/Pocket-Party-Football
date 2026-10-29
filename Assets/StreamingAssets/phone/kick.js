@@ -15,6 +15,13 @@
 // quarter second), so the arrow here runs on the TV's clock, not the phone's, and both show the same arrow; a tap adds
 // st (the seconds this arrow showed). maxDeg leans the arrow as far as the kick really goes, and postsYd / distYd draw
 // the posts to the same scale, so an arrow between the posts here is between the posts on the TV.
+//
+// A punt or a field goal with the game's kickArc: sweep carries arc: true (stage 'aim' | 'power' | 'pitch', powerS,
+// pitchS, minDeg, maxDeg, aimDeg, shank, need?, aim, power?, clear?, good?, t?). Lined up, a shaded arrow on a little
+// field shows the kick; hold the arrows (or drag the field) to steer it left and right ({ t:'kicksteer', aim, aid }),
+// then HIKE ({ t:'kickaim', aim, aid }) snaps it. Then Kenny's POWER meter fills up and down: tap to stop it
+// ({ t:'kickpower', power, aid }); then the PITCH ANGLE needle swings up and down: tap to stop it and kick
+// ({ t:'kick', pitch: 0..1, aid }). The art is in kick/ (punt-* and fg-*). Taps add st on the game's clock, as above.
 (function () {
   'use strict';
   var MIN_POWER = 0.08, FULL_SWIPE = 0.75, STEPS = 10;
@@ -25,6 +32,10 @@
   var sweep = null, stage = '', stageAt = 0, setAim = 0, raf = 0, wind = null, tapBtn, flagL, flagR, windLine;
   // kickSync: the game's clock for this stage (synced once a t came), and held still while the game's clock stands
   var synced = false, lastT = -1, frozen = -1;
+  // the arc (kickArc): its pieces, the aim he steers, the power he stopped, the arrow held down (-1 / 1), the drag
+  var arcBox, arcPlate, arcField, arcArrow, arcPosts, arcDown, arcGauges, arcFill, arcPointer, arcMark, arcDial, arcWedge,
+    arcNeedle, arcGem, arcBtn, arcLeft, arcRight, arcHint, arcWind, arcSet = '';
+  var arcAim = 0, arcPower = 0, arcHold = 0, arcDrag = null, arcSentAim = null, arcSentAt = 0, arcHeldAt = 0, arcAimSeen = false;
 
   function el(tag, cls, text, parent) {
     var e = document.createElement(tag);
@@ -61,6 +72,7 @@
     tapBtn = el('button', 'big ktap hidden', 'TAP TO AIM', root);
     tapBtn.setAttribute('aria-label', 'Kick: tap to set the aim, then tap again to set the power');
     tapBtn.addEventListener('pointerdown', function (e) { e.preventDefault(); tap(); });
+    buildArc();
 
     field.addEventListener('pointerdown', function (e) {
       if (sweep) { e.preventDefault(); tap(); return; }
@@ -212,12 +224,19 @@
       f.classList.toggle('calm', mph < 3);
     });
     windLine.classList.toggle('hidden', !wind);
-    windLine.textContent = !wind ? '' : mph < 1 ? 'No wind' : 'Wind ' + mph + ' mph ' +
+    windLine.textContent = windWords();
+  }
+
+  function windWords() {
+    if (!wind) return '';
+    var mph = wind.mph, right = wind.right, along = wind.along;
+    return mph < 1 ? 'No wind' : 'Wind ' + mph + ' mph ' +
       (Math.abs(right) >= Math.abs(along) ? (right > 0 ? 'left to right \u2192' : '\u2190 right to left') : along > 0 ? 'at your back \u2191' : 'in your face \u2193');
   }
 
   function reset() {
     done = false; pointer = null; stage = ''; setAim = 0;
+    arcAim = 0; arcPower = 0; arcHold = 0; arcDrag = null; arcSentAim = null; arcAimSeen = false;
     posts.style.top = ''; posts.style.bottom = ''; posts.style.width = ''; posts.style.marginLeft = '';
     root.classList.remove('done');
     draw({ power: 0, aim: 0 });
@@ -234,8 +253,11 @@
     arrow.classList.toggle('hidden', goal);
     root.classList.toggle('hidden', !show);
     document.documentElement.classList.toggle('kicking', show);
-    root.classList.toggle('sweep', !!sweep);
-    tapBtn.classList.toggle('hidden', !sweep || done);
+    var arc = !!(sweep && sweep.arc);
+    root.classList.toggle('sweep', !!sweep && !arc);
+    root.classList.toggle('arc', arc);
+    tapBtn.classList.toggle('hidden', !sweep || done || arc);
+    if (arc && show) { arcRefresh(goal); return; }
     if (sweep && show) {
       placeSweep();
       if (!done) {
@@ -243,6 +265,236 @@
         if (!raf) raf = requestAnimationFrame(frame);
       }
     }
+  }
+
+  // ---- the arc (kickArc) ----
+
+  // Where things are in each piece of art (shares of its size): the meter's channel and its 0% / 100% marks, the
+  // dial's pivot, the needle's reach and the shaded band's (of the dial's width), the needle's hub (of the needle's
+  // width), the dial's height over its width.
+  var ART = {
+    punt: { chanL: 0.34, chanR: 0.66, zeroY: 0.761, fullY: 0.124, pivotX: 0.0775, pivotY: 0.801, reach: 0.52, wedge: 0.74, hub: 0.1926, tall: 389 / 341, power: '192 / 426', dial: '341 / 389' },
+    fg: { chanL: 0.345, chanR: 0.663, zeroY: 0.736, fullY: 0.145, pivotX: 0.120, pivotY: 0.774, reach: 0.48, wedge: 0.7, hub: 0.1751, tall: 407 / 354, power: '217 / 425', dial: '354 / 407' }
+  };
+  var STEER_PER_S = 1.2, STEER_SEND_MS = 80;
+  function art(name) { return (window.PPKickArt || 'kick/') + name + '.png'; }   // (a test page sets PPKickArt)
+
+  function img(cls, parent, alt) {
+    var i = el('img', cls, null, parent);
+    i.alt = alt || ''; i.draggable = false;
+    return i;
+  }
+
+  function buildArc() {
+    arcBox = el('div', 'karc', null, root);
+    arcPlate = img('kplate', arcBox, '');
+    arcField = el('div', 'karcfield', null, arcBox);
+    arcField.setAttribute('role', 'slider');
+    arcField.setAttribute('aria-label', 'Aim: drag left or right to steer the kick');
+    arcPosts = el('div', 'kposts', null, arcField);
+    arcDown = el('div', 'kdown', 'DOWNFIELD', arcField);
+    arcArrow = el('div', 'karrow', null, arcField);
+    arcWind = el('div', 'kwind hidden', '', arcField);
+    el('i', 'karrowhead', null, arcArrow);
+    el('div', 'kball', null, arcField);
+    arcLeft = el('button', 'ksteer l', '◀', arcField);
+    arcLeft.setAttribute('aria-label', 'Steer the kick left');
+    arcRight = el('button', 'ksteer r', '▶', arcField);
+    arcRight.setAttribute('aria-label', 'Steer the kick right');
+    [[arcLeft, -1], [arcRight, 1]].forEach(function (b) {
+      b[0].addEventListener('pointerdown', function (e) { e.preventDefault(); e.stopPropagation(); arcHold = b[1]; arcHeldAt = performance.now(); arcLoop(); });
+      ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) { b[0].addEventListener(ev, function () { if (arcHold === b[1]) { arcHold = 0; steerSend(true); } }); });
+    });
+    arcField.addEventListener('pointerdown', function (e) {
+      if (stage !== 'aim' || done) return;
+      e.preventDefault();
+      try { arcField.setPointerCapture(e.pointerId); } catch (err) {}
+      arcDrag = { id: e.pointerId, x: e.clientX, aim: arcAim };
+    });
+    arcField.addEventListener('pointermove', function (e) {
+      if (!arcDrag || e.pointerId !== arcDrag.id) return;
+      var b = arcField.getBoundingClientRect();
+      steerTo(arcDrag.aim + (e.clientX - arcDrag.x) / (b.width / 2));
+    });
+    ['pointerup', 'pointercancel'].forEach(function (ev) {
+      arcField.addEventListener(ev, function (e) { if (arcDrag && e.pointerId === arcDrag.id) { arcDrag = null; steerSend(true); } });
+    });
+
+    arcGauges = el('div', 'kgauges', null, arcBox);
+    var pw = el('div', 'kpowerart', null, arcGauges);
+    img('kart', pw, 'Power meter');
+    arcFill = el('i', 'kfillart', null, pw);
+    arcMark = img('kmark', pw, '');
+    arcPointer = img('kpointer', pw, '');
+    arcDial = el('div', 'kdialart', null, arcGauges);
+    img('kart', arcDial, 'Pitch angle dial');
+    arcWedge = el('i', 'kwedge', null, arcDial);
+    arcGem = img('kgem', arcDial, '');
+    arcNeedle = img('kneedle', arcDial, '');
+    arcGauges.addEventListener('pointerdown', function (e) { e.preventDefault(); arcTap(); });
+
+    arcHint = el('p', 'line khint karchint', '', arcBox);
+    arcHint.setAttribute('aria-live', 'polite');
+    arcBtn = el('button', 'big karcbtn', 'HIKE', arcBox);
+    arcBtn.addEventListener('pointerdown', function (e) { e.preventDefault(); arcTap(); });
+  }
+
+  // the art for this kick (punt-* or fg-*), set once per kind
+  function arcArt(goal) {
+    var set = goal ? 'fg' : 'punt';
+    if (arcSet === set) return ART[set];
+    arcSet = set;
+    var a = ART[set];
+    arcPlate.src = art(set + '-title');
+    arcPlate.alt = goal ? 'FIELD GOAL' : 'PUNT';
+    arcBox.querySelector('.kpowerart .kart').src = art(set + '-power');
+    arcDial.querySelector('.kart').src = art(set + '-dial');
+    arcFill.style.backgroundImage = 'url("' + art(set + '-fill') + '")';
+    arcPointer.src = art(set + '-pointer');
+    arcNeedle.src = art(set + '-needle');
+    arcMark.src = art('fg-mark');
+    arcGem.src = art('punt-mark');
+    arcBox.querySelector('.kpowerart').style.aspectRatio = a.power;
+    arcDial.style.aspectRatio = a.dial;
+    arcFill.style.left = (a.chanL * 100) + '%'; arcFill.style.width = ((a.chanR - a.chanL) * 100) + '%';
+    arcFill.style.top = (a.fullY * 100) + '%'; arcFill.style.height = ((a.zeroY - a.fullY) * 100) + '%';
+    var nw = a.reach / (1 - a.hub);
+    arcNeedle.style.width = (nw * 100) + '%';
+    arcNeedle.style.left = ((a.pivotX - nw * a.hub) * 100) + '%';
+    arcNeedle.style.top = (a.pivotY * 100) + '%';
+    arcNeedle.style.transformOrigin = (a.hub * 100) + '% 50%';
+    arcWedge.style.left = ((a.pivotX - a.wedge) * 100) + '%';
+    arcWedge.style.width = (a.wedge * 200) + '%';
+    arcWedge.style.top = ((a.pivotY - a.wedge / a.tall) * 100) + '%';
+    arcWedge.style.height = (a.wedge * 200 / a.tall) + '%';
+    return a;
+  }
+
+  function steerTo(a) {
+    arcAim = Math.round(Math.max(-1, Math.min(1, a)) * 100) / 100;
+    steerSend(false);
+    arcDraw();
+  }
+  // the steered aim to the game, at most every STEER_SEND_MS (and once more when the finger lifts)
+  function steerSend(force) {
+    if (!window.PP || arcAim === arcSentAim) return;
+    var now = performance.now();
+    if (!force && now - arcSentAt < STEER_SEND_MS) return;
+    arcSentAim = arcAim; arcSentAt = now;
+    window.PP.send({ t: 'kicksteer', aim: arcAim, aid: window.PP.aid() });
+  }
+  // an arrow held down: the aim runs that way at STEER_PER_S
+  function arcLoop() {
+    if (!arcHold || stage !== 'aim' || done) return;
+    var now = performance.now(), dt = Math.min(0.1, (now - arcHeldAt) / 1000);
+    arcHeldAt = now;
+    steerTo(arcAim + arcHold * STEER_PER_S * dt);
+    requestAnimationFrame(arcLoop);
+  }
+
+  function pitchShare(t) { return triangle(t, sweep.pitchS); }
+  function pitchDeg(share) { return sweep.minDeg + (sweep.maxDeg - sweep.minDeg) * share; }
+
+  function arcStart(name) {
+    if (stage === name) return;
+    stage = name; stageAt = performance.now(); synced = false; lastT = -1; frozen = -1;
+    if (!raf) raf = requestAnimationFrame(arcFrame);
+  }
+
+  // the one big button (and a tap on the meters): HIKE, then the power, then the pitch
+  function arcTap() {
+    if (done || !sweep || !sweep.arc || !window.PP) return;
+    if (stage === 'aim') {
+      arcHold = 0; arcDrag = null;
+      window.PP.send({ t: 'kickaim', aim: arcAim, aid: window.PP.aid() });
+      arcStart('power');
+    } else if (stage === 'power') {
+      arcPower = Math.round(powerNow(since()) * 100) / 100;
+      window.PP.send(tapMsg({ t: 'kickpower', power: arcPower, aid: window.PP.aid() }));
+      arcStart('pitch');
+    } else if (stage === 'pitch') {
+      var share = Math.round(pitchShare(since()) * 100) / 100;
+      window.PP.send(tapMsg({ t: 'kick', pitch: share, aid: window.PP.aid() }));
+      done = true;
+      last = { power: arcPower, aim: arcAim, pitch: share };
+      root.classList.add('done');
+      arcHint.textContent = 'Kicked! ' + Math.round(arcPower * 100) + '% power at ' + Math.round(pitchDeg(share)) + '°' +
+        (arcPower >= sweep.shank ? '. Too hard, it may hook!' : '') + ' Watch the TV';
+      arcDraw(share);
+    }
+    arcRefresh(sweep.need !== undefined || kind === 'FIELD GOAL' || kind === 'EXTRA POINT');
+  }
+
+  // the game's word: its stage leads (it snaps the ball itself if he waits too long), its clock runs the meters
+  function arcMessage(sw, w) {
+    sweep = sw; wind = w || null;
+    if (sw.stage === 'aim' && !stage) { arcStart('aim'); if (typeof sw.aim === 'number' && !arcAimSeen) { arcAim = sw.aim; arcAimSeen = true; } }
+    else if (sw.stage === 'power' && (stage === '' || stage === 'aim')) { if (typeof sw.aim === 'number') arcAim = sw.aim; arcStart('power'); }
+    else if (sw.stage === 'pitch' && stage !== 'pitch' && !done) { if (typeof sw.power === 'number') arcPower = sw.power; arcStart('pitch'); }
+    if (sw.stage === stage && !done && stage !== 'aim') syncTo(sw.t);
+    if (stage === 'pitch' && typeof sw.power === 'number') arcPower = sw.power;
+  }
+
+  function arcRefresh(goal) {
+    arcArt(goal);
+    var aiming = stage === 'aim' || stage === '';
+    arcField.classList.toggle('hidden', !aiming);
+    arcGauges.classList.toggle('hidden', aiming);
+    arcPosts.classList.toggle('hidden', !goal);
+    arcDown.classList.toggle('hidden', goal);
+    arcWind.classList.toggle('hidden', !wind);
+    arcWind.textContent = windWords();
+    arcMark.classList.toggle('hidden', !goal || typeof sweep.need !== 'number');
+    arcBtn.classList.toggle('hidden', done);
+    arcBtn.textContent = aiming ? 'HIKE' : stage === 'power' ? 'TAP FOR POWER' : 'TAP FOR PITCH';
+    arcBtn.className = 'big karcbtn ' + (aiming ? 'aim' : 'go') + (done ? ' hidden' : '');
+    arcBtn.setAttribute('aria-label', aiming ? 'Hike: snap the ball with the kick aimed where the arrow points'
+      : stage === 'power' ? 'Tap to stop the power meter' : 'Tap to stop the pitch angle and kick');
+    if (!done) {
+      arcHint.textContent = aiming ? 'Steer the arrow with ◀ ▶ (or drag), then HIKE'
+        : stage === 'power' ? 'Tap to stop the power. Not in the red!' : 'Tap to stop the angle. ' + (goal ? 'Green clears the bar' : 'Green hangs it high');
+    }
+    // the shaded part of the dial: a field goal's climbs that clear the bar (once the power is set), a punt's high hang
+    var win = goal ? sweep.clear : sweep.good;
+    var lo = win && win.length === 2 ? win[0] : 0, hi = win && win.length === 2 ? win[1] : -1;
+    arcWedge.classList.toggle('hidden', !(hi >= lo) || aiming);
+    if (hi >= lo) arcWedge.style.background = 'conic-gradient(rgba(95,211,138,0) 0deg ' + (90 - hi) + 'deg, rgba(95,211,138,.6) ' +
+      (90 - hi) + 'deg ' + (90 - lo) + 'deg, rgba(95,211,138,0) ' + (90 - lo) + 'deg)';
+    arcGem.classList.toggle('hidden', goal || !(hi >= lo) || aiming);
+    if (!goal && hi >= lo) {
+      var a = ART.punt, mid = (lo + hi) / 2 * Math.PI / 180, r = a.wedge * 0.97;
+      arcGem.style.left = ((a.pivotX + Math.cos(mid) * r) * 100) + '%';
+      arcGem.style.top = ((a.pivotY - Math.sin(mid) * r / a.tall) * 100) + '%';
+      arcGem.style.transform = 'translate(-50%, -50%) rotate(' + (90 - (lo + hi) / 2) + 'deg)';
+    }
+    if (typeof sweep.need === 'number') {
+      var A = ART[arcSet];
+      arcMark.style.top = ((A.zeroY - (A.zeroY - A.fullY) * sweep.need) * 100) + '%';
+    }
+    arcDraw();
+    if (!done && !raf && !aiming) raf = requestAnimationFrame(arcFrame);
+  }
+
+  // one picture: the arrow's lean on the little field, the meter's fill and pointer, the needle on the dial
+  function arcDraw(stopped) {
+    if (!arcBox || !sweep) return;
+    var a = ART[arcSet] || ART.punt;
+    var lean = arcAim * (sweep.aimDeg > 0 ? sweep.aimDeg : 15);
+    arcArrow.style.transform = 'rotate(' + lean + 'deg)';
+    var power = stage === 'power' && !done ? powerNow(since()) : stage === 'pitch' || done ? arcPower : 0;
+    var share = typeof stopped === 'number' ? stopped : stage === 'pitch' && !done ? pitchShare(since()) : done && last.pitch !== undefined ? last.pitch : 0;
+    arcFill.style.clipPath = 'inset(' + ((1 - power) * 100) + '% 0 0 0)';
+    arcPointer.style.top = ((a.zeroY - (a.zeroY - a.fullY) * power) * 100) + '%';
+    arcPointer.style.left = (a.chanR * 100) + '%';
+    arcPointer.classList.toggle('hot', power >= sweep.shank);
+    arcNeedle.style.transform = 'translateY(-50%) rotate(' + (-pitchDeg(share)) + 'deg)';
+  }
+
+  function arcFrame() {
+    raf = 0;
+    if (!sweep || !sweep.arc || done || !root || root.classList.contains('hidden')) return;
+    arcDraw();
+    if (stage === 'power' || stage === 'pitch') raf = requestAnimationFrame(arcFrame);
   }
 
   window.PPKick = {
@@ -258,7 +510,8 @@
         if (msg.on) { kind = msg.kind || ''; yards = msg.yards || 0; }
         else sweep = null;
         // the two taps: the game's own stage leads (it snaps the ball itself if he waits too long)
-        if (msg.on && msg.sweep) {
+        if (msg.on && msg.sweep && msg.sweep.arc) { build(); arcMessage(msg.sweep, msg.wind); }
+        else if (msg.on && msg.sweep) {
           build();
           sweep = msg.sweep; wind = msg.wind || null;
           if (msg.sweep.stage === 'power' && stage !== 'power') { if (typeof msg.sweep.aim === 'number') setAim = msg.sweep.aim; startStage('power'); }
@@ -273,6 +526,9 @@
       }
     },
     // for tests: what is on show
-    state: function () { return { shown: !!root && !root.classList.contains('hidden'), kind: kind, done: done, last: last, stage: stage, sweep: !!sweep }; }
+    state: function () {
+      return { shown: !!root && !root.classList.contains('hidden'), kind: kind, done: done, last: last, stage: stage, sweep: !!sweep,
+        arc: !!(sweep && sweep.arc), aim: arcAim, power: arcPower };
+    }
   };
 })();

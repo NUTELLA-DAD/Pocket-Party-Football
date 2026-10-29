@@ -138,5 +138,29 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual(Vector4.one, JerseyMarks.SkinRatio(cfg, "Models/None", 0.5f), "an unknown model stays as painted");
             Assert.AreEqual("NO_SKIN_TONES", ConfigLoader.EnvName("skinTones"));
         }
+
+        // FEATURES.hairColors: a model with hair showing (the cornerback's braid) gets one of marks.hairColors per player,
+        // the 22 on the field spread over dark to fair; a model with no hair stays as painted, and so does everyone with the
+        // feature off.
+        [Test]
+        public void TheBraidHasAMixOfHairColours()
+        {
+            var cfg = ConfigTests.Load();
+            int n = cfg.marks.hairColors.Count;
+            Assert.GreaterOrEqual(n, 5, "a decent range");
+            const string cb = "Models/CB/CB_Rigged";
+            Assert.IsFalse(string.IsNullOrEmpty(cfg.marks.For(cb).hair), "the cornerback has her own hair colour");
+            var seen = new HashSet<int>();
+            for (int slot = 0; slot < 22; slot++) seen.Add((int)(JerseyMarks.HairPick(JerseyMarks.SkinPick(slot)) * n));
+            Assert.AreEqual(n, seen.Count, "every colour on the field");
+            var dark = JerseyMarks.HairOf(cfg, cb, 0f);
+            var fair = JerseyMarks.HairOf(cfg, cb, 0.999f);
+            Assert.Greater(dark.w, 0f, "drawn");
+            Assert.Less(dark.x + dark.y + dark.z, fair.x + fair.y + fair.z, "dark to fair");
+            Assert.AreEqual(Vector4.zero, JerseyMarks.HairOf(cfg, "Models/QB/QB_Rigged", 0.5f), "no hair showing: as painted");
+            Assert.IsNotNull(Resources.Load<Texture2D>(cfg.marks.For(cb).map), "her marks map, with the hair in it");
+            Assert.AreEqual("NO_HAIR_COLORS", ConfigLoader.EnvName("hairColors"));
+            Assert.IsFalse(ConfigTests.Load(new Dictionary<string, string> { { "NO_HAIR_COLORS", "1" } }).Feature("hairColors"));
+        }
     }
 }
