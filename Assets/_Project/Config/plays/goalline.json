@@ -3,6 +3,7 @@
   "name": "Goal Line",
   "side": "defense",
   "desc": "Everyone up close to stop the run",
+  "formation": "goalline",
   "jobs": [
     { "kind": "route", "pts": [[1, 0]], "text": "Fill the hole and hit the RB" },
     { "kind": "man", "target": 2, "text": "Press your receiver on the line" },

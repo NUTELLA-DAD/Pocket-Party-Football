@@ -236,10 +236,11 @@
       b.className = 'play';
       b.setAttribute('role', 'option');
       b.setAttribute('data-id', p.id);
-      b.setAttribute('aria-label', 'Choose ' + p.name + (p.desc ? ': ' + p.desc : ''));
+      b.setAttribute('aria-label', 'Choose ' + p.name + (p.formationName ? ' from ' + p.formationName : '') + (p.desc ? ': ' + p.desc : ''));
       b.disabled = H.locked;
       var f = document.createElement('div'); f.className = 'pf'; b.appendChild(f);
       var t = document.createElement('b'); t.textContent = p.name; b.appendChild(t);
+      if (p.formationName) { var fm = document.createElement('i'); fm.className = 'fm'; fm.textContent = p.formationName; t.appendChild(fm); }
       var n = H.thumbs[p.id] || 0;
       if (n > 0) { var th = document.createElement('span'); th.className = 'thumbs'; th.textContent = '👍 ' + n; b.appendChild(th); }
       var ck = document.createElement('span'); ck.className = 'ck'; ck.textContent = '✓'; b.appendChild(ck);
@@ -260,7 +261,7 @@
     for (var i = 0; i < fs.length; i++) {
       var p = playById(fs[i].parentNode.getAttribute('data-id'));
       fs[i].innerHTML = '';
-      if (p) fs[i].appendChild(diagram(p, H.spots, H.opp, H.me, true, H.side, aspect));
+      if (p) fs[i].appendChild(diagram(p, p.spots || H.spots, H.opp, H.me, true, H.side, aspect));   // FEATURES.formations: the play's own line-up
     }
   }
   // a tap only moves the gold rim and the check; the pictures stay
@@ -288,7 +289,7 @@
     pv.classList.toggle('empty', !p);
     if (!p) { pv.textContent = 'Tap a play to see your job'; return; }
     var job = p.jobs ? p.jobs[H.me] : null;
-    var you = document.createElement('span'); you.textContent = p.name + ' · You: '; pv.appendChild(you);
+    var you = document.createElement('span'); you.textContent = p.name + (p.formationName ? ' (' + p.formationName + ')' : '') + ' · You: '; pv.appendChild(you);
     pv.appendChild(document.createTextNode(job ? job.text : (p.desc || '')));
   }
   // redraw the pictures when the cards change size (turning the phone, or the huddle screen appearing after the plays arrived)
@@ -380,7 +381,7 @@
     var job = msg.play && msg.play.jobs ? msg.play.jobs[msg.me] : null;
     $('job').classList.remove('hidden');
     $('playView').classList.add('hasjob');   // the play card takes the logo's place in the middle of the pad
-    $('jobPlay').textContent = msg.play.name + ' · you are ' + (me.pos || '') + ' #' + (me.number || '');
+    $('jobPlay').textContent = msg.play.name + (msg.play.formationName ? ' (' + msg.play.formationName + ')' : '') + ' · you are ' + (me.pos || '') + ' #' + (me.number || '');
     $('jobText').textContent = job ? job.text : '';
     var f = $('jobField');
     f.innerHTML = '';

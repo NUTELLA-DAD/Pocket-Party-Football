@@ -75,6 +75,7 @@ namespace PocketFootball.Sim
             var drop = new List<int>();
             foreach (var kv in s.Hot) { var q = w.Find(kv.Key); if (q == null || q.Team == p.Team) drop.Add(kv.Key); }
             foreach (int k in drop) { s.Hot.Remove(k); s.HotJobs.Remove(k); }
+            Formation.Shift(w, p.Team);   // FEATURES.formations: line up in the new play's formation
             Bump(w, p.Team);
             return true;
         }

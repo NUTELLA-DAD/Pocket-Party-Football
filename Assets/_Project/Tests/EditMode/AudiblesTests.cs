@@ -119,8 +119,8 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual("hot_go", Audibles.RouteOf(w, rb));
             var job = Audibles.HotJob(w, rb);
             Assert.AreEqual("route", job.kind);
-            // the route starts from his own spot: the RB stands 7.5 back in the middle, the go is straight ahead
-            var home = w.Cfg.formation.offense[rb.Spot];
+            // the route starts from his own spot (where Slants lines him up), the go is straight ahead
+            var home = w.Spots(w.Offense)[rb.Spot];
             var go = w.Cfg.audibles.hotRoutes[1];
             Assert.AreEqual(-home.back + go.pts[0][0], job.pts[0][0], 1e-4f);
             Assert.AreEqual(home.z, job.pts[0][1], 1e-4f);
@@ -138,7 +138,7 @@ namespace PocketFootball.Tests.EditMode
             {
                 var wr = LivePlay.SpotOf(w, w.Offense, spot);
                 var job = Audibles.JobFor(w, wr, slant);
-                float z = w.Cfg.formation.offense[spot].z, end = job.pts[job.pts.Count - 1][1];
+                float z = w.Spots(w.Offense)[spot].z, end = job.pts[job.pts.Count - 1][1];
                 Assert.Less(System.Math.Abs(end), System.Math.Abs(z), "spot " + spot + " slants inside");
             }
         }
