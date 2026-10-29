@@ -49,8 +49,7 @@ Optional, `"formation": "<set id>"` (FEATURES.formations, `NO_FORMATIONS=1` turn
 | --- | --- |
 | `shotgun` | QB 5 deep, RB beside him; 2 wide, slot, inline TE (HB Screen) |
 | `iform` | QB under center, the slot WR as an offset fullback, RB 7 deep (HB Dive) |
-| `pistol` | QB 5 deep, RB right behind him: the base line-up, also the huddle's (Toss Sweep) |
-| `singleback` | QB under center, RB 6 deep (PA Boot) |
+| `pistol` | QB 5 deep, RB right behind him: the base line-up, also the huddle's (Toss Sweep, PA Boot) |
 | `trips` | gun; three receivers to the far side, one alone on the near side (Slants) |
 | `spread` | gun, 2x2: the TE split out as a second slot (Four Verticals) |
 | `jumbo` | under center, the WRs in tight as extra tight ends and a wing (QB Sneak) |
