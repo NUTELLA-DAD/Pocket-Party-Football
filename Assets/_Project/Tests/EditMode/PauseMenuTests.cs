@@ -18,6 +18,21 @@ namespace PocketFootball.Tests.EditMode
             Assert.IsFalse(ConfigTests.Load(new Dictionary<string, string> { { "NO_PAUSE_MENU", "1" } }).Feature("pauseMenu"));
         }
 
+        // FEATURES.pauseQr: the join QR leaves the game screen for the pause menu, but only when the menu is there to
+        // hold it; NO_PAUSE_QR=1 (or no pause menu) keeps the corner panel so people can still join mid-game.
+        [Test]
+        public void TheJoinQrMovesIntoTheMenu()
+        {
+            var cfg = ConfigTests.Load();
+            Assert.IsTrue(cfg.Feature("pauseQr"), "FEATURES.pauseQr is on in game.json");
+            Assert.AreEqual("NO_PAUSE_QR", ConfigLoader.EnvName("pauseQr"));
+            Assert.Greater(cfg.view.pauseQrPx, 0f);
+            Assert.IsTrue(PauseMenuModel.QrInMenu(cfg, true));
+            Assert.IsFalse(PauseMenuModel.QrInMenu(cfg, false), "no pause menu: the corner panel stays");
+            var off = ConfigTests.Load(new Dictionary<string, string> { { "NO_PAUSE_QR", "1" } });
+            Assert.IsFalse(PauseMenuModel.QrInMenu(off, true));
+        }
+
         [Test]
         public void TheButtonsInOrder()
         {

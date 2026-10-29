@@ -266,7 +266,7 @@ namespace PocketFootball.Sim
 
     public sealed class ViewConfig
     {
-        public float playerHeightM, playerRadiusM, findMeS, plateFontPx, joinPanelQrPx, ballLengthM, ballWidthM, meSendHz;
+        public float playerHeightM, playerRadiusM, findMeS, plateFontPx, joinPanelQrPx, pauseQrPx, ballLengthM, ballWidthM, meSendHz;
         // the frame meter (Boot/FrameMeter.cs, F3 or -fps): how often it writes a line to the log, and what counts as a slow frame
         public float perfLogEveryS, perfSlowFrameMs;
         // FEATURES.smoothMotion: the steady frame rate the TV draws at (vsync every N refreshes when the screen's rate allows)

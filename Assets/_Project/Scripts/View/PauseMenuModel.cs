@@ -24,6 +24,11 @@ namespace PocketFootball.View
 
         public Item Picked => Items[Pick];
 
+        // FEATURES.pauseQr (NO_PAUSE_QR=1: the join panel stays in the game's corner as before): the join QR code moves
+        // off the game screen into the pause menu, so a late joiner presses Esc and scans. Only with the pause menu
+        // there to hold it (not in the lab, tool runs or NO_PAUSE_MENU=1), else nobody could join mid-game.
+        public static bool QrInMenu(GameConfig cfg, bool menuThere) => menuThere && cfg.Feature("pauseQr");
+
         public void Reset() { Pick = 0; Confirming = false; }
 
         public void Move(int dir)
