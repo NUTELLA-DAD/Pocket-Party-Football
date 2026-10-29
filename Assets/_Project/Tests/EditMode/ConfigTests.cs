@@ -77,7 +77,7 @@ namespace PocketFootball.Tests.EditMode
             grn.ModelFor("LB", true, out m, out tex);
             Assert.AreEqual("Models/Linebacker/Linebacker_Rigged", m);
             Assert.AreEqual("Models/Linebacker/Linebacker_BaseColor", tex);
-            grn.ModelFor("CB", true, out m, out _);
+            grn.ModelFor("RB", true, out m, out _);
             Assert.AreEqual(grn.model, m, "a position with no model of its own wears the team's");
             grn.ModelFor("LB", false, out m, out _);
             Assert.AreEqual(grn.model, m, "NO_POS_MODELS=1: the team's model for every position");
@@ -104,8 +104,8 @@ namespace PocketFootball.Tests.EditMode
             Load().teams[1].ModelFor("WR", true, out m, out tex);
             Assert.AreEqual("Models/WR/WR_Rigged", m);
             Assert.AreEqual("Models/WR/WRGRN_BaseColor", tex, "the Grains' WR wears the green recolour");
-            Load().teams[0].ModelFor("CB", true, out m, out _);
-            Assert.AreEqual(Load().teams[0].model, m, "defensive backs keep the team's model");
+            Load().teams[0].ModelFor("RB", true, out m, out _);
+            Assert.AreEqual(Load().teams[0].model, m, "the running backs keep the team's model");
         }
 
         [Test]
@@ -135,7 +135,8 @@ namespace PocketFootball.Tests.EditMode
         public void EveryFormationSpotWearsTheModelForItsPosition()
         {
             // the bulky #64 on the line both ways and at middle linebacker, the leaner linebacker on the outside linebackers and the
-            // safeties, the receivers' #81 on the WRs, the tight end's #88 on the TE, the #24 at running back and corner; a two-way
+            // safeties, the receivers' #81 on the WRs, the tight end's #88 on the TE, the #24 at running back, the braided #24 at
+            // corner; a two-way
             // player changes model with his spot (PlayersView rebuilds the body on a new position)
             var cfg = Load();
             var want = new Dictionary<string, string>
@@ -144,7 +145,7 @@ namespace PocketFootball.Tests.EditMode
                 { "OL", "Models/Linebacker/Linebacker_Rigged" }, { "DL", "Models/Linebacker/Linebacker_Rigged" },
                 { "LB", "Models/Linebacker/Linebacker_Rigged" },
                 { "WR", "Models/WR/WR_Rigged" }, { "TE", "Models/TE/TE_Rigged" },
-                { "RB", "Models/Player24/Player24_Rigged" }, { "CB", "Models/Player24/Player24_Rigged" }, { "S", "Models/LeanLB/LeanLB_Rigged" },
+                { "RB", "Models/Player24/Player24_Rigged" }, { "CB", "Models/CB/CB_Rigged" }, { "S", "Models/LeanLB/LeanLB_Rigged" },
             };
             const string lean = "Models/LeanLB/LeanLB_Rigged";
             int outsideBackers = 0;
@@ -199,5 +200,26 @@ namespace PocketFootball.Tests.EditMode
         }
 
         static string Tex(TeamConfig team) { team.ModelFor("S", true, out _, out string t); return t; }
+
+        // The cornerback (Kenny's braided #24): every team of the league plays her at corner in its own colours, a full
+        // knee bend, and the running back keeps the #24 he had.
+        [Test]
+        public void TheBraidedPlayerPlaysCornerback()
+        {
+            var cfg = Load();
+            var all = new List<TeamConfig>(cfg.teams);
+            all.AddRange(cfg.moreTeams);
+            foreach (var team in all)
+            {
+                team.ModelFor("CB", true, out string m, out string tex, out float bend, 21);
+                Assert.AreEqual("Models/CB/CB_Rigged", m, team.@short + " CB");
+                Assert.AreEqual(team == cfg.teams[0] ? "Models/CB/CB_BaseColor" : "Models/CB/CB" + team.@short + "_BaseColor", tex, team.@short);
+                Assert.AreEqual(1f, bend);
+                team.ModelFor("RB", true, out string rb, out _);
+                Assert.AreEqual(team.model, rb, team.@short + ": the running back keeps the team's #24");
+            }
+            Assert.IsNotNull(cfg.marks.For("Models/CB/CB_Rigged"), "her numbers and eyes are the game's");
+            Assert.IsNotNull(cfg.roster.For("Models/CB/CB_Rigged"), "and she has a card on the roster page");
+        }
     }
 }

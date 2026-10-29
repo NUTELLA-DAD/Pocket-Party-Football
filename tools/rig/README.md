@@ -36,6 +36,12 @@ long arms out to 1.11 m and legs set wide). Its import/prep/rig scripts are in t
 after rigfix it goes through handfix.py (`LeanLB`) and `soften/LeanLB.json` (wider hip, knee and clavicle blends too:
 gauntlet 7917 -> 5823). Its gloves have four fingers and a thumb, no sixth finger.
 
+`cb.json`: the cornerback (Resources/Models/CB, from Hi3D_Untitled_allparts_20261029_001616.fbx, Kenny's braided #24):
+long thin arms out to 1.0 m, the braid hanging from the back of the helmet down to 0.82 m. rig_cb.py makes the braid
+rigid on the Head with the helmet (it swings with her head), so `headKeep` keeps it. Its import/prep/rig scripts are in
+the project files under models/cb/scripts; after rigfix it goes through handfix.py (`CB`: four fingers and a thumb, no
+sixth finger) and `soften/CB.json` (the LeanLB set: gauntlet 3983 -> 3698, the best of the models).
+
 ## Hands (`handfix.py`, `fcore.py`, `hands.json`)
 `python handfix.py -- in.fbx hands.json <Model> out.fbx` (QB, WR, TE, Kicker, Player24, Referee, Linebacker):
 - pulls a sixth finger (`extra`: its outline seen from above, metres on the model's left side; `base`: where it
@@ -63,3 +69,6 @@ where they go.
   (number height or iris radius, metres); an eye's `iris` (its centre on the plane) and `poly` (its opening, drawn
   by hand from a raster of the zone). The first zone that claims a texel keeps it (chest and back before shoulders).
   It prints each map's lid and iris colours for game.json "marks".
+- FEATURES.hairColors: a JSON with a `hair` entry (`box` [[x0, x1], [y0, y1], [z0, z1]] m, `hue` [h0, h1] degrees, `sMin`)
+  marks the hair (the CB's braid) in the marks map's B outside the zones, and prints the model's own hair colour for
+  game.json "marks" "models" `hair`; each player then gets one of marks.hairColors, drawn at the painted brightness.
