@@ -9,6 +9,10 @@ foreach ($f in $Fixtures) {
     $extra = @(switch ($f) {
         'field_goal_line' { @('-look-x','-40') }
         'field_goal_kick' { @('-fg-demo','-warmup','150') }
+        'kick_arc_punt'   { @('-kick-arc-demo','punt') }
+        'kick_arc_fg'     { @('-kick-arc-demo','fg') }
+        'kick_arc_power'  { @('-kick-arc-demo','fg','-kick-arc-taps','1') }
+        'kick_arc_pitch'  { @('-kick-arc-demo','punt','-kick-arc-taps','2') }
         'cheerleaders'    { @('-look-x','18') }
         'ball_flight'     { @('-throw-demo','12','-warmup','24') }
         'bots_wander'     { @('-wander','-warmup','240') }

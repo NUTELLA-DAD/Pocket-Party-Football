@@ -59,7 +59,7 @@ namespace PocketFootball.View
 
             float s = Screen.height / 1080f;
             var stage = Kicking.Stage(world);
-            bool person = kicker.Human && !kicker.BotHelp;
+            bool person = Kicking.PersonKicks(world, kicker);
             bool arc = Kicking.ArcOn(world);
             bool sweep = before && person && stage != Kicking.SweepStage.None && !arc;
             if (sweep) Arrows(cam, stage, s);

@@ -99,6 +99,7 @@ namespace PocketFootball.Boot
                 fw.FirstDownX = fw.LineOfScrimmageX + fw.Dir * cfg.downs.firstDownYd;
             }
             for (int i = 0; i < args.WarmupTicks; i++) h.StepOnce();
+            if (args.KickArcDemo != null) KickArcView.Demo(h.World, args.KickArcDemo, args.KickArcTaps, h.StepOnce);   // FEATURES.kickArc screenshots
             if (args.CalledDemo)
             {
                 if (h.World.Phase != Phase.Huddle) Huddle.Begin(h.World);

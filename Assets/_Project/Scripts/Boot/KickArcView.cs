@@ -54,7 +54,7 @@ namespace PocketFootball.Boot
             if (w == null || !Kicking.ArcOn(w) || Replay.OnScreen) { Hide(); return; }
             var kicker = Kicking.Kicker(w);
             var stage = Kicking.Stage(w);
-            if (kicker == null || !kicker.Human || kicker.BotHelp || stage == Kicking.SweepStage.None || !Kicking.WaitingToKick(w, kicker)) { Hide(); return; }
+            if (!Kicking.PersonKicks(w, kicker) || stage == Kicking.SweepStage.None || !Kicking.WaitingToKick(w, kicker)) { Hide(); return; }
 
             var c = w.Cfg.kicking;
             var k = w.Kick;
@@ -108,6 +108,36 @@ namespace PocketFootball.Boot
             headMesh.triangles = new[] { 0, 3, 1, 0, 2, 3, 0, 1, 3, 0, 3, 2 };
             headMesh.RecalculateBounds();
             head.SetActive(true);
+        }
+
+        // -kick-arc-demo punt|fg (screenshots): a person (slot DemoSlot) takes the kicker's spot, calls that kick on 4th
+        // down (a punt from his own 30, a field goal from the other team's 25), lines it up steered a little right and,
+        // with taps, presses HIKE and then stops the power, a few ticks apart. step: one tick of the game.
+        public const int DemoSlot = 900;
+        public static void Demo(World w, string kind, int taps, System.Action step)
+        {
+            if (!Kicking.On(w) || !w.Cfg.Feature("kickArc")) return;
+            var cfg = w.Cfg;
+            bool fg = kind == "fg";
+            w.Kick.Opened = true;
+            w.LineOfScrimmageX = w.Dir * (fg ? cfg.field.GoalLineX - 25f : -(cfg.field.GoalLineX - 30f));
+            w.Down = cfg.downs.downsToGain;
+            w.FirstDownX = w.LineOfScrimmageX + w.Dir * cfg.downs.firstDownYd;
+            var me = w.ReplaceBot(w.Offense, DemoSlot);
+            if (me == null) return;
+            int guard = 0;
+            while (w.Phase != Phase.Huddle && guard++ < 600) step();
+            Huddle.Lock(w, DemoSlot, fg ? cfg.kicking.fgPlay : cfg.kicking.puntPlay);
+            guard = 0;
+            while (w.Phase != Phase.Set && guard++ < 1200) step();
+            Kicking.Steer(w, DemoSlot, 0.35f);
+            for (int i = 0; i < 4; i++) step();
+            if (taps < 1) return;
+            Kicking.Tap(w, DemoSlot);
+            for (int i = 0; i < 16; i++) step();
+            if (taps < 2) return;
+            Kicking.Tap(w, DemoSlot);
+            for (int i = 0; i < 10; i++) step();
         }
 
         void Hide()

@@ -89,6 +89,11 @@ namespace PocketFootball.Sim
             return p != null && p == Kicker(w);
         }
 
+        // A person is kicking this one, not the bot standing in for an idle person (the same rule as LiveStep's: with
+        // taps a person counts as idle only once the line-up ran out on him). The TV shows the meters only for a person.
+        public static bool PersonKicks(World w, Player kicker) =>
+            kicker != null && kicker.Human && !(kicker.BotHelp && (!TapsOn(w) || w.Kick.AutoSnap));
+
         // ---- the hold (FEATURES.fgHolder) ----
 
         public static bool HolderOn(World w) => w.Cfg.Feature("fgHolder") && Mode(w) == KickKind.FieldGoal;
@@ -205,6 +210,7 @@ namespace PocketFootball.Sim
             var kicker = Kicker(w);
             if (!ArcOn(w) || Stage(w) != SweepStage.Aim || kicker == null || kicker.Slot != slot) return false;
             w.Kick.Aim = Clamp(aim, -1f, 1f);
+            kicker.IdleTicks = 0;   // (steering is a touch of the phone, like the stick)
             return true;
         }
 
@@ -217,6 +223,7 @@ namespace PocketFootball.Sim
             k.PowerSet = true;
             k.ChosenPower = Clamp(power, 0f, 1f);
             k.PitchTick = w.Tick;
+            kicker.IdleTicks = 0;
             return true;
         }
 
@@ -244,6 +251,7 @@ namespace PocketFootball.Sim
             k.Aim = Clamp(aim, -1f, 1f);
             LivePlay.Hike(w);
             k.PowerTick = w.Tick;
+            if (ArcOn(w)) kicker.IdleTicks = 0;   // (FEATURES.kickArc: HIKE is a touch, so the bot doesn't step in for him)
             return true;
         }
 

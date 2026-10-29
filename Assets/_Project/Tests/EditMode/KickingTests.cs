@@ -828,6 +828,7 @@ namespace PocketFootball.Tests.EditMode
             for (int i = 0; i < 11; i++) w.Step(null);
             float power = Kicking.SweepNow(w);
             Assert.AreEqual(Kicking.PowerSweep(c, 11f / cfg.sim.tickHz), power, 1e-5f);
+            Assert.IsTrue(Kicking.PersonKicks(w, kicker), "steering and HIKE count as touches: no bot steps in for him");
             Assert.IsFalse(Kicking.SetPower(w, 501, 0.5f), "only the kicker taps");
             Assert.IsTrue(Kicking.Tap(w, kicker.Slot));
             Assert.AreEqual(Kicking.SweepStage.Pitch, Kicking.Stage(w), "then the pitch");
