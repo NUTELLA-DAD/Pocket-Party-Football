@@ -55,6 +55,7 @@ namespace PocketFootball.Sim
     {
         public readonly GameConfig Cfg;
         public readonly Rng Rng;
+        public readonly int Seed;                      // the game's seed (FEATURES.wind draws the wind from it, not from Rng)
         public readonly List<Player> Players = new List<Player>();
         public readonly Ball Ball = new Ball();
         public int Tick;
@@ -98,6 +99,7 @@ namespace PocketFootball.Sim
         {
             Cfg = cfg;
             Rng = new Rng(seed);
+            Seed = seed;
             Offense = cfg.formation.offenseTeam;
             LineOfScrimmageX = cfg.formation.lineOfScrimmageXYd;
             BotsWander = cfg.bots.wander;

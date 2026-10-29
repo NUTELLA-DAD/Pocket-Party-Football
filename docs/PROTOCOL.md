@@ -116,7 +116,10 @@ Actions the page already sends but the game ignores (reserved for the workstream
 `hot` swaps this player's route for one of `audibles.hotRoutes` (`""` = back to the called route); only an offense person on a receiver spot (`play.receivers`) (`Audibles.PickHot`). Afterwards the team gets `audible`. Nothing goes to the other team or into `status`, and the TV shows nothing.
 
 ### `kick`
-`{power: 0..1, aim: -1..1, aid}`. Sent by the `kick` layout in `layouts.js`. **No handler in the game yet**: WS-01 (kicking) adds it.
+`{power: 0..1, aim: -1..1, aid}`. Sent by the kick meter (`kick.js`) or the `kick` layout's pad in `layouts.js`; only the kicker's, with the aid of the screen on show (`Boot/KickPhones.cs`). On a field goal with `FEATURES.kickSweep` it is the second tap: the aim set by `kickaim` stands.
+
+### `kickaim` (`FEATURES.kickSweep`)
+`{aim: -1..1, aid}`. A field goal's first tap: the aim the phone's sweeping arrow showed (the kicker's left is -1). It snaps the ball to the holder. Only the kicker, only while lined up (`Kicking.SetAim`).
 
 ## 5. Game to phone
 
@@ -140,10 +143,13 @@ Which screen to show.
 
 | Field | |
 | --- | --- |
-| `layout` | `pick`, `huddle`, `walk`, or one of the play layouts `qbpre qb carrier route block rush lb cover wait` (see `PhoneLayouts.cs`). `kick` exists on the page only. |
+| `layout` | `pick`, `huddle`, `walk`, or one of the play layouts `qbpre qb carrier route block rush lb cover wait`, `kick` (the kicker) or `hold` (a field goal's holder, `FEATURES.fgHolder`) (see `PhoneLayouts.cs`). |
 | `aid` | A new id every time (`<layout><counter>`). Presses must echo it. |
 | `receivers` | `qb` only: `[{shape, label}]` in throw order. `shape` comes from `game.json` `play.shapes`, `label` like `WR #11`. |
 | `line` | `wait` during the whistle only: what happened, for example `Tackled! Back to the huddle...`. |
+
+### `kickmeter` (the kicker's phone only, WS-01)
+`{on, kind, yards}`: `on` is true while this phone's player lines up a kick (`kind`: `KICKOFF`, `PUNT`, `FIELD GOAL`, `EXTRA POINT`; `yards` to the posts). A field goal with `FEATURES.kickSweep` adds `sweep {stage: "aim"|"power", aimS, powerS, need, shank, aim?}`: which arrow is sweeping, each sweep's period there and back (seconds), the power that just clears the bar, where the hooking red top starts, and in the power stage the aim already set. With `FEATURES.wind` it adds `wind {mph, right, along}` (-1..1: across the kick toward the kicker's right, and at his back). Sent again whenever any of it changes, so a phone that was too slow sees the game's own `stage: "power"`.
 
 ### `me` (this phone)
 `{st: 0..100, tired: bool, oob: bool}`. Stamina, sprint locked out, out of bounds. At most `view.meSendHz` times a second and only when it changed.

@@ -51,3 +51,29 @@ html.kicking body { overflow: hidden; }
 .kickmeter .kposts::after {
   content: ""; position: absolute; left: 50%; top: 100%; width: 6px; height: 18px; margin-left: -3px; background: var(--warn);
 }
+/* the two taps of a field goal (kick.js sweep): a big tap button, the wind on the posts, the bar to clear on the meter */
+.kickmeter.sweep { grid-template-rows: auto minmax(0, 1fr) auto auto; }
+.kickmeter .ktap { width: 100%; min-height: 64px; font-size: 26px; touch-action: none; }
+.kickmeter .ktap.aim { background: var(--warn); color: var(--edge, #060d2b); }
+.kickmeter .ktap.go { background: #5fd38a; color: var(--edge, #060d2b); }
+.kickmeter .kflag {
+  position: absolute; top: -18px; height: 10px; width: 20px; background: #e8462a; pointer-events: none;
+  transform-origin: 0 50%; clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+.kickmeter .kflag.l { left: -6px; }
+.kickmeter .kflag.r { right: -6px; }
+.kickmeter .kflag.r { margin-right: -20px; }
+.kickmeter .kflag.calm { height: 16px; width: 6px !important; clip-path: none; }
+.kickmeter .kposts::before {
+  content: ""; position: absolute; left: -6px; right: -6px; top: -18px; height: 18px; pointer-events: none;
+  border-left: 3px solid var(--warn); border-right: 3px solid var(--warn);
+}
+.kickmeter .kwind {
+  position: absolute; left: 12px; top: 10px; pointer-events: none; padding: 4px 10px; border-radius: 10px;
+  background: rgba(0, 0, 0, .35); font-family: var(--display); font-size: 18px; color: var(--chalk);
+}
+.kickmeter .kpower .kneed { position: absolute; left: -4px; right: -4px; height: 4px; margin-bottom: -2px; background: #fff; }
+.kickmeter .kpower .kshank { position: absolute; left: 0; right: 0; top: 0; background: rgba(240, 80, 60, .55); }
+.kickmeter .kaimline.clear { background: #5fd38a; }
+.kickmeter .kaimline.hot { background: #f0503c; }
+.kickmeter .hidden, .kickmeter .ktap.hidden { display: none; }

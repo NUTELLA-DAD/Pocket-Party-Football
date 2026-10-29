@@ -19,6 +19,7 @@ namespace PocketFootball.Boot
         public float? ThrowDemo;      // -throw-demo <yards>: the QB lobs the ball this far downfield at once (screenshots)
         public string Photo;          // -photo concept04: a frozen photo scene recreating a concept picture (also PP_SHOT=<name>)
         public bool CalledDemo;       // -called-demo: the offense has already called its play (screenshots of the TV banner)
+        public bool FieldGoalDemo;    // -fg-demo: no opening kickoff, 4th and 10 on the other team's 25, so the bots kick a field goal (screenshots)
         public int WarmupTicks;       // -warmup <ticks>: run the sim this many ticks before the first frame
         public bool Title;            // -title: show the title screen in a screenshot run too (TitleScreen.cs)
         public string TitlePage;      // -title-page howto | settings: open on that page (screenshots)
@@ -38,6 +39,7 @@ namespace PocketFootball.Boot
                 else if (s == "-bind" && next != null) { a.Bind = next; i++; }
                 else if (s == "-wander") a.Wander = true;
                 else if (s == "-called-demo") a.CalledDemo = true;
+                else if (s == "-fg-demo") a.FieldGoalDemo = true;
                 else if (s == "-title") a.Title = true;
                 else if (s == "-fps") a.Fps = true;
                 else if (s == "-lobby") a.Lobby = true;

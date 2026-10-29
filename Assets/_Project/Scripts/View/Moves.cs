@@ -12,7 +12,7 @@ namespace PocketFootball.View
     // It only reads the World, once per sim tick, and spots the moments by what changed since the tick before (the ball
     // left the QB's hand, a pass ended up held, the whistle blew on a tackle). Frames count sim ticks at anim.fps, so
     // the moves step like the rest of the look and never depend on the frame rate. Pure C#: tests drive it with a World.
-    public enum Move { None, Aim, Throw, Handoff, Reach, Secure, Bobble, Juke, Whiff, Tackle, Tackled, Celebrate, Block, Snap, TakeSnap, Stagger, KickSet, Kick }
+    public enum Move { None, Aim, Throw, Handoff, Reach, Secure, Bobble, Juke, Whiff, Tackle, Tackled, Celebrate, Block, Snap, TakeSnap, Stagger, KickSet, Kick, Hold }
 
     public struct MoveNow
     {
@@ -78,11 +78,15 @@ namespace PocketFootball.View
                 if (ballState == BallState.Held && carrier >= 0 && b.State == BallState.Flying)
                 {
                     // FEATURES.kickMotion: a kick is the kicker's leg, not a throw
+                    // (FEATURES.fgHolder: the holder had it; the kicker's leg, the holder stays down)
                     var kicker = Kicking.Kicker(w);
-                    if (w.Kick.Kicked && kicker != null && kicker.Slot == carrier && w.Cfg.Feature("kickMotion")) Start(w, carrier, Move.Kick, a.kickS);
-                    else Start(w, carrier, Move.Throw, a.throwS);
+                    var holder = Kicking.Holder(w);
+                    bool held = holder != null && holder.Slot == carrier;
+                    if (w.Kick.Kicked && kicker != null && (kicker.Slot == carrier || held) && w.Cfg.Feature("kickMotion")) Start(w, kicker.Slot, Move.Kick, a.kickS);
+                    else if (!held) Start(w, carrier, Move.Throw, a.throwS);
                 }
-                if (ballState == BallState.Held && b.State == BallState.Held && carrier >= 0 && b.Carrier >= 0 && b.Carrier != carrier)
+                // (not the field goal's line-up, where the holder takes it from the QB's spot: FEATURES.fgHolder)
+                if (ballState == BallState.Held && b.State == BallState.Held && carrier >= 0 && b.Carrier >= 0 && b.Carrier != carrier && w.Phase != Phase.Set)
                 {
                     var from = w.Find(carrier); var to = w.Find(b.Carrier);
                     if (from != null && to != null && from.Team == to.Team) Start(w, carrier, Move.Handoff, a.handoffS);
@@ -216,7 +220,9 @@ namespace PocketFootball.View
                 return m;
             }
             // FEATURES.kickMotion: the kicker over the ball (Frame 1: a punt, the ball held out)
-            if (w.Cfg.Feature("kickMotion") && Kicking.WaitingToKick(w, p)) return new MoveNow { Kind = Move.KickSet, Frame = Kicking.Mode(w) == KickKind.Punt ? 1 : 0 };
+            if (w.Cfg.Feature("kickMotion") && Kicking.WaitingToKick(w, p) && !w.Kick.Approach) return new MoveNow { Kind = Move.KickSet, Frame = Kicking.Mode(w) == KickKind.Punt ? 1 : 0 };
+            // FEATURES.fgHolder: the holder is down on one knee from the line-up until the ball is gone
+            if (p == Kicking.Holder(w) && !w.Kick.Kicked) return new MoveNow { Kind = Move.Hold };
             var snap = Snap.For(w, p);   // the snap (Snap.cs): the center down in his stance, the QB's hands out for it
             if (snap != Move.None) return new MoveNow { Kind = snap };
             if (reaching.Contains(p.Slot)) return new MoveNow { Kind = Move.Reach };

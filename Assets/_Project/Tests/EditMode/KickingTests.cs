@@ -12,10 +12,11 @@ namespace PocketFootball.Tests.EditMode
     // kick meter (only the kicker's phone gets it). Kicking ships OFF, so each test turns it on for its own world.
     public sealed class KickingTests
     {
-        static GameConfig On()
+        static GameConfig On(bool wind = false)
         {
             var cfg = ConfigTests.Load();
             cfg.features["kicking"] = true;
+            cfg.features["wind"] = wind;   // (calm, so a straight kick goes straight; the wind has its own tests)
             return cfg;
         }
 
@@ -259,8 +260,11 @@ namespace PocketFootball.Tests.EditMode
             if (on) Assert.AreEqual(Move.KickSet, m.Of(w, me).Kind, "over the ball");
             if (on) Assert.AreEqual(0, m.Of(w, me).Frame, "a place kick");
             Assert.IsTrue(Kicking.Kick(w, 500, 0.8f, 0f));
+            // (FEATURES.fgHolder: he runs up to the holder first; the holder had the ball, so no throw either way)
+            Assert.IsTrue(Run(w, 3, () => { m.Observe(w); return w.Kick.Kicked; }), "kicked once he is at the ball");
             w.Step(null); m.Observe(w);
-            Assert.AreEqual(on ? Move.Kick : Move.Throw, m.Of(w, me).Kind, "the kick");
+            if (on) Assert.AreEqual(Move.Kick, m.Of(w, me).Kind, "the kick");
+            else Assert.AreNotEqual(Move.Kick, m.Of(w, me).Kind, "no kick motion");
             for (int i = 0; i < (int)(cfg.anim.kickS * cfg.sim.tickHz) + 1; i++) { w.Step(null); m.Observe(w); }
             Assert.AreNotEqual(Move.Kick, m.Of(w, me).Kind, "the kick ends");
             Assert.AreEqual("NO_KICK_MOTION", ConfigLoader.EnvName("kickMotion"));
@@ -280,12 +284,14 @@ namespace PocketFootball.Tests.EditMode
             Assert.IsTrue(Run(w, 30, () => w.Phase == Phase.Set));
             Assert.AreEqual("kick", PhoneLayouts.For(w, me), "the kicker's phone shows the kick meter");
             Assert.IsFalse(Kicking.Kick(w, 501, 1f, 0f), "nobody else can kick");
-            float d = Math.Abs(w.Dir * cfg.field.HalfLength - me.X);
+            float d = Math.Abs(w.Dir * cfg.field.HalfLength - w.Kick.HoldX);   // (from the holder's spot)
             float power = Kicking.FieldGoalPower(w, d) + 0.1f;
             int kicking = w.Offense;
             float los = w.LineOfScrimmageX;
             Assert.IsTrue(Kicking.Kick(w, 500, power, aim), "the swipe snaps and kicks");
             Assert.AreEqual(Phase.Live, w.Phase);
+            Assert.IsFalse(Kicking.Kick(w, 500, power, aim), "one kick a play");
+            Assert.IsTrue(Run(w, 3, () => w.Kick.Kicked), "the run-up, then the kick");
             Assert.AreEqual(BallState.Flying, w.Ball.State);
             Assert.IsFalse(Kicking.Kick(w, 500, power, aim), "one kick a play");
             Assert.IsTrue(Run(w, 20, () => w.Phase == Phase.Whistle));
@@ -498,6 +504,241 @@ namespace PocketFootball.Tests.EditMode
             int kicks = 0;
             foreach (var p in w.Players) if (PhoneLayouts.For(w, p) == "kick") { kicks++; Assert.AreSame(Kicking.Kicker(w), p); }
             Assert.AreEqual(1, kicks, "the punter gets the meter instead of HIKE, and nobody else does");
+        }
+        // ---- the field goal's hold, the two taps and the wind ----
+
+        // A field goal lined up by a person: our kicker, and (with `holder`) our holder too.
+        static World FieldGoal(GameConfig cfg, out Player kicker, int seed = 1)
+        {
+            var w = At(cfg, 25f, cfg.downs.downsToGain, 35f, seed);
+            kicker = w.ReplaceBot(w.Offense, 500);
+            Assert.IsTrue(Huddle.Lock(w, 500, cfg.kicking.fgPlay));
+            Assert.IsTrue(Run(w, 30, () => w.Phase == Phase.Set));
+            Assert.AreEqual(KickKind.FieldGoal, Kicking.Mode(w));
+            return w;
+        }
+
+        [Test]
+        public void TheHolderTakesTheSnapAndTheKickerRunsUpToHim()
+        {
+            var cfg = On();
+            Assert.IsTrue(cfg.Feature("fgHolder"), "FEATURES.fgHolder ships on");
+            Assert.AreEqual("NO_FG_HOLDER", ConfigLoader.EnvName("fgHolder"));
+            var w = FieldGoal(cfg, out var kicker);
+            var c = cfg.kicking;
+            var holder = Kicking.Holder(w);
+            Assert.IsNotNull(holder, "a holder on a field goal");
+            Assert.AreEqual(c.holderSpot, holder.Spot);
+            Assert.AreEqual(w.Offense, holder.Team);
+            Assert.AreSame(holder, Kicking.SnapTaker(w), "the snap goes to him");
+            Assert.AreEqual(holder.Slot, w.Ball.Carrier, "lined up: the ball is his to hold");
+            Assert.IsTrue(Kicking.Holding(w));
+            Assert.AreEqual(w.LineOfScrimmageX - w.Dir * c.fieldGoalBackYd, w.Kick.HoldX, 1e-3f, "the spot, fieldGoalBackYd deep");
+            Assert.AreEqual(w.Kick.HoldX, holder.X, 1e-3f);
+            Assert.Greater((w.Kick.HoldX - kicker.X) * w.Dir, c.kickerBackYd - 0.1f, "the kicker stands back of the spot");
+            Assert.Greater(kicker.Z * w.Dir, 0f, "on the holder's left");
+            Assert.AreEqual("kick", PhoneLayouts.For(w, kicker));
+            var near = w.ReplaceBot(w.Offense, 501);
+            Assert.AreEqual(c.holderSpot, near.Spot, "the next person in takes the holder's spot");
+            holder = Kicking.Holder(w);
+            Assert.AreSame(near, holder);
+            Assert.AreEqual(holder.Slot, w.Ball.Carrier, "with the ball");
+            Assert.AreEqual("hold", PhoneLayouts.For(w, holder), "the holder's phone: just FIND ME, no stick");
+
+            Assert.IsTrue(Kicking.Kick(w, 500, 0.85f, 0f));
+            Assert.IsTrue(w.Kick.Approach, "the kicker runs up");
+            Assert.IsFalse(w.Kick.Kicked, "not in the air yet");
+            float was = (w.Kick.HoldX - kicker.X) * w.Dir;
+            w.Step(null); w.Step(null);
+            Assert.Less((w.Kick.HoldX - kicker.X) * w.Dir, was, "closer to the ball");
+            Assert.IsTrue(Run(w, 3, () => w.Kick.Kicked));
+            Assert.AreEqual(w.Kick.HoldX, w.Ball.X, 1e-3f, "kicked off the holder's spot");
+            Assert.AreEqual(w.Kick.HoldZ, w.Ball.Z, 1e-3f);
+            Assert.Less(Math.Abs(w.Kick.HoldX - kicker.X), c.kickContactYd + 0.1f, "the kicker at the ball");
+            Assert.GreaterOrEqual(w.PlayTicks, Huddle.Ticks(w, c.holdReadyS), "the holder had it down first");
+            Assert.IsTrue(Run(w, 20, () => w.Phase == Phase.Whistle));
+            Assert.AreEqual("FIELD GOAL", w.Result);
+        }
+
+        [Test]
+        public void NoFgHolderLetsTheKickerTakeTheSnapAsBefore()
+        {
+            var cfg = On();
+            cfg.features["fgHolder"] = false;
+            var w = FieldGoal(cfg, out var kicker);
+            Assert.IsNull(Kicking.Holder(w));
+            Assert.AreSame(kicker, Kicking.SnapTaker(w));
+            Assert.AreEqual(kicker.Slot, w.Ball.Carrier);
+            Assert.AreEqual(w.LineOfScrimmageX - w.Dir * cfg.kicking.fieldGoalBackYd, kicker.X, 1e-3f);
+            Assert.IsTrue(Kicking.Kick(w, 500, 0.85f, 0f));
+            Assert.IsTrue(w.Kick.Kicked, "no run-up: in the air at once");
+        }
+
+        [Test]
+        public void BotsKickFieldGoalsFromTheHoldToo()
+        {
+            var cfg = On();
+            var w = At(cfg, 25f, cfg.downs.downsToGain, 35f);
+            Assert.IsTrue(Run(w, 30, () => w.Phase == Phase.Set));
+            Assert.AreEqual(KickKind.FieldGoal, Kicking.Mode(w));
+            Assert.IsNotNull(Kicking.Holder(w));
+            Assert.IsTrue(Run(w, 10, () => w.Kick.Kicked));
+            Assert.AreEqual(w.Kick.HoldX, w.Ball.X, 1e-3f);
+            Assert.IsTrue(Run(w, 20, () => w.Phase == Phase.Whistle));
+            Assert.AreEqual("FIELD GOAL", w.Result, "in a calm the bot makes a 42-yarder");
+        }
+
+        [Test]
+        public void TheSweepsAreStraightLinesThereAndBack()
+        {
+            var c = On().kicking;
+            Assert.Greater(c.aimSweepS, 0f);
+            Assert.Greater(c.powerSweepS, 0f);
+            Assert.AreEqual(0f, Kicking.AimSweep(c, 0f), 1e-4f, "the aim starts in the middle");
+            Assert.AreEqual(1f, Kicking.AimSweep(c, c.aimSweepS * 0.25f), 1e-4f, "then all the way right");
+            Assert.AreEqual(0f, Kicking.AimSweep(c, c.aimSweepS * 0.5f), 1e-4f);
+            Assert.AreEqual(-1f, Kicking.AimSweep(c, c.aimSweepS * 0.75f), 1e-4f, "then left");
+            Assert.AreEqual(0.5f, Kicking.AimSweep(c, c.aimSweepS * 0.125f), 1e-4f, "at an even speed");
+            Assert.AreEqual(0f, Kicking.PowerSweep(c, 0f), 1e-4f, "the power starts at nothing");
+            Assert.AreEqual(1f, Kicking.PowerSweep(c, c.powerSweepS * 0.5f), 1e-4f, "full halfway");
+            Assert.AreEqual(0.5f, Kicking.PowerSweep(c, c.powerSweepS * 0.75f), 1e-4f);
+            Assert.AreEqual(Kicking.PowerSweep(c, 0.3f), Kicking.PowerSweep(c, 0.3f + c.powerSweepS * 3f), 1e-4f, "and round again");
+            for (float t = 0f; t < 10f; t += 0.07f)
+            {
+                Assert.That(Kicking.AimSweep(c, t), Is.InRange(-1f, 1f));
+                Assert.That(Kicking.PowerSweep(c, t), Is.InRange(0f, 1f));
+            }
+            // the phone does the same sum
+            string js = System.IO.File.ReadAllText("Assets/StreamingAssets/phone/kick.js");
+            StringAssert.Contains("function triangle(t, period)", js);
+            StringAssert.Contains("'kickaim'", js, "the first tap sends the aim");
+        }
+
+        [Test]
+        public void TwoTapsSetTheAimThenThePower()
+        {
+            var cfg = On();
+            Assert.IsTrue(cfg.Feature("kickSweep"), "FEATURES.kickSweep ships on");
+            Assert.AreEqual("NO_KICK_SWEEP", ConfigLoader.EnvName("kickSweep"));
+            var w = FieldGoal(cfg, out var kicker);
+            var c = cfg.kicking;
+            Assert.AreEqual(Kicking.SweepStage.Aim, Kicking.Stage(w), "lined up: the aim sweeps");
+            Assert.IsFalse(Kicking.SetAim(w, 501, 0f), "only the kicker taps");
+            for (int i = 0; i < 7; i++) w.Step(null);
+            float aim = Kicking.SweepNow(w);
+            Assert.AreEqual(Kicking.AimSweep(c, (w.Tick - w.Kick.AimTick) / (float)cfg.sim.tickHz), aim, 1e-5f);
+            Assert.IsTrue(Kicking.Tap(w, 500), "the first tap");
+            Assert.AreEqual(aim, w.Kick.Aim, 1e-5f, "the aim is where the arrow was");
+            Assert.AreEqual(Phase.Live, w.Phase, "and the ball is snapped");
+            Assert.AreEqual(Kicking.SweepStage.Power, Kicking.Stage(w));
+            Assert.IsFalse(Kicking.SetAim(w, 500, 0.9f), "the aim is set once");
+            for (int i = 0; i < 11; i++) w.Step(null);
+            float power = Kicking.SweepNow(w);
+            Assert.AreEqual(Kicking.PowerSweep(c, (w.Tick - w.Kick.PowerTick) / (float)cfg.sim.tickHz), power, 1e-5f);
+            Assert.IsTrue(Kicking.Tap(w, 500), "the second tap kicks");
+            Assert.AreEqual(Kicking.SweepStage.None, Kicking.Stage(w));
+            Assert.AreEqual(power, w.Kick.PendingPower, 1e-5f);
+            Assert.AreEqual(aim, w.Kick.PendingAim, 1e-5f);
+            Assert.IsTrue(Run(w, 3, () => w.Kick.Kicked));
+            Assert.AreEqual(power, w.Kick.Power, 1e-5f);
+            // the arc climbs with the power
+            Assert.AreEqual(c.fgMinAngleDeg, Kicking.Climb(w, KickKind.FieldGoal, 0f), 1e-4f);
+            Assert.AreEqual(c.fgMaxAngleDeg, Kicking.Climb(w, KickKind.FieldGoal, 1f), 1e-4f);
+            Assert.Greater(Kicking.Climb(w, KickKind.FieldGoal, 0.8f), Kicking.Climb(w, KickKind.FieldGoal, 0.4f));
+        }
+
+        [Test]
+        public void TooSlowToAimAndTheSnapComesAnyway()
+        {
+            var cfg = On();
+            var w = FieldGoal(cfg, out var kicker);
+            Assert.IsTrue(Run(w, cfg.play.humanHikeMaxS + 1f, () => w.Phase == Phase.Live), "the line-up runs out");
+            w.Step(null);
+            Assert.IsTrue(w.Kick.AimSet, "the aim stops where the arrow was");
+            Assert.AreEqual(Kicking.SweepStage.Power, Kicking.Stage(w), "now the power sweeps");
+            Assert.IsTrue(Run(w, cfg.kicking.humanKickMaxS + 2f, () => w.Kick.Kicked), "and the bot kicks if he never taps");
+        }
+
+        [Test]
+        public void TheTopOfThePowerSweepHooks()
+        {
+            var cfg = On();
+            var c = cfg.kicking;
+            Assert.Less(c.shankFromPower, 1f);
+            Assert.Greater(c.shankAimDeg, 0f);
+            float Across(float power, int seed)
+            {
+                var w = FieldGoal(cfg, out _, seed);
+                Assert.IsTrue(Kicking.SetAim(w, 500, 0f));
+                Assert.IsTrue(Kicking.Kick(w, 500, power, 0f));
+                Assert.IsTrue(Run(w, 3, () => w.Kick.Kicked));
+                return w.Ball.VZ;
+            }
+            Assert.AreEqual(0f, Across(c.shankFromPower - 0.05f, 1), 1e-4f, "just under the red: dead straight");
+            bool hooked = false;
+            for (int seed = 1; seed <= 3; seed++) hooked |= Math.Abs(Across(1f, seed)) > 1e-3f;
+            Assert.IsTrue(hooked, "in the red it goes off line");
+            Assert.That(Kicking.NeedPower(FieldGoal(cfg, out _)), Is.InRange(0.05f, c.shankFromPower), "a 42-yarder can be made out of the red");
+        }
+
+        [Test]
+        public void TheWindIsSteadyForASpellAndNeverTooStrong()
+        {
+            var cfg = On(true);
+            Assert.IsTrue(cfg.Feature("wind"), "FEATURES.wind ships on");
+            Assert.AreEqual("NO_WIND", ConfigLoader.EnvName("wind"));
+            var c = cfg.kicking;
+            var w = WorldTests.Full(cfg, 7);
+            var seen = new HashSet<string>();
+            for (int n = 0; n < c.windEveryHuddles * 8; n++)
+            {
+                w.HuddleNumber = n;
+                Kicking.Wind(w, out float x, out float z);
+                Assert.LessOrEqual(Math.Sqrt(x * x + z * z), c.windMaxYdS + 1e-3f);
+                w.HuddleNumber = n - n % c.windEveryHuddles;
+                Kicking.Wind(w, out float x0, out float z0);
+                Assert.AreEqual(x0, x, 1e-6f, "the same all spell");
+                Assert.AreEqual(z0, z, 1e-6f);
+                seen.Add(x.ToString("F2") + "," + z.ToString("F2"));
+            }
+            Assert.Greater(seen.Count, 3, "it changes from spell to spell");
+            var again = WorldTests.Full(cfg, 7);
+            again.HuddleNumber = 13; w.HuddleNumber = 13;
+            Kicking.Wind(w, out float ax, out float az); Kicking.Wind(again, out float bx, out float bz);
+            Assert.AreEqual(ax, bx); Assert.AreEqual(az, bz);
+            Assert.AreEqual(w.Rng.Value(), again.Rng.Value(), "drawn from the seed, not the sim's random numbers");
+            var calm = WorldTests.Full(On(false), 7);
+            calm.HuddleNumber = 13;
+            Kicking.Wind(calm, out float cx, out float cz);
+            Assert.AreEqual(0f, cx); Assert.AreEqual(0f, cz);
+        }
+
+        [Test]
+        public void TheWindPushesAFieldGoal()
+        {
+            // a seed whose wind at this field goal blows hard across the field
+            for (int seed = 1; seed < 200; seed++)
+            {
+                var windy = FieldGoal(On(true), out _, seed);
+                Kicking.Wind(windy, out float wx, out float wz);
+                if (Math.Abs(wz) < 3f) continue;
+                var calm = FieldGoal(On(false), out _, seed);
+                float Z(World w)
+                {
+                    Assert.IsTrue(Kicking.Kick(w, 500, 0.85f, 0f));
+                    Assert.IsTrue(Run(w, 10, () => w.Ball.X * w.Dir >= w.Cfg.field.HalfLength || w.Phase == Phase.Whistle));
+                    return w.Ball.Z;
+                }
+                float drift = Z(windy) - Z(calm);
+                Assert.Greater(drift * Math.Sign(wz), 1f, "blown the way the wind blows (seed " + seed + ")");
+                // the ball on the ground and everything else is left alone
+                var b = new World(On(true), seed);
+                b.Ball.Launch(10f, 0f, true, b.Cfg.ball);
+                Kicking.Drift(b, out float dx, out float dz);
+                Assert.AreEqual(0f, dx); Assert.AreEqual(0f, dz);
+                return;
+            }
+            Assert.Fail("no windy seed found");
         }
     }
 }

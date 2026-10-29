@@ -90,6 +90,14 @@ namespace PocketFootball.Boot
             if (!args.LookX.HasValue) rig.SetLookAtX(h.World.LineOfScrimmageX);
             h.holdCamera = args.LookX.HasValue;
             if (args.ThrowDemo.HasValue) h.World.Throw(h.World.Ball.X + h.World.Dir * args.ThrowDemo.Value, h.World.Ball.Z, true);
+            if (args.FieldGoalDemo && Kicking.On(h.World))
+            {
+                var fw = h.World;
+                fw.Kick.Opened = true;   // (no opening kickoff)
+                fw.LineOfScrimmageX = fw.Dir * (cfg.field.GoalLineX - 25f);
+                fw.Down = cfg.downs.downsToGain;
+                fw.FirstDownX = fw.LineOfScrimmageX + fw.Dir * cfg.downs.firstDownYd;
+            }
             for (int i = 0; i < args.WarmupTicks; i++) h.StepOnce();
             if (args.CalledDemo)
             {
@@ -228,6 +236,8 @@ namespace PocketFootball.Boot
             if (Photo == null && !Downs.On(World)) firstX = lines.LineOfScrimmageX + lines.Dir * cfg.downs.firstDownYd;
             marks.SetLines(lines.LineOfScrimmageX, firstX);
             stadium.SetMarkers(lines.LineOfScrimmageX, firstX);
+            Kicking.Wind(World, out float windX, out float windZ);   // FEATURES.wind: the flags on the posts
+            stadium.SetWind(windX, windZ, cfg.kicking.windMaxYdS, (int)(Time.unscaledTime * cfg.anim.fps));
             stadium.SetScore(Photo != null ? Photo.Score : World.Score);   // the big scoreboard over the end (stadium bowl)
             // the rings and FIND ME glows under people's players follow the live figures, so none while a replay is on
             humanFeet.Clear();
@@ -287,7 +297,43 @@ namespace PocketFootball.Boot
             if (float.IsNaN(camX)) camX = target;
             camX += (target - camX) * (1f - Mathf.Exp(-dt * cfg.camera.followRate));
             rig.SetZoom(SnapZoom(dt));
+            KickCam(dt);
             rig.SetLookAtX(camX);
+        }
+
+        // FEATURES.kickCam: from the field goal's line-up to the whistle (and kicking.cam.holdAfterS into it, so the
+        // TV sees it go through or miss) the camera eases round behind the kicker, looking down the field at the
+        // posts; then it eases back to the sideline. Not while a replay is on.
+        float kickCamWeight, kickCamUntil;
+        bool kickCamSeen;
+        Vector3 kickCamPos, kickCamLook;
+        void KickCam(float dt)
+        {
+            var kc = cfg.kicking.cam;
+            var k = World.Kick;
+            bool fg = cfg.Feature("kickCam") && Kicking.Mode(World) == KickKind.FieldGoal && k.Placed && !Replay.OnScreen;
+            bool want = false;
+            if (fg && (World.Phase == Phase.Set || World.Phase == Phase.Live))
+            {
+                float m = cfg.field.yardM, dir = World.Dir;
+                kickCamPos = new Vector3((k.HoldX - dir * kc.backYd) * m, kc.heightM, (k.HoldZ + dir * kc.sideYd) * m);
+                // the nearest thing (the kicker's feet where he lines up) and the highest (the flags on the uprights),
+                // and the look tilted lookShare of the way up between them, so both are in the picture
+                var kc2 = cfg.kicking;
+                var feet = new Vector3((k.HoldX - dir * kc2.kickerBackYd) * m, 0f, (k.HoldZ + dir * kc2.kickerSideYd) * m);
+                var st = cfg.stadium;
+                var flags = new Vector3(dir * cfg.field.HalfLength * m, st.postCrossbarM + st.postUprightM + st.flagHeightM, 0f);
+                var look = Vector3.Slerp((feet - kickCamPos).normalized, (flags - kickCamPos).normalized, kc.lookShare);
+                kickCamLook = kickCamPos + look * (flags - kickCamPos).magnitude;
+                kickCamUntil = Time.unscaledTime + kc.holdAfterS;
+                want = true;
+            }
+            else if (fg && World.Phase == Phase.Whistle && Time.unscaledTime < kickCamUntil) want = true;
+            if (!kickCamSeen) kickCamWeight = want ? 1f : 0f;   // (the first frame: already there, like camX)
+            kickCamSeen = true;
+            kickCamWeight += ((want ? 1f : 0f) - kickCamWeight) * (1f - Mathf.Exp(-dt * kc.rate));
+            if (kickCamWeight < 0.001f) kickCamWeight = 0f;
+            rig.SetKickView(kickCamWeight, kickCamPos, kickCamLook, kc.fovDeg);
         }
 
         void OnPhaseChanged()
@@ -474,6 +520,7 @@ namespace PocketFootball.Boot
                     else if (t == "throw") src.OnThrowStick(PhoneProtocol.Float(m, "x", -1f, 1f), PhoneProtocol.Float(m, "y", -1f, 1f), PhoneProtocol.Float(m, "arc", 0f, 1f),
                                                             PhoneProtocol.Str(m, "aid"));
                     else if (t == "kick") KickPhones.OnKick(this, src, m);   // WS-01
+                    else if (t == "kickaim") KickPhones.OnAim(this, src, m);   // FEATURES.kickSweep: the first tap
                     else if (t == "audible" || t == "hot") AudibleHost.OnMessage(this, src, m);   // WS-13
                     else if (Lobby.Instance != null) Lobby.Instance.OnMessage(src.Seat, t, m);   // WS-07: spot, swap, kickoff, lobbyme
                 }

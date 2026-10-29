@@ -728,6 +728,34 @@
     "botGoForItYd": 2,
     "botGoForItGoalYd": 5,
     "meterShowS": 2.5,
+    "holderSpot": 1,
+    "holderSideYd": 0.6,
+    "kickerBackYd": 2.6,
+    "kickerSideYd": 1.6,
+    "kickContactYd": 0.6,
+    "approachSpeedYdS": 5.5,
+    "holdReadyS": 0.7,
+    "aimSweepS": 2.2,
+    "powerSweepS": 1.6,
+    "fgMinAngleDeg": 30,
+    "fgMaxAngleDeg": 44,
+    "shankFromPower": 0.94,
+    "shankAimDeg": 7,
+    "meterSearchSteps": 14,
+    "windMaxYdS": 7,
+    "windEveryHuddles": 6,
+    "windPush": 0.2,
+    "botWindRead": 0.8,
+    "windMphPerYdS": 2.045,
+    "cam": {
+      "backYd": 11,
+      "sideYd": 3.4,
+      "heightM": 4.6,
+      "fovDeg": 52,
+      "lookShare": 0.55,
+      "rate": 2.5,
+      "holdAfterS": 1.2
+    },
     "kickoffKicking": [
       [-5, 0], [-1, -22], [-1, 22], [-1, -17], [-1, 17], [-1, -12],
       [-1, 12], [-1, -7], [-1, 7], [-1, -2.5], [-1, 2.5]
@@ -822,6 +850,11 @@
     "postColor": "#ffd23a",
     "postPadColor": "#1e3a5f",
     "postRibbonColor": "#e8462a",
+    "flagLengthM": 2.6,
+    "flagHeightM": 1,
+    "flagThickM": 0.06,
+    "flagCalmDroopDeg": 78,
+    "flagFlutterDeg": 9,
     "bowl": {
       "endBackM": 9,
       "nearBackM": 12,
@@ -934,7 +967,8 @@
       "cover":   { "rt": "sprint", "x": "tackle", "a": "jump", "b": "dive" },
       "wait":    { "a": "find" },
       "walk":    { "rt": "sprint" },
-      "kick":    { "a": "kick" }
+      "kick":    { "a": "kick" },
+      "hold":    { "a": "find" }
     }
   },
   "audio": {
@@ -1178,6 +1212,10 @@
     "nearSideline": true,
     "oobIncomplete": true,
     "jumpAnytime": true,
-    "cup": true
+    "cup": true,
+    "fgHolder": true,
+    "kickSweep": true,
+    "wind": true,
+    "kickCam": true
   }
 }

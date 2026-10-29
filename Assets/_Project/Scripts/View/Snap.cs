@@ -16,10 +16,10 @@ namespace PocketFootball.View
     {
         public static bool On(World w) => w.Cfg.Feature("snap") && LivePlay.On(w);
 
-        // The man who snaps it: the offense lineman lined up straightest in front of the QB.
+        // The man who snaps it: the offense lineman lined up straightest in front of the QB (the holder on a field goal).
         public static Player Center(World w)
         {
-            var qb = LivePlay.Qb(w);
+            var qb = Kicking.SnapTaker(w);
             if (qb == null) return null;
             Player best = null; float bd = float.MaxValue;
             foreach (var p in w.Players)
@@ -37,7 +37,7 @@ namespace PocketFootball.View
             x = z = 0f;
             if (w.Phase != Phase.Huddle && w.Phase != Phase.Set) return false;
             var c = Ready(w);
-            if (c == null || w.Ball.State != BallState.Held || w.Ball.Carrier != LivePlay.Qb(w).Slot) return false;
+            if (c == null || w.Ball.State != BallState.Held || w.Ball.Carrier != Kicking.SnapTaker(w).Slot) return false;
             Spot(w, c, out x, out z);
             return true;
         }
@@ -45,7 +45,7 @@ namespace PocketFootball.View
         // How long the ball is on its way back, in ticks: from the spot to where the QB lined up.
         public static int FlightTicks(World w)
         {
-            var c = Center(w); var qb = LivePlay.Qb(w);
+            var c = Center(w); var qb = Kicking.SnapTaker(w);
             if (c == null || qb == null) return 0;
             Spot(w, c, out float x, out float z);
             float dx = qb.HomeX - x, dz = qb.HomeZ - z;
@@ -77,7 +77,7 @@ namespace PocketFootball.View
             if (c == null) return Move.None;
             int n = FlightTicks(w), at = SinceHike(w);
             if (p == c && at < n) return Move.Snap;
-            if (p != LivePlay.Qb(w) || LivePlay.Carrier(w) != p) return Move.None;
+            if (p != Kicking.SnapTaker(w) || LivePlay.Carrier(w) != p) return Move.None;
             if (at < n) return Move.TakeSnap;
             if (at < n + (int)Math.Round(w.Cfg.anim.snapSecureS * w.Cfg.sim.tickHz)) return Move.Secure;
             return Move.None;

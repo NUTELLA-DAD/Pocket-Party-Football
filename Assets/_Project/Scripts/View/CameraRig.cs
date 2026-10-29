@@ -6,6 +6,7 @@ namespace PocketFootball.View
     // The one broadcast camera: stands on the near sideline and never rolls or spins.
     // It slides along X (following the ball from M1-e). It is placed so visibleYards of field fit across the screen
     // at the look-at point. Once a play runs it eases back and up to camera.live (FEATURES.snapZoom, SetZoom).
+    // For a field goal it swings round behind the kicker to look down the field at the posts (FEATURES.kickCam, SetKickView).
     // FEATURES.nearSideline: if the bottom of the screen would cut into the near sideline, the look-at point slides
     // toward the camera until the near border (plus camera.nearSidelinePadYd) is on screen.
     public sealed class CameraRig : MonoBehaviour
@@ -36,6 +37,17 @@ namespace PocketFootball.View
         }
 
         public void SetLookAtX(float xYd) { lookAtXYd = xYd; Apply(); }
+
+        // FEATURES.kickCam: a field goal seen from behind the kicker, down the field to the posts. weight 0 = the
+        // broadcast framing, 1 = standing at pos looking at lookAt (metres) with fovDeg; takes effect with the next
+        // SetLookAtX. The camera still never rolls.
+        float kickWeight, kickFov;
+        Vector3 kickPos, kickLook;
+        public void SetKickView(float weight, Vector3 pos, Vector3 lookAt, float fovDeg)
+        {
+            kickWeight = Mathf.Clamp01(weight); kickPos = pos; kickLook = lookAt; kickFov = fovDeg;
+        }
+        public float KickWeight => kickWeight;
         // 0..1 between the pre-snap framing and camera.live; takes effect with the next SetLookAtX.
         public void SetZoom(float t) { zoom = Mathf.Clamp01(t); }
         public float Zoom => zoom;
@@ -70,6 +82,16 @@ namespace PocketFootball.View
                 return;
             }
             var p = Pose(cfg, Cam.aspect, lookAtXYd, zoom);
+            if (kickWeight > 0f && (kickLook - kickPos).sqrMagnitude > 1e-4f)
+            {
+                var look = Quaternion.LookRotation(kickLook - kickPos, Vector3.up);
+                transform.SetPositionAndRotation(Vector3.Lerp(p.position, kickPos, kickWeight), Quaternion.Slerp(p.rotation, look, kickWeight));
+                Cam.fieldOfView = Mathf.Lerp(cfg.camera.fovDeg, kickFov, kickWeight);
+                Cam.nearClipPlane = Mathf.Lerp(1f, 0.3f, kickWeight);
+                Cam.farClipPlane = p.distance * 4f;
+                lookTarget = p.target;
+                return;
+            }
             transform.SetPositionAndRotation(p.position, p.rotation);
             lookTarget = p.target;
             Cam.fieldOfView = cfg.camera.fovDeg;
