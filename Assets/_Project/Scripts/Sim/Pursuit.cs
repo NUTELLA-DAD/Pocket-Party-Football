@@ -17,9 +17,15 @@ namespace PocketFootball.Sim
     //   of overrunning him), in lanes trailLane as wide;
     // - the lanes close as a chaser gets near: whole from spreadYd out, gone inside convergeYd (everyone to the ball);
     // - a team-mate closer than sepYd pushes his aim away, up to sepPush of the way to him per yard still to go.
+    // The lanes are for the open field: a carrier with the ball openPastLosYd or more past the line, or on a return.
+    // Nearer the line (the run fits, where lanes stuffed runs to about 2 yards a carry) and for a pass still in the air,
+    // the bots chase the way they did before.
     public static class Pursuit
     {
         public static bool On(World w) => w.Cfg.Feature("pursuitLanes");
+
+        public static bool InTheOpen(World w, Player carrier) =>
+            LivePlay.Carrier(w) == carrier && (carrier.Team != w.Offense || (carrier.X - w.LineOfScrimmageX) * w.Dir >= w.Cfg.pursuit.openPastLosYd);
 
         // A bot chasing the carrier: to his spot in this tick's plan, sprinting.
         public static PlayerInput Chase(World w, Player p, Player carrier)
@@ -68,31 +74,22 @@ namespace PocketFootball.Sim
                 float goal = c.Team == w.Offense ? w.Dir : -w.Dir;
                 float hx = sp > 1f ? c.VX / sp : goal, hz = sp > 1f ? c.VZ / sp : 0f;
                 float nx = -hz, nz = hx;
-                float best = float.MaxValue;
+                float best = float.MaxValue, bestD = float.MaxValue;
                 foreach (var q in w.Players)
                 {
                     if (q.Team == c.Team) continue;
                     float top = (q.Tired ? pc.jogSpeedYdS : pc.sprintSpeedYdS) * Ratings.SpeedFrac(w, q);
                     float t = MeetS(q.X, q.Z, top, c.X, c.Z, c.VX, c.VZ);
                     t = t < 0f ? k.leadMaxS : Math.Min(t, k.leadMaxS);
+                    float rx = q.X - c.X, rz = q.Z - c.Z, d = (float)Math.Sqrt(rx * rx + rz * rz);
+                    // the hitter is whoever really gets there first (nobody can: the nearest; the first slot of a tie),
+                    // picked before the bots' own long or short lead so it can't hand the middle to a man out wide
+                    if (t < best || (t == best && d < bestD)) { best = t; bestD = d; Hitter = q.Slot; }
                     t = BotsV3.PursuitLead(w, q, t);   // bots v3: some lead him long, some short
-                    float rx = q.X - c.X, rz = q.Z - c.Z;
                     chasers.Add(q); meet.Add(t); side.Add(rx * nx + rz * nz); ahead.Add(rx * hx + rz * hz);
-                    if (t < best) { best = t; Hitter = q.Slot; }   // (slot order: the first of a tie)
                 }
                 // the lanes: on each side of the path, counted out from the inside man (the hitter takes the middle)
-                for (int s = 0; s < 2; s++)
-                {
-                    order.Clear();
-                    for (int i = 0; i < chasers.Count; i++) if ((side[i] >= 0f) == (s == 0)) order.Add(i);
-                    order.Sort((a, b) =>
-                    {
-                        int by = Math.Abs(side[a]).CompareTo(Math.Abs(side[b]));
-                        return by != 0 ? by : chasers[a].Slot.CompareTo(chasers[b].Slot);
-                    });
-                    int n = 0;
-                    foreach (int i in order) Lane[chasers[i].Slot] = chasers[i].Slot == Hitter ? 0 : (s == 0 ? n++ : -n++);
-                }
+                Lanes(true); Lanes(false);
                 for (int i = 0; i < chasers.Count; i++)
                 {
                     var q = chasers[i];
@@ -116,6 +113,20 @@ namespace PocketFootball.Sim
                     Aim[q.Slot] = new[] { Clamp(tx, -w.Cfg.field.HalfLength, w.Cfg.field.HalfLength), Clamp(tz, -w.Cfg.field.HalfWidth, w.Cfg.field.HalfWidth) };
                 }
             }
+
+            // The lanes on one side of the path (left: + lanes), counted out from the inside man.
+            void Lanes(bool left)
+            {
+                order.Clear();
+                for (int i = 0; i < chasers.Count; i++) if ((side[i] >= 0f) == left) order.Add(i);
+                order.Sort((a, b) =>
+                {
+                    int by = Math.Abs(side[a]).CompareTo(Math.Abs(side[b]));
+                    return by != 0 ? by : chasers[a].Slot.CompareTo(chasers[b].Slot);
+                });
+                int n = 0;
+                foreach (int i in order) Lane[chasers[i].Slot] = chasers[i].Slot == Hitter ? 0 : (left ? ++n : -++n);   // (the hitter has the middle: the next man out is lane 1)
+            }
         }
 
         static float Clamp01(float v) => v < 0f ? 0f : v > 1f ? 1f : v;
@@ -130,5 +141,6 @@ namespace PocketFootball.Sim
         public float spreadYd, convergeYd;     // the lanes whole from spreadYd away, closed inside convergeYd
         public float behindYd, trailLead, trailLane;   // a chaser more than behindYd behind him: that share of the lead and of the lane
         public float sepYd, sepPush;           // a team-mate closer than sepYd pushes his aim away (sepPush of the way, per yard to go)
+        public float openPastLosYd;            // the lanes only once the carrier is this far past the line (a return: always)
     }
 }

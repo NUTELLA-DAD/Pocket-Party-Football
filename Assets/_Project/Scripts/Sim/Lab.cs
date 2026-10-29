@@ -128,7 +128,7 @@ namespace PocketFootball.Sim
             Place(w.Defense, d.defense, d.you == "defense", d.youSpot, ref bot);
             w.LineUp();
             var holder = LivePlay.SpotOf(w, w.Offense, d.carrier);
-            if (holder != null && d.carrierAt.Count == 2)
+            if (holder != null && d.carrierAt.Count > 1)   // [x, z]
             {
                 holder.X = holder.HomeX = w.LineOfScrimmageX + w.Dir * d.carrierAt[0];
                 holder.Z = holder.HomeZ = d.carrierAt[1];

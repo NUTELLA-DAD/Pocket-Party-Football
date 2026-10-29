@@ -1237,8 +1237,9 @@
     "behindYd": 1,
     "trailLead": 0.55,
     "trailLane": 0.7,
-    "sepYd": 2.4,
-    "sepPush": 0.25
+    "sepYd": 3.0,
+    "sepPush": 0.4,
+    "openPastLosYd": 5
   },
   "features": {
     "fieldStripes": true,
