@@ -77,7 +77,7 @@ namespace PocketFootball.Tests.EditMode
             grn.ModelFor("LB", true, out m, out tex);
             Assert.AreEqual("Models/Linebacker/Linebacker_Rigged", m);
             Assert.AreEqual("Models/Linebacker/Linebacker_BaseColor", tex);
-            grn.ModelFor("CB", true, out m, out _);
+            grn.ModelFor("RB", true, out m, out _);
             Assert.AreEqual(grn.model, m, "a position with no model of its own wears the team's");
             grn.ModelFor("LB", false, out m, out _);
             Assert.AreEqual(grn.model, m, "NO_POS_MODELS=1: the team's model for every position");
@@ -104,8 +104,8 @@ namespace PocketFootball.Tests.EditMode
             Load().teams[1].ModelFor("WR", true, out m, out tex);
             Assert.AreEqual("Models/WR/WR_Rigged", m);
             Assert.AreEqual("Models/WR/WRGRN_BaseColor", tex, "the Grains' WR wears the green recolour");
-            Load().teams[0].ModelFor("CB", true, out m, out _);
-            Assert.AreEqual(Load().teams[0].model, m, "defensive backs keep the team's model");
+            Load().teams[0].ModelFor("RB", true, out m, out _);
+            Assert.AreEqual(Load().teams[0].model, m, "the running backs keep the team's model");
         }
 
         [Test]

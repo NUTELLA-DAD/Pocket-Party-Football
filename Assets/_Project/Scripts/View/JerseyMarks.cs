@@ -132,16 +132,19 @@ namespace PocketFootball.View
 
         // The shader's _Hair: one of marks.hairColors picked by u (0..1) and, in w, one over the model's own hair's
         // brightness; the shader draws the colour at the brightness of what is painted there, so the braid's own shading
-        // stays. Zero (as painted): a model with no hair colour, or no colours to give.
+        // stays. Zero (as painted): a model with no hair colour, or no colours to give. Both in the project's colour space
+        // (linear): a vector, unlike a colour, is not converted on its way to the shader.
         public static Vector4 HairOf(GameConfig cfg, string model, float u)
         {
             var mm = cfg.marks.For(model);
             var colors = cfg.marks.hairColors;
             if (mm == null || string.IsNullOrEmpty(mm.hair) || colors == null || colors.Count == 0) return Vector4.zero;
+            bool lin = QualitySettings.activeColorSpace == ColorSpace.Linear;
             var c = Colors.Hex(colors[Mathf.Clamp((int)(Mathf.Repeat(u, 1f) * colors.Count), 0, colors.Count - 1)]);
             var own = Colors.Hex(mm.hair);
+            if (lin) { c = c.linear; own = own.linear; }
             float lum = 0.2126f * own.r + 0.7152f * own.g + 0.0722f * own.b;
-            return new Vector4(c.r, c.g, c.b, 1f / Mathf.Max(lum, 0.02f));
+            return new Vector4(c.r, c.g, c.b, 1f / Mathf.Max(lum, 0.005f));
         }
 
         // The hair pick from the skin pick: a different stride round the colours, so hair and skin don't go together.
