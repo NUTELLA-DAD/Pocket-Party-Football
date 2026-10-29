@@ -32,3 +32,8 @@ they stand apart from the Cobras); near-black helmets and pants, purple
 jerseys, electric-lime trim and stripes, lime numbers edged near-black. LeanLB's red source map (`<work>/src/LeanLB/`) is
 the 0.jpg colour map inside Hi3D_Untitled_allparts_20261028_084912.fbx at 2048 px, with LeanLB_BaseColor.png's texels
 copied in wherever LeanLB_Marks.png has a zone (numbers and irises painted out), the old decal still on.
+
+The cornerback (`CB`, Kenny's braided #24) came after SRC_REV too: her red source map (`<work>/src/CB/`) is
+CB_BaseColor.png as `marks.py tools/rig/marks/CB.json` left it (numbers and irises painted out, the old decal still on),
+made from the colour map inside Hi3D_Untitled_allparts_20261029_001616.fbx at 2048 px. The braid keeps its colour on
+every map (kit.py only repaints red, gold and white); the game gives each player her own (FEATURES.hairColors).

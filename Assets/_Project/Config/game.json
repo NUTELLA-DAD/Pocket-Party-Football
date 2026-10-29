@@ -281,6 +281,7 @@
       "posModels": [
         { "pos": "LB", "numbers": [50, 58], "model": "Models/LeanLB/LeanLB_Rigged", "modelTexture": "Models/LeanLB/LeanLB_BaseColor" },
         { "pos": "S", "model": "Models/LeanLB/LeanLB_Rigged", "modelTexture": "Models/LeanLB/LeanLB_BaseColor" },
+        { "pos": "CB", "model": "Models/CB/CB_Rigged", "modelTexture": "Models/CB/CB_BaseColor" },
         { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerARR_BaseColor", "strideBend": 0.7 },
         { "pos": "OL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerARR_BaseColor", "strideBend": 0.7 },
         { "pos": "DL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerARR_BaseColor", "strideBend": 0.7 },
@@ -304,6 +305,7 @@
       "posModels": [
         { "pos": "LB", "numbers": [50, 58], "model": "Models/LeanLB/LeanLB_Rigged", "modelTexture": "Models/LeanLB/LeanLBGRN_BaseColor" },
         { "pos": "S", "model": "Models/LeanLB/LeanLB_Rigged", "modelTexture": "Models/LeanLB/LeanLBGRN_BaseColor" },
+        { "pos": "CB", "model": "Models/CB/CB_Rigged", "modelTexture": "Models/CB/CBGRN_BaseColor" },
         { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/Linebacker_BaseColor", "strideBend": 0.7 },
         { "pos": "OL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/Linebacker_BaseColor", "strideBend": 0.7 },
         { "pos": "DL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/Linebacker_BaseColor", "strideBend": 0.7 },
@@ -330,6 +332,7 @@
       "posModels": [
         { "pos": "LB", "numbers": [50, 58], "model": "Models/LeanLB/LeanLB_Rigged", "modelTexture": "Models/LeanLB/LeanLBCAC_BaseColor" },
         { "pos": "S", "model": "Models/LeanLB/LeanLB_Rigged", "modelTexture": "Models/LeanLB/LeanLBCAC_BaseColor" },
+        { "pos": "CB", "model": "Models/CB/CB_Rigged", "modelTexture": "Models/CB/CBCAC_BaseColor" },
         { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerCAC_BaseColor", "strideBend": 0.7 },
         { "pos": "OL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerCAC_BaseColor", "strideBend": 0.7 },
         { "pos": "DL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerCAC_BaseColor", "strideBend": 0.7 },
@@ -353,6 +356,7 @@
       "posModels": [
         { "pos": "LB", "numbers": [50, 58], "model": "Models/LeanLB/LeanLB_Rigged", "modelTexture": "Models/LeanLB/LeanLBWHL_BaseColor" },
         { "pos": "S", "model": "Models/LeanLB/LeanLB_Rigged", "modelTexture": "Models/LeanLB/LeanLBWHL_BaseColor" },
+        { "pos": "CB", "model": "Models/CB/CB_Rigged", "modelTexture": "Models/CB/CBWHL_BaseColor" },
         { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerWHL_BaseColor", "strideBend": 0.7 },
         { "pos": "OL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerWHL_BaseColor", "strideBend": 0.7 },
         { "pos": "DL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerWHL_BaseColor", "strideBend": 0.7 },
@@ -376,6 +380,7 @@
       "posModels": [
         { "pos": "LB", "numbers": [50, 58], "model": "Models/LeanLB/LeanLB_Rigged", "modelTexture": "Models/LeanLB/LeanLBBAT_BaseColor" },
         { "pos": "S", "model": "Models/LeanLB/LeanLB_Rigged", "modelTexture": "Models/LeanLB/LeanLBBAT_BaseColor" },
+        { "pos": "CB", "model": "Models/CB/CB_Rigged", "modelTexture": "Models/CB/CBBAT_BaseColor" },
         { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerBAT_BaseColor", "strideBend": 0.7 },
         { "pos": "OL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerBAT_BaseColor", "strideBend": 0.7 },
         { "pos": "DL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerBAT_BaseColor", "strideBend": 0.7 },
@@ -399,6 +404,7 @@
       "posModels": [
         { "pos": "LB", "numbers": [50, 58], "model": "Models/LeanLB/LeanLB_Rigged", "modelTexture": "Models/LeanLB/LeanLBSNB_BaseColor" },
         { "pos": "S", "model": "Models/LeanLB/LeanLB_Rigged", "modelTexture": "Models/LeanLB/LeanLBSNB_BaseColor" },
+        { "pos": "CB", "model": "Models/CB/CB_Rigged", "modelTexture": "Models/CB/CBSNB_BaseColor" },
         { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerSNB_BaseColor", "strideBend": 0.7 },
         { "pos": "OL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerSNB_BaseColor", "strideBend": 0.7 },
         { "pos": "DL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerSNB_BaseColor", "strideBend": 0.7 },
@@ -422,6 +428,7 @@
       "posModels": [
         { "pos": "LB", "numbers": [50, 58], "model": "Models/LeanLB/LeanLB_Rigged", "modelTexture": "Models/LeanLB/LeanLBCMT_BaseColor" },
         { "pos": "S", "model": "Models/LeanLB/LeanLB_Rigged", "modelTexture": "Models/LeanLB/LeanLBCMT_BaseColor" },
+        { "pos": "CB", "model": "Models/CB/CB_Rigged", "modelTexture": "Models/CB/CBCMT_BaseColor" },
         { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerCMT_BaseColor", "strideBend": 0.7 },
         { "pos": "OL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerCMT_BaseColor", "strideBend": 0.7 },
         { "pos": "DL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerCMT_BaseColor", "strideBend": 0.7 },
@@ -445,6 +452,7 @@
       "posModels": [
         { "pos": "LB", "numbers": [50, 58], "model": "Models/LeanLB/LeanLB_Rigged", "modelTexture": "Models/LeanLB/LeanLBCOB_BaseColor" },
         { "pos": "S", "model": "Models/LeanLB/LeanLB_Rigged", "modelTexture": "Models/LeanLB/LeanLBCOB_BaseColor" },
+        { "pos": "CB", "model": "Models/CB/CB_Rigged", "modelTexture": "Models/CB/CBCOB_BaseColor" },
         { "pos": "LB", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerCOB_BaseColor", "strideBend": 0.7 },
         { "pos": "OL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerCOB_BaseColor", "strideBend": 0.7 },
         { "pos": "DL", "model": "Models/Linebacker/Linebacker_Rigged", "modelTexture": "Models/Linebacker/LinebackerCOB_BaseColor", "strideBend": 0.7 },
@@ -1104,6 +1112,7 @@
     "blinkEveryKeys": 28,
     "blinkKeys": 2,
     "skinTones": ["#f3d0b0", "#e2b48a", "#c98e5e", "#a86e44", "#8a5432", "#6b3f24", "#4a2a17"],
+    "hairColors": ["#1b1410", "#3b2416", "#6a4128", "#8e3b1c", "#b8732e", "#d9b26a", "#e8d39a"],
     "models": [
       { "model": "Models/Player24/Player24_Rigged", "map": "Models/Player24/Player24_Marks", "iris": "#6b3a1e", "lid": "#9f623a", "number": 24 , "skin": "#9C5E34" },
       { "model": "Models/Linebacker/Linebacker_Rigged", "map": "Models/Linebacker/Linebacker_Marks", "iris": "#5e3822", "lid": "#da8a54", "number": 64 , "skin": "#BD7546" },
@@ -1111,7 +1120,8 @@
       { "model": "Models/WR/WR_Rigged", "map": "Models/WR/WR_Marks", "iris": "#94601c", "lid": "#ac6e49", "number": 81 , "skin": "#8E5839" },
       { "model": "Models/Kicker/Kicker_Rigged", "map": "Models/Kicker/Kicker_Marks", "iris": "#8a5510", "lid": "#c7936b", "number": 3 , "skin": "#CA966A" },
       { "model": "Models/TE/TE_Rigged", "map": "Models/TE/TE_Marks", "iris": "#885415", "lid": "#A46742", "number": 88 , "skin": "#8F5938" },
-      { "model": "Models/LeanLB/LeanLB_Rigged", "map": "Models/LeanLB/LeanLB_Marks", "iris": "#673B03", "lid": "#A6683E", "number": 52 , "skin": "#945D37" }
+      { "model": "Models/LeanLB/LeanLB_Rigged", "map": "Models/LeanLB/LeanLB_Marks", "iris": "#673B03", "lid": "#A6683E", "number": 52 , "skin": "#945D37" },
+      { "model": "Models/CB/CB_Rigged", "map": "Models/CB/CB_Marks", "iris": "#7C4008", "lid": "#A65E2E", "number": 24 , "skin": "#C97538", "hair": "#402416" }
     ]
   },
   "reactions": {
@@ -1147,6 +1157,7 @@
       { "model": "Models/TE/TE_Rigged", "name": "TIGHT END", "number": 87 },
       { "model": "Models/Linebacker/Linebacker_Rigged", "name": "LINEBACKER", "number": 54 },
       { "model": "Models/LeanLB/LeanLB_Rigged", "name": "LEAN LINEBACKER", "number": 50 },
+      { "model": "Models/CB/CB_Rigged", "name": "CORNERBACK", "number": 24 },
       { "model": "Models/Kicker/Kicker_Rigged", "name": "KICKER", "number": 9 }
     ],
     "ratingMax": 10,
@@ -1418,6 +1429,7 @@
     "jerseyNumbers": true,
     "eyesLook": true,
     "skinTones": true,
+    "hairColors": true,
     "faceReactions": true,
     "grassStains": true,
     "nameBars": false,

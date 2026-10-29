@@ -19,7 +19,7 @@ namespace PocketFootball.View
             IrisId = Shader.PropertyToID("_IrisColor"), LidId = Shader.PropertyToID("_LidColor"),
             StainId = Shader.PropertyToID("_Stain"), StainLookId = Shader.PropertyToID("_StainLook"),
             GrassId = Shader.PropertyToID("_StainGrass"), DirtId = Shader.PropertyToID("_StainDirt"),
-            SkinId = Shader.PropertyToID("_Skin");
+            SkinId = Shader.PropertyToID("_Skin"), HairId = Shader.PropertyToID("_Hair");
 
         // The digit atlas: ten cells side by side, each the glyph's box (1 x 1.4) with Margin round it, CellPx pixels a
         // glyph unit; each pixel the distance to the glyph's centre line over MaxDist (the shader's 0.6).
@@ -29,7 +29,7 @@ namespace PocketFootball.View
         static readonly Dictionary<string, Texture2D> maps = new Dictionary<string, Texture2D>();
         static MaterialPropertyBlock block;
 
-        public static bool On(GameConfig cfg) => cfg.Feature("jerseyNumbers") || cfg.Feature("eyesLook") || cfg.Feature("faceReactions") || cfg.Feature("grassStains") || cfg.Feature("skinTones");
+        public static bool On(GameConfig cfg) => cfg.Feature("jerseyNumbers") || cfg.Feature("eyesLook") || cfg.Feature("faceReactions") || cfg.Feature("grassStains") || cfg.Feature("skinTones") || cfg.Feature("hairColors");
 
         public static Texture2D Digits()
         {
@@ -114,13 +114,38 @@ namespace PocketFootball.View
         public static void SetEyes(Renderer r, float x, float y, float blink, float mood = 0f) => Set(r, LookId, new Vector4(x, y, blink, mood));
 
         // FEATURES.skinTones: a man's own skin colour, one of marks.skinTones picked by u (0..1), drawn as its ratio to the
-        // model's own skin (so the shading painted on the model stays), on every renderer under him.
+        // model's own skin (so the shading painted on the model stays), on every renderer under him. FEATURES.hairColors:
+        // and, on a model with hair showing, her own hair colour (HairOf), picked from the same u.
         public static void SetSkin(GameObject holder, GameConfig cfg, string model, float u)
         {
-            if (holder == null || !cfg.Feature("skinTones")) return;
+            if (holder == null) return;
+            bool skin = cfg.Feature("skinTones"), hair = cfg.Feature("hairColors");
+            if (!skin && !hair) return;
             var r = SkinRatio(cfg, model, u);
-            foreach (var rend in holder.GetComponentsInChildren<Renderer>(true)) Set(rend, SkinId, r);
+            var h = HairOf(cfg, model, HairPick(u));
+            foreach (var rend in holder.GetComponentsInChildren<Renderer>(true))
+            {
+                if (skin) Set(rend, SkinId, r);
+                if (hair) Set(rend, HairId, h);
+            }
         }
+
+        // The shader's _Hair: one of marks.hairColors picked by u (0..1) and, in w, one over the model's own hair's
+        // brightness; the shader draws the colour at the brightness of what is painted there, so the braid's own shading
+        // stays. Zero (as painted): a model with no hair colour, or no colours to give.
+        public static Vector4 HairOf(GameConfig cfg, string model, float u)
+        {
+            var mm = cfg.marks.For(model);
+            var colors = cfg.marks.hairColors;
+            if (mm == null || string.IsNullOrEmpty(mm.hair) || colors == null || colors.Count == 0) return Vector4.zero;
+            var c = Colors.Hex(colors[Mathf.Clamp((int)(Mathf.Repeat(u, 1f) * colors.Count), 0, colors.Count - 1)]);
+            var own = Colors.Hex(mm.hair);
+            float lum = 0.2126f * own.r + 0.7152f * own.g + 0.0722f * own.b;
+            return new Vector4(c.r, c.g, c.b, 1f / Mathf.Max(lum, 0.02f));
+        }
+
+        // The hair pick from the skin pick: a different stride round the colours, so hair and skin don't go together.
+        public static float HairPick(float skinU) => Mathf.Repeat(skinU * 3.7f + 0.13f, 1f);
 
         public static Vector4 SkinRatio(GameConfig cfg, string model, float u)
         {
