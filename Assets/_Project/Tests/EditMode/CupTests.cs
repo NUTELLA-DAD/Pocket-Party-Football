@@ -84,6 +84,25 @@ namespace PocketFootball.Tests.EditMode
         }
 
         [Test]
+        public void TheWholeLeagueIsEightTeamsWithNoByes()
+        {
+            var cfg = ConfigTests.Load();
+            var teams = new List<string>();
+            foreach (var t in TeamPick.League(cfg)) teams.Add(t.@short);
+            Assert.AreEqual(8, teams.Count, "the league's eight teams");
+            Assert.GreaterOrEqual(cfg.cup.maxTeams, teams.Count, "all play in the cup");
+            CollectionAssert.Contains(teams, "CMT");
+            CollectionAssert.Contains(teams, "COB");
+            var cup = new Cup(teams);
+            Assert.AreEqual(8, cup.Size);
+            Assert.AreEqual(3, cup.Rounds);
+            for (int m = 0; m < cup.Matches(0); m++) { Assert.IsFalse(cup.IsBye(0, m, 0)); Assert.IsFalse(cup.IsBye(0, m, 1)); }
+            int games = 0;
+            while (cup.Next() != null) { cup.Record(0, 7); games++; }
+            Assert.AreEqual(7, games, "four quarterfinals, two semifinals, the final");
+        }
+
+        [Test]
         public void ItSavesAndLoadsMidway()
         {
             var cup = new Cup(Six);
