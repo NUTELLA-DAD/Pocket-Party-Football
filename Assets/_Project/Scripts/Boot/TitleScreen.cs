@@ -113,6 +113,7 @@ namespace PocketFootball.Boot
             if (returnPage != null) { startPage = returnPage; returnPage = null; }
             if (startPage == "howto") t.page = Page.HowTo;
             else if (startPage == "settings") t.page = Page.Settings;
+            else if (startPage == "hotspot" && HotspotJoin.On(cfg)) t.OpenHotspot();
             else if (startPage == "cup" && System.Array.IndexOf(t.items, Item.Cup) >= 0) { t.page = Page.Cup; t.cup = CupHost.Load(cfg); }
             else if (startPage != null && startPage.StartsWith("roster") && System.Array.IndexOf(t.items, Item.Roster) >= 0) t.OpenRoster(startPage);
             Instance = t;
