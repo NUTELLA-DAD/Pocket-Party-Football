@@ -584,7 +584,11 @@
     "gatherArmDeg": 45,
     "gatherArmOutDeg": 22,
     "gatherForeDeg": 80,
-    "gatherGaitYdS": 5
+    "gatherGaitYdS": 5,
+    "leapS": 0.6,
+    "leapYd": 0.5,
+    "leapCloseYd": 0.8,
+    "oneHandYd": 0.9
   },
   "defense": {
     "swimEarlyS": 0.5,
@@ -1228,6 +1232,16 @@
     "wallAheadYd": 12,
     "wallGapYd": 4
   },
+  "catchPlay": {
+    "diveReachYd": 1.2,
+    "diveMaxHeightYd": 1.1,
+    "diveMinSpeedYdS": 4,
+    "diveChanceMul": 0.55,
+    "diveDownS": 0.7,
+    "contestYd": 1.4,
+    "contestChanceMul": 0.7,
+    "tangleS": 0.9
+  },
   "pursuit": {
     "leadMaxS": 2.0,
     "laneGapYd": 2.6,
@@ -1326,6 +1340,7 @@
     "pursuitLanes": true,
     "spineChain": true,
     "strideHips": true,
-    "breakdown": true
+    "breakdown": true,
+    "catchPlay": true
   }
 }

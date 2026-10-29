@@ -18,6 +18,9 @@ namespace PocketFootball.View
             // FEATURES.kickMotion (Moves.cs): the kicker over the ball before the kick (frame 0 a place kick, 1 a punt,
             // the ball held out), and the kick itself in keys from the foot meeting the ball
             KickSet, Kick,
+            // FEATURES.catchPlay (Moves.cs): one hand up for a ball out to his side (frame 0-1 his left hand, 2-3 his right,
+            // the legs running), and up for a jump ball (0 gathered to go, 1 in the air)
+            ReachOne, Leap,
         }
 
         public const int CheerFrames = 8;
@@ -148,6 +151,15 @@ namespace PocketFootball.View
                 case PoseKind.Handoff: return new P { drop = 10, lean = 22, head = -10, armL = 60, armLx = 25, foreL = 40, armR = 70, armRx = 25, foreR = 30, thighL = 24, thighLx = 9, shinL = -30, thighR = 10, thighRx = 9, shinR = -28 };
                 // hands up for a pass coming in, on the run
                 case PoseKind.Reach: return RunLegs(new P { drop = 4, lean = 4, head = -20, armL = 140, armLx = 14, foreL = 25, armR = 140, armRx = 14, foreR = 25 }, frame);
+                // one arm stretched up and out for it (shoulders turned into it), the other back for balance
+                case PoseKind.ReachOne: return frame < 2
+                        ? RunLegs(new P { drop = 4, lean = 6, head = -18, twist = -14, armL = 150, armLx = 34, foreL = 12, armR = -25, armRx = 16, foreR = 70 }, frame)
+                        : RunLegs(new P { drop = 4, lean = 6, head = -18, twist = 14, armL = -25, armLx = 16, foreL = 70, armR = 150, armRx = 34, foreR = 12 }, frame - 2);
+                // a jump ball: 0 sunk on bent knees, arms swung back to go; 1 in the air, both arms at full stretch over his
+                // head, one knee driven up, the chest arched up to the ball
+                case PoseKind.Leap: return frame == 0
+                        ? new P { drop = 16, lean = 22, head = -20, armL = -35, armLx = 14, foreL = 25, armR = -35, armRx = 14, foreR = 25, thighL = 42, thighLx = 8, shinL = -75, thighR = 42, thighRx = 8, shinR = -75 }
+                        : new P { drop = -2, lean = -8, head = 28, armL = 172, armLx = 10, foreL = 8, armR = 168, armRx = 10, foreR = 12, thighL = 72, thighLx = 6, shinL = -95, thighR = 6, thighRx = 6, shinR = -38 };
                 // caught: the ball pulled in to the chest with both arms
                 case PoseKind.Secure: return RunLegs(new P { drop = 8, lean = 20, head = -6, armL = 60, armLx = 6, foreL = 120, armR = 50, armRx = 8, foreR = 110 }, frame);
                 // a drop: 0 hands wide as it pops out, 1 head down
@@ -318,7 +330,7 @@ namespace PocketFootball.View
         {
             strideTwist = strideHipYaw = strideHipRoll = 0f; ToeL = ToeR = 0f; BallL = BallR = 0f;
             bool run = current == PoseKind.Run, carrier = current == PoseKind.Carry;
-            if (!striding || !(run || carrier || current == PoseKind.Reach || current == PoseKind.Secure)) return p;
+            if (!striding || !(run || carrier || current == PoseKind.Reach || current == PoseKind.ReachOne || current == PoseKind.Secure)) return p;
             var s = stride;
             p.drop = s.Drop;
             p.thighL = s.ThighL; p.shinL = s.ShinL; p.thighR = s.ThighR; p.shinR = s.ShinR;
@@ -422,7 +434,8 @@ namespace PocketFootball.View
         {
             switch (kind)
             {
-                case PoseKind.Catch: case PoseKind.Reach: case PoseKind.Dive: l = r = -1f; return;
+                case PoseKind.Catch: case PoseKind.Reach: case PoseKind.Dive: case PoseKind.Leap: l = r = -1f; return;
+                case PoseKind.ReachOne: l = frame < 2 ? -1f : 0.7f; r = frame < 2 ? 0.7f : -1f; return;   // (the reaching hand open)
                 case PoseKind.Bobble: l = r = frame == 0 ? -0.6f : -1f; return;   // (it squirts out: the fingers fly open)
                 case PoseKind.Secure: l = r = 1f; return;
                 case PoseKind.Throw: l = 0.3f; r = 1f; return;

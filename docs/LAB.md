@@ -17,6 +17,9 @@ A test bench for the game's mechanics without a whole game: one drill on the fie
 | ... with the ball | RB | The same carrying the ball |
 | Pursuit: all eleven chase you | RB | You start in the open, already running; the whole defense chases you in lanes (FEATURES.pursuitLanes) |
 | Watch a pursuit | nobody | The same with a bot runner: angles, lanes, and the man who breaks down for the tackle |
+| Breakaway: you are past them all | RB | You start past the safeties; all eleven chase you from behind, each in his own lane |
+| Jump ball | WR | A lob up the sideline with a corner on your hip: go up together and come down tangled, or lay out for one getting away (FEATURES.catchPlay) |
+| Watch a jump ball | nobody | The same with a bot receiver: the leap, one-handed grabs, dives and tangles |
 | Full scrimmage | QB | All 22, Slants vs Cover 3 |
 | Watch the bots | nobody | Bots only, for watching hitboxes in slow motion |
 
@@ -94,3 +97,17 @@ What it tunes:
   `strideHipRollDeg` (FEATURES.strideHips: the pelvis turns with the leg reaching forward and dips on the swinging side),
   `anim.gather*` (FEATURES.breakdown: a defender closing on the carrier sinks his hips, chops his feet and brings his
   arms up to wrap; one coming from behind runs on through).
+
+`-Drill breakaway` films the long chase from behind instead (into `.shots\pursuit\round-N-breakaway\`).
+
+## Catch plays (FEATURES.catchPlay, `NO_CATCH_PLAY=1`)
+
+- A diving catch (`Sim/CatchPlay.cs`): a low ball (under `catchPlay.diveMaxHeightYd`) nobody has in the catch circle
+  can still be caught by a man running at it at `diveMinSpeedYdS` or more from up to `diveReachYd` further out; his
+  odds are `diveChanceMul` of a plain catch's and he is on his belly for `diveDownS`.
+- A jump ball: a man of the other team within `contestYd` of the catcher cuts his odds to `contestChanceMul` of a
+  plain catch's, and both come down tangled for `tangleS` (the one with the ball lands on a knee, the other goes over).
+  On the TV (`View/Moves.cs`) the two leave the grass together (`anim.leapS`, `leapYd` high) just before it gets there.
+- One hand: a man reaching for a ball more than `anim.oneHandYd` out to his side of his run reaches with the hand on
+  that side, the other arm back for balance.
+- Tests `CatchPlayTests`; film it with `tools/botreel.ps1 -Drills watchjumpball -Every 2 -Reps 6`.

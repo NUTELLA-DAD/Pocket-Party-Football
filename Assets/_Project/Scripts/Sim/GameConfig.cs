@@ -46,6 +46,7 @@ namespace PocketFootball.Sim
         public MarksConfig marks = new MarksConfig();   // FEATURES.jerseyNumbers / eyesLook: the players' numbers and eyes (View/JerseyMarks.cs)
         public ReactionsConfig reactions = new ReactionsConfig();   // FEATURES.faceReactions / grassStains / nameBars (View/Reactions.cs)
         public BotsV3Config botsV3 = new BotsV3Config();   // bots v3: reactions, blocking assignments, kick lanes (BotsV3.cs, FEATURES.botsV3)
+        public CatchPlayConfig catchPlay = new CatchPlayConfig();   // FEATURES.catchPlay: diving and contested catches (CatchPlay.cs)
         public PursuitConfig pursuit = new PursuitConfig();   // FEATURES.pursuitLanes: chasing the ball carrier in lanes (Pursuit.cs)
         public CupConfig cup = new CupConfig();   // FEATURES.cup: the Pocket Cup bracket (Cup.cs, Boot/CupHost.cs)
         public RosterConfig roster = new RosterConfig();   // FEATURES.rosterPage: the title's ROSTER page (RosterCards.cs, Boot/RosterPage.cs)
@@ -361,6 +362,10 @@ namespace PocketFootball.Sim
         // gatherWideDeg wider, the arms up gatherArmDeg in front (gatherArmOutDeg out, elbows gatherForeDeg), short steps
         // (a stride for gatherGaitYdS at most)
         public float gatherFromYd, gatherToYd, gatherBehindCos, gatherKneeDeg, gatherLeanDeg, gatherWideDeg, gatherArmDeg, gatherArmOutDeg, gatherForeDeg, gatherGaitYdS;
+        // FEATURES.catchPlay (View/Moves.cs): a man reaching for a ball more than oneHandYd out to his side of his run goes
+        // for it one-handed; two men of both teams within catchPlay.contestYd + leapCloseYd of each other go up for it
+        // together, a hop of leapS seconds and leapYd at the top
+        public float leapS, leapYd, leapCloseYd, oneHandYd;
     }
 
     // WS-07 the lobby (FEATURES.lobby): each person picks an offense spot and a defense spot before kickoff. The game

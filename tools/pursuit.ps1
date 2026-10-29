@@ -7,12 +7,13 @@
 # - <variant>-<cam>-<run>.png: contact sheets of the pictures (4 a row, stamped with the time and bunched pairs);
 # - <variant>-<cam>-<run>.mp4: the same as a clip, only if ffmpeg is already on this computer (nothing is installed);
 # - summary.txt: one line a run and variant.
-# -Cams top,close,tv; -Every ticks between pictures; -Seed changes the tackle odds and reactions.
-param([int]$Round = 1, [string[]]$Cams = @('top', 'close'), [int]$Every = 3, [int]$Seed = 1, [switch]$Compare)
+# -Cams top,close,tv; -Every ticks between pictures; -Seed changes the tackle odds and reactions; -Drill breakaway films
+# the long chase from behind (the runner already past the safeties) instead of the break into the open.
+param([string]$Drill = 'pursuit', [int]$Round = 1, [string[]]$Cams = @('top', 'close'), [int]$Every = 3, [int]$Seed = 1, [switch]$Compare)
 . (Join-Path $PSScriptRoot 'env.ps1')
 Add-Type -AssemblyName System.Drawing
 $exe = Join-Path $PROJ 'Builds\Windows\PocketFootball.exe'
-$out = Join-Path $PROJ ".shots\pursuit\round-$Round"
+$out = Join-Path $PROJ $(if ($Drill -eq 'pursuit') { ".shots\pursuit\round-$Round" } else { ".shots\pursuit\round-$Round-$Drill" })
 New-Item -ItemType Directory -Force $out | Out-Null
 $old = @('NO_PURSUIT_LANES', 'NO_BREAKDOWN', 'NO_STRIDE_HIPS', 'NO_SPINE_CHAIN')
 $variants = if ($Compare) { @('before', 'now') } else { @('now') }
@@ -26,7 +27,7 @@ foreach ($v in $variants) {
     foreach ($cam in $Cams) {
         $vdir = Join-Path $out $v
         New-Item -ItemType Directory -Force $vdir | Out-Null
-        $p = Start-Process -FilePath $exe -ArgumentList @('-lab', '-lab-drill', 'pursuit', '-pursuit-reel', $cam, '-pursuit-every', $Every, '-pursuit-reps', 4, '-fixture', "pursuit-$cam", '-seed', $Seed, '-bind', '127.0.0.1', '-shots', "`"$vdir`"", '-screen-width', '1920', '-screen-height', '1080', '-screen-fullscreen', '0', '-logFile', "`"$LOGS\pursuit-$v-$cam.log`"") -PassThru
+        $p = Start-Process -FilePath $exe -ArgumentList @('-lab', '-lab-drill', $Drill, '-pursuit-reel', $cam, '-pursuit-every', $Every, '-pursuit-reps', 4, '-fixture', "pursuit-$cam", '-seed', $Seed, '-bind', '127.0.0.1', '-shots', "`"$vdir`"", '-screen-width', '1920', '-screen-height', '1080', '-screen-fullscreen', '0', '-logFile', "`"$LOGS\pursuit-$v-$cam.log`"") -PassThru
         if (-not $p.WaitForExit(300000)) { $p.Kill(); Write-Host "TIMEOUT: $v $cam"; exit 1 }
         $csvPath = Join-Path $vdir "pursuit-$cam.csv"
         if (-not (Test-Path $csvPath)) { Write-Host "MISSING: $v $cam (see .logs\pursuit-$v-$cam.log)"; exit 1 }
@@ -71,8 +72,9 @@ foreach ($n in $old) { Remove-Item "Env:$n" -ErrorAction SilentlyContinue }
 
 # the trails, from the CSV of the first camera (every camera sees the same chase)
 $colors = @('#e6503c', '#f0a028', '#e6dc3c', '#78d25a', '#3cbec8', '#5078f0', '#aa64e6', '#f06ebe', '#c8c8c8', '#96643c', '#5aa078')
-$W = 760; $H = 460; $x0 = -20.0; $x1 = 45.0; $half = 53.3 / 2
+$W = 760; $x0 = -20.0; $x1 = $(if ($Drill -eq 'pursuit') { 45.0 } else { 75.0 }); $half = 53.3 / 2
 $s = $W / ($x1 - $x0)
+$H = [int][Math]::Ceiling(($half + $half + 4) * $s)   # the whole width of the field, sideline to sideline, in the panel
 $runs = @('straight', 'sweep', 'cutback', 'zigzag')
 $trails = New-Object System.Drawing.Bitmap ($W * $variants.Count + 10 * ($variants.Count - 1)), (($H + 10) * $runs.Count)
 $tg = [System.Drawing.Graphics]::FromImage($trails)
@@ -88,7 +90,7 @@ for ($vi = 0; $vi -lt $variants.Count; $vi++) {
         $tg.FillRectangle((New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(60, 110, 50))), $ox, $oy, $W, $H)
         function P([double]$x, [double]$z) { return New-Object System.Drawing.PointF ([float]($ox + ($x - $x0) * $s)), ([float]($oy + $H / 2 - $z * $s)) }
         $line = New-Object System.Drawing.Pen ([System.Drawing.Color]::FromArgb(90, 140, 80)), 1
-        for ($yl = -20; $yl -le 45; $yl += 5) { $tg.DrawLine($line, (P $yl $half), (P $yl (-$half))) }
+        for ($yl = -20; $yl -le $x1; $yl += 5) { $tg.DrawLine($line, (P $yl $half), (P $yl (-$half))) }
         $side = New-Object System.Drawing.Pen ([System.Drawing.Color]::White), 2
         $tg.DrawLine($side, (P $x0 $half), (P $x1 $half)); $tg.DrawLine($side, (P $x0 (-$half)), (P $x1 (-$half)))
         if ($rs.Count -lt 2) { continue }
@@ -112,4 +114,4 @@ $trails.Save((Join-Path $out 'trails.png'), [System.Drawing.Imaging.ImageFormat]
 $trails.Dispose()
 $summary | Set-Content (Join-Path $out 'summary.txt')
 $summary | ForEach-Object { Write-Host $_ }
-Write-Host "pursuit: .shots\pursuit\round-$Round\ (trails.png, contact sheets$(if ($ffmpeg) { ', clips' }))"
+Write-Host "pursuit: $out\ (trails.png, contact sheets$(if ($ffmpeg) { ', clips' }))"

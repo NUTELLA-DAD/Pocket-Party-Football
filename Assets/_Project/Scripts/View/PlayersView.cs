@@ -179,7 +179,7 @@ namespace PocketFootball.View
                 else
                 {
                     downStart.Remove(p.Slot);
-                    pos.y += DefenseMovesView.LiftYd(w, p) * yd;   // a defender's JUMP leaves the grass
+                    pos.y += (DefenseMovesView.LiftYd(w, p) + Moves.LiftYd(w, p.Slot)) * yd;   // a defender's JUMP, a jump ball (FEATURES.catchPlay) leave the grass
                 }
                 t.localPosition = pos;
                 t.localRotation = Quaternion.Euler(0f, yaw, 0f);
@@ -346,7 +346,23 @@ namespace PocketFootball.View
                 case Move.Handoff: kind = FootballFigure.PoseKind.Handoff; return true;
                 case Move.Snap: kind = FootballFigure.PoseKind.Stance; return true;
                 case Move.TakeSnap: kind = FootballFigure.PoseKind.Handoff; return true;   // hands out in front for it
-                case Move.Reach: kind = FootballFigure.PoseKind.Reach; frame = stride; return true;
+                // FEATURES.catchPlay: one hand up for a ball out to his side (ReachOne: 0-1 his left, 2-3 his right, by stride frame)
+                case Move.Reach: kind = m.Hand == 0 ? FootballFigure.PoseKind.Reach : FootballFigure.PoseKind.ReachOne; frame = (m.Hand == 2 ? 2 : 0) + stride; return true;
+                // FEATURES.catchPlay: up for a jump ball (gathered, then in the air); laid out for a low ball, then on his
+                // belly, up on a knee at the end; two men tangled after a jump ball: arms up, then the one with the ball
+                // pulls it in and lands on a knee, the other goes over (backwards, or on his face if it was his catch to make)
+                case Move.Leap: kind = FootballFigure.PoseKind.Leap; frame = Mathf.Min(1, m.Frame); return true;
+                case Move.DiveCatch:
+                    if (m.GettingUp) kind = m.UpFrame < 2 ? FootballFigure.PoseKind.Kneel : FootballFigure.PoseKind.Ready;
+                    else kind = m.Frame < 2 ? FootballFigure.PoseKind.Dive : FootballFigure.PoseKind.Prone;
+                    return true;
+                case Move.Tangle:
+                    if (m.GettingUp) { kind = m.UpFrame < 2 ? FootballFigure.PoseKind.Kneel : FootballFigure.PoseKind.Ready; return true; }
+                    if (m.Frame == 0) { kind = FootballFigure.PoseKind.Leap; frame = 1; return true; }
+                    if (m.Won) { kind = m.Frame < 3 ? FootballFigure.PoseKind.Secure : FootballFigure.PoseKind.Kneel; return true; }
+                    if (m.Frame < 3) { kind = m.OnBack ? FootballFigure.PoseKind.FallBack : FootballFigure.PoseKind.FallFront; frame = m.Frame - 1; }
+                    else kind = m.OnBack ? FootballFigure.PoseKind.Supine : FootballFigure.PoseKind.Prone;
+                    return true;
                 case Move.Secure: kind = FootballFigure.PoseKind.Secure; frame = stride; return true;
                 case Move.Bobble: kind = FootballFigure.PoseKind.Bobble; frame = Mathf.Min(1, m.Frame / 2); return true;
                 case Move.Juke: kind = FootballFigure.PoseKind.Juke; frame = Mathf.Min(1, m.Frame); return true;

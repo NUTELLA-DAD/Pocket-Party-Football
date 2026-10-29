@@ -12,7 +12,7 @@ namespace PocketFootball.View
     // It only reads the World, once per sim tick, and spots the moments by what changed since the tick before (the ball
     // left the QB's hand, a pass ended up held, the whistle blew on a tackle). Frames count sim ticks at anim.fps, so
     // the moves step like the rest of the look and never depend on the frame rate. Pure C#: tests drive it with a World.
-    public enum Move { None, Aim, Throw, Handoff, Reach, Secure, Bobble, Juke, Whiff, Tackle, Tackled, Celebrate, Block, Snap, TakeSnap, Stagger, KickSet, Kick, Hold }
+    public enum Move { None, Aim, Throw, Handoff, Reach, Secure, Bobble, Juke, Whiff, Tackle, Tackled, Celebrate, Block, Snap, TakeSnap, Stagger, KickSet, Kick, Hold, Leap, DiveCatch, Tangle }
 
     public struct MoveNow
     {
@@ -28,14 +28,18 @@ namespace PocketFootball.View
         public bool Full;         // Aim / Throw (FEATURES.throwMotion): wound up, the four-key throw
         public bool BigHit;       // Tackle / Tackled (FEATURES.hitAngle): a straight-on big hit
         public float KnockX, KnockZ;   // ... how far (yards) he still has to slide to where the hit put him down
+        public int Hand;          // Reach (FEATURES.catchPlay): 0 both hands up, 1 his left hand only, 2 his right (a ball out to his side)
+        public bool Won;          // Tangle: he came down with the ball
     }
 
     public sealed class Moves
     {
-        sealed class Rec { public Move Kind; public int Start, End; public bool Hold, OnBack, BigHit; public int Partner = -1; public float KnockX, KnockZ; }
+        sealed class Rec { public Move Kind; public int Start, End; public bool Hold, OnBack, BigHit, Won; public int Partner = -1; public float KnockX, KnockZ; }
 
         readonly SortedDictionary<int, Rec> bySlot = new SortedDictionary<int, Rec>();
         readonly HashSet<int> reaching = new HashSet<int>();
+        readonly SortedDictionary<int, int> reachHand = new SortedDictionary<int, int>();   // FEATURES.catchPlay: the hand each reacher picked as he put it up
+        readonly SortedDictionary<int, int> leapAt = new SortedDictionary<int, int>();      // FEATURES.catchPlay: slot -> the tick he left the grass
         readonly HashSet<int> watching = new HashSet<int>();
         readonly SortedDictionary<int, int> blockPartner = new SortedDictionary<int, int>();   // slot -> the man he's blocking / blocked by
         // a locked pair slides together (or apart) on the TV until their hands meet: slot -> offset in yards, this tick and the last
@@ -101,6 +105,21 @@ namespace PocketFootball.View
                     if (p.JukeTicks > 0 && (!juke.TryGetValue(p.Slot, out int j) || j == 0)) Start(w, p.Slot, Move.Juke, p.JukeTicks / (float)w.Cfg.sim.tickHz);
                     if (p.StumbleTicks > 0 && (!stumble.TryGetValue(p.Slot, out int s) || s == 0)) Start(w, p.Slot, Move.Whiff, p.StumbleTicks / (float)w.Cfg.sim.tickHz);
                     if (p.OffBalanceTicks > 0 && (!offBalance.TryGetValue(p.Slot, out int o) || o == 0)) Start(w, p.Slot, Move.Stagger, p.OffBalanceTicks / (float)w.Cfg.sim.tickHz);
+                }
+                // FEATURES.catchPlay: a man laying out for the ball, or two men up for it coming down tangled
+                var cn = w.CatchNote;
+                if (CatchOn(w) && cn.Tick > was && cn.Tick <= w.Tick)
+                {
+                    var c0 = w.Find(cn.Slot);
+                    float downS = c0 != null ? c0.StumbleTicks / (float)w.Cfg.sim.tickHz : 0f;
+                    if (cn.Style == CatchStyle.Dive && c0 != null) Start(w, cn.Slot, Move.DiveCatch, downS);
+                    if (cn.Style == CatchStyle.Contested && c0 != null && w.Find(cn.Rival) is Player r0)
+                    {
+                        // the catcher lands with it (on a knee) or goes down on his face; the other man over backwards
+                        Start(w, cn.Slot, Move.Tangle, downS, false, false, cn.Rival);
+                        bySlot[cn.Slot].Won = cn.Caught;
+                        Start(w, cn.Rival, Move.Tangle, r0.StumbleTicks / (float)w.Cfg.sim.tickHz, false, true, cn.Slot);
+                    }
                 }
                 // the whistle: a tackle brings both men down; a touchdown, the carrier celebrates
                 if (phase == Phase.Live && w.Phase == Phase.Whistle)
@@ -170,6 +189,7 @@ namespace PocketFootball.View
                     if (best != null) reaching.Add(best.Slot);
                 }
             }
+            Leaps(w);
             Watch(w);
             Engage(w);
             // finished moves go
@@ -204,7 +224,7 @@ namespace PocketFootball.View
             var a = w.Cfg.anim;
             if (bySlot.TryGetValue(p.Slot, out var r))
             {
-                var m = new MoveNow { Kind = r.Kind, Frame = FrameOf(w, w.Tick - r.Start), OnBack = r.OnBack, StartTick = r.Start, HasPartner = r.Partner >= 0, Partner = r.Partner, BigHit = r.BigHit, Full = w.Cfg.Feature("throwMotion") };
+                var m = new MoveNow { Kind = r.Kind, Frame = FrameOf(w, w.Tick - r.Start), OnBack = r.OnBack, StartTick = r.Start, HasPartner = r.Partner >= 0, Partner = r.Partner, BigHit = r.BigHit, Won = r.Won, Full = w.Cfg.Feature("throwMotion") };
                 if (r.BigHit)
                 {
                     // the slide back, in stepped keys: knockKeys of them, the first already part of the way
@@ -212,6 +232,12 @@ namespace PocketFootball.View
                     m.KnockX = r.KnockX * (1f - done); m.KnockZ = r.KnockZ * (1f - done);
                 }
                 int upTicks = Ticks(w, a.getUpS);
+                // FEATURES.catchPlay: up off the grass over the last getUpS of a dive or a tangle
+                if ((r.Kind == Move.DiveCatch || r.Kind == Move.Tangle) && r.End - w.Tick <= upTicks)
+                {
+                    m.GettingUp = true;
+                    m.UpFrame = FrameOf(w, upTicks - (r.End - w.Tick));
+                }
                 if (r.Hold && w.Phase == Phase.Whistle && w.PhaseTicks <= upTicks && (r.Kind == Move.Tackle || r.Kind == Move.Tackled))
                 {
                     m.GettingUp = true;
@@ -225,7 +251,7 @@ namespace PocketFootball.View
             if (p == Kicking.Holder(w) && !w.Kick.Kicked) return new MoveNow { Kind = Move.Hold };
             var snap = Snap.For(w, p);   // the snap (Snap.cs): the center down in his stance, the QB's hands out for it
             if (snap != Move.None) return new MoveNow { Kind = snap };
-            if (reaching.Contains(p.Slot)) return new MoveNow { Kind = Move.Reach };
+            if (reaching.Contains(p.Slot)) return new MoveNow { Kind = Move.Reach, Hand = reachHand.TryGetValue(p.Slot, out int hand) ? hand : 0 };
             if (w.Phase != Phase.Live) return default;
             // the QB with the ball in the pocket, not yet thrown: arm cocked
             var play = LivePlay.Called(w, w.Offense);
@@ -248,6 +274,60 @@ namespace PocketFootball.View
             ux = dx / d; uz = dz / d;
             x = cx - ux * contactYd; z = cz - uz * contactYd;
             return true;
+        }
+
+        public static bool CatchOn(World w) => w.Cfg.Feature("catchPlay");
+
+        // FEATURES.catchPlay: the hand each man reaching for the ball puts up, picked as he starts to reach: one hand
+        // (the one on the ball's side) for a ball more than oneHandYd out to his side of his run, else both; and a jump
+        // ball: the two men reaching for it from both teams, within catchPlay.contestYd of each other, both leave the
+        // grass as it comes down (leapS before it is at catching height, the top of the jump as it gets there).
+        void Leaps(World w)
+        {
+            var b = w.Ball;
+            var a = w.Cfg.anim;
+            keys.Clear();
+            foreach (var kv in reachHand) if (!reaching.Contains(kv.Key)) keys.Add(kv.Key);
+            foreach (int slot in keys) reachHand.Remove(slot);
+            keys.Clear();
+            foreach (var kv in leapAt) if (w.Tick - kv.Value > Ticks(w, a.leapS) || w.Phase != Phase.Live) keys.Add(kv.Key);
+            foreach (int slot in keys) leapAt.Remove(slot);
+            if (!On(w) || !CatchOn(w) || b.State != BallState.Flying) return;
+            foreach (int slot in reaching)
+            {
+                if (reachHand.ContainsKey(slot)) continue;
+                var p = w.Find(slot);
+                if (p == null) continue;
+                float sp = (float)Math.Sqrt(p.VX * p.VX + p.VZ * p.VZ);
+                int hand = 0;
+                if (sp > 1f)
+                {
+                    float side = ((b.TargetZ - p.Z) * p.VX - (b.TargetX - p.X) * p.VZ) / sp;   // + on his left (facing +x, left is +z)
+                    if (Math.Abs(side) > a.oneHandYd) hand = side > 0f ? 1 : 2;
+                }
+                reachHand[slot] = hand;
+            }
+            // a jump ball: one reacher a team, close together, the ball about to come down to them
+            Player x = null, y = null;
+            foreach (int slot in reaching) { var p = w.Find(slot); if (p == null) continue; if (x == null) x = p; else if (p.Team != x.Team) y = p; }
+            if (x == null || y == null || LivePlay.Dist(x, y) > w.Cfg.catchPlay.contestYd + a.leapCloseYd) return;
+            float g = w.Cfg.ball.gravityYdS2, drop = b.Y - w.Cfg.play.catchMaxHeightYd;
+            if (b.VY > 0f && drop > 0f) return;
+            float until = drop <= 0f ? 0f : (b.VY + (float)Math.Sqrt(b.VY * b.VY + 2f * g * drop)) / g;   // seconds until it is at catching height
+            if (until > a.leapS * 0.5f) return;
+            foreach (var p in new[] { x, y })
+                if (!leapAt.ContainsKey(p.Slot) && !bySlot.ContainsKey(p.Slot)) { leapAt[p.Slot] = w.Tick; Start(w, p.Slot, Move.Leap, a.leapS); }
+        }
+
+        // FEATURES.catchPlay: how high (yd) a man up for a jump ball has his feet off the grass: a hop over anim.leapS from
+        // when he left it, leapYd at the top, in stepped keys at anim.fps (no wobble); the hop carries on if the ball
+        // lands in the middle of it and he comes down tangled. 0 for everyone else.
+        public float LiftYd(World w, int slot)
+        {
+            if (!leapAt.TryGetValue(slot, out int at)) return 0f;
+            int keys = FrameOf(w, Ticks(w, w.Cfg.anim.leapS)) + 1;
+            float t = Math.Min(1f, (FrameOf(w, w.Tick - at) + 1f) / keys);
+            return w.Cfg.anim.leapYd * 4f * t * (1f - t);
         }
 
         // FEATURES.watchBall: while a pass is in the air, the man of each team nearest where it's aimed (within watchYd)

@@ -95,6 +95,7 @@ namespace PocketFootball.Sim
         public readonly HitState Hit = new HitState();   // FEATURES.hitAngle: the last hit, for the TV (HitAngle.cs); not hashed
         public readonly AudibleState Audible = new AudibleState();   // WS-13: audibles and hot routes this down (Audibles.cs)
         public readonly BotsV3.Plan BotPlan = new BotsV3.Plan();   // bots v3: this tick's blocking plan (BotsV3.cs); not hashed, rebuilt every tick
+        public readonly CatchNote CatchNote = new CatchNote();   // FEATURES.catchPlay: the last catch try, for the TV (CatchPlay.cs); not hashed
         public readonly Pursuit.Plan ChasePlan = new Pursuit.Plan();   // FEATURES.pursuitLanes: this tick's chase (Pursuit.cs); not hashed, rebuilt every tick
 
         public World(GameConfig cfg, int seed)
