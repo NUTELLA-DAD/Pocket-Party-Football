@@ -118,7 +118,9 @@ namespace PocketFootball.View
             {
                 var fig = Body(w, p);
                 var move = PoseOverride.ContainsKey(p.Slot) ? default : Moves.Of(w, p);
-                bool down = move.Kind == Move.Tackle || move.Kind == Move.Tackled;
+                // (FEATURES.catchPlay: a tangled pair go down like a tackle, apart and facing off each other; on his run's
+                // facing the catcher fell on his face straight through the other man)
+                bool down = move.Kind == Move.Tackle || move.Kind == Move.Tackled || move.Kind == Move.Tangle;
                 Vector2 now = new Vector2(p.X, p.Z);
                 Vector2 was = prev.TryGetValue(p.Slot, out var v) ? v : now;
                 Vector2 at = Vector2.Lerp(was, now, alpha);

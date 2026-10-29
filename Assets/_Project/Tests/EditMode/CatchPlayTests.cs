@@ -121,14 +121,14 @@ namespace PocketFootball.Tests.EditMode
             var (w, r, d) = Low(cfg);
             var m = new Moves();
             m.Observe(w);
+            CatchPlay.After(w, r, null, true, true);   // (as in World.Step: the try, then Tick moves on)
             w.Tick++;
-            CatchPlay.After(w, r, null, true, true);
             m.Observe(w);
             Assert.AreEqual(Move.DiveCatch, m.Of(w, r).Kind, "laid out for it");
             w.Tick += r.StumbleTicks + 2; r.StumbleTicks = 0;
             m.Observe(w);
-            w.Tick++;
             CatchPlay.After(w, r, d, false, true);
+            w.Tick++;
             m.Observe(w);
             var rm = m.Of(w, r); var dm = m.Of(w, d);
             Assert.AreEqual(Move.Tangle, rm.Kind); Assert.AreEqual(Move.Tangle, dm.Kind);
@@ -145,8 +145,8 @@ namespace PocketFootball.Tests.EditMode
             var (w, r, _) = Low(cfg);
             var m = new Moves();
             m.Observe(w);
-            w.Tick++;
             w.CatchNote.Tick = w.Tick; w.CatchNote.Slot = r.Slot; w.CatchNote.Style = CatchStyle.Dive;
+            w.Tick++;
             m.Observe(w);
             Assert.AreNotEqual(Move.DiveCatch, m.Of(w, r).Kind);
             Assert.AreEqual(0f, m.LiftYd(w, r.Slot));

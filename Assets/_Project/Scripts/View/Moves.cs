@@ -108,7 +108,7 @@ namespace PocketFootball.View
                 }
                 // FEATURES.catchPlay: a man laying out for the ball, or two men up for it coming down tangled
                 var cn = w.CatchNote;
-                if (CatchOn(w) && cn.Tick > was && cn.Tick <= w.Tick)
+                if (CatchOn(w) && cn.Tick >= was && cn.Tick < w.Tick)   // (stamped in World.Step before it moves Tick on)
                 {
                     var c0 = w.Find(cn.Slot);
                     float downS = c0 != null ? c0.StumbleTicks / (float)w.Cfg.sim.tickHz : 0f;
