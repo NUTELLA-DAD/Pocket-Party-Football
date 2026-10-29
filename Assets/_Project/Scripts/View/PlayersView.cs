@@ -69,6 +69,23 @@ namespace PocketFootball.View
 
         public FootballFigure Figure(int slot) => bodies.TryGetValue(slot, out var f) ? f : null;
 
+        // FEATURES.breakdown (NO_BREAKDOWN=1): how far a defender closing on the ball carrier has gathered himself for the
+        // tackle, 0..1: none from anim.gatherFromYd away, all of it at gatherToYd; a man coming from behind the carrier
+        // runs on through (none past gatherBehindCos behind his way, eased in from there to square on his side).
+        public static float Breakdown(World w, Player p, GameConfig cfg)
+        {
+            if (!cfg.Feature("breakdown") || w.Phase != Phase.Live || w.Ball.State != BallState.Held || w.Ball.Carrier == p.Slot) return 0f;
+            var c = w.Find(w.Ball.Carrier);
+            if (c == null || c.Team == p.Team) return 0f;
+            var a = cfg.anim;
+            float dx = p.X - c.X, dz = p.Z - c.Z, d = Mathf.Sqrt(dx * dx + dz * dz);
+            if (d >= a.gatherFromYd || d <= 0f) return 0f;
+            float g = Mathf.Clamp01((a.gatherFromYd - d) / Mathf.Max(0.01f, a.gatherFromYd - a.gatherToYd));
+            float cs = Mathf.Sqrt(c.VX * c.VX + c.VZ * c.VZ);
+            if (cs > 1f && a.gatherBehindCos > 0f) g *= Mathf.Clamp01(((dx * c.VX + dz * c.VZ) / (d * cs) + a.gatherBehindCos) / a.gatherBehindCos);
+            return g;
+        }
+
         // The facing and lean state a player's figure carries (FEATURES.momentumLean), for the motion reel.
         public bool MomentumOf(int slot, out MomentumState s) => carry.TryGetValue(slot, out s);
         // FEATURES.strideCycle: where a man is in his stride (0..1, the left foot down at 0), -1 if he hasn't run yet
@@ -167,7 +184,7 @@ namespace PocketFootball.View
                 t.localPosition = pos;
                 t.localRotation = Quaternion.Euler(0f, yaw, 0f);
                 fig.Carry(0f, 0f, 0f, 0f, 0f);
-                fig.Stride(false, default); fig.Settle(0f);
+                fig.Stride(false, default); fig.Settle(0f); fig.Gather(0f, null);
 
                 if (PoseOverride.TryGetValue(p.Slot, out var held)) { fig.Idle(0f, 0f); fig.Pose(held, PoseFrameOverride.TryGetValue(p.Slot, out int hf) ? hf : 0); continue; }
                 travelled[p.Slot] = (travelled.TryGetValue(p.Slot, out float d) ? d : 0f) + moved;
@@ -212,18 +229,23 @@ namespace PocketFootball.View
                     if (move.Kind == Move.None && speed <= 0.5f && plant > 0f)
                     { fig.Idle(0f, 0f); fig.Pose(carrier ? FootballFigure.PoseKind.Carry : FootballFigure.PoseKind.Run, frame); continue; }
                 }
+                // FEATURES.breakdown: closing on the ball carrier, he gathers himself for the tackle
+                float gather = free ? Breakdown(w, p, cfg) : 0f;
+                fig.Gather(gather, cfg.anim);
                 // the stride (FEATURES.strideCycle): its phase moves with the distance run (held through a plant)
                 if (striding)
                 {
-                    phase = Stride.Advance(phase, cfg.anim, cfg.players, speed, strideMoved / yd);
+                    // (breaking down: short choppy steps, a jog's stride at his speed)
+                    float gait = gather > 0f ? Mathf.Lerp(speed, Mathf.Min(speed, cfg.anim.gatherGaitYdS), gather) : speed;
+                    phase = Stride.Advance(phase, cfg.anim, cfg.players, gait, strideMoved / yd);
                     stridePhase[p.Slot] = phase;
                     // braking hard (a stop takes a tick or two) a stride smaller than a walk's shrinks over StrideShrinkTicks, not at once,
                     // so the last stride pose the stop eases from still has bent legs
-                    float shown = speed;
+                    float shown = gait;
                     if (strideShown.TryGetValue(p.Slot, out var drawn))
-                        shown = Mathf.Max(speed, Mathf.Min(drawn.speed, cfg.anim.strideWalkYdS) * (1f - (w.Tick - drawn.tick) / StrideShrinkTicks));
+                        shown = Mathf.Max(gait, Mathf.Min(drawn.speed, cfg.anim.strideWalkYdS) * (1f - (w.Tick - drawn.tick) / StrideShrinkTicks));
                     if (drawn.tick != w.Tick) strideShown[p.Slot] = (shown, w.Tick);
-                    fig.Stride(true, Stride.Pose(cfg.anim, cfg.players, fig.Legs, phase, shown, yd * FootballFigure.RigHeight / cfg.view.playerHeightM, cfg.Feature("footFlex")));
+                    fig.Stride(true, Stride.Pose(cfg.anim, cfg.players, fig.Legs, phase, shown, yd * FootballFigure.RigHeight / cfg.view.playerHeightM, cfg.Feature("footFlex"), cfg.Feature("strideHips"), gather));
                     strideLast[p.Slot] = w.Tick;
                 }
                 else if (!down && move.Kind == Move.None && strideLast.TryGetValue(p.Slot, out int last))

@@ -39,6 +39,7 @@ namespace PocketFootball.View
         public float BallL, BallR;                           // FEATURES.footFlex: the toes bent up at the ball of the foot (degrees)
         public float ArmL, ForeL, ArmR, ForeR;               // the arm swing and elbow bend (FootballFigure's arm / fore)
         public float Twist;                                  // the shoulders turned (degrees, + toward his right)
+        public float HipYaw, HipRoll;                        // FEATURES.strideHips: the pelvis turned (+ his left hip forward) and dipped (+ his left side down)
     }
 
     public static class Stride
@@ -157,7 +158,9 @@ namespace PocketFootball.View
 
         // The pose at phase (0..1, the left foot touching down at 0, the right at 0.5) and speed (yd/s). cmPerYd: rig
         // cm a yard on the grass (the figure's scale).
-        public static StridePose Pose(AnimConfig a, PlayersConfig pc, StrideLegs g, float phase, float speed, float cmPerYd, bool footFlex = true)
+        // gather (FEATURES.breakdown, 0..1): a defender breaking down for the tackle, every planted knee bent gatherKneeDeg more
+        // (the hips come down with it, the feet stay on the grass).
+        public static StridePose Pose(AnimConfig a, PlayersConfig pc, StrideLegs g, float phase, float speed, float cmPerYd, bool footFlex = true, bool hips = true, float gather = 0f)
         {
             float amp = Mathf.Clamp01(speed / Mathf.Max(0.01f, a.strideWalkYdS));   // slower than a walk: smaller
             float leg = g.Thigh + g.Shin;
@@ -174,6 +177,8 @@ namespace PocketFootball.View
             k.land = Gait(a.strideKneeLandDeg, speed, a, pc) * amp * bend;
             k.load = Gait(a.strideKneeDeg, speed, a, pc) * amp * bend;
             k.push = Gait(a.strideKneePushDeg, speed, a, pc) * amp * bend;
+            float sink = a.gatherKneeDeg * Mathf.Clamp01(gather) * amp;
+            k.land += sink; k.load += sink; k.push += sink;
             k.fold = Gait(a.strideKneeFoldDeg, speed, a, pc) * amp;
             k.drive = Gait(a.strideThighDriveDeg, speed, a, pc) * amp;
             k.heel = Gait(a.strideHeelCm, speed, a, pc) * amp;
@@ -244,6 +249,14 @@ namespace PocketFootball.View
             float ef = Gait(a.strideElbowFrontDeg, speed, a, pc), eb = Gait(a.strideElbowBackDeg, speed, a, pc);
             p.ForeL = Mathf.Lerp(eb, ef, (w + 1f) * 0.5f); p.ForeR = Mathf.Lerp(eb, ef, (1f - w) * 0.5f);
             p.Twist = Gait(a.strideTwistDeg, speed, a, pc) * amp * w;
+            // FEATURES.strideHips: the pelvis turns with the leg reaching out (the left hip furthest forward as the left foot
+            // lands, against the shoulders) and the swinging leg's side dips while the other foot carries him, lowest at the
+            // middle of each stance
+            if (hips)
+            {
+                p.HipYaw = -Gait(a.strideHipYawDeg, speed, a, pc) * amp * Wave(phase);
+                p.HipRoll = Gait(a.strideHipRollDeg, speed, a, pc) * amp * Wave(phase - k.stance * 0.5f);
+            }
             return p;
         }
 

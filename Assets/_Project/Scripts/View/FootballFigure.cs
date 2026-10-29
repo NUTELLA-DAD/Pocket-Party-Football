@@ -252,10 +252,22 @@ namespace PocketFootball.View
             carryDirty = true;
         }
 
+        // FEATURES.breakdown (PlayersView): a defender closing on the ball carrier gathers himself for the tackle, share 0..1:
+        // chest further over, eyes up on the man, feet wider, both arms up in front ready to wrap (the carrier's ball arm
+        // stays tucked). Gather(0, null): none. Takes hold at the next Run or Carry pose.
+        public void Gather(float share, AnimConfig a)
+        {
+            share = a == null ? 0f : Mathf.Clamp01(share);
+            if (share == gather) return;
+            gather = share; carryDirty = true;
+            if (a != null) { gatherLean = a.gatherLeanDeg; gatherWide = a.gatherWideDeg; gatherArm = a.gatherArmDeg; gatherArmOut = a.gatherArmOutDeg; gatherFore = a.gatherForeDeg; }
+        }
+        float gather, gatherLean, gatherWide, gatherArm, gatherArmOut, gatherFore;
+
         // FEATURES.strideCycle (Stride.cs): the stride's legs, hips, arms, shoulders and feet over the run poses
         bool striding;
         StridePose stride;
-        float strideTwist;
+        float strideTwist, strideHipYaw, strideHipRoll;
         // The leg the stride reaches with (rig cm): the model's own (ModelSkin), else the figure's.
         public StrideLegs Legs = StrideLegs.Figure;
         // Each foot's pitch on top of the leg's (degrees, - = toes down): the stride's push-off and heel strike (ModelSkin).
@@ -285,7 +297,7 @@ namespace PocketFootball.View
             if (share == settle) return;
             settle = share; carryDirty = true;
         }
-        float settle, strodeTwist, strodeToeL, strodeToeR, strodeBallL, strodeBallR;
+        float settle, strodeTwist, strodeToeL, strodeToeR, strodeBallL, strodeBallR, strodeHipYaw, strodeHipRoll;
         P strode;
 
         static P Mix(P a, P b, float t)
@@ -304,7 +316,7 @@ namespace PocketFootball.View
 
         P Strode(P p)
         {
-            strideTwist = 0f; ToeL = ToeR = 0f; BallL = BallR = 0f;
+            strideTwist = strideHipYaw = strideHipRoll = 0f; ToeL = ToeR = 0f; BallL = BallR = 0f;
             bool run = current == PoseKind.Run, carrier = current == PoseKind.Carry;
             if (!striding || !(run || carrier || current == PoseKind.Reach || current == PoseKind.Secure)) return p;
             var s = stride;
@@ -318,7 +330,7 @@ namespace PocketFootball.View
                 p.armL = s.ArmL; p.foreL = s.ForeL;
                 p.armR = CarryArmDeg + CarryArmSwing * s.ArmR; p.foreR = CarryForeDeg;
             }
-            if (run || carrier) strideTwist = s.Twist;
+            if (run || carrier) { strideTwist = s.Twist; strideHipYaw = s.HipYaw; strideHipRoll = s.HipRoll; }
             return p;
         }
 
@@ -346,6 +358,15 @@ namespace PocketFootball.View
                 p.lean -= 10f * t;                 // and the chest sits back over the bent back leg
                 ToeL *= 1f - t; ToeR *= 1f - t; BallL *= 1f - t; BallR *= 1f - t;
             }
+            if (gather > 0f && (current == PoseKind.Run || current == PoseKind.Carry))
+            {
+                float g = gather;
+                p.lean += gatherLean * g;
+                p.head -= gatherLean * g;          // (the eyes stay on the man)
+                p.thighLx += gatherWide * g; p.thighRx += gatherWide * g;
+                p.armL = Mathf.Lerp(p.armL, gatherArm, g); p.armLx = Mathf.Lerp(p.armLx, gatherArmOut, g); p.foreL = Mathf.Lerp(p.foreL, gatherFore, g);
+                if (current == PoseKind.Run) { p.armR = Mathf.Lerp(p.armR, gatherArm, g); p.armRx = Mathf.Lerp(p.armRx, gatherArmOut, g); p.foreR = Mathf.Lerp(p.foreR, gatherFore, g); }
+            }
             float all = Mathf.Abs(carryAll) + Mathf.Abs(carrySide);
             p.drop += 0.25f * all;                 // a lean sinks the hips a little
             p.lean += carryFwd;
@@ -364,11 +385,12 @@ namespace PocketFootball.View
             {
                 current = kind; currentFrame = frame; carryDirty = false;
                 var p = Carried(Strode(Get(kind, frame)));
-                if (striding) { strode = p; strodeTwist = strideTwist; strodeToeL = ToeL; strodeToeR = ToeR; strodeBallL = BallL; strodeBallR = BallR; }
+                if (striding) { strode = p; strodeTwist = strideTwist; strodeToeL = ToeL; strodeToeR = ToeR; strodeBallL = BallL; strodeBallR = BallR; strodeHipYaw = strideHipYaw; strodeHipRoll = strideHipRoll; }
                 else if (settle > 0f)
                 {
                     p = Mix(p, strode, settle);
                     strideTwist = strodeTwist * settle; ToeL = strodeToeL * settle; ToeR = strodeToeR * settle;
+                    strideHipYaw = strodeHipYaw * settle; strideHipRoll = strodeHipRoll * settle;
                     BallL = strodeBallL * settle; BallR = strodeBallR * settle;
                 }
                 cur = p;
@@ -378,17 +400,19 @@ namespace PocketFootball.View
                 ForeL.localRotation = Quaternion.Euler(0, 0, p.foreL);
                 ForeR.localRotation = Quaternion.Euler(0, 0, p.foreR);
             }
-            // the hips and legs: the pose's, swayed by Idle (+ shift: his weight on his left foot, the figure's +z)
-            float sway = shift * SwayCm, roll = -shift * RollDeg;
+            // the hips and legs: the pose's, swayed by Idle (+ shift: his weight on his left foot, the figure's +z); in a
+            // stride (FEATURES.strideHips) the pelvis turns with the leg reaching forward and dips on the swinging side,
+            // the thighs turned back so the knees still point the way he runs
+            float sway = shift * SwayCm, roll = -shift * RollDeg + strideHipRoll, yaw = strideHipYaw;
             float keep = Mathf.Atan2(sway, Mathf.Max(hipY - cur.drop, 1f)) * Mathf.Rad2Deg - roll;   // (the feet stay put)
             Hips.localPosition = new Vector3(0, hipY - cur.drop, sway + hipShift);
-            Hips.localRotation = Quaternion.Euler(roll, 0, -cur.tilt);
-            ThighL.localRotation = Quaternion.Euler(-cur.thighLx + keep, 0, cur.thighL);
-            ThighR.localRotation = Quaternion.Euler(cur.thighRx + keep, 0, cur.thighR);
+            Hips.localRotation = Quaternion.Euler(roll, yaw, -cur.tilt);
+            ThighL.localRotation = Quaternion.Euler(-cur.thighLx + keep, -yaw, cur.thighL);
+            ThighR.localRotation = Quaternion.Euler(cur.thighRx + keep, -yaw, cur.thighR);
             ShinL.localRotation = Quaternion.Euler(0, 0, cur.shinL - Mathf.Max(0f, -shift) * KneeDeg);
             ShinR.localRotation = Quaternion.Euler(0, 0, cur.shinR - Mathf.Max(0f, shift) * KneeDeg);
             // the chest and head: the pose's, turned by Look, the chest up by the breath and back level over the hips
-            Torso.localRotation = Quaternion.Euler(0, twist + carryTwist + strideTwist + cur.twist, 0) * Quaternion.Euler(carrySide - roll, 0, 0) * Quaternion.Euler(0, 0, -(cur.lean - breath));
+            Torso.localRotation = Quaternion.Euler(0, twist + carryTwist + strideTwist + cur.twist - yaw, 0) * Quaternion.Euler(carrySide - roll, 0, 0) * Quaternion.Euler(0, 0, -(cur.lean - breath));
             float head = looking ? Mathf.Clamp(-headUp - cur.lean - cur.tilt, -60f, 35f) : cur.head - headTip;
             Head.localRotation = Quaternion.Euler(0, headYaw + carryTwist - strideTwist - cur.twist, 0) * Quaternion.Euler(0, 0, -head);
         }

@@ -347,6 +347,20 @@ namespace PocketFootball.Sim
         // the hand spread open (handCurlOpenDeg, - bends back), relaxed (handCurlRelaxedDeg) and shut on the ball
         // (handCurlShutDeg); a grip between them blends them.
         public float[] handCurlOpenDeg, handCurlRelaxedDeg, handCurlShutDeg;
+        // FEATURES.spineChain (View/ModelSkin.cs): the model's spine bends as a curve, its bend over the hips shared out
+        // along Spine, Chest and UpperChest by spineBendShare (forward and to the side) and spineTwistShare (turning about
+        // the spine); the neck takes neckShare of the head's turn
+        public float[] spineBendShare, spineTwistShare;
+        public float neckShare;
+        // FEATURES.strideHips (View/Stride.cs): in a stride the pelvis turns strideHipYawDeg each way with the leg reaching
+        // forward and dips strideHipRollDeg on the swinging side (walk, jog, sprint)
+        public float[] strideHipYawDeg, strideHipRollDeg;
+        // FEATURES.breakdown (View/PlayersView.cs): a defender closing on the ball carrier breaks down for the tackle,
+        // from gatherFromYd away (none) to gatherToYd (all of it), not when he comes from more than gatherBehindCos behind
+        // the carrier's way: planted knees gatherKneeDeg more bent, the chest gatherLeanDeg further over, the feet
+        // gatherWideDeg wider, the arms up gatherArmDeg in front (gatherArmOutDeg out, elbows gatherForeDeg), short steps
+        // (a stride for gatherGaitYdS at most)
+        public float gatherFromYd, gatherToYd, gatherBehindCos, gatherKneeDeg, gatherLeanDeg, gatherWideDeg, gatherArmDeg, gatherArmOutDeg, gatherForeDeg, gatherGaitYdS;
     }
 
     // WS-07 the lobby (FEATURES.lobby): each person picks an offense spot and a defense spot before kickoff. The game
