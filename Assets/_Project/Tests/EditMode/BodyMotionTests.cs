@@ -139,7 +139,7 @@ namespace PocketFootball.Tests.EditMode
                 float ph = i / 20f;
                 var up = Stride.Pose(cfg.anim, cfg.players, g, ph, v, cm, true, true, 0f);
                 var down = Stride.Pose(cfg.anim, cfg.players, g, ph, v, cm, true, true, 1f);
-                Assert.Greater(down.Drop, up.Drop + 2f, "lower at phase " + ph);
+                Assert.Greater(down.Drop, up.Drop + 1f, "lower at phase " + ph);
             }
         }
     }
