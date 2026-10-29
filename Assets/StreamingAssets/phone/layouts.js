@@ -279,6 +279,11 @@
         addThrowStick();
         return { stam: L.stam, stick: true, line: data.line || 'Right stick: aim, let go to throw. Flick = bullet, hold = lob', layout: name };
       }
+      if (name === 'block' && data.driveStick && window.PPDrive) {   // FEATURES.driveBlock: the BLOCK button is a stick (driveblock.js)
+        box.className += ' ds';
+        window.PPDrive.add(box, press, sendFn, aidFn);
+        return { stam: L.stam, stick: true, line: data.line || window.PPDrive.line, layout: name };
+      }
       if (L.receivers) (data.receivers || []).forEach(function (r) { addReceiver(r); });
       else if (!L.kick) box.className += ' cluster n' + L.btns.length;
       L.btns.forEach(addButton);
@@ -291,6 +296,7 @@
     // Let go of everything (screen lock, layout change mid-press): every held button sends its release.
     releaseAll: function () {
       if (aimStop) aimStop();
+      if (window.PPDrive) window.PPDrive.stop();   // FEATURES.driveBlock
       if (!box) return;
       var held = box.querySelectorAll('.on');
       for (var i = 0; i < held.length; i++) {

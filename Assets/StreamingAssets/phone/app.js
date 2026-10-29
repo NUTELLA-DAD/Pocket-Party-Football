@@ -129,7 +129,7 @@
   var baseLine = 'Run with the stick. Hold SPRINT to go faster.';
   if (window.PPLayouts) window.PPLayouts.mount($('btnBox'), send, function () { return aid; });
   function playLayout(msg) {
-    var r = window.PPLayouts ? window.PPLayouts.show(msg.layout, { receivers: msg.receivers || [], line: msg.line, throwStick: !!msg.throwStick }) : null;
+    var r = window.PPLayouts ? window.PPLayouts.show(msg.layout, { receivers: msg.receivers || [], line: msg.line, throwStick: !!msg.throwStick, driveStick: !!msg.driveStick }) : null;
     var play = !!r;
     $('btnBox').classList.toggle('hidden', !play);
     $('walkBtns').classList.toggle('hidden', play);

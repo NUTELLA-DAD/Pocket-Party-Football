@@ -1373,6 +1373,22 @@
       }
     }
   },
+  "driveBlock": {
+    "deadZone": 0.25,
+    "pushYdS": 2.6,
+    "strengthPerPoint": 0.12,
+    "minFrac": 0.4,
+    "maxFrac": 1.6,
+    "fightFrac": 0.7,
+    "fightShedAbove": 0.5,
+    "staminaPerS": 0.22,
+    "tiredFrac": 0.4,
+    "laneBehindYd": 1.5,
+    "laneDepthYd": 4,
+    "laneHalfWidthYd": 7,
+    "laneOpenYd": 3,
+    "laneMemoryS": 1.5
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
@@ -1457,6 +1473,7 @@
     "sandField": true,
     "passTarget": true,
     "kickSync": true,
-    "pauseQr": true
+    "pauseQr": true,
+    "driveBlock": false
   }
 }

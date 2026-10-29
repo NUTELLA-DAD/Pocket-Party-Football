@@ -140,6 +140,8 @@ const LAYOUTS = ['wait', 'qbpre', 'qb', 'carrier', 'route', 'block', 'rush', 'lb
       sendIn({ t: 'status', phase: 'set', secs: 0, called: [true, true], score: [6, 0], down: '2ND & 6', tv: 'TACKLED! FIRST DOWN' });
       await check(L);
     }
+    sendIn({ t: 'ui', layout: 'block', aid: 'd1', driveStick: true });   // FEATURES.driveBlock: SPRINT and the BLOCK stick
+    await check('block-drive');
     // between plays (walk): SPRINT and FIND ME gems; the QB without the throw stick: a receiver gem for each man
     sendIn({ t: 'ui', layout: 'walk', aid: 'w1' });
     await check('walk');

@@ -40,6 +40,9 @@ namespace PocketFootball.Sim
         public static float ShedFrac(World w, Player blocker, Player defender) =>
             On(w) ? Math.Max(0f, 1f + w.Cfg.ratings.blockPerPoint * (Size(w, blocker) - Size(w, defender))) : 1f;
 
+        // FEATURES.driveBlock: how many points bigger a is than b (0 with the switch off).
+        public static float SizeEdge(World w, Player a, Player b) => On(w) ? Size(w, a) - Size(w, b) : 0f;
+
         // TryTackle: added to the tackle odds.
         public static float TackleBonus(World w, Player tackler, Player carrier) =>
             On(w) ? w.Cfg.ratings.tacklePerPoint * (Size(w, tackler) - Size(w, carrier)) : 0f;

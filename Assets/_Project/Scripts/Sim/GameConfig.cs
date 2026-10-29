@@ -50,6 +50,7 @@ namespace PocketFootball.Sim
         public WeatherConfig weather = new WeatherConfig();   // FEATURES.weather / sandField: rain, snow, a sand field (Weather.cs)
         public WeatherLookConfig weatherLook = new WeatherLookConfig();   // ...and how they look on the TV (View/WeatherView.cs)
         public RosterConfig roster = new RosterConfig();   // FEATURES.rosterPage: the title's ROSTER page (RosterCards.cs, Boot/RosterPage.cs)
+        public DriveBlockConfig driveBlock = new DriveBlockConfig();   // FEATURES.driveBlock: shoving your man with the drive stick (DriveBlock.cs)
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 

@@ -111,6 +111,7 @@ namespace PocketFootball.Boot
             Lobby.Attach(h, cfg, args);   // WS-07: the lobby and two-way players (FEATURES.lobby)
             KickPhones.Attach(h);   // WS-01: the kick meter on the kicker's phone and on the TV
             ThrowAimView.Attach(h, baseMat);   // the throw stick's live arc and landing spot on the TV
+            DriveBlockView.Attach(h, baseMat);   // FEATURES.driveBlock: the shove arrows and the open lane on the TV
             FlightView.Attach(h, baseMat);   // the lab's helpers in the game: the pass's flight, landing and catch rings, tackle reach
             return h;
         }
@@ -522,6 +523,7 @@ namespace PocketFootball.Boot
                     else if (t == "kick") KickPhones.OnKick(this, src, m);   // WS-01
                     else if (t == "kickaim") KickPhones.OnAim(this, src, m);   // FEATURES.kickSweep: the first tap
                     else if (t == "audible" || t == "hot") AudibleHost.OnMessage(this, src, m);   // WS-13
+                    else if (t == "drive") src.OnDrive(PhoneProtocol.Float(m, "x", -1f, 1f), PhoneProtocol.Float(m, "y", -1f, 1f), PhoneProtocol.Str(m, "aid"));   // FEATURES.driveBlock
                     else if (Lobby.Instance != null) Lobby.Instance.OnMessage(src.Seat, t, m);   // WS-07: spot, swap, kickoff, lobbyme
                 }
             }
@@ -589,7 +591,7 @@ namespace PocketFootball.Boot
             src.Aid = layout + (++aidCounter);
             lastLayout[src.Seat.Slot] = layout;
             if (src.Seat.Conn >= 0) Server.Send(src.Seat.Conn, Messages.Ui(layout, src.Aid, layout == "qb" ? Receivers() : null, layout == "wait" && World.Phase == Phase.Whistle ? WhistleLine() : null,
-                                                                               layout == "qb" && ThrowStick.On(World)));
+                                                                               layout == "qb" && ThrowStick.On(World), layout == "block" && DriveBlock.On(World)));
         }
 
         void BroadcastLobby()
