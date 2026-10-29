@@ -480,6 +480,7 @@
     "findMeAlpha": 0.6,
     "plateFontPx": 22,
     "joinPanelQrPx": 260,
+    "pauseQrPx": 360,
     "ballLengthM": 0.5,
     "ballWidthM": 0.32,
     "meSendHz": 5,
@@ -1455,6 +1456,7 @@
     "weather": true,
     "sandField": true,
     "passTarget": true,
-    "kickSync": true
+    "kickSync": true,
+    "pauseQr": true
   }
 }

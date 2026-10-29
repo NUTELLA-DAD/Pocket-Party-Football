@@ -676,18 +676,18 @@ namespace PocketFootball.Boot
                 }
             if (Photo != null) return;
 
-            // join panel, top right
-            float qr = cfg.view.joinPanelQrPx * s, pad = 16 * s, w = qr + 2 * pad, x = Screen.width - w - pad, y = pad;
-            float textH = 210 * s;
-            Hud.JoinPanel = new Rect(x, y, w, qr + textH + 2 * pad);   // the kick meter keeps clear of it
-            GUI.color = new Color(0f, 0f, 0f, 0.72f);
-            GUI.DrawTexture(Hud.JoinPanel, Texture2D.whiteTexture);
-            GUI.color = Color.white;
-            if (qrTex != null) GUI.DrawTexture(new Rect(x + pad, y + pad, qr, qr), qrTex);
-            string text = ServerError != null
-                ? "<color=#ff8080>Phone server failed:\n" + ServerError + "</color>"
-                : "Scan to join, or open\n<b>" + Url.Replace("http://", "") + "</b>\nCode <b><size=" + Mathf.RoundToInt(44 * s) + ">" + RoomCode + "</size></b>\n<size=" + Mathf.RoundToInt(21 * s) + ">" + TeamLine() + "</size>";
-            GUI.Label(new Rect(x + pad, y + pad + qr + 8 * s, qr, textH), text, panelText);
+            // join panel, top right (FEATURES.pauseQr: in the pause menu instead, Esc shows it)
+            if (!PauseMenuModel.QrInMenu(cfg, PauseMenu.Instance != null))
+            {
+                float qr = cfg.view.joinPanelQrPx * s, pad = 16 * s, w = qr + 2 * pad, x = Screen.width - w - pad, y = pad;
+                float textH = 210 * s;
+                Hud.JoinPanel = new Rect(x, y, w, qr + textH + 2 * pad);   // the kick meter keeps clear of it
+                GUI.color = new Color(0f, 0f, 0f, 0.72f);
+                GUI.DrawTexture(Hud.JoinPanel, Texture2D.whiteTexture);
+                GUI.color = Color.white;
+                if (qrTex != null) GUI.DrawTexture(new Rect(x + pad, y + pad, qr, qr), qrTex);
+                GUI.Label(new Rect(x + pad, y + pad + qr + 8 * s, qr, textH), JoinText(s), panelText);
+            }
 
             // the huddle banner, top centre: check marks only
             string tv = TvLine(World, cfg);
@@ -749,6 +749,11 @@ namespace PocketFootball.Boot
             GUI.Label(r, label, bar);
             GUI.color = Color.white;
         }
+
+        // the words under the QR code: the address, the room code and who joined (or why the phone server failed)
+        public string JoinText(float s) => ServerError != null
+            ? "<color=#ff8080>Phone server failed:\n" + ServerError + "</color>"
+            : "Scan to join, or open\n<b>" + Url.Replace("http://", "") + "</b>\nCode <b><size=" + Mathf.RoundToInt(44 * s) + ">" + RoomCode + "</size></b>\n<size=" + Mathf.RoundToInt(21 * s) + ">" + TeamLine() + "</size>";
 
         string TeamLine()
         {
