@@ -182,13 +182,25 @@ namespace PocketFootball.Sim
             if (sp <= 0f) return To(p, bl.TargetX, bl.TargetZ, 1f, true);
             // a person's throw goes at him, not out in front (no lead): if it comes down short of where his run takes him,
             // he waits on it (a bot's throw is led, so he can't tell and runs on). FEATURES.catchPlay: a bot's throw too,
-            // led by how fast he was going when it left the QB's hand: if he has since sped up past it (a lob up the
-            // sideline), he tracks it over his shoulder and comes back to it, so it is a jump ball, not an overthrow
+            // led by how fast he was going when it left the QB's hand: if he has since sped up past a lob (one that goes up
+            // trackLobApexYd or higher: it hangs long enough to read) with a defender within trackNearYd of him, he tracks
+            // it over his shoulder and comes back to it, so it is a jump ball, not an overthrow. (Every pass read like
+            // that took away the bots' own misses: 20% incomplete and 8.6 yards a play over the gate games.)
             var qb = LivePlay.Qb(w);
             float along = ((bl.TargetX - p.X) * p.VX + (bl.TargetZ - p.Z) * p.VZ) / sp;
-            bool reads = CatchPlay.On(w) || (qb != null && qb.Human && !qb.BotHelp);
+            bool reads = (qb != null && qb.Human && !qb.BotHelp) || (CatchPlay.On(w) && JumpBall(w, p));
             if (reads && along < sp * Landing(w) - w.Cfg.play.catchRadiusYd) return To(p, bl.TargetX, bl.TargetZ, 1f, true);
             return new PlayerInput { MoveX = p.VX / sp, MoveZ = p.VZ / sp, Sprint = true };
+        }
+
+        // FEATURES.catchPlay: a lob in the air with a defender on the man it is for (MeetThePass: he comes back to it).
+        static bool JumpBall(World w, Player p)
+        {
+            var bl = w.Ball; var k = w.Cfg.catchPlay;
+            float apex = bl.Y + bl.VY * bl.VY / (w.Cfg.ball.gravityYdS2 + w.Cfg.ball.gravityYdS2);   // (the top of its flight, from where it is now)
+            if (apex < k.trackLobApexYd) return false;
+            foreach (var o in w.Players) if (o.Team != p.Team && LivePlay.Dist(o, p) <= k.trackNearYd) return true;
+            return false;
         }
 
         // A defender with a pass in the air reads it like the receiver does: only in the last adjustS can he tell where

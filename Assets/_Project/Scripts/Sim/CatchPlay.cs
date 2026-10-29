@@ -90,5 +90,7 @@ namespace PocketFootball.Sim
     {
         public float diveReachYd, diveMaxHeightYd, diveMinSpeedYdS, diveChanceMul, diveDownS;
         public float contestYd, contestChanceMul, tangleS;
+        public float trackLobApexYd, trackNearYd;   // a bot receiver comes back to a led pass he has outrun only if it goes up
+                                                    // this high (a lob) with a defender this close to him (Bots.MeetThePass)
     }
 }

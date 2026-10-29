@@ -1240,7 +1240,9 @@
     "diveDownS": 0.7,
     "contestYd": 1.4,
     "contestChanceMul": 0.8,
-    "tangleS": 0.9
+    "tangleS": 0.9,
+    "trackLobApexYd": 5,
+    "trackNearYd": 2
   },
   "pursuit": {
     "leadMaxS": 2.0,
