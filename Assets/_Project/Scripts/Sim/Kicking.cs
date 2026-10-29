@@ -28,6 +28,9 @@ namespace PocketFootball.Sim
     //     (powerSweepS): the second tap sets the power, and the arc climbs with it (fgMinAngleDeg..fgMaxAngleDeg).
     //     The very top of the sweep (shankFromPower and up) is too much: the kick hooks up to shankAimDeg either way.
     //     The sweep is a plain back-and-forth line (Sweep), the same sum on the phone and the TV.
+    //   FEATURES.kickSync (NO_KICK_SYNC=1): the kicker's phone runs its arrow from the game's own sweep clock (sent
+    //     again every phoneSyncS), and a tap takes the arrow where the phone showed it (TapAt), so the phone, the TV
+    //     and the kick agree even when the game's clock runs behind the phone's.
     //   FEATURES.wind (NO_WIND=1): a wind of up to windMaxYdS from any side, new every windEveryHuddles huddles, drawn
     //     from the game's seed (no draw from the sim's random numbers); it pushes a field goal in the air by windPush
     //     per yard a second. The flags on top of the posts show it (View/Stadium.cs).
@@ -132,16 +135,28 @@ namespace PocketFootball.Sim
         // The power arrow, `seconds` into its sweep: 0 .. 1 and back, starting at nothing.
         public static float PowerSweep(KickingConfig c, float seconds) => Triangle(seconds, c.powerSweepS);
 
-        // The arrow right now (what a tap would set): the aim in the line-up, the power after the snap.
-        public static float SweepNow(World w)
+        // Game seconds into the arrow that is sweeping now (0 when none). The phone runs its arrow from this, so it shows
+        // the same arrow as the TV even when the game's clock runs behind the phone's (a slow frame, the pause menu).
+        public static float SweepSeconds(World w)
         {
-            var c = w.Cfg.kicking;
             var k = w.Kick;
             float hz = w.Cfg.sim.tickHz;
             switch (Stage(w))
             {
-                case SweepStage.Aim: return AimSweep(c, (w.Tick - k.AimTick) / hz);
-                case SweepStage.Power: return PowerSweep(c, (w.Tick - k.PowerTick) / hz);
+                case SweepStage.Aim: return (w.Tick - k.AimTick) / hz;
+                case SweepStage.Power: return (w.Tick - k.PowerTick) / hz;
+            }
+            return 0f;
+        }
+
+        // The arrow right now (what a tap would set): the aim in the line-up, the power after the snap.
+        public static float SweepNow(World w)
+        {
+            var c = w.Cfg.kicking;
+            switch (Stage(w))
+            {
+                case SweepStage.Aim: return AimSweep(c, SweepSeconds(w));
+                case SweepStage.Power: return PowerSweep(c, SweepSeconds(w));
             }
             return 0f;
         }
@@ -165,6 +180,20 @@ namespace PocketFootball.Sim
             var stage = Stage(w);
             if (stage == SweepStage.Aim) return SetAim(w, slot, SweepNow(w));
             if (stage == SweepStage.Power) return Kick(w, slot, SweepNow(w), w.Kick.Aim);
+            return false;
+        }
+
+        // FEATURES.kickSync: a phone's tap, with the game seconds into the sweep its arrow showed (it runs from
+        // SweepSeconds). The arrow is taken there, so the kick goes where both the phone and the TV pointed; the
+        // phone's seconds count only up to tapSlackS behind the game's (the trip over the wifi), never ahead of it.
+        public static bool TapAt(World w, int slot, float seconds)
+        {
+            var c = w.Cfg.kicking;
+            var stage = Stage(w);
+            float now = SweepSeconds(w);
+            float s = Clamp(seconds, Math.Max(0f, now - c.tapSlackS), now);
+            if (stage == SweepStage.Aim) return SetAim(w, slot, AimSweep(c, s));
+            if (stage == SweepStage.Power) return Kick(w, slot, PowerSweep(c, s), w.Kick.Aim);
             return false;
         }
 
@@ -850,7 +879,7 @@ namespace PocketFootball.Sim
         // FEATURES.wind: the wind (see the top of Kicking)
         public int holderSpot = 1, meterSearchSteps, windEveryHuddles;
         public float holderSideYd, kickerBackYd, kickerSideYd, kickContactYd, approachSpeedYdS, holdReadyS;
-        public float aimSweepS, powerSweepS, fgMinAngleDeg, fgMaxAngleDeg, shankFromPower, shankAimDeg;
+        public float aimSweepS, powerSweepS, phoneSyncS, tapSlackS, fgMinAngleDeg, fgMaxAngleDeg, shankFromPower, shankAimDeg;
         public float windMaxYdS, windPush, botWindRead, windMphPerYdS;
         public KickCamConfig cam = new KickCamConfig();
         public float[] puntReturner = new float[0];

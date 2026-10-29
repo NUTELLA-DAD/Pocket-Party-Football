@@ -11,6 +11,10 @@
 // the higher its tip, the harder and higher the kick. The posts are drawn where the tip just clears the bar (need);
 // the red top of the meter (shank and up) is too hard and hooks. Tap again to kick: { t:'kick', power, aim, aid }.
 // The sweep is the same straight back-and-forth sum the game uses (Sim/Kicking.cs: AimSweep, PowerSweep).
+// With the game's kickSync the sweep also carries t (the game's seconds into the arrow now sweeping, sent again every
+// quarter second), so the arrow here runs on the TV's clock, not the phone's, and both show the same arrow; a tap adds
+// st (the seconds this arrow showed). maxDeg leans the arrow as far as the kick really goes, and postsYd / distYd draw
+// the posts to the same scale, so an arrow between the posts here is between the posts on the TV.
 (function () {
   'use strict';
   var MIN_POWER = 0.08, FULL_SWIPE = 0.75, STEPS = 10;
@@ -19,6 +23,8 @@
   var pointer = null, x0 = 0, y0 = 0, done = false, last = { power: 0, aim: 0 };
   // the two taps (sweep): which arrow is sweeping, since when (ms), the aim the first tap set
   var sweep = null, stage = '', stageAt = 0, setAim = 0, raf = 0, wind = null, tapBtn, flagL, flagR, windLine;
+  // kickSync: the game's clock for this stage (synced once a t came), and held still while the game's clock stands
+  var synced = false, lastT = -1, frozen = -1;
 
   function el(tag, cls, text, parent) {
     var e = document.createElement(tag);
@@ -118,11 +124,20 @@
   }
   function aimNow(t) { return triangle(t + sweep.aimS / 4, sweep.aimS) * 2 - 1; }   // starts in the middle going right
   function powerNow(t) { return triangle(t, sweep.powerS); }
-  function since() { return (performance.now() - stageAt) / 1000; }
+  function since() { return frozen >= 0 ? frozen : (performance.now() - stageAt) / 1000; }
+  function leanDeg() { return sweep && sweep.maxDeg > 0 ? sweep.maxDeg : 30; }
+  // the game's seconds into this stage: the arrow runs on from there (the same t twice: the game is paused, hold still)
+  function syncTo(t) {
+    if (typeof t !== 'number' || !(t >= 0)) return;
+    frozen = t === lastT ? t : -1;
+    lastT = t; synced = true;
+    stageAt = performance.now() - t * 1000;
+  }
+  function tapMsg(m) { if (synced) m.st = Math.round(since() * 1000) / 1000; return m; }
 
   function startStage(name) {
     if (stage === name) return;
-    stage = name; stageAt = performance.now();
+    stage = name; stageAt = performance.now(); synced = false; lastT = -1; frozen = -1;
     tapBtn.textContent = name === 'aim' ? 'TAP TO AIM' : 'TAP TO KICK';
     tapBtn.className = 'big ktap ' + (name === 'aim' ? 'aim' : 'go');
     if (!raf) raf = requestAnimationFrame(frame);
@@ -132,14 +147,16 @@
     if (done || !sweep) return;
     if (stage === 'aim') {
       setAim = Math.round(aimNow(since()) * 100) / 100;
-      if (window.PP) window.PP.send({ t: 'kickaim', aim: setAim, aid: window.PP.aid() });
+      if (window.PP) window.PP.send(tapMsg({ t: 'kickaim', aim: setAim, aid: window.PP.aid() }));
+      var onClock = synced;
       startStage('power');
+      synced = onClock;   // (the game starts its power sweep as this tap lands: the same clock, give or take the wifi)
       return;
     }
     if (stage !== 'power') return;
     var p = Math.round(powerNow(since()) * 100) / 100;
     done = true;
-    if (window.PP) window.PP.send({ t: 'kick', power: p, aim: setAim, aid: window.PP.aid() });
+    if (window.PP) window.PP.send(tapMsg({ t: 'kick', power: p, aim: setAim, aid: window.PP.aid() }));
     last = { power: p, aim: setAim };
     root.classList.add('done');
     tapBtn.className = 'big ktap hidden';
@@ -154,8 +171,10 @@
     var b = field.getBoundingClientRect(), track = Math.max(40, b.height - 60);
     var aim = stage === 'aim' ? aimNow(since()) : setAim;
     var power = stage === 'power' ? powerNow(since()) : 0;
-    line.style.height = (stage === 'aim' ? track * 0.45 : Math.max(10, track * power)) + 'px';
-    line.style.transform = 'rotate(' + (aim * 30) + 'deg)';
+    var lean = aim * leanDeg(), reach = track * Math.max(0.05, Math.min(0.97, sweep.need || 0.5));
+    // lining up: the arrow reaches the crossbar's height, so its tip is where the kick crosses the goal line
+    line.style.height = (stage === 'aim' ? reach / Math.cos(lean * Math.PI / 180) : Math.max(10, track * power)) + 'px';
+    line.style.transform = 'rotate(' + lean + 'deg)';
     line.className = 'kaimline ' + (stage === 'power' && power >= sweep.shank ? 'hot' : stage === 'power' && power >= sweep.need ? 'clear' : '');
     fill.style.height = (power * 100) + '%';
     fill.className = power >= sweep.shank ? 'hot' : power >= sweep.need ? '' : 'warm';
@@ -169,6 +188,11 @@
     var need = Math.max(0.05, Math.min(0.97, sweep.need || 0.5));
     posts.style.top = 'auto';
     posts.style.bottom = (36 + track * need - 6) + 'px';
+    // to scale with the arrow: half the posts' width over the distance to them, at the crossbar's height
+    if (sweep.postsYd > 0 && sweep.distYd > 0) {
+      var half = Math.max(10, Math.min(b.width * 0.4, track * need * sweep.postsYd / sweep.distYd));
+      posts.style.width = (half * 2) + 'px'; posts.style.marginLeft = (-half) + 'px';
+    }
     var mark = el('b', 'kneed', null, null);
     var old = field.querySelector('.kpower .kneed');
     if (old) old.remove();
@@ -194,7 +218,7 @@
 
   function reset() {
     done = false; pointer = null; stage = ''; setAim = 0;
-    posts.style.top = ''; posts.style.bottom = '';
+    posts.style.top = ''; posts.style.bottom = ''; posts.style.width = ''; posts.style.marginLeft = '';
     root.classList.remove('done');
     draw({ power: 0, aim: 0 });
   }
@@ -239,6 +263,11 @@
           sweep = msg.sweep; wind = msg.wind || null;
           if (msg.sweep.stage === 'power' && stage !== 'power') { if (typeof msg.sweep.aim === 'number') setAim = msg.sweep.aim; startStage('power'); }
           else if (msg.sweep.stage === 'aim' && !stage) startStage('aim');
+          // kickSync: run on the game's clock (a late word about a stage this phone has left changes nothing)
+          if (msg.sweep.stage === stage && !done) {
+            syncTo(msg.sweep.t);
+            if (stage === 'power' && typeof msg.sweep.aim === 'number') setAim = msg.sweep.aim;
+          }
         }
         refresh();
       }

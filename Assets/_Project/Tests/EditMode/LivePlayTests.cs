@@ -42,6 +42,63 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual(Me, w.Ball.Carrier);
         }
 
+        // FEATURES.passTarget: the pass is for the man whose receiver button was pressed (the shape over his head on the
+        // TV), not whoever happens to be nearest where it comes down
+        [Test]
+        public void ThePassIsForTheManWhoseButtonWasPressed()
+        {
+            Assert.IsTrue(ConfigTests.Load().Feature("passTarget"), "FEATURES.passTarget ships on");
+            Assert.AreEqual("NO_PASS_TARGET", ConfigLoader.EnvName("passTarget"));
+            foreach (bool on in new[] { true, false })
+            {
+                var w = AtTheLine(tune: c => c.features["passTarget"] = on);
+                ClearDefense(w);
+                w.Step(Press(new PlayerInput { Hike = true }));
+                Run(w, 20);
+                var circle = LivePlay.Receiver(w, 2);
+                var square = LivePlay.Receiver(w, 3);
+                w.Step(Press(new PlayerInput { Throw = 2 }));
+                Assert.AreEqual(BallState.Flying, w.Ball.State);
+                // the square stands right where it comes down; the circle is somewhere else
+                square.X = w.Ball.TargetX; square.Z = w.Ball.TargetZ;
+                if (on)
+                {
+                    Assert.AreEqual(circle.Slot, w.PassTarget);
+                    Assert.AreSame(circle, Bots.Intended(w), "the circle's pass: he goes to meet it");
+                }
+                else Assert.AreSame(square, Bots.Intended(w), "NO_PASS_TARGET=1: the man nearest where it lands");
+            }
+        }
+
+        [Test]
+        public void TheManThePassIsForCatchesItAheadOfATeammate()
+        {
+            foreach (bool on in new[] { true, false })
+            {
+                var w = AtTheLine(tune: c => { c.play.catchChanceOffense = 1f; c.features["passTarget"] = on; });
+                ClearDefense(w);
+                w.Step(Press(new PlayerInput { Hike = true }));
+                Run(w, 20);
+                var circle = LivePlay.Receiver(w, 2);
+                var square = LivePlay.Receiver(w, 3);
+                w.Step(Press(new PlayerInput { Throw = 2 }));
+                // both under the ball as it comes down, the square a little nearer. Who goes up for it first? (A catch
+                // can still be dropped: ratings and the CATCH timing set the odds, so the first try is what counts here.)
+                int first = -1;
+                for (int i = 0; i < w.Cfg.sim.tickHz * 4 && w.Ball.State == BallState.Flying && first < 0; i++)
+                {
+                    // (where the ball will be after this tick, the circle a little short of it along its flight)
+                    float bx = w.Ball.X + w.Ball.VX * w.Dt, bz = w.Ball.Z + w.Ball.VZ * w.Dt;
+                    float sp = (float)System.Math.Sqrt(w.Ball.VX * w.Ball.VX + w.Ball.VZ * w.Ball.VZ) + 1e-4f, back = w.Cfg.play.catchRadiusYd * 0.3f;
+                    square.X = bx; square.Z = bz; square.VX = square.VZ = 0f;
+                    circle.X = bx - w.Ball.VX / sp * back; circle.Z = bz - w.Ball.VZ / sp * back; circle.VX = circle.VZ = 0f;
+                    w.Step(null);
+                    foreach (int slot in w.CatchTried) first = slot;
+                }
+                Assert.AreEqual(on ? circle.Slot : square.Slot, first, on ? "the circle goes up for his ball" : "NO_PASS_TARGET=1: the nearest man goes up");
+            }
+        }
+
         [Test]
         public void ABotQbHikesByItself()
         {
