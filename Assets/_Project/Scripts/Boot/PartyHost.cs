@@ -111,6 +111,7 @@ namespace PocketFootball.Boot
             Lobby.Attach(h, cfg, args);   // WS-07: the lobby and two-way players (FEATURES.lobby)
             KickPhones.Attach(h);   // WS-01: the kick meter on the kicker's phone and on the TV
             ThrowAimView.Attach(h, baseMat);   // the throw stick's live arc and landing spot on the TV
+            KickArcView.Attach(h, baseMat);   // FEATURES.kickArc: the kick's shaded arc on the field
             FlightView.Attach(h, baseMat);   // the lab's helpers in the game: the pass's flight, landing and catch rings, tackle reach
             return h;
         }
@@ -521,6 +522,8 @@ namespace PocketFootball.Boot
                                                             PhoneProtocol.Str(m, "aid"));
                     else if (t == "kick") KickPhones.OnKick(this, src, m);   // WS-01
                     else if (t == "kickaim") KickPhones.OnAim(this, src, m);   // FEATURES.kickSweep: the first tap
+                    else if (t == "kicksteer") KickPhones.OnSteer(this, src, m);   // FEATURES.kickArc: the arc left and right
+                    else if (t == "kickpower") KickPhones.OnPower(this, src, m);   // FEATURES.kickArc: the first tap after the snap
                     else if (t == "audible" || t == "hot") AudibleHost.OnMessage(this, src, m);   // WS-13
                     else if (Lobby.Instance != null) Lobby.Instance.OnMessage(src.Seat, t, m);   // WS-07: spot, swap, kickoff, lobbyme
                 }
