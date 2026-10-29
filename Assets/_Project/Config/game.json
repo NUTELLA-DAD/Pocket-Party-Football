@@ -1213,6 +1213,18 @@
     "wallAheadYd": 12,
     "wallGapYd": 4
   },
+  "pursuit": {
+    "leadMaxS": 2.0,
+    "laneGapYd": 2.6,
+    "laneMaxYd": 8,
+    "spreadYd": 12,
+    "convergeYd": 4,
+    "behindYd": 1,
+    "trailLead": 0.55,
+    "trailLane": 0.7,
+    "sepYd": 2.4,
+    "sepPush": 0.25
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
@@ -1294,6 +1306,7 @@
     "pauseMenu": true,
     "toonHud": true,
     "passTarget": true,
-    "kickSync": true
+    "kickSync": true,
+    "pursuitLanes": true
   }
 }

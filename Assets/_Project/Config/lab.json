@@ -85,6 +85,27 @@
       "live": true, "endOnCatch": false, "maxS": 0
     },
     {
+      "id": "pursuit",
+      "name": "Pursuit: all eleven chase you",
+      "help": "You broke into the open with the ball and the whole defense chases you. Watch them take angles and keep their lanes instead of piling into one clump behind you. SHIFT sprints, E jukes.",
+      "note": "FEATURES.pursuitLanes (Sim/Pursuit.cs). tools/pursuit.ps1 drives the runner here along set runs for the pursuit gauntlet.",
+      "offensePlay": "dive", "defensePlay": "cover3",
+      "you": "offense", "youSpot": 1, "carrier": 1,
+      "offense": [1], "defense": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "carrierAt": [6, -3], "carrierRunYdS": 8,
+      "live": true, "endOnCatch": false, "maxS": 8
+    },
+    {
+      "id": "watchpursuit",
+      "name": "Watch a pursuit",
+      "help": "Bots only: a runner breaks into the open and all eleven chase him. Slow it down ([ and ]) and watch the angles, the lanes and the man who breaks down to make the tackle.",
+      "offensePlay": "dive", "defensePlay": "cover3",
+      "you": "none", "youSpot": 0, "carrier": 1,
+      "offense": [1], "defense": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "carrierAt": [6, -3], "carrierRunYdS": 8,
+      "live": true, "endOnCatch": false, "maxS": 8
+    },
+    {
       "id": "scrimmage",
       "name": "Full scrimmage",
       "help": "All 22 players, Slants against Cover 3, you at QB. A normal play from the snap to the whistle, then it starts again.",

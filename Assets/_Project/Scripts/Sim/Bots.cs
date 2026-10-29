@@ -386,9 +386,10 @@ namespace PocketFootball.Sim
             return To(p, tx, tz, 1f, p.FreeTicks > 0);
         }
 
-        // A pursuit angle: run at where the carrier will be when we get there.
+        // A pursuit angle: run at where the carrier will be when we get there (FEATURES.pursuitLanes: in lanes, Pursuit.cs).
         static PlayerInput Pursue(World w, Player p, Player carrier)
         {
+            if (Pursuit.On(w)) return Pursuit.Chase(w, p, carrier);
             float t = LivePlay.Dist(p, carrier) / Math.Max(w.Cfg.players.sprintSpeedYdS, w.Cfg.players.jogSpeedYdS);
             t = BotsV3.PursuitLead(w, p, t);   // bots v3: some lead him long, some short
             return To(p, carrier.X + carrier.VX * t, carrier.Z + carrier.VZ * t, 1f, true);
