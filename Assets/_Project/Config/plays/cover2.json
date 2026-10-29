@@ -3,6 +3,7 @@
   "name": "Cover 2",
   "side": "defense",
   "desc": "Two deep safeties, corners sit short",
+  "formation": "twohigh",
   "jobs": [
     { "kind": "zone", "pts": [[8, 0]], "radius": 5, "text": "Middle hook zone" },
     { "kind": "zone", "pts": [[6, -20]], "radius": 6, "text": "Sit in the flat, jam the receiver" },

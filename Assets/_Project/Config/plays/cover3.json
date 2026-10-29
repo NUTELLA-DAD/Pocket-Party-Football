@@ -3,11 +3,12 @@
   "name": "Cover 3",
   "side": "defense",
   "desc": "Three deep thirds",
+  "formation": "singlehigh",
   "jobs": [
     { "kind": "zone", "pts": [[7, 0]], "radius": 5, "text": "Hook zone in the middle" },
     { "kind": "zone", "pts": [[20, -18]], "radius": 8, "text": "Deep third on your side" },
     { "kind": "zone", "pts": [[20, 18]], "radius": 8, "text": "Deep third on your side" },
-    { "kind": "zone", "pts": [[8, -13]], "radius": 5, "text": "Drop down to the curl zone" },
+    { "kind": "zone", "pts": [[8, -13]], "radius": 5, "text": "Strong safety: walk down, then drop to the curl zone" },
     { "kind": "zone", "pts": [[22, 0]], "radius": 9, "text": "Deep middle third: nothing gets behind you" },
     { "kind": "zone", "pts": [[6, -7]], "radius": 5, "text": "Hook zone on your side" },
     { "kind": "zone", "pts": [[6, 8]], "radius": 5, "text": "Hook zone on your side" },

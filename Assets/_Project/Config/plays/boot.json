@@ -3,6 +3,7 @@
   "name": "PA Boot",
   "side": "offense",
   "desc": "Fake handoff, QB rolls out, TE drags across",
+  "formation": "pistol",
   "jobs": [
     { "kind": "route", "pts": [[-6, -1], [-7, 8], [-2, 16]], "text": "Fake the handoff, roll right, throw on the run" },
     { "kind": "route", "pts": [[-3, -1], [2, -2]], "text": "Sell the fake: run into the line" },

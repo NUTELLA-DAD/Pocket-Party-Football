@@ -434,13 +434,53 @@ namespace PocketFootball.Sim
             w.Down = 1;
             w.FirstDownX = w.LineOfScrimmageX;
             w.LineUp();
+            var deep = FastReturner(w) ? ByDepth(w) : null;
             foreach (var p in w.Players)
             {
                 var spots = p.Team == w.Offense ? c.kickoffKicking : c.kickoffReceiving;
-                if (p.Spot >= 0 && p.Spot < spots.Count) Place(w, p, spots[p.Spot]);
+                int at = deep != null && p.Team == w.Defense ? deep.IndexOf(p) : p.Spot;
+                if (at >= 0 && at < spots.Count) Place(w, p, spots[at]);
             }
             var kicker = Kicker(w);
             w.PhaseTicks = Huddle.Ticks(w, kicker != null && kicker.Human ? c.humanKickMaxS : c.kickoffSetS);
+        }
+
+        // FEATURES.fastReturner (NO_FAST_RETURNER=1): the kick returners are the receiving team's quickest men (the
+        // position speed in "ratings", a CB first), not whoever holds a set spot (kicking.returnerSpot was the middle
+        // linebacker). Off: the punt returner is returnerSpot and the kickoff places go by spot.
+        static bool FastReturner(World w) => w.Cfg.Feature("fastReturner");
+
+        // The man who stands back for a punt: the receiving team's fastest (ties: the lower spot).
+        public static Player PuntReturner(World w)
+        {
+            if (!FastReturner(w)) return LivePlay.SpotOf(w, w.Defense, w.Cfg.kicking.returnerSpot);
+            Player best = null;
+            foreach (var p in w.Players)
+                if (p.Team == w.Defense && p.Spot >= 0 && (best == null || Faster(w, p, best))) best = p;
+            return best;
+        }
+
+        // The receiving team in the order the kickoffReceiving places go to them: those places sorted deepest first
+        // (ties: the list order), then handed out fastest man first (ties: the lower spot). Index = the place's index.
+        static List<Player> ByDepth(World w)
+        {
+            var places = w.Cfg.kicking.kickoffReceiving;
+            var order = new List<int>();
+            for (int i = 0; i < places.Count; i++) order.Add(i);
+            order.Sort((a, b) => places[a][0] != places[b][0] ? places[b][0].CompareTo(places[a][0]) : a.CompareTo(b));
+            var men = new List<Player>();
+            foreach (var p in w.Players) if (p.Team == w.Defense && p.Spot >= 0) men.Add(p);
+            men.Sort((a, b) => Faster(w, a, b) ? -1 : Faster(w, b, a) ? 1 : 0);
+            var byPlace = new List<Player>();
+            for (int i = 0; i < places.Count; i++) byPlace.Add(null);
+            for (int i = 0; i < men.Count && i < order.Count; i++) byPlace[order[i]] = men[i];
+            return byPlace;
+        }
+
+        static bool Faster(World w, Player a, Player b)
+        {
+            int sa = Ratings.SpeedRating(w, a), sb = Ratings.SpeedRating(w, b);
+            return sa != sb ? sa > sb : a.Spot != b.Spot ? a.Spot < b.Spot : a.Slot < b.Slot;
         }
 
         // Punt and field goal line-ups: the kicker deep, and on a punt one receiver back to field it.
@@ -453,7 +493,7 @@ namespace PocketFootball.Sim
             if (kind == KickKind.Punt)
             {
                 if (kicker != null) Place(w, kicker, new[] { -c.puntBackYd, 0f });
-                var returner = LivePlay.SpotOf(w, w.Defense, c.returnerSpot);
+                var returner = PuntReturner(w);
                 if (returner != null && c.puntReturner.Length > 1) Place(w, returner, c.puntReturner);
             }
             else if (kind == KickKind.FieldGoal && kicker != null)
@@ -768,7 +808,7 @@ namespace PocketFootball.Sim
                 // kickoff: everyone holds his spot until the ball is in the air (no running before the kick)
                 if (kind == KickKind.Kickoff) return To(p, p.HomeX, p.HomeZ, false, arrive);
                 // a punt's returner stays back; everyone else plays the called jobs (block, rush, cover)
-                if (kind == KickKind.Punt && p.Team == w.Defense && p.Spot == w.Cfg.kicking.returnerSpot) return To(p, p.HomeX, p.HomeZ, false, arrive);
+                if (kind == KickKind.Punt && p == PuntReturner(w)) return To(p, p.HomeX, p.HomeZ, false, arrive);
                 return null;
             }
             if (kind == KickKind.FieldGoal || p == kicker) return default(PlayerInput);

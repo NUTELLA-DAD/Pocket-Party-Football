@@ -3,13 +3,15 @@
 # the PocketParty/Toon shader where a number or an eye goes on each texel.
 #   marks map RGBA: R, G = the texel's spot in its zone (number: in number heights, -1.5..1.5; eye: in iris radii, -3..3;
 #   both 0..1 in the PNG), B = 128 number / 255 eye, A = 255 inside the zone (an eye's: inside its opening only);
-#   outside every zone R = where grass stains may go (0..1), G = how much is skin (0..1), B, A = 0.
+#   outside every zone R = where grass stains may go (0..1), G = how much is skin (0..1), B = how much is hair (0..1:
+#   FEATURES.hairColors, a model with a "hair" entry), A = 0.
 # usage: [MARKS_ONLY=1] python3 marks.py <uvmap.npz> <zones.json> <Models dir> [preview.png]
 #   uvmap.npz from uvmap.py (the rest-pose point and normal under every texel of the colour map).
 #   zones.json: {"marks": "Player24/Player24_Marks.png", "textures": [{"file": ..., "hue": jersey hue in degrees}],
 #     "zones": [{"kind": "number"|"eye", "c": centre [x,y,z] m, "n": facing, "up": up, "w","h": half box m,
 #     "depth": m either side of the surface, "size": number height | iris radius m,
-#     an eye's "iris": its centre on the plane [s, t] m, "poly": its opening on the plane [[s, t], ...] m}]}
+#     an eye's "iris": its centre on the plane [s, t] m, "poly": its opening on the plane [[s, t], ...] m}],
+#     optional "hair": {"box": [[x0, x1], [y0, y1], [z0, z1]] m, "hue": [h0, h1] degrees, "sMin": saturation}}
 #   Blender space throughout: +X the model's left, -Y forward, Z up (what uvmap.py writes).
 # Prints, per colour map, the iris and lid colours to copy into game.json "marks" "models".
 import sys, json, os, numpy as np
@@ -151,6 +153,19 @@ hard = free & (sk > 0.5)
 if hard.any():
     c = np.median(np.asarray(first).astype(np.float32)[hard] / 255, 0)
     print('skin texels', int(hard.sum()), 'skin', '#%02X%02X%02X' % tuple(int(x * 255 + 0.5) for x in c))
+# and B = how much of the texel is hair (FEATURES.hairColors: each player's own hair colour), from the first colour map:
+# hair hues inside the model's hair box (a braid hanging out of the helmet), soft at the edges; never skin as well
+if 'hair' in spec:
+    hs = spec['hair']; bx = hs['box']
+    inbox = np.ones((N, N), bool)
+    for k in range(3): inbox &= (P[..., k] >= bx[k][0]) & (P[..., k] <= bx[k][1])
+    hr = band(h0, hs['hue'][0], hs['hue'][1], 4) * band(s0, hs.get('sMin', 0.25), 1.1, 0.06) * inbox
+    marks[free, 2] = np.clip(hr[free], 0, 1)
+    marks[free & (hr > 0), 1] = 0
+    hard = free & (hr > 0.5)
+    if hard.any():
+        c = np.median(np.asarray(first).astype(np.float32)[hard] / 255, 0)
+        print('hair texels', int(hard.sum()), 'hair', '#%02X%02X%02X' % tuple(int(x * 255 + 0.5) for x in c))
 print('stain texels', int((free & (st > 0)).sum()))
 # pad 3 texels into the empty texture around each zone (bilinear filtering reads a texel past the edge)
 filled = marks[..., 3] > 0

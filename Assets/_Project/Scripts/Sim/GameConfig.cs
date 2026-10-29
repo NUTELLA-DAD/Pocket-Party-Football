@@ -111,6 +111,16 @@ namespace PocketFootball.Sim
         public int offenseTeam;
         public List<SpotConfig> offense = new List<SpotConfig>();
         public List<SpotConfig> defense = new List<SpotConfig>();
+        public SortedDictionary<string, FormationSetConfig> sets = new SortedDictionary<string, FormationSetConfig>();   // FEATURES.formations
+    }
+
+    // A named formation (FEATURES.formations): a play's "formation" picks one. spots: [back, z] per formation spot, in
+    // the same order as formation.offense / defense (who is who stays the same; only where they stand changes).
+    public sealed class FormationSetConfig
+    {
+        public string name, side;
+        public List<float[]> spots = new List<float[]>();
+        internal List<SpotConfig> Built;    // the spots with pos and number filled in from the base list (Formation.SpotsOf)
     }
 
     // The ball flies in 3D: Y is height in yards. A pass lands at catchHeightYd.
@@ -160,6 +170,7 @@ namespace PocketFootball.Sim
     public sealed class PlayConfig
     {
         public string id, name, side, desc;
+        public string formation;            // FEATURES.formations: a formation.sets id; none = the base line-up
         public int runner = -1;
         public List<JobConfig> jobs = new List<JobConfig>();
     }
@@ -217,6 +228,7 @@ namespace PocketFootball.Sim
         public float glanceChance, glanceDeg;
         public List<ModelMarksConfig> models = new List<ModelMarksConfig>();
         public List<string> skinTones = new List<string>();   // FEATURES.skinTones: the skin colours players are given, light to dark
+        public List<string> hairColors = new List<string>();  // FEATURES.hairColors: the hair colours players are given, dark to fair
 
         public ModelMarksConfig For(string model)
         {
@@ -244,6 +256,7 @@ namespace PocketFootball.Sim
     {
         public string model, map, iris, lid;
         public string skin;   // the model's own skin colour (marks.py prints it): each man's tone is drawn as a ratio of it
+        public string hair;   // a model with hair showing (the cornerback's braid): its own hair colour (marks.py prints it)
         public int number;
     }
 
@@ -262,11 +275,15 @@ namespace PocketFootball.Sim
         public int port, portTries, maxPlayers, codeLength;
         public string bindAddress, codeLetters;
         public float stickStaleS;
+        // FEATURES.hotspotQr: the address range of this PC's own Wi-Fi hotspot (Windows Mobile Hotspot: 192.168.137.x),
+        // and how often the TV looks again for a hotspot turned on or off while the game runs
+        public string hotspotPrefix;
+        public float addressCheckS;
     }
 
     public sealed class ViewConfig
     {
-        public float playerHeightM, playerRadiusM, findMeS, plateFontPx, joinPanelQrPx, ballLengthM, ballWidthM, meSendHz;
+        public float playerHeightM, playerRadiusM, findMeS, plateFontPx, joinPanelQrPx, pauseQrPx, ballLengthM, ballWidthM, meSendHz;
         // the frame meter (Boot/FrameMeter.cs, F3 or -fps): how often it writes a line to the log, and what counts as a slow frame
         public float perfLogEveryS, perfSlowFrameMs;
         // FEATURES.smoothMotion: the steady frame rate the TV draws at (vsync every N refreshes when the screen's rate allows)
@@ -363,6 +380,7 @@ namespace PocketFootball.Sim
         public bool holdUntilKickoff, botCoversDropped;
         public float swapAskS;
         public float tint, qrFrac, emblemFrac, teamApplyS;
+        public float hotspotCardFrac;   // FEATURES.hotspotQr: the Wi-Fi card's width, against the join card's
         public int listRows;
     }
 

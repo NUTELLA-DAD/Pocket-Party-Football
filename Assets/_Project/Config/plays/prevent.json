@@ -3,6 +3,7 @@
   "name": "Prevent",
   "side": "defense",
   "desc": "Everyone deep, gives up the short stuff",
+  "formation": "prevent",
   "jobs": [
     { "kind": "zone", "pts": [[15, 0]], "radius": 8, "text": "Drop deep to the middle" },
     { "kind": "zone", "pts": [[30, -18]], "radius": 10, "text": "Deep outside: give up the short stuff" },
