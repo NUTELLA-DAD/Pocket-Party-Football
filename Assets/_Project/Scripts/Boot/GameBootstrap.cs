@@ -34,12 +34,14 @@ namespace PocketFootball.Boot
             bool title = TitleScreen.Requested(Config, Args);
             if (title) TitleScreen.PrepareAttract(Config, Args);   // the bots' show game behind the title
             CupHost.Apply(Config, title);   // FEATURES.cup: the Pocket Cup's next game wears its two teams
+            Weather.ApplyLook(Config);   // FEATURES.weather / sandField: the sky, haze and grass for rain, snow or a sand field
 
             BuildLight();
             Field = FieldView.Build(Config, baseMaterial);
             Rig = CameraRig.Create(Config);
             if (Args.LookX.HasValue) Rig.SetLookAtX(Args.LookX.Value);
             Host = PartyHost.Create(gameObject, Config, baseMaterial, Rig, Args);
+            WeatherView.Attach(gameObject, Config, Rig, baseMaterial, () => Host != null ? Host.World : null);   // FEATURES.weather: the rain or snow falling
             if (LabMode.Requested()) Lab = LabMode.Create(gameObject, Config, baseMaterial, Host, Rig, ConfigDir);
             if (title) Title = TitleScreen.Attach(gameObject, Config, Host, Rig, Args.TitlePage);
             if (PauseMenu.Requested(Config, Args, title)) PauseMenu.Attach(gameObject, Config, Host);   // Esc in the game: the pause menu

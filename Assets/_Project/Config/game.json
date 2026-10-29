@@ -322,6 +322,7 @@
     {
       "name": "CACTI",
       "short": "CAC",
+      "field": "sand",
       "color": "#287a4b",
       "color2": "#f47a35",
       "model": "Models/Player24/Player24_Rigged",
@@ -479,6 +480,7 @@
     "findMeAlpha": 0.6,
     "plateFontPx": 22,
     "joinPanelQrPx": 260,
+    "pauseQrPx": 360,
     "ballLengthM": 0.5,
     "ballWidthM": 0.32,
     "meSendHz": 5,
@@ -1257,6 +1259,164 @@
     "sepPush": 0.4,
     "openPastLosYd": 5
   },
+  "weather": {
+    "now": "clear",
+    "randomOdds": [
+      0.4,
+      0.3,
+      0.3
+    ],
+    "slipMinSpeedYdS": 6.5,
+    "slipCutDot": 0.3,
+    "slipStumbleS": 0.5,
+    "rain": {
+      "topSpeed": 0.96,
+      "accel": 0.8,
+      "decel": 0.5,
+      "stamina": 1,
+      "slipChance": 0.025,
+      "catchChance": 0.86,
+      "fumble": 1.8,
+      "kickSpeed": 0.95,
+      "wind": 1.3
+    },
+    "snow": {
+      "topSpeed": 0.9,
+      "accel": 0.7,
+      "decel": 0.55,
+      "stamina": 1.15,
+      "slipChance": 0.02,
+      "catchChance": 0.86,
+      "fumble": 1.4,
+      "kickSpeed": 0.9,
+      "wind": 1.15
+    },
+    "sand": {
+      "topSpeed": 0.92,
+      "accel": 0.8,
+      "decel": 1,
+      "stamina": 1.3,
+      "slipChance": 0,
+      "catchChance": 1,
+      "fumble": 1,
+      "kickSpeed": 0.97,
+      "wind": 1
+    }
+  },
+  "weatherLook": {
+    "keyFps": 8,
+    "boxM": [
+      100,
+      30,
+      80
+    ],
+    "aheadM": 36,
+    "rain": {
+      "count": 2600,
+      "widthM": 0.03,
+      "lengthM": 1.1,
+      "fallMS": 18,
+      "driftMS": 0,
+      "windLean": 0.5,
+      "color": "#dde8f4",
+      "alpha": 0.5,
+      "splashCount": 260,
+      "splashM": 0.16,
+      "splashAlpha": 0.45,
+      "overrides": {
+        "sky": {
+          "sunIntensity": 0.8,
+          "sunColor": "#d6dde6",
+          "ambientColor": "#7a8494",
+          "zenithColor": "#4a5462",
+          "highColor": "#66717f",
+          "lowColor": "#8a949f",
+          "horizonColor": "#9aa3ac",
+          "sunLowColor": "#a2a9b1",
+          "sunHorizonColor": "#aeb4ba",
+          "discColor": "#bfc4c9",
+          "sunGlow": 0.2,
+          "cloudCover": 0.95,
+          "cloudLitColor": "#a0a8b2",
+          "cloudShadeColor": "#5b6470",
+          "cloudRimColor": "#b8bfc7",
+          "hillColor": "#55606b",
+          "hazeColor": "#7e8996",
+          "fogStartM": 60,
+          "fogEndM": 620,
+          "gradeTemperature": -6,
+          "gradeTint": 0,
+          "gradeSaturation": -18
+        },
+        "field": {
+          "grassColor": "#5f9234",
+          "grassAltColor": "#55832f",
+          "endZoneColor": "#4f812d",
+          "surroundColor": "#577f2c"
+        }
+      }
+    },
+    "snow": {
+      "count": 2400,
+      "widthM": 0.09,
+      "lengthM": 0,
+      "fallMS": 1.6,
+      "driftMS": 0.5,
+      "windLean": 0.25,
+      "color": "#ffffff",
+      "alpha": 0.92,
+      "cover": 0.72,
+      "coverPatchYd": 4,
+      "coverEdge": 5,
+      "coverColor": "#e8eef5",
+      "overrides": {
+        "sky": {
+          "sunIntensity": 0.9,
+          "sunColor": "#eef2f8",
+          "ambientColor": "#9ba7b8",
+          "zenithColor": "#7d8a9b",
+          "highColor": "#a0abb9",
+          "lowColor": "#c2cbd5",
+          "horizonColor": "#d2d9e1",
+          "sunLowColor": "#d6dbe2",
+          "sunHorizonColor": "#e0e4e9",
+          "discColor": "#eef0f3",
+          "sunGlow": 0.2,
+          "cloudCover": 1,
+          "cloudLitColor": "#dfe4ea",
+          "cloudShadeColor": "#a4aebb",
+          "cloudRimColor": "#eef1f4",
+          "hillColor": "#9aa5b2",
+          "hazeColor": "#c8d0d9",
+          "fogStartM": 45,
+          "fogEndM": 480,
+          "gradeTemperature": -10,
+          "gradeTint": 0,
+          "gradeSaturation": -12
+        },
+        "field": {
+          "surroundColor": "#dfe6ee"
+        },
+        "reactions": {
+          "stainGrass": "#c9d3de"
+        }
+      }
+    },
+    "sand": {
+      "field": {
+        "grassColor": "#e2c38a",
+        "grassAltColor": "#d7b67b",
+        "endZoneColor": "#cfaa70",
+        "surroundColor": "#c9a46a"
+      },
+      "reactions": {
+        "stainGrass": "#b89458"
+      },
+      "features": {
+        "grassBlades": false
+      }
+    }
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
@@ -1337,12 +1497,15 @@
     "kickCam": true,
     "pauseMenu": true,
     "toonHud": true,
+    "weather": true,
+    "sandField": true,
     "passTarget": true,
     "kickSync": true,
     "pursuitLanes": true,
     "spineChain": true,
     "strideHips": true,
     "breakdown": true,
-    "catchPlay": true
+    "catchPlay": true,
+    "pauseQr": true
   }
 }

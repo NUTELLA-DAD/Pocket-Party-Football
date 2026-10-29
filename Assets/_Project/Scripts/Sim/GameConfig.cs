@@ -49,6 +49,8 @@ namespace PocketFootball.Sim
         public CatchPlayConfig catchPlay = new CatchPlayConfig();   // FEATURES.catchPlay: diving and contested catches (CatchPlay.cs)
         public PursuitConfig pursuit = new PursuitConfig();   // FEATURES.pursuitLanes: chasing the ball carrier in lanes (Pursuit.cs)
         public CupConfig cup = new CupConfig();   // FEATURES.cup: the Pocket Cup bracket (Cup.cs, Boot/CupHost.cs)
+        public WeatherConfig weather = new WeatherConfig();   // FEATURES.weather / sandField: rain, snow, a sand field (Weather.cs)
+        public WeatherLookConfig weatherLook = new WeatherLookConfig();   // ...and how they look on the TV (View/WeatherView.cs)
         public RosterConfig roster = new RosterConfig();   // FEATURES.rosterPage: the title's ROSTER page (RosterCards.cs, Boot/RosterPage.cs)
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
@@ -184,6 +186,8 @@ namespace PocketFootball.Sim
         public string cheerModel, cheerTexture;
         // FEATURES.jerseyNumbers: the players' numbers, white (numberFill) with a thin edge (numberEdge) in the team's trim
         public string numberFill, numberEdge;
+        // FEATURES.sandField: "sand" when the team's home field is sand (Weather.cs, View/FieldCover.cs); else grass
+        public string field;
 
         // The model and colour map a player at this position wears.
         public void ModelFor(string pos, bool byPos, out string m, out string tex) => ModelFor(pos, byPos, out m, out tex, out _);
@@ -264,7 +268,7 @@ namespace PocketFootball.Sim
 
     public sealed class ViewConfig
     {
-        public float playerHeightM, playerRadiusM, findMeS, plateFontPx, joinPanelQrPx, ballLengthM, ballWidthM, meSendHz;
+        public float playerHeightM, playerRadiusM, findMeS, plateFontPx, joinPanelQrPx, pauseQrPx, ballLengthM, ballWidthM, meSendHz;
         // the frame meter (Boot/FrameMeter.cs, F3 or -fps): how often it writes a line to the log, and what counts as a slow frame
         public float perfLogEveryS, perfSlowFrameMs;
         // FEATURES.smoothMotion: the steady frame rate the TV draws at (vsync every N refreshes when the screen's rate allows)

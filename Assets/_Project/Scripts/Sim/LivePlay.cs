@@ -198,7 +198,7 @@ namespace PocketFootball.Sim
                     w.CatchTried.Add(near.Slot);
                     bool offense = near.Team == w.Offense;
                     var rival = CatchPlay.On(w) ? CatchPlay.Rival(w, near) : null;   // FEATURES.catchPlay: a jump ball
-                    float chance = Receiving.Chance(w, near, Ratings.Catch(w, near, offense ? c.catchChanceOffense : c.catchChanceDefense));   // WS-05: CATCH timing
+                    float chance = Receiving.Chance(w, near, Weather.Catch(w, Ratings.Catch(w, near, offense ? c.catchChanceOffense : c.catchChanceDefense)));   // WS-05: CATCH timing; FEATURES.weather: a wet ball
                     if (CatchPlay.On(w)) chance = CatchPlay.Chance(w, chance, dive, rival != null);
                     bool caught = w.Rng.Value() < chance;
                     if (CatchPlay.On(w)) CatchPlay.After(w, near, rival, dive, caught);
