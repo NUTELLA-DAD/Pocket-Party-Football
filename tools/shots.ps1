@@ -25,6 +25,7 @@ foreach ($f in $Fixtures) {
         'title_roster'    { @('-title','-title-page','roster') }
         'title_roster_lb' { @('-title','-title-page','roster:4:GRN') }
         'lobby'           { @('-lobby') }
+        { $_ -like 'formation_*' } { @('-formation-demo', (($f -replace '^formation_', '') -replace '-', ':')) }   # formation_dive-goalline
         default           { }
     })
     $p = Start-Process -FilePath $exe -ArgumentList (@('-fixture',$f,'-seed','1','-bind','127.0.0.1') + $extra + @('-shots',"`"$shots`"",'-quit-after-shots','-screen-width','1920','-screen-height','1080','-screen-fullscreen','0','-logFile',"`"$LOGS\shots-$f.log`"")) -PassThru

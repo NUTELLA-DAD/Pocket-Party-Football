@@ -105,6 +105,18 @@ namespace PocketFootball.Boot
                 var book = Huddle.Playbook(h.World, h.World.Offense);
                 if (book.Count > 0) h.World.Calls[h.World.Offense] = book[0].id;
             }
+            if (args.FormationDemo != null)
+            {
+                // both plays called in the huddle; the next tick lines everyone up in their formations
+                var ids = args.FormationDemo.Split(':');
+                var fw = h.World;
+                fw.Kick.Opened = true;   // (no opening kickoff)
+                if (fw.Phase != Phase.Huddle) Huddle.Begin(fw);
+                fw.Calls[fw.Offense] = ids[0];
+                if (ids.Length > 1) fw.Calls[fw.Defense] = ids[1];
+                fw.PhaseTicks = 1;
+                h.StepOnce();
+            }
             string photoName = PhotoScenes.Requested(args);
             if (photoName != null) h.Photo = PhotoScenes.Setup(photoName, h.World, h.Players, rig);
             on.AddComponent<ReceivingHud>().Host = h;   // WS-05: CALL FOR IT pulse on the TV and the QB's phone
