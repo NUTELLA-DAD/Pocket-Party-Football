@@ -10,7 +10,7 @@
     { "kind": "route", "pts": [[4, -20], [12, -12]], "text": "Slant: 4 steps, cut inside hard" },
     { "kind": "route", "pts": [[4, 21], [12, 13]], "text": "Slant: 4 steps, cut inside hard" },
     { "kind": "route", "pts": [[3, 13], [5, 0]], "text": "Shallow cross: run under the slant at 5 yards" },
-    { "kind": "route", "pts": [[6, 9], [6, 11]], "text": "Stick: 6 yards, turn around and sit in the hole" },
+    { "kind": "route", "pts": [[10, 9], [18, 19]], "text": "Corner: 10 yards, then break for the far pylon" },
     { "kind": "block", "pts": [[-1, 0]], "text": "Pass block: stay between him and the QB" },
     { "kind": "block", "pts": [[-1, -1.5]], "text": "Pass block: stay between him and the QB" },
     { "kind": "block", "pts": [[-1, 1.5]], "text": "Pass block: stay between him and the QB" },

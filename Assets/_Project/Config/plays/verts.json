@@ -6,7 +6,7 @@
   "formation": "empty",
   "jobs": [
     { "kind": "route", "pts": [[-9, 0]], "text": "Five-step drop. Find the open deep man" },
-    { "kind": "route", "pts": [[5, -13], [6, -18]], "text": "Split out wide: quick out at 5 yards, the hot read" },
+    { "kind": "route", "pts": [[3, -16], [24, -17]], "text": "Split out wide: wheel route, out to the sideline then straight up it" },
     { "kind": "route", "pts": [[30, -21]], "text": "Go route: full sprint up the sideline" },
     { "kind": "route", "pts": [[30, 21]], "text": "Go route: full sprint up the sideline" },
     { "kind": "route", "pts": [[28, 12]], "text": "Seam route straight up the field" },

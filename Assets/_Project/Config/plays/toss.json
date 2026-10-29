@@ -6,7 +6,7 @@
   "formation": "iform",
   "runner": 1,
   "jobs": [
-    { "kind": "route", "pts": [[-4, -2], [-5, -3]], "text": "Under center: pitch to the RB, then lead block" },
+    { "kind": "route", "pts": [[-5, -3]], "text": "Under center: open to the left and pitch to the RB as he goes by" },
     { "kind": "route", "pts": [[-6, -3.5], [-4, -14], [10, -22]], "text": "Catch the pitch, race for the edge" },
     { "kind": "block", "pts": [[6, -18]], "text": "Block your cornerback" },
     { "kind": "block", "pts": [[6, 18]], "text": "Block your cornerback" },
