@@ -294,3 +294,28 @@ button:focus-visible { outline: 3px solid var(--warn); outline-offset: 2px; }
   font-family: var(--display); font-weight: 900; font-size: 28px; color: var(--gold);
 }
 @media (prefers-reduced-motion: reduce) { .btn.on, .btn:active, .big:active:not(:disabled), .pill:active { transform: none; } }
+
+/* ---- Kenny's controller art (docs/art/controller, cut by tools/phone/cut-controller-art.py) ----
+   The stick, its cap and the PAUSE plate are pictures; the gems are in layouts.css. Pocket Block is the TV's lettering,
+   served from this folder like everything else (no internet). */
+@font-face { font-family: "Pocket Block"; src: url("PocketBlock.ttf") format("truetype"); font-display: block; }
+:root { --block: "Pocket Block", var(--display); }
+.stick, .tstick {
+  border: 0; box-shadow: none;
+  background: url("stick-base.png") center / 100% 100% no-repeat;
+  filter: drop-shadow(0 5px 0 rgba(6,13,43,.7));
+}
+.knob, .tstick .tknob {
+  width: 54%; height: 54%; margin: -27% 0 0 -27%; border: 0; box-shadow: none;
+  background: url("stick-cap.png") center / 100% 100% no-repeat;
+  filter: drop-shadow(0 4px 0 rgba(6,13,43,.75));
+}
+
+#menuBtn {
+  border: 0; border-radius: 0; box-shadow: none; padding: 0; min-height: 0;
+  width: 138px; height: 52px; background: url("pause.png") center / contain no-repeat;
+  color: transparent; filter: drop-shadow(0 4px 0 rgba(6,13,43,.7));
+}
+#menuBtn > * { visibility: hidden; }
+#menuBtn:active { transform: translateY(3px); box-shadow: none; filter: brightness(1.1) drop-shadow(0 1px 0 rgba(6,13,43,.7)); }
+@media (orientation: landscape) and (max-height: 340px) { #menuBtn { width: 112px; height: 42px; } }
