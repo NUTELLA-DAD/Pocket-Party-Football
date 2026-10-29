@@ -621,6 +621,7 @@ namespace PocketFootball.Boot
 
         void OnGUI()
         {
+            UiFont.Use();   // (FEATURES.toonHud: the game's own lettering)
             Hud.JoinPanel = Rect.zero;   // (set again below while the join panel is on)
             if (TitleScreen.Showing) return;   // the title screen covers the TV (the bots' show game has no HUD)
             if (Lobby.Instance != null && Lobby.Instance.FullScreen) return;   // FEATURES.lobbyScreen: the join screen covers the TV
@@ -690,7 +691,9 @@ namespace PocketFootball.Boot
 
             // the huddle banner, top centre: check marks only
             string tv = TvLine(World, cfg);
-            if (tv.Length > 0)
+            if (tv.Length > 0 && cfg.Feature("toonHud") && UiFont.On)
+                ToonHud.Banner(tv, s, Downs.On(World) && !Clock.IsOver(World));   // FEATURES.toonHud: a navy and gold pill under the scoreboard
+            else if (tv.Length > 0)
             {
                 banner ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold };
                 banner.fontSize = Mathf.RoundToInt(34 * s);

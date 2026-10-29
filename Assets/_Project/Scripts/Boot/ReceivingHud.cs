@@ -33,6 +33,7 @@ namespace PocketFootball.Boot
 
         void OnGUI()
         {
+            UiFont.Use();   // (FEATURES.toonHud: the game's own lettering)
             var w = Host != null ? Host.World : null;
             if (w == null || Host.Photo != null || !Receiving.On(w) || Replay.OnScreen) return;
             var cam = Camera.main;

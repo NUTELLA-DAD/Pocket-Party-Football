@@ -68,6 +68,7 @@ namespace PocketFootball.View
         static void WinnerBanner(World w, float s)
         {
             big ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold };
+            big.fontStyle = UiFont.On ? FontStyle.Normal : FontStyle.Bold;   // (Pocket Block is heavy already)
             big.fontSize = Mathf.RoundToInt(96 * s);
             big.normal.textColor = Color.white;
             int win = Clock.Winner(w);
@@ -87,7 +88,8 @@ namespace PocketFootball.View
                 float m = h - 40 * s;
                 GUI.DrawTexture(new Rect(Screen.width * 0.5f - big.CalcSize(new GUIContent(text)).x * 0.5f - m - 30 * s, y + 20 * s, m, m), mark, ScaleMode.ScaleToFit);
             }
-            GUI.Label(new Rect(0, y, Screen.width, h), text, big);
+            if (UiFont.On) UiFont.Toon(new Rect(0, y, Screen.width, h), text, big, Color.white, 5f * s);
+            else GUI.Label(new Rect(0, y, Screen.width, h), text, big);
         }
     }
 }

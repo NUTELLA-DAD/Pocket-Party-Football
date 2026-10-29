@@ -158,6 +158,7 @@ namespace PocketFootball.Boot
 
         void OnGUI()
         {
+            UiFont.Use();   // (FEATURES.toonHud: the game's own lettering)
             if (host.Photo != null) return;
             if (Lobby.Instance != null && Lobby.Instance.FullScreen) GUI.depth = -60;   // (over the join screen)
             float s = Screen.height / 1080f;
