@@ -77,3 +77,71 @@ html.kicking body { overflow: hidden; }
 .kickmeter .kaimline.clear { background: #5fd38a; }
 .kickmeter .kaimline.hot { background: #f0503c; }
 .kickmeter .hidden, .kickmeter .ktap.hidden { display: none; }
+/* the arc (kick.js, kickArc): a punt or a field goal. Kenny's HUD art in kick/: the title plate, the POWER meter with
+   the colour bar for its fill and the pointer, the PITCH ANGLE dial with its needle. Lined up: a little field with a
+   shaded arrow and the steering arrows; after HIKE: the two meters. */
+.kickmeter.arc { grid-template-rows: minmax(0, 1fr); }
+.kickmeter.arc > .kfield, .kickmeter.arc > .ktap, .kickmeter.arc > .khint, .kickmeter.arc > .khead { display: none; }
+.kickmeter:not(.arc) .karc { display: none; }
+.kickmeter .karc { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; gap: 10px; min-height: 0; }
+.kickmeter .kplate { display: block; height: 64px; max-width: 100%; margin: 0 auto; object-fit: contain; pointer-events: none; }
+.kickmeter .karcfield {
+  position: relative; overflow: hidden; border-radius: 18px; touch-action: none; min-height: 160px;
+  border: 4px solid transparent;
+  background: repeating-linear-gradient(0deg, #2a8a3e 0 34px, #237a35 34px 68px) padding-box, var(--rim, #ffc928) border-box;
+  box-shadow: 0 0 0 2px var(--edge, #060d2b), 0 5px 0 2px var(--edge, #060d2b);
+}
+/* the shaded arrow: bright at its head, fading back to the ball, leaning with the aim */
+.kickmeter .karrow {
+  position: absolute; left: 50%; bottom: 36px; width: 56px; height: 72%; margin-left: -28px; transform-origin: 50% 100%;
+  pointer-events: none;
+}
+.kickmeter .karrow::before {
+  content: ""; position: absolute; left: 30%; right: 30%; top: 30px; bottom: 0; border-radius: 10px 10px 4px 4px;
+  background: linear-gradient(0deg, rgba(255, 214, 51, .15), rgba(255, 214, 51, .8));
+  box-shadow: 0 0 18px rgba(255, 214, 51, .35);
+}
+.kickmeter .karrowhead {
+  position: absolute; left: 0; right: 0; top: 0; height: 40px;
+  background: linear-gradient(0deg, rgba(255, 214, 51, .8), #fff2a8); clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.kickmeter .karcfield .kposts { top: 34px; }
+.kickmeter .ksteer {
+  position: absolute; top: 50%; width: 68px; height: 68px; margin-top: -34px; border-radius: 50%; touch-action: none;
+  font-size: 28px; color: var(--edge, #060d2b); border: 3px solid transparent;
+  background: linear-gradient(#fff2a8, #ffc928) padding-box, var(--rim, #ffc928) border-box;
+  box-shadow: 0 0 0 2px var(--edge, #060d2b), 0 4px 0 2px var(--edge, #060d2b);
+}
+.kickmeter .ksteer.l { left: 10px; }
+.kickmeter .ksteer.r { right: 10px; }
+.kickmeter .ksteer:active { transform: translateY(3px); }
+.kickmeter .kgauges {
+  display: flex; align-items: center; justify-content: center; gap: 14px; min-height: 0; touch-action: none;
+  container-type: size; --gh: min(100cqh, calc((100cqw - 18px) / 1.2), 430px);
+}
+/* (both as tall as fits: the meter is about 0.45 of its height wide, the dial 0.72 at 82% of it) */
+.kickmeter .kpowerart, .kickmeter .kdialart { position: relative; flex: none; height: var(--gh); }
+.kickmeter .kpowerart { aspect-ratio: 192 / 426; }
+.kickmeter .kdialart { aspect-ratio: 341 / 389; height: calc(var(--gh) * 0.82); align-self: center; }
+.kickmeter .kart { display: block; width: 100%; height: 100%; pointer-events: none; }
+.kickmeter .kfillart {
+  position: absolute; display: block; background: center / 100% 100% no-repeat; pointer-events: none; border-radius: 4px;
+}
+.kickmeter .kpointer { position: absolute; width: 22%; transform: translate(4%, -50%); pointer-events: none; }
+.kickmeter .kpointer.hot { filter: hue-rotate(-40deg) saturate(3); }
+.kickmeter .kmark { position: absolute; left: 50%; width: 44%; transform: translate(-50%, -50%); pointer-events: none; }
+.kickmeter .kneedle { position: absolute; pointer-events: none; }
+.kickmeter .kwedge { position: absolute; display: block; border-radius: 50%; pointer-events: none; }
+.kickmeter .kgem { position: absolute; width: 9%; pointer-events: none; }
+.kickmeter .karcbtn { width: 100%; min-height: 64px; font-size: 26px; touch-action: none; }
+.kickmeter .karcbtn.aim { background: var(--warn); color: var(--edge, #060d2b); }
+.kickmeter .karcbtn.go { background: #5fd38a; color: var(--edge, #060d2b); }
+.kickmeter .karcbtn.hidden { display: none; }
+.kickmeter.arc.done .kgauges { opacity: .75; }
+@media (orientation: landscape) and (max-height: 420px) {
+  .kickmeter .karc { grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr); grid-template-rows: auto minmax(0, 1fr) auto; gap: 6px 14px; }
+  .kickmeter .kplate { grid-column: 1 / -1; height: 44px; }
+  .kickmeter .karcfield, .kickmeter .kgauges { grid-column: 1; grid-row: 2 / 4; min-height: 0; }
+  .kickmeter .karchint { grid-column: 2; grid-row: 2; align-self: end; }
+  .kickmeter .karcbtn { grid-column: 2; grid-row: 3; }
+}

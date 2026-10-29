@@ -19,6 +19,15 @@ namespace PocketFootball.Boot
     //     angle, kicking.maxAimDeg), postsYd (half the posts' width) and distYd (the hold to the posts), sent again
     //     every kicking.phoneSyncS; the phone runs its arrow from t, and its kickaim and kick add st (the seconds its
     //     arrow showed) for Kicking.TapAt.
+    //   FEATURES.kickArc (punts and field goals): sweep carries arc: true and stage "aim" (he steers and snaps it),
+    //     "power" or "pitch", with powerS, pitchS, minDeg / maxDeg (the needle's ends), shank, need (a field goal: the
+    //     power that clears the bar at its usual climb), aim (the steered aim), power (the first tap's, once set),
+    //     clear [lo, hi] (a field goal, once the power is set: the climbs that clear the bar) or good [lo, hi] (a punt:
+    //     a good high hang). The phone sends:
+    //   phone -> game: kicksteer {aim -1..1, aid}   (moving the arc left and right while lined up)
+    //   phone -> game: kickaim {aim, aid}           (HIKE: the aim, and the snap)
+    //   phone -> game: kickpower {power 0..1, st?, aid}   (the first tap: the power)
+    //   phone -> game: kick {pitch 0..1, st?, aid}  (the second tap: the pitch needle's share, and the kick)
     // The kicker's phone also gets the "kick" layout (Input/PhoneLayouts.cs), which hides HIKE and the throws.
     // It also puts the TV's kick meter (View/KickMeter.cs) on the host.
     public sealed class KickPhones : MonoBehaviour
@@ -42,7 +51,26 @@ namespace PocketFootball.Boot
             var p = h.World.Find(src.Seat.Slot);
             if (p == null) return;
             if (Synced(h.World, m)) { Kicking.TapAt(h.World, p.Slot, PhoneProtocol.Float(m, "st", 0f, 600f)); return; }
+            if (Kicking.Stage(h.World) == Kicking.SweepStage.Pitch && m["pitch"] != null) { Kicking.KickPitched(h.World, p.Slot, PhoneProtocol.Float(m, "pitch", 0f, 1f)); return; }
             Kicking.Kick(h.World, p.Slot, PhoneProtocol.Float(m, "power", 0f, 1f), PhoneProtocol.Float(m, "aim", -1f, 1f));
+        }
+
+        // FEATURES.kickArc: the arc steered left and right while he lines up. Same guards as a kick.
+        public static void OnSteer(PartyHost h, PhoneSource src, JObject m)
+        {
+            if (PhoneProtocol.Str(m, "aid") != src.Aid) return;
+            var p = h.World.Find(src.Seat.Slot);
+            if (p != null) Kicking.Steer(h.World, p.Slot, PhoneProtocol.Float(m, "aim", -1f, 1f));
+        }
+
+        // FEATURES.kickArc: the first tap after the snap, the power the phone's meter showed.
+        public static void OnPower(PartyHost h, PhoneSource src, JObject m)
+        {
+            if (PhoneProtocol.Str(m, "aid") != src.Aid) return;
+            var p = h.World.Find(src.Seat.Slot);
+            if (p == null) return;
+            if (Synced(h.World, m)) { Kicking.TapAt(h.World, p.Slot, PhoneProtocol.Float(m, "st", 0f, 600f)); return; }
+            Kicking.SetPower(h.World, p.Slot, PhoneProtocol.Float(m, "power", 0f, 1f));
         }
 
         // FEATURES.kickSync: a tap from a phone running the game's sweep clock (it says which second it showed)
@@ -55,6 +83,7 @@ namespace PocketFootball.Boot
             if (PhoneProtocol.Str(m, "aid") != src.Aid) return;
             var p = h.World.Find(src.Seat.Slot);
             if (p == null) return;
+            if (Kicking.ArcOn(h.World)) { Kicking.Steer(h.World, p.Slot, PhoneProtocol.Float(m, "aim", -1f, 1f)); Kicking.SetAim(h.World, p.Slot, h.World.Kick.Aim); return; }   // (the arc's HIKE)
             if (Synced(h.World, m)) { Kicking.TapAt(h.World, p.Slot, PhoneProtocol.Float(m, "st", 0f, 600f)); return; }
             Kicking.SetAim(h.World, p.Slot, PhoneProtocol.Float(m, "aim", -1f, 1f));
         }
@@ -87,7 +116,8 @@ namespace PocketFootball.Boot
             var o = new JObject { ["t"] = "kickmeter", ["on"] = on };
             if (on) { o["kind"] = Kicking.Name(w); o["yards"] = Kicking.KickYards(w); }
             var stage = on ? Kicking.Stage(w) : Kicking.SweepStage.None;
-            if (stage != Kicking.SweepStage.None)
+            if (stage != Kicking.SweepStage.None && Kicking.ArcOn(w)) o["sweep"] = Arc(w, stage, clock);
+            else if (stage != Kicking.SweepStage.None)
             {
                 var c = w.Cfg.kicking;
                 o["sweep"] = new JObject
@@ -104,19 +134,49 @@ namespace PocketFootball.Boot
                     o["sweep"]["distYd"] = System.Math.Round(System.Math.Abs(w.Dir * w.Cfg.field.HalfLength - w.Kick.HoldX), 1);   // (the hold to the posts)
                     if (clock) o["sweep"]["t"] = System.Math.Round(Kicking.SweepSeconds(w), 3);
                 }
-                if (Kicking.WindOn(w))
-                {
-                    Kicking.Wind(w, out float x, out float z);
-                    float speed = (float)System.Math.Sqrt(x * x + z * z);
-                    o["wind"] = new JObject
-                    {
-                        ["mph"] = (int)System.Math.Round(speed * c.windMphPerYdS),
-                        ["right"] = speed > 0f ? System.Math.Round(-z * w.Dir / speed, 2) : 0.0,
-                        ["along"] = speed > 0f ? System.Math.Round(x * w.Dir / speed, 2) : 0.0,
-                    };
-                }
             }
+            if (stage != Kicking.SweepStage.None && Kicking.WindOn(w) && Kicking.Mode(w) == KickKind.FieldGoal) o["wind"] = Wind(w);   // (it pushes only a field goal)
             return PhoneProtocol.Text(o);
+        }
+
+        // FEATURES.kickArc's sweep block (see the top). clock: t and the steered aim (left out of the "changed?" key).
+        static JObject Arc(World w, Kicking.SweepStage stage, bool clock)
+        {
+            var c = w.Cfg.kicking;
+            var k = w.Kick;
+            bool goal = Kicking.Mode(w) == KickKind.FieldGoal;
+            var a = new JObject
+            {
+                ["arc"] = true,
+                ["stage"] = stage == Kicking.SweepStage.Aim ? "aim" : stage == Kicking.SweepStage.Power ? "power" : "pitch",
+                ["powerS"] = c.powerSweepS, ["pitchS"] = c.pitchSweepS,
+                ["minDeg"] = c.arcMinPitchDeg, ["maxDeg"] = c.arcMaxPitchDeg, ["shank"] = c.shankFromPower,
+            };
+            if (goal) a["need"] = System.Math.Round(Kicking.NeedPower(w), 2);
+            if (stage == Kicking.SweepStage.Pitch)
+            {
+                a["power"] = System.Math.Round(k.ChosenPower, 2);
+                if (goal && Kicking.ClearPitch(w, k.ChosenPower, out float lo, out float hi)) a["clear"] = new JArray(lo, hi);
+                else if (goal) a["clear"] = new JArray();
+            }
+            if (!goal) a["good"] = new JArray(c.puntGoodMinDeg, c.puntGoodMaxDeg);
+            if (stage != Kicking.SweepStage.Aim) a["aim"] = System.Math.Round(k.Aim, 2);
+            else if (clock) a["aim"] = System.Math.Round(k.Aim, 2);
+            if (clock && w.Cfg.Feature("kickSync")) a["t"] = System.Math.Round(Kicking.SweepSeconds(w), 3);
+            return a;
+        }
+
+        // wind {mph, right, along} from the kicker's side (FEATURES.wind)
+        static JObject Wind(World w)
+        {
+            Kicking.Wind(w, out float x, out float z);
+            float speed = (float)System.Math.Sqrt(x * x + z * z);
+            return new JObject
+            {
+                ["mph"] = (int)System.Math.Round(speed * w.Cfg.kicking.windMphPerYdS),
+                ["right"] = speed > 0f ? System.Math.Round(-z * w.Dir / speed, 2) : 0.0,
+                ["along"] = speed > 0f ? System.Math.Round(x * w.Dir / speed, 2) : 0.0,
+            };
         }
     }
 }

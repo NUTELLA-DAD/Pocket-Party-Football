@@ -824,6 +824,14 @@
     "windPush": 0.2,
     "botWindRead": 0.8,
     "windMphPerYdS": 2.045,
+    "pitchSweepS": 1.3,
+    "arcMinPitchDeg": 15,
+    "arcMaxPitchDeg": 75,
+    "arcWindowStepDeg": 1,
+    "arcPreviewPower": 0.7,
+    "arcSteerPerS": 1.2,
+    "puntGoodMinDeg": 45,
+    "puntGoodMaxDeg": 62,
     "cam": {
       "backYd": 11,
       "sideYd": 3.4,
@@ -1491,6 +1499,7 @@
     "passTarget": true,
     "kickSync": true,
     "pauseQr": true,
-    "hotspotQr": true
+    "hotspotQr": true,
+    "kickArc": true
   }
 }

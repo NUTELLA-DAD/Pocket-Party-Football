@@ -5,14 +5,17 @@ namespace PocketFootball.View
 {
     // A ball's flight path drawn as one smooth ribbon turned to face the camera: bright in the middle and soft at its
     // edges, fading in from the ball (so it never hides it) and out where it meets the grass. The lab's flight path
-    // and the throw stick's aim both draw with it. Fill Path with up to Max points, then Draw(n).
+    // and the throw stick's aim both draw with it. Fill Path with up to Max points, then Draw(n). A tinted, wider or
+    // flat one (lying on the grass instead of facing the camera) draws the kick's arc (FEATURES.kickArc).
     public sealed class ArcRibbon
     {
         public const int Max = 160;
-        const float HalfM = 0.16f, Core = 0.9f, FadeInM = 0.6f;
+        const float Core = 0.9f, FadeInM = 0.6f;
         // across the ribbon: (share of its half width, alpha share): a bright middle that melts away at both edges
         static readonly float[] Across = { -1f, -0.45f, 0f, 0.45f, 1f }, AcrossA = { 0f, 0.65f, 1f, 0.65f, 0f };
-        static readonly Color Tint = new Color(1f, 1f, 1f);
+        readonly Color tint = new Color(1f, 1f, 1f);
+        readonly float halfM = 0.16f, core = Core;
+        readonly bool flat;
 
         public readonly Vector3[] Path = new Vector3[Max];
         readonly Mesh mesh;
@@ -20,6 +23,14 @@ namespace PocketFootball.View
         readonly List<Vector3> v = new List<Vector3>();
         readonly List<Color> c = new List<Color>();
         readonly List<int> t = new List<int>();
+
+        public ArcRibbon(Transform parent, string name, Material baseMat, Color tint, float halfM, float core, bool flat) : this(parent, name, baseMat)
+        {
+            this.tint = tint;
+            this.halfM = halfM;
+            this.core = core;
+            this.flat = flat;
+        }
 
         public ArcRibbon(Transform parent, string name, Material baseMat)
         {
@@ -48,12 +59,12 @@ namespace PocketFootball.View
                 {
                     if (i > 0) run += (Path[i] - Path[i - 1]).magnitude;
                     Vector3 along = (Path[Mathf.Min(i + 1, n - 1)] - Path[Mathf.Max(i - 1, 0)]).normalized;
-                    Vector3 side = Vector3.Cross(along, cam.transform.position - Path[i]).normalized;
+                    Vector3 side = Vector3.Cross(along, flat ? Vector3.up : cam.transform.position - Path[i]).normalized;
                     float fade = Mathf.Clamp01(run / FadeInM) * Mathf.Clamp01((n - 1 - i) / 6f);
                     for (int j = 0; j < k; j++)
                     {
-                        v.Add(Path[i] + side * (Across[j] * HalfM));
-                        c.Add(Looks.VertexColor(Tint, Core * AcrossA[j] * fade));
+                        v.Add(Path[i] + side * (Across[j] * halfM));
+                        c.Add(Looks.VertexColor(tint, core * AcrossA[j] * fade));
                     }
                     if (i == 0) continue;
                     int s0 = (i - 1) * k, s1 = i * k;
