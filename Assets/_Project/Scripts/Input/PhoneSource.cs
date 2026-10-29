@@ -19,13 +19,13 @@ namespace PocketFootball.Input
         public IList<string> Shapes = new string[0];
 
         float stickX, stickY, stickAt;
-        bool findPressed, sprintHeld, blockHeld, hikePressed, jukePressed, tacklePressed, lob;
+        bool findPressed, sprintHeld, blockHeld, bullHeld, hikePressed, jukePressed, tacklePressed, lob;
         int throwTo;
         bool callPressed, catchPressed;   // WS-05
         CarrierMove movePressed;          // WS-04: SPIN / STIFF ARM / DIVE
         DefMove defPressed;               // WS-03
         bool throwAt; float throwX, throwY, throwArc;   // the throw stick, let go (latched until the next tick)
-        float driveX, driveY;                           // FEATURES.driveBlock: the drive stick (the BLOCK button, slid)
+        float driveX, driveY;                           // FEATURES.driveBlock / driveRush: the drive stick (the BLOCK or BULL RUSH button, slid)
 
         // The throw stick while it is held (for the TV's arc only; the sim sees nothing until it is let go).
         // AimX right, AimY DOWN, like the move stick; AimArc 0 = bullet .. 1 = lob.
@@ -58,8 +58,8 @@ namespace PocketFootball.Input
             return true;
         }
 
-        // FEATURES.driveBlock: {t:'drive',x,y,aid} streams while the BLOCK stick is held and slid (x right, y DOWN like
-        // the move stick). It only counts while BLOCK is held: letting go of BLOCK zeroes it.
+        // FEATURES.driveBlock / driveRush: {t:'drive',x,y,aid} streams while the BLOCK or BULL RUSH stick is held and slid
+        // (x right, y DOWN like the move stick). It only counts while that button is held: letting go zeroes it.
         public bool OnDrive(float x, float y, string aid)
         {
             if (aid != Aid) return false;
@@ -95,7 +95,7 @@ namespace PocketFootball.Input
                 case "divein": if (down) movePressed = CarrierMove.Dive; break;         // WS-04 (the carrier's dive; "dive" is DIVE TACKLE)
                 case "dive": if (down) { tacklePressed = true; defPressed = DefMove.Dive; } break;   // WS-03 (a plain tackle with NO_DEFMOVES=1)
                 case "swim": if (down) defPressed = DefMove.Swim; break;      // WS-03
-                case "bull": if (down) defPressed = DefMove.BullRush; break;  // WS-03
+                case "bull": if (down) defPressed = DefMove.BullRush; bullHeld = down; if (!down) driveX = driveY = 0f; break;   // WS-03; held: the drive stick (FEATURES.driveRush)
                 case "swat": if (down) defPressed = DefMove.Swat; break;      // WS-03
                 case "jump": if (down) defPressed = DefMove.Jump; break;      // WS-03
                 default: return false;
@@ -110,7 +110,7 @@ namespace PocketFootball.Input
             return f;
         }
 
-        public void OnDisconnect() { stickX = stickY = 0; sprintHeld = false; blockHeld = false; driveX = driveY = 0f; Aiming = false; }
+        public void OnDisconnect() { stickX = stickY = 0; sprintHeld = false; blockHeld = false; bullHeld = false; driveX = driveY = 0f; Aiming = false; }
 
         // A stick that has gone quiet (phone locked, Wi-Fi blip) stops.
         public void ExpireStick(float now, float staleSeconds)
@@ -128,7 +128,7 @@ namespace PocketFootball.Input
                 Move = movePressed,                         // WS-04
                 Def = defPressed,                           // WS-03
                 ThrowAt = throwAt, AimX = throwX, AimZ = -throwY, Arc = throwArc,   // the throw stick (y down -> +Z away)
-                DriveX = blockHeld ? driveX : 0f, DriveZ = blockHeld ? -driveY : 0f,   // FEATURES.driveBlock (y down -> +Z away)
+                DriveX = blockHeld || bullHeld ? driveX : 0f, DriveZ = blockHeld || bullHeld ? -driveY : 0f,   // FEATURES.driveBlock / driveRush (y down -> +Z away)
             };
             throwAt = false;
             hikePressed = jukePressed = tacklePressed = false;

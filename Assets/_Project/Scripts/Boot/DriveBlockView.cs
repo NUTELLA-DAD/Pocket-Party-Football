@@ -8,17 +8,18 @@ namespace PocketFootball.Boot
     // Drive blocks on the TV (FEATURES.driveBlock, Sim/DriveBlock.cs): a fat yellow arrow on the grass under each
     // defender a person is shoving, pointing the way he is going (longer the harder the shove), and, when the line
     // has a gap the runner can hit (DriveBlock.Lane), a bright lane with chevrons from the line downfield through it.
-    // Drawing only, no time-based motion; all of it hides while a replay plays.
+    // Drive rushes (FEATURES.driveRush, Sim/DriveRush.cs): the same arrow, in blue, under each blocker a rusher is
+    // shoving. Drawing only, no time-based motion; all of it hides while a replay plays.
     public sealed class DriveBlockView : MonoBehaviour
     {
         const float Lift = 0.07f, LaneLift = 0.04f, LanePastYd = 3f, MinArrow = 0.45f;
-        static readonly Color Arrow = new Color(1f, 0.82f, 0.15f), Lane = new Color(1f, 0.92f, 0.35f), Chevron = new Color(1f, 1f, 0.85f);
+        static readonly Color Arrow = new Color(1f, 0.82f, 0.15f), RushArrow = new Color(0.35f, 0.65f, 1f), Lane = new Color(1f, 0.92f, 0.35f), Chevron = new Color(1f, 1f, 0.85f);
 
         PartyHost host;
         GameConfig cfg;
         Material mat, glow;
         Transform root, lane;
-        readonly List<Transform> arrows = new List<Transform>();
+        readonly List<Transform> arrows = new List<Transform>(), rushArrows = new List<Transform>();
 
         public static DriveBlockView Attach(PartyHost h, Material baseMat)
         {
@@ -34,13 +35,13 @@ namespace PocketFootball.Boot
         }
 
         // An arrow lying flat, pointing +X from its origin, one metre long.
-        Transform BuildArrow()
+        Transform BuildArrow(List<Transform> into, Color colour)
         {
             var bl = new Blocks { Flag = Looks.Gloss };
-            bl.Quad(new Vector3(0.05f, 0, -0.13f), new Vector3(0.05f, 0, 0.13f), new Vector3(0.62f, 0, 0.13f), new Vector3(0.62f, 0, -0.13f), Arrow, Vector3.up);
-            bl.Quad(new Vector3(0.6f, 0, -0.36f), new Vector3(0.6f, 0, 0.36f), new Vector3(1f, 0, 0f), new Vector3(1f, 0, 0f), Arrow, Vector3.up);
+            bl.Quad(new Vector3(0.05f, 0, -0.13f), new Vector3(0.05f, 0, 0.13f), new Vector3(0.62f, 0, 0.13f), new Vector3(0.62f, 0, -0.13f), colour, Vector3.up);
+            bl.Quad(new Vector3(0.6f, 0, -0.36f), new Vector3(0.6f, 0, 0.36f), new Vector3(1f, 0, 0f), new Vector3(1f, 0, 0f), colour, Vector3.up);
             var t = bl.Build(root, "Shove", mat, false).transform;
-            arrows.Add(t);
+            into.Add(t);
             return t;
         }
 
@@ -65,34 +66,60 @@ namespace PocketFootball.Boot
         void LateUpdate()
         {
             var w = host != null ? host.World : null;
-            int n = 0;
-            if (w != null && DriveBlock.On(w) && !Replay.OnScreen)
+            int n = 0, r = 0;
+            bool live = w != null && !Replay.OnScreen;
+            if (live && DriveBlock.On(w))
             {
                 n = Shoves(w);
                 LaneNow(w);
             }
             else lane.gameObject.SetActive(false);
+            if (live && DriveRush.On(w)) r = RushShoves(w);
             for (int i = n; i < arrows.Count; i++) arrows[i].gameObject.SetActive(false);
+            for (int i = r; i < rushArrows.Count; i++) rushArrows[i].gameObject.SetActive(false);
         }
 
         int Shoves(World w)
         {
-            float m = cfg.field.yardM, full = Mathf.Max(0.01f, cfg.driveBlock.pushYdS);
+            float full = Mathf.Max(0.01f, cfg.driveBlock.pushYdS);
             int n = 0;
             foreach (var push in w.Drive.Pushes)
             {
                 var d = w.Find(push.Defender);
                 if (d == null) continue;
-                var a = n < arrows.Count ? arrows[n] : BuildArrow();
+                var a = n < arrows.Count ? arrows[n] : BuildArrow(arrows, Arrow);
                 n++;
-                a.gameObject.SetActive(true);
-                float speed = Mathf.Sqrt(push.VX * push.VX + push.VZ * push.VZ);
-                float len = (MinArrow + Mathf.Clamp01(speed / full)) * 1.6f * m;   // a weak shove still shows
-                a.position = new Vector3(d.X * m, Lift, d.Z * m);
-                a.rotation = Quaternion.Euler(0f, -Mathf.Atan2(push.VZ, push.VX) * Mathf.Rad2Deg, 0f);
-                a.localScale = new Vector3(len, 1f, Mathf.Max(1f, len * 0.6f));
+                Place(a, d, push.VX, push.VZ, full);
             }
             return n;
+        }
+
+        // FEATURES.driveRush: a blue arrow under each blocker a rusher is shoving.
+        int RushShoves(World w)
+        {
+            float full = Mathf.Max(0.01f, cfg.driveRush.pushYdS);
+            int n = 0;
+            foreach (var push in w.Rush.Pushes)
+            {
+                var o = w.Find(push.Blocker);
+                if (o == null) continue;
+                var a = n < rushArrows.Count ? rushArrows[n] : BuildArrow(rushArrows, RushArrow);
+                n++;
+                Place(a, o, push.VX, push.VZ, full);
+            }
+            return n;
+        }
+
+        // The arrow under a shoved man, pointing the way he is going, longer the harder the shove (a weak one still shows).
+        void Place(Transform a, Player p, float vx, float vz, float full)
+        {
+            float m = cfg.field.yardM;
+            a.gameObject.SetActive(true);
+            float speed = Mathf.Sqrt(vx * vx + vz * vz);
+            float len = (MinArrow + Mathf.Clamp01(speed / full)) * 1.6f * m;
+            a.position = new Vector3(p.X * m, Lift, p.Z * m);
+            a.rotation = Quaternion.Euler(0f, -Mathf.Atan2(vz, vx) * Mathf.Rad2Deg, 0f);
+            a.localScale = new Vector3(len, 1f, Mathf.Max(1f, len * 0.6f));
         }
 
         void LaneNow(World w)

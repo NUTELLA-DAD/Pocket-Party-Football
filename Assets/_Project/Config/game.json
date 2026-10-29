@@ -1471,6 +1471,17 @@
     "laneOpenYd": 3,
     "laneMemoryS": 1.5
   },
+  "driveRush": {
+    "deadZone": 0.25,
+    "pushYdS": 2.4,
+    "strengthPerPoint": 0.12,
+    "minFrac": 0.4,
+    "maxFrac": 1.6,
+    "fightFrac": 0.7,
+    "shedAcrossBelow": 0.5,
+    "staminaPerS": 0.22,
+    "tiredFrac": 0.4
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
@@ -1566,6 +1577,7 @@
     "pauseQr": true,
     "hotspotQr": true,
     "kickArc": true,
-    "driveBlock": true
+    "driveBlock": true,
+    "driveRush": true
   }
 }

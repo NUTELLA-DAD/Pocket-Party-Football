@@ -284,6 +284,11 @@
         window.PPDrive.add(box, press, sendFn, aidFn);
         return { stam: L.stam, stick: true, line: data.line || window.PPDrive.line, layout: name };
       }
+      if (name === 'rush' && data.driveStick && window.PPDrive) {   // FEATURES.driveRush: the BULL RUSH button is a stick (driveblock.js)
+        box.className += ' ds';
+        window.PPDrive.addRush(box, press, sendFn, aidFn);
+        return { stam: L.stam, stick: true, line: data.line || window.PPDrive.rushLine, layout: name };
+      }
       if (L.receivers) (data.receivers || []).forEach(function (r) { addReceiver(r); });
       else if (!L.kick) box.className += ' cluster n' + L.btns.length;
       L.btns.forEach(addButton);
@@ -296,7 +301,7 @@
     // Let go of everything (screen lock, layout change mid-press): every held button sends its release.
     releaseAll: function () {
       if (aimStop) aimStop();
-      if (window.PPDrive) window.PPDrive.stop();   // FEATURES.driveBlock
+      if (window.PPDrive) window.PPDrive.stop();   // FEATURES.driveBlock / driveRush
       if (!box) return;
       var held = box.querySelectorAll('.on');
       for (var i = 0; i < held.length; i++) {
