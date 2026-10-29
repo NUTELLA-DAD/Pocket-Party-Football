@@ -8,8 +8,7 @@ namespace PocketFootball.View
     // never reaches it, its own camera sees nothing past a few metres), lit by the same sun as the field: the camera
     // stands on the sun's side, roster.turnDeg round from it, so the light falls on his front. He stands still in his
     // standing pose (baked, like the sideline players), in the team's own colours and a jersey number of his own.
-    // The camera backs off until all of him fits, roster.frameMargin times his size (the models differ in height and
-    // build, the linebacker's shoulder pads are wide).
+    // The camera backs off until all of him fits, with roster.frameMargin times his height in the picture.
     public sealed class RosterStage : MonoBehaviour
     {
         static readonly Vector3 Spot = new Vector3(5000f, -400f, 0f);
@@ -19,8 +18,6 @@ namespace PocketFootball.View
         RenderTexture rt;
         Transform man;
         Vector3 view;     // from the spot toward the camera, flat
-        Bounds body;      // all of him (world space)
-        bool hasBody;
         string shown;   // team/model on the stage now
 
         public static RosterStage Build(GameConfig cfg)
@@ -95,20 +92,15 @@ namespace PocketFootball.View
             ModelSkin.Freeze(fig, FootballFigure.PoseKind.Stand);
             JerseyMarks.SetNumber(man.gameObject, cfg, number);
             JerseyMarks.SetSkin(man.gameObject, cfg, card.Model, JerseyMarks.SkinPick(number));
-            hasBody = false;
-            foreach (var rend in man.GetComponentsInChildren<Renderer>())
-            {
-                if (!hasBody) { body = rend.bounds; hasBody = true; }
-                else body.Encapsulate(rend.bounds);
-            }
         }
 
-        // The camera along `view`, far enough back that his height (and his width, on a narrow picture) fits.
+        // The camera along `view`, far enough back that his height (and his width, on a narrow picture) fits. Every
+        // model is scaled to the figure's height (ModelSkin), so that is his height, feet to helmet; half of it
+        // covers his width, shoulder pads and all.
         void Frame()
         {
-            float h = hasBody ? body.size.y : cfg.view.playerHeightM;
-            float wide = hasBody ? Mathf.Max(body.size.x, body.size.z) : h * 0.5f;
-            Vector3 aim = hasBody ? body.center : transform.position + Vector3.up * h * 0.5f;
+            float h = cfg.view.playerHeightM, wide = h * 0.5f;
+            Vector3 aim = transform.position + Vector3.up * h * 0.5f;
             float m = Mathf.Max(1f, cfg.roster.frameMargin);
             float halfV = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
             float halfH = halfV * Mathf.Max(0.1f, cam.aspect);
