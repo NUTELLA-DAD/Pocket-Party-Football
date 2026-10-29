@@ -466,7 +466,9 @@
     "maxPlayers": 22,
     "codeLetters": "ABCDEFGHJKLMNPQRSTUVWXYZ",
     "codeLength": 4,
-    "stickStaleS": 0.5
+    "stickStaleS": 0.5,
+    "hotspotPrefix": "192.168.137.",
+    "addressCheckS": 3
   },
   "view": {
     "perfLogEveryS": 10,
@@ -707,6 +709,7 @@
     "swapAskS": 12,
     "tint": 0.6,
     "qrFrac": 0.4,
+    "hotspotCardFrac": 0.72,
     "emblemFrac": 0.3,
     "teamApplyS": 1.2,
     "listRows": 6
@@ -1468,6 +1471,7 @@
     "narrowLegs": true,
     "throwMotion": true,
     "kickMotion": true,
+    "fastReturner": true,
     "idleMotion": true,
     "headTrack": true,
     "ballSpin": true,
@@ -1506,6 +1510,7 @@
     "strideHips": true,
     "breakdown": true,
     "catchPlay": true,
-    "pauseQr": true
+    "pauseQr": true,
+    "hotspotQr": true
   }
 }
