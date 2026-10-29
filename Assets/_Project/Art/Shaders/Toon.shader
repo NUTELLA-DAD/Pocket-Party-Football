@@ -49,6 +49,7 @@ Shader "PocketParty/Toon"
         _StainGrass ("Stain grass", Color) = (0.33, 0.48, 0.17, 1)
         _StainDirt ("Stain dirt", Color) = (0.43, 0.32, 0.2, 1)
         _Skin ("Skin tone (ratio to the model's)", Vector) = (1, 1, 1, 1)
+        _Hair ("Hair colour (rgb) and 1 / the model's hair brightness (w; 0 = as painted)", Vector) = (0, 0, 0, 0)
     }
     SubShader
     {

@@ -52,6 +52,7 @@
 .play .pf { min-height: 0; border-radius: 8px; overflow: hidden; display: flex; }
 .play .pf svg { display: block; width: 100%; height: 100%; }
 .play b { font-family: var(--display); font-weight: 900; font-size: 15px; line-height: 1.1; padding: 5px 2px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: .02em; }
+.play b .fm { display: block; font-style: normal; font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; opacity: .75; padding-top: 1px; }   /* FEATURES.formations */
 .play[aria-pressed="true"] { border-width: 5px; background: linear-gradient(#24418f, #10215a) padding-box, var(--rim) border-box; box-shadow: 0 0 0 2px var(--edge), 0 0 0 5px rgba(255,201,40,.35), 0 4px 0 2px var(--edge); }
 .play[aria-pressed="true"] b { color: var(--gold); }
 .play .ck {

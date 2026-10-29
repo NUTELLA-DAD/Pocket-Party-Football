@@ -3,72 +3,18 @@
   "name": "HB Screen",
   "side": "offense",
   "desc": "Linemen let rushers through, short pass to the RB behind them",
+  "formation": "shotgun",
   "jobs": [
-    {
-      "kind": "route",
-      "pts": [ [-10, 0]
-      ],
-      "text": "Drop deep, float it to the RB over the rush"
-    },
-    {
-      "kind": "route",
-      "pts": [ [-4, 4], [-2, 10]
-      ],
-      "text": "Slip out behind the line, catch, follow your blockers"
-    },
-    {
-      "kind": "block",
-      "pts": [ [6, -19]
-      ],
-      "text": "Block your cornerback"
-    },
-    {
-      "kind": "block",
-      "pts": [ [6, 19]
-      ],
-      "text": "Block your cornerback"
-    },
-    {
-      "kind": "block",
-      "pts": [ [5, 10]
-      ],
-      "text": "Block the man over you for the screen"
-    },
-    {
-      "kind": "block",
-      "pts": [ [0, -6]
-      ],
-      "text": "Chip the end on your side"
-    },
-    {
-      "kind": "route",
-      "pts": [ [-2, 0], [1, 8]
-      ],
-      "text": "Let him by, then run out and block for the RB"
-    },
-    {
-      "kind": "block",
-      "pts": [ [-1, -1.5]
-      ],
-      "text": "Pass block: stay between him and the QB"
-    },
-    {
-      "kind": "route",
-      "pts": [ [-2, 2], [2, 11]
-      ],
-      "text": "Let him by, then run out and block for the RB"
-    },
-    {
-      "kind": "block",
-      "pts": [ [-1, -3]
-      ],
-      "text": "Pass block: stay between him and the QB"
-    },
-    {
-      "kind": "route",
-      "pts": [ [-2, 4], [3, 14]
-      ],
-      "text": "Let him by, then run out and block for the RB"
-    }
+    { "kind": "route", "pts": [[-10, 0]], "text": "Drop deep, float it to the RB over the rush" },
+    { "kind": "route", "pts": [[-4, 4], [-2, 10]], "text": "Slip out behind the line, catch, follow your blockers" },
+    { "kind": "block", "pts": [[6, -20]], "text": "Block your cornerback" },
+    { "kind": "block", "pts": [[6, 20]], "text": "Block your cornerback" },
+    { "kind": "block", "pts": [[5, 10]], "text": "Block the man over you for the screen" },
+    { "kind": "block", "pts": [[0, -6]], "text": "Chip the end on your side" },
+    { "kind": "route", "pts": [[-2, 0], [1, 8]], "text": "Let him by, then run out and block for the RB" },
+    { "kind": "block", "pts": [[-1, -1.5]], "text": "Pass block: stay between him and the QB" },
+    { "kind": "route", "pts": [[-2, 2], [2, 11]], "text": "Let him by, then run out and block for the RB" },
+    { "kind": "block", "pts": [[-1, -3]], "text": "Pass block: stay between him and the QB" },
+    { "kind": "route", "pts": [[-2, 4], [3, 14]], "text": "Let him by, then run out and block for the RB" }
   ]
 }

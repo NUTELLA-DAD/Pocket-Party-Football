@@ -128,7 +128,7 @@ namespace PocketFootball.Sim
             return n;
         }
 
-        public List<SpotConfig> Spots(int team) => team == Offense ? Cfg.formation.offense : Cfg.formation.defense;
+        public List<SpotConfig> Spots(int team) => Formation.SpotsOf(this, team);
 
         // Adds a player on the team's first free formation spot (spot >= 0: that one). Null when the team is full.
         // A player already in the world on another team moves over.

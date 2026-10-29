@@ -43,4 +43,25 @@ Job kinds:
 
 Every job has a `text`: one short line the phone shows as "your job". The EditMode test `PlaysTests` checks every file: 11 jobs, known kinds, points present where needed, `man` targets 0-10, unique ids, and both sides have at least one play.
 
+Optional, `"formation": "<set id>"` (FEATURES.formations, `NO_FORMATIONS=1` turns it off): where the team lines up for this play, one of `game.json` → `formation.sets`. A set is `{ "name", "side", "spots": [[back, z], ...] }` with one `[back, z]` per formation spot, in the same spot order as above (who is who never changes, only where they stand; `back` = yards behind the line on the team's own side). In the huddle everyone stands in the base line-up; when both calls are in, each team moves to its play's formation, and an audible shifts the team into the new play's one. Write route points from the formation's spots (e.g. in I-Form the QB is 2 back under center, so his drop starts at `[-2, 0]`). The phone cards draw each play's own line-up and show the formation's name under the play's.
+
+| Offense set | Look |
+| --- | --- |
+| `shotgun` | QB 5 deep, RB beside him; 2 wide, slot, inline TE (HB Screen) |
+| `iform` | QB under center, the slot WR as an offset fullback, RB 7 deep (HB Dive) |
+| `pistol` | QB 5 deep, RB right behind him: the base line-up, also the huddle's (Toss Sweep, PA Boot) |
+| `trips` | gun; three receivers to the far side, one alone on the near side (Slants) |
+| `spread` | gun, 2x2: the TE split out as a second slot (Four Verticals) |
+| `jumbo` | under center, the WRs in tight as extra tight ends and a wing (QB Sneak) |
+| `punt`, `fieldgoal` | the kicking line-ups (Kicking.cs still places the punter, holder and kicker) |
+
+| Defense set | Look |
+| --- | --- |
+| `twohigh` | 4-3, two deep safeties (Cover 2) |
+| `singlehigh` | 4-3, one safety deep, the other walked down (Cover 3) |
+| `blitzlook` | outside LBs walked up a step showing blitz, a single high safety (Zone Blitz) |
+| `press` | corners tight on the receivers, safeties down, no deep help (Man Blitz) |
+| `goalline` | everyone close, corners pressed (Goal Line) |
+| `prevent` | corners 10 off, safeties 20 deep (Prevent) |
+
 Optional, M1-c: `"runner": <offense spot>` on a run play: the QB hands the ball to that spot when they meet just after the snap (HB Dive and Toss Sweep use 1, the RB). Without it the QB keeps the ball and throws.

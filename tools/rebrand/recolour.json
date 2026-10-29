@@ -9,6 +9,7 @@
     { "fbx": "Models/TE/TE_Rigged.fbx", "textures": ["Models/TE/TEGRN_BaseColor.png"], "goldZ": [0.42, 1.2] },
     { "fbx": "Models/Kicker/Kicker_Rigged.fbx", "textures": ["Models/Kicker/KickerGRN_BaseColor.png"], "goldZ": [0.42, 1.2] },
     { "fbx": "Models/LeanLB/LeanLB_Rigged.fbx", "textures": ["Models/LeanLB/LeanLBGRN_BaseColor.png"], "goldZ": [0.42, 1.2] },
+    { "fbx": "Models/CB/CB_Rigged.fbx", "textures": ["Models/CB/CBGRN_BaseColor.png"], "goldZ": [0.38, 1.2] },
     { "fbx": "Models/Cheerleader/Cheerleader_Rigged.fbx", "textures": ["Models/Cheerleader/CheerleaderGRN_BaseColor.png"], "goldZ": [0.3, 1.13] }
   ]
 }

@@ -62,6 +62,8 @@ CBUFFER_START(UnityPerMaterial)
     half4 _StainDirt;
     // FEATURES.skinTones: this man's skin as a ratio of the model's own (1, 1, 1: as painted)
     float4 _Skin;
+    // FEATURES.hairColors: her hair colour, and one over the model's own hair's brightness (w 0: as painted)
+    float4 _Hair;
 CBUFFER_END
 TEXTURE2D(_MarksTex); SAMPLER(sampler_MarksTex);
 TEXTURE2D(_DigitsTex); SAMPLER(sampler_DigitsTex);
@@ -69,6 +71,7 @@ TEXTURE2D(_DigitsTex); SAMPLER(sampler_DigitsTex);
 // ---- the marks map (tools/rig/marks.py): where a number or an eye goes on the model's colour map ----
 //   R, G = the texel's spot in its zone (number: -1.5..1.5 number heights; eye: -3..3 iris radii from the iris at rest),
 //   B = 0.5 number / 1 eye, A = inside the zone (an eye: inside its opening).
+//   Outside every zone (A = 0): R = where grass stains may go, G = how much is skin, B = how much is hair.
 // The digits (JerseyMarks.Digits): ten cells, each the glyph box (1 x 1.4) with 0.4 round it, the distance to the
 // glyph's centre line in R (0..0.6 glyph units).
 float MarkDigit(float digit, float gx, float gy)
@@ -163,7 +166,13 @@ half3 Marks(half3 col, float2 uv)
         float skinW = (m.a >= 0.5 ? saturate((sat - 0.15) * 8.0) * step(0.75, m.b) : m.g) * saturate(lum * 12.0 - 0.15);
         half3 skin = col * lerp(half3(1, 1, 1), (half3)_Skin.rgb, skinW);
         if (m.a >= 0.5) outCol = m.b < 0.75 ? MarkNumber(col, q, aa) : MarkEye(skin, q * 2.0, aa * 2.0);
-        else outCol = MarkStain(skin, uv, sn, saa, m.r * step(m.b, 0.25));
+        else
+        {
+            // FEATURES.hairColors: the hair drawn in her own colour at the brightness painted there
+            half3 hair = (half3)_Hair.rgb * min(lum * _Hair.w, 2.0);
+            skin = lerp(skin, hair, m.b * step(0.001, _Hair.w));
+            outCol = MarkStain(skin, uv, sn, saa, m.r * step(m.b, 0.25));
+        }
     }
     return outCol;
 }

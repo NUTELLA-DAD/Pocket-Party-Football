@@ -492,7 +492,11 @@ namespace PocketFootball.Boot
 
             float margin = 56 * s, top = 132 * s, bottom = 150 * s;
             Text(new Rect(0, 26 * s, sw, 80 * s), "JOIN THE GAME", big, 64 * s, GoldText);
-            Text(new Rect(0, 92 * s, sw, 36 * s), "Scan the code with your phone (same Wi-Fi as the TV), then pick your side", small, 26 * s, Color.white);
+            // FEATURES.hotspotQr: with a hotspot saved, a NO WI-FI? card stands beside the usual code
+            var hotspot = HotspotJoin.Instance != null && HotspotJoin.Instance.Shown ? HotspotJoin.Instance : null;
+            Text(new Rect(0, 92 * s, sw, 36 * s), hotspot != null
+                ? "On the TV's Wi-Fi? Scan the first code.  No Wi-Fi? Follow the NO WI-FI? card.  Then pick your side."
+                : "Scan the code with your phone (same Wi-Fi as the TV), then pick your side", small, 26 * s, Color.white);
 
             // the QR card, left
             float qr = Mathf.Min(sh * lc.qrFrac, (sh - top - bottom) - 300 * s), pad = 28 * s;
@@ -506,7 +510,7 @@ namespace PocketFootball.Boot
                 Text(new Rect(qc.x + 12 * s, y, qc.width - 24 * s, 160 * s), "Phone server failed:\n" + host.ServerError, mid, 24 * s, new Color(1f, 0.5f, 0.5f));
             else
             {
-                Text(new Rect(qc.x, y, qc.width, 44 * s), "SCAN TO JOIN", big, 36 * s, GoldText);
+                Text(new Rect(qc.x, y, qc.width, 44 * s), hotspot != null ? "SAME WI-FI? SCAN" : "SCAN TO JOIN", big, 36 * s, GoldText);
                 Text(new Rect(qc.x, y + 44 * s, qc.width, 32 * s), "or open <b>" + host.Url.Replace("http://", "") + "</b>", small, 24 * s, Color.white);
                 Text(new Rect(qc.x, y + 86 * s, qc.width, 30 * s), "ROOM CODE", small, 22 * s, Muted);
                 var code = new Rect(qc.center.x - 130 * s, y + 118 * s, 260 * s, 84 * s);
@@ -515,8 +519,18 @@ namespace PocketFootball.Boot
                 Text(code, host.RoomCode, big, 60 * s, Color.white);
             }
 
+            // the NO WI-FI? card, next to it
+            float leftEnd = qc.xMax;
+            if (hotspot != null)
+            {
+                var hc = new Rect(qc.xMax + 24 * s, qc.y, qc.width * lc.hotspotCardFrac, qc.height);
+                Card(hc, s, false);
+                hotspot.DrawCard(hc, s, qr * 0.8f, GoldText, Muted);
+                leftEnd = hc.xMax;
+            }
+
             // the two team cards, right, VS between them
-            float areaX = qc.xMax + 44 * s, areaW = sw - margin - areaX, vs = 110 * s;
+            float areaX = leftEnd + 44 * s, areaW = sw - margin - areaX, vs = 110 * s;
             float cw = (areaW - vs) * 0.5f;
             bool pick = CanPick;
             for (int side = 0; side < 2 && side < cfg.teams.Count; side++)
@@ -599,7 +613,7 @@ namespace PocketFootball.Boot
             int rows = Mathf.Max(1, lc.listRows);
             float lh = 34 * s;
             if (lines.Count == 0)
-                Text(new Rect(x, y, w, 64 * s), "Nobody yet. Bots play every spot.\nPick this side on your phone!", small, 26 * s, new Color(0.88f, 0.91f, 1f));
+                Text(new Rect(x, y, w, 110 * s), "Nobody yet. Bots play every spot.\nPick this side on your phone!", small, 26 * s, new Color(0.88f, 0.91f, 1f));   // (room for 3 lines: narrow cards beside the NO WI-FI? card)
             for (int i = 0; i < lines.Count && i < rows; i++)
             {
                 bool more = i == rows - 1 && lines.Count > rows;
