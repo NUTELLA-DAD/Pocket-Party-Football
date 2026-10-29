@@ -783,6 +783,8 @@
     "holdReadyS": 0.7,
     "aimSweepS": 2.2,
     "powerSweepS": 1.6,
+    "phoneSyncS": 0.25,
+    "tapSlackS": 0.3,
     "fgMinAngleDeg": 30,
     "fgMaxAngleDeg": 44,
     "shankFromPower": 0.94,
@@ -1264,6 +1266,8 @@
     "wind": true,
     "kickCam": true,
     "pauseMenu": true,
-    "toonHud": true
+    "toonHud": true,
+    "passTarget": true,
+    "kickSync": true
   }
 }

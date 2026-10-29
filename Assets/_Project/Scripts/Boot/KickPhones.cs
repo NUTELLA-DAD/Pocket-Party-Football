@@ -15,12 +15,17 @@ namespace PocketFootball.Boot
     //     wind {mph, right, along} (right: -1..1 across his kick to his right, along: -1..1 at his back)
     //   phone -> game: kick {power 0..1, aim -1..1, aid}   (the kick pad: phone/kick.js, or layouts.js's own pad)
     //   phone -> game: kickaim {aim -1..1, aid}   (FEATURES.kickSweep's first tap: the aim, and the snap)
+    //   FEATURES.kickSync: sweep also carries t (game seconds into the arrow now sweeping), maxDeg (the aim's widest
+    //     angle, kicking.maxAimDeg), postsYd (half the posts' width) and distYd (the hold to the posts), sent again
+    //     every kicking.phoneSyncS; the phone runs its arrow from t, and its kickaim and kick add st (the seconds its
+    //     arrow showed) for Kicking.TapAt.
     // The kicker's phone also gets the "kick" layout (Input/PhoneLayouts.cs), which hides HIKE and the throws.
     // It also puts the TV's kick meter (View/KickMeter.cs) on the host.
     public sealed class KickPhones : MonoBehaviour
     {
         PartyHost host;
         readonly Dictionary<int, string> last = new Dictionary<int, string>();   // by slot: the last kickmeter sent
+        readonly Dictionary<int, float> sentAt = new Dictionary<int, float>();   // by slot: when (FEATURES.kickSync)
 
         public static KickPhones Attach(PartyHost h)
         {
@@ -36,8 +41,13 @@ namespace PocketFootball.Boot
             if (PhoneProtocol.Str(m, "aid") != src.Aid) return;
             var p = h.World.Find(src.Seat.Slot);
             if (p == null) return;
+            if (Synced(h.World, m)) { Kicking.TapAt(h.World, p.Slot, PhoneProtocol.Float(m, "st", 0f, 600f)); return; }
             Kicking.Kick(h.World, p.Slot, PhoneProtocol.Float(m, "power", 0f, 1f), PhoneProtocol.Float(m, "aim", -1f, 1f));
         }
+
+        // FEATURES.kickSync: a tap from a phone running the game's sweep clock (it says which second it showed)
+        static bool Synced(World w, JObject m) =>
+            w.Cfg.Feature("kickSync") && m["st"] != null && Kicking.Stage(w) != Kicking.SweepStage.None;
 
         // The first tap of a field goal (FEATURES.kickSweep): the aim the phone's arrow showed. Same guards as a kick.
         public static void OnAim(PartyHost h, PhoneSource src, JObject m)
@@ -45,6 +55,7 @@ namespace PocketFootball.Boot
             if (PhoneProtocol.Str(m, "aid") != src.Aid) return;
             var p = h.World.Find(src.Seat.Slot);
             if (p == null) return;
+            if (Synced(h.World, m)) { Kicking.TapAt(h.World, p.Slot, PhoneProtocol.Float(m, "st", 0f, 600f)); return; }
             Kicking.SetAim(h.World, p.Slot, PhoneProtocol.Float(m, "aim", -1f, 1f));
         }
 
@@ -57,15 +68,20 @@ namespace PocketFootball.Boot
             {
                 if (s.Kind != SeatKind.Phone || !s.Connected || s.Conn < 0) continue;
                 var p = w.Find(s.Slot);
-                string msg = Meter(w, p);
-                string key = s.Conn + " " + msg;   // (a phone that reconnected gets it again)
-                if (last.TryGetValue(s.Slot, out var was) && was == key) continue;
+                string key = s.Conn + " " + Meter(w, p, false);   // (a phone that reconnected gets it again)
+                bool same = last.TryGetValue(s.Slot, out var was) && was == key;
+                // FEATURES.kickSync: while an arrow sweeps, the game's sweep clock again every phoneSyncS
+                bool sync = Kicking.Stage(w) != Kicking.SweepStage.None && p != null && Kicking.WaitingToKick(w, p) && w.Cfg.Feature("kickSync")
+                    && (!sentAt.TryGetValue(s.Slot, out float at) || Time.unscaledTime - at >= w.Cfg.kicking.phoneSyncS);
+                if (same && !sync) continue;
                 last[s.Slot] = key;
-                host.Server.Send(s.Conn, msg);
+                sentAt[s.Slot] = Time.unscaledTime;
+                host.Server.Send(s.Conn, Meter(w, p));
             }
         }
 
-        public static string Meter(World w, Player p)
+        // clock: with FEATURES.kickSync, the sweep's t (left out to tell whether anything else changed)
+        public static string Meter(World w, Player p, bool clock = true)
         {
             bool on = p != null && Kicking.WaitingToKick(w, p);
             var o = new JObject { ["t"] = "kickmeter", ["on"] = on };
@@ -81,6 +97,13 @@ namespace PocketFootball.Boot
                     ["need"] = System.Math.Round(Kicking.NeedPower(w), 2), ["shank"] = c.shankFromPower,
                 };
                 if (stage == Kicking.SweepStage.Power) o["sweep"]["aim"] = System.Math.Round(w.Kick.Aim, 2);   // (the first tap's aim)
+                if (w.Cfg.Feature("kickSync"))
+                {
+                    o["sweep"]["maxDeg"] = c.maxAimDeg;
+                    o["sweep"]["postsYd"] = c.postsHalfWidthYd;
+                    o["sweep"]["distYd"] = System.Math.Round(System.Math.Abs(w.Dir * w.Cfg.field.HalfLength - w.Kick.HoldX), 1);   // (the hold to the posts)
+                    if (clock) o["sweep"]["t"] = System.Math.Round(Kicking.SweepSeconds(w), 3);
+                }
                 if (Kicking.WindOn(w))
                 {
                     Kicking.Wind(w, out float x, out float z);

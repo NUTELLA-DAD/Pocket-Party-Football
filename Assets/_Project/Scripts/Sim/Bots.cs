@@ -212,10 +212,16 @@ namespace PocketFootball.Sim
             return (bl.VY + (float)Math.Sqrt(Math.Max(0f, bl.VY * bl.VY + (g + g) * drop))) / g;
         }
 
-        // The receiver a pass in the air is meant for: the offense player nearest where it comes down (the QB aside).
+        // The receiver a pass in the air is meant for: the man whose receiver button the QB pressed (FEATURES.passTarget),
+        // else the offense player nearest where it comes down (the QB aside).
         public static Player Intended(World w)
         {
             if (w.Ball.State != BallState.Flying) return null;
+            if (w.PassTarget >= 0 && w.Cfg.Feature("passTarget"))
+            {
+                var meant = w.Find(w.PassTarget);
+                if (meant != null && meant.Team == w.Offense) return meant;
+            }
             var qb = LivePlay.Qb(w);
             Player best = null; float bd = float.MaxValue;
             foreach (var o in w.Players)

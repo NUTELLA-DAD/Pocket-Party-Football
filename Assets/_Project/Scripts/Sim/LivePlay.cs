@@ -39,6 +39,7 @@ namespace PocketFootball.Sim
             w.PlayTicks = 0;
             w.Thrown = false;
             w.StickThrow = false;
+            w.PassTarget = -1;
             w.Intercepted = false;
             w.Result = "";
             w.CatchTried.Clear();
@@ -84,7 +85,13 @@ namespace PocketFootball.Sim
             if (w.Phase != Phase.Live) return;
             var carrier = Carrier(w);
             // the QB's throw
-            if (input.Throw > 0 && carrier == p && p == Qb(w) && !w.Thrown) ThrowTo(w, Receiver(w, input.Throw), input.Lob);
+            if (input.Throw > 0 && carrier == p && p == Qb(w) && !w.Thrown)
+            {
+                var target = Receiver(w, input.Throw);
+                ThrowTo(w, target, input.Lob);
+                // FEATURES.passTarget: the pass is for the man whose button was pressed, not whoever is nearest where it lands
+                if (w.Thrown && target != null && p.Human && w.Cfg.Feature("passTarget")) w.PassTarget = target.Slot;
+            }
             else if (input.ThrowAt && carrier == p && p == Qb(w) && !w.Thrown && ThrowStick.On(w)) ThrowStick.Throw(w, p, input.AimX, input.AimZ, input.Arc);
             // the ball carrier's juke: a burst to the side the stick points (or the far side)
             if (input.Juke && carrier == p && p.JukeCooldown == 0)
@@ -172,9 +179,14 @@ namespace PocketFootball.Sim
             if (w.Ball.State == BallState.Flying && w.Ball.VY < 0f && w.Ball.Y <= c.catchMaxHeightYd)
             {
                 Player near = null; float nd = float.MaxValue;
+                // FEATURES.passTarget: the man the QB picked goes up for it ahead of a teammate who drifted closer
+                var meant = w.PassTarget >= 0 ? Bots.Intended(w) : null;
+                bool hisBall = meant != null && !w.CatchTried.Contains(meant.Slot)
+                    && (float)Math.Sqrt((meant.X - w.Ball.X) * (meant.X - w.Ball.X) + (meant.Z - w.Ball.Z) * (meant.Z - w.Ball.Z)) <= c.catchRadiusYd;
                 foreach (var p in w.Players)
                 {
                     if (w.CatchTried.Contains(p.Slot)) continue;
+                    if (hisBall && p.Team == w.Offense && p != meant) continue;
                     float dx = p.X - w.Ball.X, dz = p.Z - w.Ball.Z, d = (float)Math.Sqrt(dx * dx + dz * dz);
                     if (d <= c.catchRadiusYd && d < nd) { near = p; nd = d; }
                 }
