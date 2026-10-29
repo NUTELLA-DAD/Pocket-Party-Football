@@ -8,6 +8,8 @@ namespace PocketFootball.View
     // never reaches it, its own camera sees nothing past a few metres), lit by the same sun as the field: the camera
     // stands on the sun's side, roster.turnDeg round from it, so the light falls on his front. He stands still in his
     // standing pose (baked, like the sideline players), in the team's own colours and a jersey number of his own.
+    // The camera backs off until all of him fits, roster.frameMargin times his size (the models differ in height and
+    // build, the linebacker's shoulder pads are wide).
     public sealed class RosterStage : MonoBehaviour
     {
         static readonly Vector3 Spot = new Vector3(5000f, -400f, 0f);
@@ -16,6 +18,9 @@ namespace PocketFootball.View
         Camera cam;
         RenderTexture rt;
         Transform man;
+        Vector3 view;     // from the spot toward the camera, flat
+        Bounds body;      // all of him (world space)
+        bool hasBody;
         string shown;   // team/model on the stage now
 
         public static RosterStage Build(GameConfig cfg)
@@ -33,17 +38,16 @@ namespace PocketFootball.View
             Vector3 toSun = RenderSettings.sun != null ? -RenderSettings.sun.transform.forward : Vector3.right;
             toSun.y = 0f;
             if (toSun.sqrMagnitude < 1e-4f) toSun = Vector3.right;
-            Vector3 view = Quaternion.AngleAxis(r.turnDeg, Vector3.up) * toSun.normalized;
+            s.view = Quaternion.AngleAxis(r.turnDeg, Vector3.up) * toSun.normalized;
             var camGo = new GameObject("RosterCamera");
             camGo.transform.SetParent(go.transform, false);
-            camGo.transform.localPosition = view * r.cameraDistM + Vector3.up * r.cameraHeightM;
-            camGo.transform.LookAt(Spot + Vector3.up * r.lookHeightM);
+            camGo.transform.localPosition = s.view * cfg.view.playerHeightM * 2f;
             s.cam = camGo.AddComponent<Camera>();
             s.cam.clearFlags = CameraClearFlags.SolidColor;
             s.cam.backgroundColor = Colors.Hex(r.backdrop);
             s.cam.fieldOfView = r.fovDeg;
             s.cam.nearClipPlane = 0.1f;
-            s.cam.farClipPlane = r.cameraDistM * 3f;
+            s.cam.farClipPlane = cfg.view.playerHeightM * 10f;
             s.cam.enabled = false;   // (on while the page shows: Picture)
             return s;
         }
@@ -60,6 +64,7 @@ namespace PocketFootball.View
             }
             cam.enabled = true;
             Dress(team, card);
+            Frame();
             return rt;
         }
 
@@ -90,6 +95,27 @@ namespace PocketFootball.View
             ModelSkin.Freeze(fig, FootballFigure.PoseKind.Stand);
             JerseyMarks.SetNumber(man.gameObject, cfg, number);
             JerseyMarks.SetSkin(man.gameObject, cfg, card.Model, JerseyMarks.SkinPick(number));
+            hasBody = false;
+            foreach (var rend in man.GetComponentsInChildren<Renderer>())
+            {
+                if (!hasBody) { body = rend.bounds; hasBody = true; }
+                else body.Encapsulate(rend.bounds);
+            }
+        }
+
+        // The camera along `view`, far enough back that his height (and his width, on a narrow picture) fits.
+        void Frame()
+        {
+            float h = hasBody ? body.size.y : cfg.view.playerHeightM;
+            float wide = hasBody ? Mathf.Max(body.size.x, body.size.z) : h * 0.5f;
+            Vector3 aim = hasBody ? body.center : transform.position + Vector3.up * h * 0.5f;
+            float m = Mathf.Max(1f, cfg.roster.frameMargin);
+            float halfV = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
+            float halfH = halfV * Mathf.Max(0.1f, cam.aspect);
+            float dist = Mathf.Max(h * m * 0.5f / halfV, wide * m * 0.5f / halfH) + wide * 0.5f;
+            cam.transform.position = aim + view * dist;
+            cam.transform.LookAt(aim);
+            cam.farClipPlane = dist * 3f;
         }
 
         void OnDestroy()

@@ -1,13 +1,15 @@
 # The title's ROSTER button, made from the SETTINGS button: the word painted out with the plate's own navy (each row
-# copied across from a column clear of the letters), then ROSTER in Pocket Block, cream with a dark ink edge and a
-# drop, like the other buttons. Needs Pillow:  python tools/title/roster_button.py
+# copied across from a column clear of the letters), then ROSTER in a heavy upright slab serif (DejaVu Serif Bold,
+# fattened), cream with a dark ink edge and a drop, close to the block letters of the other buttons.
+# Needs Pillow and the DejaVu fonts:  python tools/title/roster_button.py
 import os
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 title = os.path.join(root, 'Assets', '_Project', 'Resources', 'Title')
-ttf = os.path.join(root, 'Assets', '_Project', 'Resources', 'Fonts', 'PocketBlock.ttf')
+ttf = '/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf'
+fat = 4   # the letters fattened this many px all round, toward the varsity block
 
 src = Image.open(os.path.join(title, 'ButtonSettings.png')).convert('RGBA')
 W, H = src.size
@@ -21,19 +23,19 @@ for y in range(y0, y1):
         px[x, y] = c
 
 text = 'ROSTER'
-size = 112
+size = 104
 font = ImageFont.truetype(ttf, size)
 box = font.getbbox(text)
 tw, th = box[2] - box[0], box[3] - box[1]
 tx, ty = (W - tw) // 2 - box[0], (H - th) // 2 - box[1] - 4
-edge = 7
+edge = 7 + fat
 ink = (6, 13, 43, 255)
 layer = Image.new('RGBA', (W, H), (0, 0, 0, 0))
 d = ImageDraw.Draw(layer)
 d.text((tx, ty + edge + 5), text, font=font, fill=ink, stroke_width=edge, stroke_fill=ink)   # the drop
 d.text((tx, ty), text, font=font, fill=ink, stroke_width=edge, stroke_fill=ink)              # the edge
 fill = Image.new('RGBA', (W, H), (0, 0, 0, 0))
-ImageDraw.Draw(fill).text((tx, ty), text, font=font, fill=(255, 255, 255, 255))
+ImageDraw.Draw(fill).text((tx, ty), text, font=font, fill=(255, 255, 255, 255), stroke_width=fat, stroke_fill=(255, 255, 255, 255))
 # cream, a touch warmer toward the bottom (like SETTINGS)
 grad = Image.new('RGBA', (W, H))
 gp = grad.load()

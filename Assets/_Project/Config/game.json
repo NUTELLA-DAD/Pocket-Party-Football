@@ -1146,11 +1146,9 @@
       { "model": "Models/Kicker/Kicker_Rigged", "name": "KICKER", "number": 9 }
     ],
     "ratingMax": 10,
-    "cameraDistM": 4.2,
-    "cameraHeightM": 1.15,
-    "lookHeightM": 1.0,
     "fovDeg": 30,
     "turnDeg": 25,
+    "frameMargin": 1.18,
     "backdrop": "#13275e",
     "floor": "#ffc81f"
   },

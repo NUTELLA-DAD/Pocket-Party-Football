@@ -103,7 +103,7 @@ namespace PocketFootball.Boot
             var card = cards[rosterCard];
 
             // the picture, on the left, with ◄ ► either side
-            float top = r.y + 168 * s, bottom = r.yMax - 92 * s;
+            float top = r.y + 168 * s, bottom = r.yMax - 136 * s;
             float ph = bottom - top, pw = Mathf.Min(ph * 0.8f, r.width * 0.4f);
             var pic = new Rect(r.x + pad + 44 * s, top, pw, ph);
             Fill(new Rect(pic.x - 5 * s, pic.y - 5 * s, pic.width + 10 * s, pic.height + 10 * s), gold);
@@ -195,7 +195,7 @@ namespace PocketFootball.Boot
         // A rating as pips: `value` of `max` lit gold, the rest dim, and the number after them.
         void Pips(Rect at, int value, int max, float s)
         {
-            float numW = 30 * s, gap = Mathf.Max(1f, 3 * s);
+            float numW = 44 * s, gap = Mathf.Max(1f, 3 * s);
             float pw = (at.width - numW - gap * (max - 1)) / max;
             for (int i = 0; i < max; i++)
             {

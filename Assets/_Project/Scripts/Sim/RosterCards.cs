@@ -87,9 +87,9 @@ namespace PocketFootball.Sim
         public SortedDictionary<string, string> posNotes = new SortedDictionary<string, string>(StringComparer.Ordinal);
         public List<RosterModel> models = new List<RosterModel>();
         public int ratingMax;
-        // the model on the page: the camera this far in front of him and this high (metres), the lens, and his turn
-        // toward the camera's left (degrees, so the light falls on his front)
-        public float cameraDistM, cameraHeightM, lookHeightM, fovDeg, turnDeg;
+        // the model on the page: the lens, the camera's turn round from the sun (degrees, so the light falls on his
+        // front), and how much room round him (1.2: his size and a tenth more each side)
+        public float fovDeg, turnDeg, frameMargin;
         public string backdrop, floor;
 
         public RosterModel For(string model)
