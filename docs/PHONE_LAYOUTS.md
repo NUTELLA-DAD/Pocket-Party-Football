@@ -15,6 +15,10 @@
 | Kick pad (drag up, let go) | `{ t: "kick", power: 0..1, aim: -1..1, aid }` |
 | Field goal, first tap (`kick.js`, `FEATURES.kickSweep`) | `{ t: "kickaim", aim: -1..1, aid }` (sets the aim and snaps the ball) |
 | Field goal, second tap | `{ t: "kick", power: 0..1, aim: <the first tap's>, aid }` |
+| Punt or field goal, steering the arc (`kick.js`, `FEATURES.kickArc`) | `{ t: "kicksteer", aim: -1..1, aid }` |
+| ...HIKE | `{ t: "kickaim", aim: -1..1, aid }` |
+| ...first tap (POWER) | `{ t: "kickpower", power: 0..1, st?, aid }` |
+| ...second tap (PITCH ANGLE) | `{ t: "kick", pitch: 0..1, st?, aid }` |
 
 Actions: `find`, `hike`, `throw`, `scramble`, `sprint` (hold), `juke`, `spin`, `stiff`, `divein`, `call`, `catch`, `block` (hold), `swim`, `bull`, `tackle`, `swat`, `dive`, `jump`. A layout change while a button is held sends that button's release first, so the game never sees a stuck SPRINT or BLOCK.
 
