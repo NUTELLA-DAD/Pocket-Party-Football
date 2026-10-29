@@ -143,5 +143,36 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual(0, LanAddress.Rank(IPAddress.Parse("8.8.8.8")));
             Assert.IsNotEmpty(LanAddress.Best());
         }
+    
+
+        // FEATURES.hotspotQr: the Wi-Fi join code phones' cameras read as "Join network?"
+        [Test]
+        public void WifiCodeHoldsTheNameAndPassword()
+        {
+            Assert.AreEqual("WIFI:T:WPA;S:Party TV;P:touchdown1;;", WifiQr.Payload("Party TV", "touchdown1"));
+            Assert.AreEqual("WIFI:T:nopass;S:Open;;", WifiQr.Payload("Open", ""));
+            Assert.AreEqual("WIFI:T:WPA;S:a\\;b\\:c;P:p\\,q\\\"r\\\\s12;;", WifiQr.Payload("a;b:c", "p,q\"r\\s12"));
+            Assert.IsNull(WifiQr.Payload("", "whatever1"));
+            Assert.IsNull(WifiQr.Problem("Party TV", "touchdown1"));
+            Assert.IsNull(WifiQr.Problem("Party TV", ""));
+            Assert.IsNotNull(WifiQr.Problem("", "touchdown1"));
+            Assert.IsNotNull(WifiQr.Problem("Party TV", "short"));
+            Assert.IsNotNull(WifiQr.Problem(new string('x', 33), "touchdown1"));
+            var qr = QrCode.EncodeText(WifiQr.Payload("Party TV", "touchdown1"), QrEcc.Medium);
+            Assert.GreaterOrEqual(qr.Size, 21);
+        }
+
+        [Test]
+        public void HotspotAddressIsKeptApartFromTheLan()
+        {
+            Assert.IsTrue(LanAddress.IsHotspot("192.168.137.1", LanAddress.WindowsHotspotPrefix));
+            Assert.IsFalse(LanAddress.IsHotspot("192.168.1.37", LanAddress.WindowsHotspotPrefix));
+            Assert.IsFalse(LanAddress.IsHotspot("192.168.13.7", LanAddress.WindowsHotspotPrefix));
+            Assert.IsFalse(LanAddress.IsHotspot("192.168.137.1", ""));
+            Assert.IsFalse(LanAddress.IsHotspot(null, LanAddress.WindowsHotspotPrefix));
+            Assert.IsFalse(LanAddress.IsHotspot(LanAddress.Best(), LanAddress.WindowsHotspotPrefix));
+            string hot = LanAddress.Hotspot();
+            if (hot != null) StringAssert.StartsWith(LanAddress.WindowsHotspotPrefix, hot);
+        }
     }
 }

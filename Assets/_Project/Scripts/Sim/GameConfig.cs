@@ -262,6 +262,10 @@ namespace PocketFootball.Sim
         public int port, portTries, maxPlayers, codeLength;
         public string bindAddress, codeLetters;
         public float stickStaleS;
+        // FEATURES.hotspotQr: the address range of this PC's own Wi-Fi hotspot (Windows Mobile Hotspot: 192.168.137.x),
+        // and how often the TV looks again for a hotspot turned on or off while the game runs
+        public string hotspotPrefix;
+        public float addressCheckS;
     }
 
     public sealed class ViewConfig
@@ -363,6 +367,7 @@ namespace PocketFootball.Sim
         public bool holdUntilKickoff, botCoversDropped;
         public float swapAskS;
         public float tint, qrFrac, emblemFrac, teamApplyS;
+        public float hotspotCardFrac;   // FEATURES.hotspotQr: the Wi-Fi card's width, against the join card's
         public int listRows;
     }
 

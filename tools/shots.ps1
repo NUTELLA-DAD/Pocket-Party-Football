@@ -25,8 +25,13 @@ foreach ($f in $Fixtures) {
         'title_roster'    { @('-title','-title-page','roster') }
         'title_roster_lb' { @('-title','-title-page','roster:4:GRN') }
         'lobby'           { @('-lobby') }
+        'lobby_hotspot'   { @('-lobby') }
+        'title_hotspot'   { @('-title','-title-page','hotspot') }
         default           { }
     })
+    # (the hotspot shots: a made-up hotspot, so the NO WI-FI? card shows)
+    if ($f -like '*_hotspot') { $env:PP_HOTSPOT_NAME = 'Party TV'; $env:PP_HOTSPOT_PASSWORD = 'touchdown1' }
+    else { Remove-Item Env:PP_HOTSPOT_NAME, Env:PP_HOTSPOT_PASSWORD -ErrorAction SilentlyContinue }
     $p = Start-Process -FilePath $exe -ArgumentList (@('-fixture',$f,'-seed','1','-bind','127.0.0.1') + $extra + @('-shots',"`"$shots`"",'-quit-after-shots','-screen-width','1920','-screen-height','1080','-screen-fullscreen','0','-logFile',"`"$LOGS\shots-$f.log`"")) -PassThru
     if (-not $p.WaitForExit(60000)) { $p.Kill(); Write-Host "SHOT TIMEOUT: $f"; exit 1 }
     if (-not (Test-Path (Join-Path $shots "$f.png"))) { Write-Host "SHOT MISSING: $f (see .logs\shots-$f.log)"; exit 1 }

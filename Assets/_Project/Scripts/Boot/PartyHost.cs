@@ -31,6 +31,7 @@ namespace PocketFootball.Boot
         public string RoomCode { get; private set; }
         public string Url { get; private set; }
         public string ServerError { get; private set; }
+        public bool BoundToAll { get; private set; }   // listening on every network (not one address): a hotspot reaches it too
         public PlayersView Players { get; private set; }
         // The practice lab (LabMode) plugs in here: its own keys instead of the dev keys, the keyboard player's input
         // before each tick, and the drill's bookkeeping after it.
@@ -60,7 +61,7 @@ namespace PocketFootball.Boot
         // FEATURES.lobbyScreen: the TV picks new teams in the lobby. The Boot scene is built again with them (every
         // model, the stadium, the field paint), but the phone server, the room code and the roster carry over, so the
         // phones stay connected and keep their side (away or home) and their spots.
-        sealed class Carry { public PhoneServer Server; public Roster Roster; public string RoomCode, Url, ServerError; }
+        sealed class Carry { public PhoneServer Server; public Roster Roster; public string RoomCode, Url, ServerError; public bool BoundToAll; }
         static Carry carry;
         bool keepServer;
 
@@ -83,6 +84,7 @@ namespace PocketFootball.Boot
             h.marks = new Markings(cfg, baseMat);
             if (kept != null) h.TakeServer(kept);
             else h.StartServer(args.Bind);
+            HotspotJoin.Attach(h, cfg);   // FEATURES.hotspotQr: the Wi-Fi join code for a game with no router
             h.FillWithBots();
             if (kept != null) h.SeatCarriedPeople();
             GamepadHost.Attach(h, cfg);   // WS-14: Xbox pads join as players (FEATURES.gamepad)
@@ -140,7 +142,8 @@ namespace PocketFootball.Boot
             int port = PortOverride >= 0 ? PortOverride : n.port;
             Server = new PhoneServer(Path.Combine(Application.streamingAssetsPath, "phone"));
             if (!Server.Start(bind, port, n.portTries)) { ServerError = Server.Error; Debug.LogWarning("[net] phone server failed: " + ServerError); }
-            string host = bind.Equals(IPAddress.Loopback) ? "127.0.0.1" : LanAddress.Best();
+            BoundToAll = bind.Equals(IPAddress.Any);
+            string host = bind.Equals(IPAddress.Loopback) ? "127.0.0.1" : LanAddress.Best(n.hotspotPrefix);
             Url = "http://" + host + ":" + Server.Port;
             qrTex = MakeQr(Url + "/join/" + RoomCode);
             Debug.Log("[net] phones join at " + Url + "/join/" + RoomCode + " (bound " + bind + ")");
@@ -159,7 +162,7 @@ namespace PocketFootball.Boot
         public void SwitchTeams(string away, string home)
         {
             TitleScreen.SaveTeams(away, home);
-            carry = new Carry { Server = Server, Roster = Roster, RoomCode = RoomCode, Url = Url, ServerError = ServerError };
+            carry = new Carry { Server = Server, Roster = Roster, RoomCode = RoomCode, Url = Url, ServerError = ServerError, BoundToAll = BoundToAll };
             keepServer = true;
             GamepadHost.Instance?.CarryPads();
             Debug.Log("[lobby] new teams: " + away + " at " + home + "; building the stadium again (the phones stay)");
@@ -172,7 +175,20 @@ namespace PocketFootball.Boot
             RoomCode = kept.RoomCode;
             Url = kept.Url;
             ServerError = kept.ServerError;
+            BoundToAll = kept.BoundToAll;
             if (Url != null) qrTex = MakeQr(Url + "/join/" + RoomCode);
+        }
+
+        // FEATURES.hotspotQr: the PC's address moved (Wi-Fi joined later, or only the hotspot is up): a new join code.
+        // Phones already in keep their connection.
+        public void MoveTo(string address)
+        {
+            if (Server == null || ServerError != null || string.IsNullOrEmpty(address)) return;
+            string url = "http://" + address + ":" + Server.Port;
+            if (url == Url) return;
+            Url = url;
+            qrTex = MakeQr(Url + "/join/" + RoomCode);
+            Debug.Log("[net] phones join at " + Url + "/join/" + RoomCode + " (the address changed)");
         }
 
         // After a team switch: every person back on their side (a bot's spot; the lobby puts them on their own spots
@@ -599,7 +615,7 @@ namespace PocketFootball.Boot
         }
 
         // ---- the TV ----
-        static Texture2D MakeQr(string text)
+        public static Texture2D MakeQr(string text)
         {
             var qr = QrCode.EncodeText(text, QrEcc.Medium);
             const int quiet = 4;
