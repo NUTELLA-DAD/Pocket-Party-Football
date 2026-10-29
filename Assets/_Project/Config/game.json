@@ -1427,6 +1427,7 @@
     "narrowLegs": true,
     "throwMotion": true,
     "kickMotion": true,
+    "fastReturner": true,
     "idleMotion": true,
     "headTrack": true,
     "ballSpin": true,
