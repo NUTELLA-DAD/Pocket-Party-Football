@@ -601,9 +601,10 @@ namespace PocketFootball.Boot
                 }
             }
 
-            // the people: a small team-coloured triangle over each person's player (no name, so it hides nothing);
-            // shape badges over receivers (photo scenes for now). None during a replay: they would hang over the live
-            // players, who are hidden.
+            // the people: a small triangle over each person's player in his phone's colour (the team colour the
+            // controller is painted in; no name, so it hides nothing), flashing white while FIND ME is on; shape badges
+            // over receivers (photo scenes for now). None during a replay: they would hang over the live players, who are hidden.
+            float now = Time.unscaledTime;
             if (cam != null && !Replay.OnScreen)
                 foreach (var p in World.Players)
                 {
@@ -613,8 +614,10 @@ namespace PocketFootball.Boot
                     {
                         var tc = Colors.Hex(cfg.teams[p.Team].color);
                         var seat = Photo == null ? Roster[p.Slot] : null;
+                        bool find = seat != null && findUntil.TryGetValue(p.Slot, out float fu) && fu > now;
                         if (!Hud.EdgePortrait(cam, Players.HeadPosition(p.Slot), tc, p.Number, s))
-                            Hud.Pointer(new Vector2(sp.x, Screen.height - sp.y), tc, p.BotHelp || (seat != null && !seat.Connected), s);
+                            Hud.Pointer(new Vector2(sp.x, Screen.height - sp.y), tc, p.BotHelp || (seat != null && !seat.Connected), s,
+                                find && ((int)(now * 8f)) % 2 == 0);
                     }
                     if (Photo == null && LivePlay.On(World) && (World.Phase == Phase.Set || World.Phase == Phase.Live) && !World.Thrown && p.Team == World.Offense)
                     {
@@ -652,32 +655,24 @@ namespace PocketFootball.Boot
                 GUI.Label(br, tv, banner);
             }
 
-            // name plates only while FIND ME is on (with the beam and the ring flash), and a small OUT past the lines; the rest of
-            // the time the triangle is enough and the name would cover the play (Kenny's playtest note). FEATURES.nameBars:
-            // a slim bar with each person's name over his player, see-through during a live play.
+            // a small OUT (with the number) over a man past the lines. FIND ME is the triangle flash above and the small glow
+            // under his feet (Markings.Beam); FEATURES.nameBars (off by default, Kenny: too big): a slim bar with each
+            // person's name over his player, see-through during a live play.
             if (cam == null) return;
-            float now = Time.unscaledTime;
             foreach (var p in World.Players)
             {
                 var seat = p.Human ? Roster[p.Slot] : null;
-                bool find = seat != null && findUntil.TryGetValue(p.Slot, out float until) && until > now;
-                if (!find && !p.OutOfBounds)
+                if (!p.OutOfBounds)
                 {
                     if (seat != null && cfg.Feature("nameBars")) NameBar(p, seat, cam, s);
                     continue;
                 }
                 Vector3 sp = cam.WorldToScreenPoint(Players.HeadPosition(p.Slot) + Vector3.up * 1.1f);
                 if (sp.z <= 0) continue;
-                string label = find ? seat.Name + (seat.Connected ? "" : " ...") : p.Number.ToString();
-                if (find && p.BotHelp) label += " (BOT)";   // a bot plays for a person who put the phone down
-                if (p.OutOfBounds) label += " OUT";
+                string label = p.Number + " OUT";
                 plate.fontSize = Mathf.RoundToInt(cfg.view.plateFontPx * s);
                 var size = plate.CalcSize(new GUIContent(label));
                 var r = new Rect(sp.x - size.x * 0.5f, Screen.height - sp.y - size.y, size.x, size.y);
-                var team = p.Team >= 0 && p.Team < cfg.teams.Count ? cfg.teams[p.Team] : null;
-                GUI.color = team != null ? Colors.Hex(team.color) : Color.grey;
-                if (find) GUI.DrawTexture(r, Texture2D.whiteTexture);
-                GUI.color = Color.white;
                 GUI.Label(r, label, plate);
             }
         }
