@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace PocketFootball.Tests.EditMode
 {
-    // WS-12: the stats add up (to the score, and to the sim's own yards), the post-game screen fits 22 players
+    // WS-12: the stats add up (to the score, and to the sim's own yards), the post-game screen fits both units of both teams
     // without overlap on any TV, and a score sets off the celebration. FEATURES.stats ships off, so each test turns
     // it on in its own config.
     public sealed class StatsTests
@@ -195,7 +195,11 @@ namespace PocketFootball.Tests.EditMode
             Assert.AreEqual(cfg.downs.touchdownPoints, l.Points);
             Assert.AreEqual(w.Score[offense], s.Team(offense).Points);
             Assert.AreEqual((int)System.Math.Round((cfg.field.GoalLineX * dir - los) * dir), l.Yards, "to the goal line");
-            Assert.AreEqual(l, s.Mvp(cfg.stats), "the only scorer is the player of the game");
+            var mvp = s.Mvp(cfg.stats);
+            Assert.IsNotNull(mvp);
+            Assert.AreEqual(c.Slot, mvp.Slot, "the only scorer is the player of the game");
+            Assert.AreEqual(1, mvp.Tds);
+            Assert.IsTrue(mvp.Offense, "he scored with the offense");
             StringAssert.StartsWith("1 TD", Stats.Summary(l));
         }
 
@@ -267,11 +271,12 @@ namespace PocketFootball.Tests.EditMode
         static bool Inside(Rect r, Vector2 screen) => r.xMin >= -0.01f && r.yMin >= -0.01f && r.xMax <= screen.x + 0.01f && r.yMax <= screen.y + 0.01f;
 
         [Test]
-        public void ThePostGameScreenFits22PlayersWithoutOverlap()
+        public void ThePostGameScreenFitsBothUnitsOfBothTeamsWithoutOverlap()
         {
+            // each team's offense and defense: 22 rows a team
             var cfg = On();
-            int teams = cfg.teams.Count, rows = cfg.players.perTeam;
-            Assert.AreEqual(22, teams * rows);
+            int teams = cfg.teams.Count, rows = 2 * cfg.players.perTeam;
+            Assert.AreEqual(44, teams * rows);
             foreach (var sc in Screens())
             {
                 var l = PostGame.Lay(sc.x, sc.y, teams, rows, cfg.stats);
@@ -312,12 +317,53 @@ namespace PocketFootball.Tests.EditMode
             for (int t = 0; t < cfg.teams.Count; t++)
             {
                 var rows = PostGame.TeamRows(w, s, t);
-                Assert.AreEqual(cfg.players.perTeam, rows.Count);
+                int n = cfg.players.perTeam;
+                Assert.AreEqual(2 * n, rows.Count, "the offense and the defense, whichever is on the field now");
+                for (int r = 0; r < rows.Count; r++) Assert.AreEqual(r < n, rows[r].Offense, "the offense first, then the defense");
                 for (int r = 1; r < rows.Count; r++)
-                    Assert.GreaterOrEqual(Stats.Impact(rows[r - 1], cfg.stats), Stats.Impact(rows[r], cfg.stats), "the biggest impact first");
-                foreach (var l in rows) { Assert.AreEqual(t, l.Team); seen.Add(l.Slot); }
+                    if (r != n) Assert.GreaterOrEqual(Stats.Impact(rows[r - 1], cfg.stats), Stats.Impact(rows[r], cfg.stats), "the biggest impact first");
+                var offense = new HashSet<string>(); var defense = new HashSet<string>();
+                var offSlots = new HashSet<int>(); var defSlots = new HashSet<int>();
+                foreach (var l in rows)
+                {
+                    Assert.AreEqual(t, l.Team); seen.Add(l.Slot);
+                    (l.Offense ? offense : defense).Add(l.Pos);
+                    Assert.IsTrue((l.Offense ? offSlots : defSlots).Add(l.Slot), "slot " + l.Slot + " once a unit");
+                }
+                var offPos = new HashSet<string>(); foreach (var sp in cfg.formation.offense) offPos.Add(sp.pos);
+                var defPos = new HashSet<string>(); foreach (var sp in cfg.formation.defense) defPos.Add(sp.pos);
+                CollectionAssert.AreEquivalent(offPos, offense, "team " + t + ": every offense position (QB, WR, ...)");
+                CollectionAssert.AreEquivalent(defPos, defense, "team " + t + ": every defense position");
             }
             Assert.AreEqual(22, seen.Count);
+        }
+
+        [Test]
+        public void AUnitsNumbersStayWithItAfterPossessionChanges()
+        {
+            // the offense's yards and the defense's tackles land on the right unit, and the units add up to the team
+            var cfg = On();
+            var w = WorldTests.Full(cfg, 2);
+            var s = new Stats();
+            for (int i = 0; i < cfg.sim.tickHz * 60 * 10; i++) { w.Step(null); s.Observe(w); }
+            for (int t = 0; t < cfg.teams.Count; t++)
+            {
+                int yards = 0, tackles = 0, offTackles = 0;
+                foreach (var l in PostGame.TeamRows(w, s, t))
+                {
+                    yards += l.Yards; tackles += l.Tackles;
+                    if (l.Offense) offTackles += l.Tackles;
+                }
+                Assert.AreEqual(s.Team(t).Yards, yards, "team " + t + ": the rows add up to the team's yards");
+                Assert.AreEqual(s.Team(t).Tackles, tackles, "team " + t + ": the rows add up to the team's tackles");
+                Assert.Greater(s.Team(t).Tackles, offTackles, "team " + t + ": most tackles are the defense's");
+            }
+            // a player's whole line is his two units added up
+            foreach (var p in w.Players)
+            {
+                var o = s.Unit(w, p, true); var d = s.Unit(w, p, false); var all = s.Of(p);
+                Assert.AreEqual(o.Yards + d.Yards, all.Yards); Assert.AreEqual(o.Tackles + d.Tackles, all.Tackles); Assert.AreEqual(o.Tds + d.Tds, all.Tds);
+            }
         }
 
         [Test]
