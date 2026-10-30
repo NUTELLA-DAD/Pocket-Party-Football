@@ -49,7 +49,8 @@ namespace PocketFootball.Boot
                 // stepped: big on even frames, small on odd ones, anim.fps frames a second of sim time
                 int frame = (w.Tick - at) * Mathf.RoundToInt(w.Cfg.anim.fps) / w.Cfg.sim.tickHz;
                 float grow = frame % 2 == 0 ? 1.7f : 1.3f;
-                Hud.ShapeBadge(new Vector2(sp.x, Screen.height - sp.y - 4 * s), Receiving.ShapeOf(w, p) - 1, s * grow);
+                int k = Receiving.ShapeOf(w, p);
+                Hud.ShapeBadge(new Vector2(sp.x, Screen.height - sp.y - 4 * s), k - 1, s * grow, Hud.ShapeColor(w.Cfg, k));
             }
         }
     }

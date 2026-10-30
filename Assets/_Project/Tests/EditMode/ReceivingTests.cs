@@ -94,6 +94,27 @@ namespace PocketFootball.Tests.EditMode
             foreach (var sh in shapes) StringAssert.DoesNotContain("?", sh, "a shape was lost to a text encoding");
         }
 
+        [Test]
+        public void EveryReceiverHasItsOwnColour()
+        {
+            // FEATURES.colorTargets: the QB's button and the badge over the receiver share one colour per shape
+            var cfg = ConfigTests.Load();
+            Assert.IsTrue(cfg.Feature("colorTargets"), "FEATURES.colorTargets is on in game.json");
+            Assert.AreEqual("NO_COLOR_TARGETS", ConfigLoader.EnvName("colorTargets"));
+            Assert.AreEqual(cfg.play.shapes.Count, cfg.play.shapeColors.Count, "one colour per shape");
+            var seen = new HashSet<string>();
+            for (int k = 1; k <= cfg.play.shapes.Count; k++)
+            {
+                string c = Receiving.ColorOf(cfg, k);
+                StringAssert.IsMatch("^#[0-9a-fA-F]{6}$", c, "shape " + k + " colour");
+                Assert.IsTrue(seen.Add(c.ToLowerInvariant()), "two receivers share a colour: " + c);
+            }
+            Assert.AreEqual("", Receiving.ColorOf(cfg, 0), "not a receiver: no colour");
+            Assert.AreEqual("", Receiving.ColorOf(cfg, cfg.play.shapes.Count + 1));
+            ConfigLoader.ApplyEnvOverrides(cfg, n => n == "NO_COLOR_TARGETS" ? "1" : null);
+            Assert.AreEqual("", Receiving.ColorOf(cfg, 1), "NO_COLOR_TARGETS=1: the plain gold badge and ivory button");
+        }
+
         // ---- the CATCH window ----
 
         [Test]

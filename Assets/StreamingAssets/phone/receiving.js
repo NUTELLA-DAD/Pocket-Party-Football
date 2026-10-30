@@ -6,11 +6,11 @@
   'use strict';
   var timer = null, lit = null;
 
-  // the pulse look lives here so the stylesheets stay untouched
+  // the pulse look lives here so the stylesheets stay untouched (a coloured gem sets --call to white, layouts.css)
   var css = document.createElement('style');
   css.textContent =
-    '@keyframes pp-call { from { outline-color: #ffd34d; } to { outline-color: transparent; } }' +
-    '.btn.rcv.calling { outline: 4px solid #ffd34d; outline-offset: -4px; animation: pp-call 0.25s steps(2, jump-none) infinite; }';
+    '@keyframes pp-call { from { outline-color: var(--call, #ffd34d); } to { outline-color: transparent; } }' +
+    '.btn.rcv.calling { outline: 4px solid var(--call, #ffd34d); outline-offset: -4px; animation: pp-call 0.25s steps(2, jump-none) infinite; }';
   document.head.appendChild(css);
 
   function stop() {

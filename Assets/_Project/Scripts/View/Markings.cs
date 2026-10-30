@@ -226,15 +226,20 @@ namespace PocketFootball.View
         }
 
         // A round badge with a painted receiver shape: 0 triangle, 1 circle, 2 square, 3 diamond, 4 star (the phone's
-        // receiver buttons show the same shapes, so the QB knows who is who).
+        // receiver buttons show the same shapes, so the QB knows who is who). The plain badge is gold with a dark shape;
+        // FEATURES.colorTargets passes the receiver's own colour (his phone button is the same colour), and the shape
+        // goes white on the darker ones so it still reads.
         static Texture2D[] shapes;
-        public static void ShapeBadge(Vector2 screen, int shape, float s)
+        static readonly Color Gold = new Color(1f, 0.85f, 0.3f), Ink = new Color(0.08f, 0.08f, 0.1f);
+        public static void ShapeBadge(Vector2 screen, int shape, float s) => ShapeBadge(screen, shape, s, Gold);
+        public static void ShapeBadge(Vector2 screen, int shape, float s, Color fill)
         {
             Init();
             if (shapes == null)
             {
+                // painted white, tinted at draw time
                 shapes = new Texture2D[5];
-                Color ink = new Color(0.08f, 0.08f, 0.1f);
+                Color ink = Color.white;
                 shapes[0] = Shape(64, 64, p => p.Fill(new[] { new Vector2(32, 54), new Vector2(54, 14), new Vector2(10, 14) }, ink));
                 var ring = new Vector2[33];
                 for (int i = 0; i <= 32; i++) { float a = i * Mathf.PI * 2f / 32f; ring[i] = new Vector2(32 + Mathf.Cos(a) * 18, 32 + Mathf.Sin(a) * 18); }
@@ -247,12 +252,21 @@ namespace PocketFootball.View
             }
             float d = 40 * s;
             var rr = new Rect(screen.x - d * 0.5f, screen.y - d, d, d);
-            GUI.color = new Color(0.08f, 0.08f, 0.1f, 1f);
+            GUI.color = Ink;
             GUI.DrawTexture(new Rect(rr.x - 3 * s, rr.y - 3 * s, rr.width + 6 * s, rr.height + 6 * s), disc);
-            GUI.color = new Color(1f, 0.85f, 0.3f);
+            GUI.color = new Color(fill.r, fill.g, fill.b, 1f);
             GUI.DrawTexture(rr, disc);
-            GUI.color = Color.white;
+            float lum = 0.299f * fill.r + 0.587f * fill.g + 0.114f * fill.b;
+            GUI.color = lum > 0.55f ? Ink : Color.white;
             if (shape >= 0 && shape < shapes.Length) GUI.DrawTexture(new Rect(rr.x + d * 0.2f, rr.y + d * 0.2f, d * 0.6f, d * 0.6f), shapes[shape]);
+            GUI.color = Color.white;
+        }
+
+        // FEATURES.colorTargets: receiver k's (1-based) badge colour, or the plain gold.
+        public static Color ShapeColor(GameConfig cfg, int k)
+        {
+            string hex = Receiving.ColorOf(cfg, k);
+            return hex.Length > 0 ? Colors.Hex(hex) : Gold;
         }
 
         // A round badge with a shape letter (△ ○ □ ◇ ☆ in the game; any short text).
