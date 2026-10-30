@@ -253,9 +253,10 @@ namespace PocketFootball.View
             if (snap != Move.None) return new MoveNow { Kind = snap };
             if (reaching.Contains(p.Slot)) return new MoveNow { Kind = Move.Reach, Hand = reachHand.TryGetValue(p.Slot, out int hand) ? hand : 0 };
             if (w.Phase != Phase.Live) return default;
-            // the QB with the ball in the pocket, not yet thrown: arm cocked
+            // the QB with the ball in the pocket, not yet thrown: arm cocked (FEATURES.qbStrafe: on the move too, his legs
+            // striding under it, until he runs past the line)
             var play = LivePlay.Called(w, w.Offense);
-            if (p == LivePlay.Carrier(w) && p == LivePlay.Qb(w) && !w.Thrown && (play == null || play.runner < 0) && p.VX * p.VX + p.VZ * p.VZ <= 0.25f) return new MoveNow { Kind = Move.Aim, Full = w.Cfg.Feature("throwMotion") };
+            if (p == LivePlay.Carrier(w) && p == LivePlay.Qb(w) && !w.Thrown && (play == null || play.runner < 0) && (p.VX * p.VX + p.VZ * p.VZ <= 0.25f || (w.Cfg.Feature("qbStrafe") && Facing.InPocket(w, p)))) return new MoveNow { Kind = Move.Aim, Full = w.Cfg.Feature("throwMotion") };
             // a block: a defender held up, or a blocker with a man in front of him
             if (blockPartner.TryGetValue(p.Slot, out int q))
                 return new MoveNow { Kind = Move.Block, Frame = (int)(w.PlayTicks / Math.Max(1, Ticks(w, a.blockShoveS))), Locked = w.Cfg.Feature("blockLock"), Partner = q };

@@ -31,10 +31,12 @@ namespace PocketFootball.View
         readonly Dictionary<int, int> strideLast = new Dictionary<int, int>();   // the last tick each man was striding
         readonly Dictionary<int, (float speed, int tick)> strideShown = new Dictionary<int, (float, int)>();   // the speed his stride is drawn at
         const float StrideShrinkTicks = 6f;   // a walk's stride shrinks to nothing over this many ticks at the most
-        readonly Dictionary<int, MomentumState> carry = new Dictionary<int, MomentumState>();
+        readonly Dictionary<int, FacingState> carry = new Dictionary<int, FacingState>();   // the facing (Facing.cs), once a sim tick
         readonly Dictionary<int, int> carryTick = new Dictionary<int, int>();
         // FEATURES.smoothMotion: the facing a tick ago, so a turn blends across the frames between ticks (NaN: none yet)
         readonly Dictionary<int, float> yawWas = new Dictionary<int, float>();
+        // FEATURES.calmTurns: the facing drawn last frame, so a turn on the spot steps the feet round (Facing.Pivot)
+        readonly Dictionary<int, float> yawDrawn = new Dictionary<int, float>();
         readonly List<int> gone = new List<int>();
         public readonly Moves Moves = new Moves();
         // a man on the grass: where he went down, his facing, which fall (slot -> start tick)
@@ -53,6 +55,9 @@ namespace PocketFootball.View
         public readonly Dictionary<int, int> PoseFrameOverride = new Dictionary<int, int>();   // (that pose's key frame; none: 0)
         // ...and give a player an extra football to hold (slot -> true: right hand, false: left), the sim's ball aside
         public readonly Dictionary<int, bool> PropBalls = new Dictionary<int, bool>();
+        // FEATURES.qbStrafe: a QB holding the throw stick, where it aims (slot -> field yards from him, x along the
+        // field, y across it); PartyHost sets it every frame he holds the stick
+        public readonly Dictionary<int, Vector2> QbAim = new Dictionary<int, Vector2>();
         readonly Dictionary<int, Transform> props = new Dictionary<int, Transform>();
 
         public PlayersView(GameConfig cfg, Material baseMat)
@@ -87,7 +92,7 @@ namespace PocketFootball.View
         }
 
         // The facing and lean state a player's figure carries (FEATURES.momentumLean), for the motion reel.
-        public bool MomentumOf(int slot, out MomentumState s) => carry.TryGetValue(slot, out s);
+        public bool MomentumOf(int slot, out MomentumState s) { bool on = carry.TryGetValue(slot, out var f); s = f.M; return on; }
         // FEATURES.strideCycle: where a man is in his stride (0..1, the left foot down at 0), -1 if he hasn't run yet
         public float StridePhaseOf(int slot) => stridePhase.TryGetValue(slot, out float ph) ? ph : -1f;
 
@@ -136,34 +141,56 @@ namespace PocketFootball.View
                 Vector2 face = speed > 0.5f ? new Vector2(p.VX, p.VZ).normalized : new Vector2(dir, 0f);
                 float turn = CameraTurn(cfg, false);
                 bool momentum = cfg.Feature("momentumLean") && !PoseOverride.ContainsKey(p.Slot);
-                var ms = default(MomentumState);
-                if (momentum)
-                {
-                    // once a sim tick (the view renders the same tick more than once)
-                    carry.TryGetValue(p.Slot, out ms);
-                    if (!carryTick.TryGetValue(p.Slot, out int seen) || seen != w.Tick)
-                    {
-                        yawWas[p.Slot] = ms.Ready ? ms.Yaw : float.NaN;
-                        Momentum.Step(ref ms, cfg.anim, p.X, p.Z, p.VX, p.VZ, Momentum.YawOf(dir, 0f), cfg.players.sprintSpeedYdS, w.Dt);
-                        carry[p.Slot] = ms; carryTick[p.Slot] = w.Tick;
-                    }
-                    // the facing turns once a tick (up to 30 degrees at a time); smoothMotion blends it across the frames between
-                    float shownYaw = smooth && yawWas.TryGetValue(p.Slot, out float yw) && !float.IsNaN(yw) ? Mathf.LerpAngle(yw, ms.Yaw, alpha) : ms.Yaw;
-                    float r = shownYaw * Mathf.Deg2Rad;
-                    face = new Vector2(Mathf.Cos(r), -Mathf.Sin(r));
-                }
+                bool calm = momentum && Facing.Calm(cfg);
+                bool watching = !down && !PoseOverride.ContainsKey(p.Slot) && Moves.Watching(p.Slot);
+                // a locked block faces his man (FEATURES.calmTurns: turned to at the turn rate, not at once)
+                float lockYaw = float.NaN;
                 if (move.Kind == Move.Block && move.Locked && w.Find(move.Partner) is Player q)
                 {
                     // locked arms: square up to him, turned only a little toward the camera so the hands meet
                     Moves.LockOffset(q.Slot, alpha, out float qx, out float qz);
                     var them = new Vector2(q.X + qx, q.Z + qz) - (now + new Vector2(ox, oz));
-                    if (them.sqrMagnitude > 1e-4f) { face = them.normalized; turn = CameraTurn(cfg, true); }
+                    if (them.sqrMagnitude > 1e-4f) { lockYaw = Momentum.YawOf(them.x, them.y); turn = CameraTurn(cfg, true); }
                 }
+                // FEATURES.qbStrafe: the QB in the pocket faces where he aims (else down the field), his legs a little
+                // toward where he runs; letting it go, where the ball goes
+                float aimYaw = float.NaN;
+                if (momentum)
+                {
+                    bool aiming = QbAim.TryGetValue(p.Slot, out var aim);
+                    aimYaw = Facing.QbYaw(w, p, move.Kind == Move.Throw, aiming ? aim.x : float.NaN, aiming ? aim.y : float.NaN);
+                }
+                var ms = default(MomentumState);
+                var fs = default(FacingState);
+                if (momentum)
+                {
+                    // once a sim tick (the view renders the same tick more than once)
+                    carry.TryGetValue(p.Slot, out fs);
+                    if (!carryTick.TryGetValue(p.Slot, out int seen) || seen != w.Tick)
+                    {
+                        float faceYaw = aimYaw;
+                        if (!float.IsNaN(faceYaw) && move.Kind != Move.Throw) faceYaw += Facing.StrafeLegs(cfg, faceYaw, p.VX, p.VZ);
+                        if (calm && !float.IsNaN(lockYaw)) faceYaw = lockYaw;
+                        float eyes = cfg.view.playerHeightM * 0.8f / cfg.field.yardM;
+                        Facing.Step(ref fs, cfg, p.X, p.Z, p.VX, p.VZ, Momentum.YawOf(dir, 0f), faceYaw, watching && cfg.Feature("watchBall"), w.Ball.X, w.Ball.Y, w.Ball.Z, eyes, w.Dt);
+                        yawWas[p.Slot] = fs.WasYaw;
+                        carry[p.Slot] = fs; carryTick[p.Slot] = w.Tick;
+                    }
+                    ms = fs.M;
+                    // the facing turns once a tick (up to 30 degrees at a time); smoothMotion blends it across the frames between
+                    float shownYaw = smooth && yawWas.TryGetValue(p.Slot, out float yw) && !float.IsNaN(yw) ? Mathf.LerpAngle(yw, fs.Yaw, alpha) : fs.Yaw;
+                    float r = shownYaw * Mathf.Deg2Rad;
+                    face = new Vector2(Mathf.Cos(r), -Mathf.Sin(r));
+                }
+                if (!float.IsNaN(lockYaw) && !calm) { float r = lockYaw * Mathf.Deg2Rad; face = new Vector2(Mathf.Cos(r), -Mathf.Sin(r)); }
                 float yaw = Mathf.Atan2(-face.y, face.x) * Mathf.Rad2Deg;
                 yaw = TowardCamera(yaw, turn);
                 fig.Look(0f, 0f, float.NaN);
-                bool watching = !down && !PoseOverride.ContainsKey(p.Slot) && Moves.Watching(p.Slot);
-                if (watching) yaw = WatchBall(w, p, fig, yaw);
+                // following a pass: with the momentum facing, Facing.Step turned the body and worked out the look
+                if (watching && momentum) { if (fs.Watching) fig.Look(fs.Twist, fs.Head, fs.Up); }
+                else if (watching) yaw = WatchBall(w, p, fig, yaw);
+                // FEATURES.qbStrafe: his shoulders square to where he aims, whichever way his legs go
+                if (!float.IsNaN(aimYaw) && !watching) fig.Look(Mathf.Clamp(Mathf.DeltaAngle(yaw, aimYaw), -cfg.anim.lookTwistDeg, cfg.anim.lookTwistDeg), 0f, float.NaN);
                 if (down)
                 {
                     // stays where and how he went down
@@ -187,6 +214,10 @@ namespace PocketFootball.View
                 t.localRotation = Quaternion.Euler(0f, yaw, 0f);
                 fig.Carry(0f, 0f, 0f, 0f, 0f);
                 fig.Stride(false, default); fig.Settle(0f); fig.Gather(0f, null);
+                // FEATURES.reachTrack: hands up for a pass point at the ball
+                bool reach = move.Kind == Move.Reach && w.Ball.State == BallState.Flying && cfg.Feature("reachTrack");
+                float shoulder = cfg.view.playerHeightM * 0.75f / cfg.field.yardM;
+                fig.ReachAt(reach ? Facing.ReachUp(cfg.anim, p.X, p.Z, shoulder, w.Ball.X, w.Ball.Y, w.Ball.Z) : float.NaN, cfg.anim.reachLowDeg, cfg.anim.reachHighDeg);
 
                 if (PoseOverride.TryGetValue(p.Slot, out var held)) { fig.Idle(0f, 0f); fig.Pose(held, PoseFrameOverride.TryGetValue(p.Slot, out int hf) ? hf : 0); continue; }
                 travelled[p.Slot] = (travelled.TryGetValue(p.Slot, out float d) ? d : 0f) + moved;
@@ -195,7 +226,11 @@ namespace PocketFootball.View
                 float stride = momentum ? StrideM * (0.8f + 0.4f * Mathf.Clamp01(speed / cfg.players.sprintSpeedYdS)) : StrideM;
                 int frame = (int)(travelled[p.Slot] / stride) % 2;
                 bool carrier = w.Ball.State == BallState.Held && w.Ball.Carrier == p.Slot;
-                bool striding = cfg.Feature("strideCycle") && !down && speed > 0.5f;
+                // FEATURES.calmTurns: a turn on the spot steps the feet round (this frame's share of it)
+                float pivot = 0f;
+                if (momentum && !down && !fs.Placed && yawDrawn.TryGetValue(p.Slot, out float drawnYaw) && !float.IsNaN(drawnYaw)) pivot = Facing.Pivot(cfg, Mathf.DeltaAngle(drawnYaw, yaw));
+                yawDrawn[p.Slot] = down ? float.NaN : yaw;
+                bool striding = cfg.Feature("strideCycle") && !down && (speed > 0.5f || pivot > 0f);
                 float phase = stridePhase.TryGetValue(p.Slot, out float ph) ? ph : 0f;
                 var dk = FootballFigure.PoseKind.Ready; int df = 0;
                 bool defMove = !down && DefenseMovesView.PoseFor(w, p, out dk, out df);
@@ -228,7 +263,8 @@ namespace PocketFootball.View
                     float pump = Mathf.Clamp01((speed - cfg.players.jogSpeedYdS) / Mathf.Max(0.1f, cfg.players.sprintSpeedYdS - cfg.players.jogSpeedYdS));
                     fig.Carry(fwd - tip, side * (1f - feet), fwd, move.Kind == Move.None ? plant : 0f, cfg.anim.cutSpreadDeg, -side * cfg.anim.cutTwistShare, pump);
                     // planted in the middle of a turn-around: no stand-up pose for a tick
-                    if (move.Kind == Move.None && speed <= 0.5f && plant > 0f)
+                    // (FEATURES.calmTurns: unless he's stepping round, below)
+                    if (move.Kind == Move.None && speed <= 0.5f && plant > 0f && pivot <= 0f)
                     { fig.Idle(0f, 0f); fig.Pose(carrier ? FootballFigure.PoseKind.Carry : FootballFigure.PoseKind.Run, frame); continue; }
                 }
                 // FEATURES.breakdown: closing on the ball carrier, he gathers himself for the tackle
@@ -239,7 +275,10 @@ namespace PocketFootball.View
                 {
                     // (breaking down: short choppy steps, a jog's stride at his speed)
                     float gait = gather > 0f ? Mathf.Lerp(speed, Mathf.Min(speed, cfg.anim.gatherGaitYdS), gather) : speed;
-                    phase = Stride.Advance(phase, cfg.anim, cfg.players, gait, strideMoved / yd);
+                    // (FEATURES.qbStrafe: running backward from where he faces, the stride runs backward: a backpedal)
+                    float way = !float.IsNaN(aimYaw) ? Facing.StrideWay(yaw, p.VX, p.VZ) : 1f;
+                    phase = Mathf.Repeat(Stride.Advance(phase, cfg.anim, cfg.players, gait, way * strideMoved / yd) + pivot, 1f);
+                    if (pivot > 0f) gait = Mathf.Max(gait, cfg.anim.strideWalkYdS);   // (stepping round on the spot: a walk's steps)
                     stridePhase[p.Slot] = phase;
                     // braking hard (a stop takes a tick or two) a stride smaller than a walk's shrinks over StrideShrinkTicks, not at once,
                     // so the last stride pose the stop eases from still has bent legs
@@ -250,14 +289,14 @@ namespace PocketFootball.View
                     fig.Stride(true, Stride.Pose(cfg.anim, cfg.players, fig.Legs, phase, shown, yd * FootballFigure.RigHeight / cfg.view.playerHeightM, cfg.Feature("footFlex"), cfg.Feature("strideHips"), gather));
                     strideLast[p.Slot] = w.Tick;
                 }
-                else if (!down && move.Kind == Move.None && strideLast.TryGetValue(p.Slot, out int last))
+                else if (!down && (move.Kind == Move.None || move.Kind == Move.Aim) && strideLast.TryGetValue(p.Slot, out int last))
                 {
                     // just stopped: the last stride eases into the standing pose
                     float left = 1f - (w.Tick - last - 1 + alpha) / Mathf.Max(1, cfg.anim.strideSettleTicks);
                     if (left > 0f) fig.Settle(left * left * (3f - 2f * left)); else strideLast.Remove(p.Slot);
                 }
                 if (PoseFor(move, frame, out var kind, out int f)) fig.Pose(kind, f);
-                else if (speed > 0.5f) fig.Pose(carrier ? FootballFigure.PoseKind.Carry : FootballFigure.PoseKind.Run, frame);
+                else if (speed > 0.5f || pivot > 0f) fig.Pose(carrier ? FootballFigure.PoseKind.Carry : FootballFigure.PoseKind.Run, frame);   // (turning on the spot: stepping)
                 else fig.Pose(p.Pos == "OL" || p.Pos == "DL" ? FootballFigure.PoseKind.Stance : FootballFigure.PoseKind.Ready, 0);
             }
             Eyes(w);
@@ -313,7 +352,7 @@ namespace PocketFootball.View
             if (inAir) ballShadow.localPosition = new Vector3(bat.x * yd, 0.02f, bat.z * yd);
             gone.Clear();
             foreach (var kv in bodies) if (w.Find(kv.Key) == null) gone.Add(kv.Key);
-            foreach (int slot in gone) { Object.Destroy(bodies[slot].gameObject); bodies.Remove(slot); kitOf.Remove(slot); skins.Remove(slot); carry.Remove(slot); carryTick.Remove(slot); yawWas.Remove(slot); stridePhase.Remove(slot); strideLast.Remove(slot); strideShown.Remove(slot); downStart.Remove(slot); downFrom.Remove(slot); }
+            foreach (int slot in gone) { Object.Destroy(bodies[slot].gameObject); bodies.Remove(slot); kitOf.Remove(slot); skins.Remove(slot); carry.Remove(slot); carryTick.Remove(slot); yawWas.Remove(slot); yawDrawn.Remove(slot); QbAim.Remove(slot); stridePhase.Remove(slot); strideLast.Remove(slot); strideShown.Remove(slot); downStart.Remove(slot); downFrom.Remove(slot); }
         }
 
         // A tackle that meets (Moves.TackleContact): the tackler goes down against the carrier, facing him; the carrier

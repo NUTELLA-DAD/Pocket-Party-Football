@@ -49,6 +49,17 @@ namespace PocketFootball.Boot
         float accumulator;
         readonly Dictionary<int, PhoneSource> sources = new Dictionary<int, PhoneSource>();   // by slot
         public PhoneSource SourceOf(int slot) => sources.TryGetValue(slot, out var s) ? s : null;
+
+        // FEATURES.qbStrafe: while a person at QB holds the throw stick, the figure faces where it aims (PlayersView.QbAim),
+        // the same spot ThrowAimView draws
+        void AimToView()
+        {
+            Players.QbAim.Clear();
+            var qb = LivePlay.Qb(World);
+            var src = qb != null && qb.Human ? SourceOf(qb.Slot) : null;
+            if (src == null || !src.Aiming || !ThrowStick.On(World)) return;
+            if (ThrowStick.Target(World, qb, src.AimX, -src.AimY, out float tx, out float tz)) Players.QbAim[qb.Slot] = new Vector2(tx - qb.X, tz - qb.Z);
+        }
         readonly Dictionary<int, PhoneSource> byConn = new Dictionary<int, PhoneSource>();
         readonly Dictionary<int, PlayerInput> inputs = new Dictionary<int, PlayerInput>();
         readonly Dictionary<int, float> findUntil = new Dictionary<int, float>();
@@ -258,6 +269,7 @@ namespace PocketFootball.Boot
             }
             if (!phaseKnown || World.Phase != lastPhase || World.HuddleNumber != lastHuddle) OnPhaseChanged();
             RefreshLayouts();
+            AimToView();
             Players.Render(World, lockstep || Photo != null ? 1f : Mathf.Clamp01(accumulator / dt));
             CarrierMovesView.Apply(World, Players);   // WS-04: spin, stiff arm, dive, fumbles on the TV
             if (Photo == null && !holdCamera) FollowBall(Time.deltaTime);   // (-look-x holds the camera where it was put)
