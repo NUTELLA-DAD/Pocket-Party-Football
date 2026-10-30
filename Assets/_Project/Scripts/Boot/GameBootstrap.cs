@@ -21,6 +21,7 @@ namespace PocketFootball.Boot
         public PartyHost Host { get; private set; }
         public LabMode Lab { get; private set; }     // the practice lab (-lab, Lab.bat), else null
         public TitleScreen Title { get; private set; }   // the title screen while it is up, else null
+        public TutorialMode Tutorial { get; private set; }   // FEATURES.tutorial: the first-drive tutorial, else null
 
         void Awake()
         {
@@ -32,8 +33,10 @@ namespace PocketFootball.Boot
             PaceFrames(Config);
             UiFont.Configure(Config.Feature("toonHud"));   // the game's own lettering on every TV overlay
             TitleScreen.ApplySavedSettings(Config);   // the sound level, and the helpers switched off on the SETTINGS page
-            bool title = TitleScreen.Requested(Config, Args);
+            bool tutorial = TutorialMode.Requested(Config) && !LabMode.Requested();   // the title's TUTORIAL (or -tutorial)
+            bool title = !tutorial && TitleScreen.Requested(Config, Args);
             if (title) TitleScreen.PrepareAttract(Config, Args);   // the bots' show game behind the title
+            if (tutorial) TutorialMode.Prepare(Config);   // no lobby, clock, replays or stats in the tutorial
             CupHost.Apply(Config, title);   // FEATURES.cup: the Pocket Cup's next game wears its two teams
             Weather.ApplyLook(Config);   // FEATURES.weather / sandField: the sky, haze and grass for rain, snow or a sand field
 
@@ -45,6 +48,7 @@ namespace PocketFootball.Boot
             WeatherView.Attach(gameObject, Config, Rig, baseMaterial, () => Host != null ? Host.World : null);   // FEATURES.weather: the rain or snow falling
             if (LabMode.Requested()) Lab = LabMode.Create(gameObject, Config, baseMaterial, Host, Rig, ConfigDir);
             if (title) Title = TitleScreen.Attach(gameObject, Config, Host, Rig, Args.TitlePage);
+            if (tutorial) Tutorial = TutorialMode.Create(gameObject, Config, Host, ConfigDir);
             if (PauseMenu.Requested(Config, Args, title)) PauseMenu.Attach(gameObject, Config, Host);   // Esc in the game: the pause menu
             FrameMeter.Attach(gameObject, Config, Args.Fps);   // F3: frames a second on the TV; a line in the log every perfLogEveryS
 

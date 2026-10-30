@@ -55,7 +55,7 @@ namespace PocketFootball.Boot
         string lengthPick;    // FEATURES.gameLength: the picked game length (saved at once; the game after PLAY runs that long)
 
         enum Page { Menu, HowTo, Settings, Cup, Roster, Hotspot }
-        enum Item { Play, Cup, HowTo, Settings, Roster }
+        enum Item { Play, Cup, HowTo, Settings, Roster, Tutorial }
 
         GameConfig cfg;
         PartyHost host;
@@ -99,6 +99,7 @@ namespace PocketFootball.Boot
             t.rig = rig;
             t.logo = Resources.Load<Texture2D>("Title/TitleArt");
             var list = new System.Collections.Generic.List<Item> { Item.Play };
+            if (TutorialMode.On(cfg)) list.Add(Item.Tutorial);   // FEATURES.tutorial: the first drive on one phone
             if (CupHost.On(cfg)) list.Add(Item.Cup);
             if (RosterCards.On(cfg)) list.Add(Item.Roster);
             list.Add(Item.HowTo);
@@ -125,8 +126,9 @@ namespace PocketFootball.Boot
             return t;
         }
 
-        static readonly string[] ButtonArt = { "Title/ButtonPlay", "Title/ButtonCup", "Title/ButtonHowToPlay", "Title/ButtonSettings", "Title/ButtonRoster" };   // by Item
-        static readonly string[] ButtonText = { "PLAY", "POCKET CUP", "HOW TO PLAY", "SETTINGS", "ROSTER" };
+        // by Item (no picture yet for TUTORIAL: it is drawn as a navy button with its word)
+        static readonly string[] ButtonArt = { "Title/ButtonPlay", "Title/ButtonCup", "Title/ButtonHowToPlay", "Title/ButtonSettings", "Title/ButtonRoster", "Title/ButtonTutorial" };
+        static readonly string[] ButtonText = { "PLAY", "POCKET CUP", "HOW TO PLAY", "SETTINGS", "ROSTER", "TUTORIAL" };
 
         void OnDestroy() { if (Instance == this) Instance = null; }
 
@@ -272,6 +274,7 @@ namespace PocketFootball.Boot
         void Choose(Item i)
         {
             if (i == Item.Play) { CupHost.SetLive(false); fadeT = 0f; Debug.Log("[title] PLAY"); }
+            else if (i == Item.Tutorial) { CupHost.SetLive(false); TutorialMode.Request(); fadeT = 0f; Debug.Log("[title] TUTORIAL"); }
             else if (i == Item.Cup) { cup = CupHost.Load(cfg); Open(Page.Cup); }
             else if (i == Item.Roster) OpenRoster(null);
             else Open(i == Item.HowTo ? Page.HowTo : Page.Settings);
@@ -447,7 +450,17 @@ namespace PocketFootball.Boot
                 }
                 GUI.color = on ? Color.white : new Color(t.dimOthers, t.dimOthers, t.dimOthers, 1f);
                 if (tex != null) GUI.DrawTexture(r, tex);
-                else GUI.Label(r, ButtonText[(int)items[i]], row);
+                else
+                {
+                    // no picture: a navy button with gold edges and the word, like the settings rows
+                    var c = GUI.color;
+                    Fill(r, new Color(CupColors.Navy.r * c.r, CupColors.Navy.g * c.g, CupColors.Navy.b * c.b, 1f));
+                    Fill(new Rect(r.x, r.y, r.width, 5 * s), new Color(CupColors.Gold.r * c.r, CupColors.Gold.g * c.g, CupColors.Gold.b * c.b, 1f));
+                    Fill(new Rect(r.x, r.yMax - 5 * s, r.width, 5 * s), new Color(CupColors.Gold.r * c.r, CupColors.Gold.g * c.g, CupColors.Gold.b * c.b, 1f));
+                    GUI.color = c;
+                    row.normal.textColor = Color.white;
+                    GUI.Label(r, ButtonText[(int)items[i]], row);
+                }
                 GUI.color = Color.white;
             }
             Shadowed(new Rect(0, H - 44 * s, W, 34 * s), "Mouse, arrows + Enter, or a controller", hint);
@@ -473,7 +486,7 @@ namespace PocketFootball.Boot
             "<b>4. Huddle.</b> Call a play on your phone in secret. The TV only shows CALLED, never which play.",
             "<b>5. Offense.</b> QB: tap HIKE, then a receiver's shape to throw (tap = bullet, hold = lob). With the ball: SPRINT, JUKE, SPIN, STIFF ARM.",
             "<b>6. Defense.</b> Chase the ball and tap TACKLE. Try SWAT, SWIM or DIVE.",
-            "<b>7. Lost?</b> Tap FIND ME: your player lights up on the TV.",
+            "<b>7. Lost?</b> Tap FIND ME: your player lights up on the TV. New to it? TUTORIAL on the menu teaches the buttons on one phone in about three minutes.",
         };
 
         void DrawHowTo(float W, float H, float s)

@@ -1,0 +1,58 @@
+{
+  "lab": {
+    "keyboardSlot": 90,
+    "botSlotBase": 200,
+    "offenseTeam": 0,
+    "attackDir": 1,
+    "lineOfScrimmageXYd": -15,
+    "idleTakeoverS": 100000,
+    "endAfterCatchS": 0.6,
+    "logLines": 1,
+    "speeds": [1]
+  },
+  "doneS": 2.5,
+  "finishS": 8,
+  "giveUpReps": 4,
+  "introTitle": "TUTORIAL",
+  "introText": "Scan the code with your phone to start. Four quick drills on one phone, about three minutes. (No phone handy? Press ENTER to use the keyboard.)",
+  "niceText": "NICE!",
+  "moveOnText": "LET'S KEEP GOING",
+  "finishTitle": "YOU'RE READY",
+  "finishText": "That's the whole game: call a play in the huddle, then run it. Grab your friends and press PLAY on the title screen. Bots play every spot nobody takes.",
+  "steps": [
+    {
+      "id": "throw",
+      "title": "1 of 4: THROW A PASS",
+      "text": "You're the quarterback. Tap HIKE on your phone. Then drag the throw stick toward a receiver and let go. A quick flick throws hard, a longer hold throws a soft lob. Complete one pass.",
+      "goal": "complete",
+      "drill": { "offensePlay": "slants", "defensePlay": "cover3", "you": "offense", "youSpot": 0, "carrier": 0,
+                 "offense": [0, 2, 3, 4, 5], "defense": [], "live": false, "endOnCatch": true, "maxS": 8 }
+    },
+    {
+      "id": "run",
+      "title": "2 of 4: RUN WITH THE BALL",
+      "text": "Now you have the ball. Run with the stick and hold SPRINT to go faster. When a defender gets close, tap JUKE to dodge him. Get 10 yards.",
+      "goal": "gain",
+      "goalYd": 10,
+      "drill": { "offensePlay": "dive", "defensePlay": "cover3", "you": "offense", "youSpot": 1, "carrier": 1,
+                 "offense": [1], "defense": [0, 5, 6], "live": true, "endOnCatch": false, "maxS": 10 }
+    },
+    {
+      "id": "tackle",
+      "title": "3 of 4: MAKE A TACKLE",
+      "text": "Defense! A runner is coming at you. Run at him and tap TACKLE when you're close. Hitting him at full speed, or from behind, works best.",
+      "goal": "tackle",
+      "drill": { "offensePlay": "dive", "defensePlay": "cover3", "you": "defense", "youSpot": 0, "carrier": 1,
+                 "offense": [1], "defense": [0], "live": true, "endOnCatch": false, "maxS": 7 }
+    },
+    {
+      "id": "scrimmage",
+      "title": "4 of 4: A REAL PLAY",
+      "text": "Everyone's on the field now, 11 on 11. You're the quarterback again: hike, then throw or run. If you're lost, tap FIND ME and your player lights up on the TV.",
+      "goal": "play",
+      "drill": { "offensePlay": "slants", "defensePlay": "cover3", "you": "offense", "youSpot": 0, "carrier": 0,
+                 "offense": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "defense": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                 "live": false, "endOnCatch": false, "maxS": 0 }
+    }
+  ]
+}
