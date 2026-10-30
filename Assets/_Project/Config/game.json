@@ -1300,6 +1300,12 @@
     "trackLobApexYd": 5,
     "trackNearYd": 2
   },
+  "tightCoverage": {
+    "closeYd": 0.6,
+    "pickChance": 0.15,
+    "inFrontBonus": 0.1,
+    "breakupChance": 0.2
+  },
   "pursuit": {
     "leadMaxS": 2.0,
     "laneGapYd": 2.6,
@@ -1661,6 +1667,7 @@
     "tutorial": true,
     "season": true,
     "jerseyNames": true,
-    "colorTargets": true
+    "colorTargets": true,
+    "tightCoverage": true
   }
 }

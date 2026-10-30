@@ -294,7 +294,7 @@ namespace PocketFootball.Sim
         static void Won(World w, Player p, Defender d, DefMove m) { Count(w, m, true); Show(d, m, true); }
 
         // To the grass where it was hit, rolling on a little: LivePlay calls it incomplete.
-        static void KnockDown(World w)
+        internal static void KnockDown(World w)
         {
             var b = w.Ball;
             float f = w.Cfg.defense.swatRollFrac;
@@ -303,7 +303,7 @@ namespace PocketFootball.Sim
             b.Y = 0f; b.VX = vx; b.VZ = vz;
         }
 
-        static void PickOff(World w, Player p)
+        internal static void PickOff(World w, Player p)
         {
             w.Ball.GiveTo(p, w.Cfg.ball);
             w.Events.Push(w, EventKind.Interception, p, LivePlay.Qb(w));

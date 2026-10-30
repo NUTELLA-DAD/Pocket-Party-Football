@@ -75,7 +75,7 @@ namespace PocketFootball.Tests.EditMode
         [Test]
         public void QbDrillThrowCaughtThenItRunsAgain()
         {
-            var lab = Make("throw", c => c.play.catchChanceOffense = 1f);
+            var lab = Make("throw", c => { c.play.catchChanceOffense = 1f; c.features["tightCoverage"] = false; });
             var w = lab.W;
             Assert.AreEqual(Phase.Set, w.Phase, "waits for your snap");
             Tick(lab, new PlayerInput { Hike = true });
@@ -96,7 +96,7 @@ namespace PocketFootball.Tests.EditMode
         [Test]
         public void CatchDrillThrowsABulletThenALob()
         {
-            var lab = Make("catch", c => c.play.catchChanceOffense = 1f);
+            var lab = Make("catch", c => { c.play.catchChanceOffense = 1f; c.features["tightCoverage"] = false; });
             var w = lab.W;
             var kinds = new List<bool>();
             for (int rep = 0; rep < 2; rep++)

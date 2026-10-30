@@ -9,7 +9,8 @@ namespace PocketFootball.Sim
     //   (slowed as after a missed tackle, so he slides on his belly and gets up).
     // - A contested catch: a man of the other team within contestYd of the catcher as he goes up for it makes it a jump
     //   ball: the catcher's odds are contestChanceMul of a plain catch's, and the two come down tangled, both on the
-    //   grass for tangleS. If he drops it the ball falls on, so the other man can still pick it off.
+    //   grass for tangleS. If he drops it the ball falls on, so the other man can still pick it off. FEATURES.tightCoverage
+    //   (TightCoverage.cs): before the catch try, the defender in a jump ball may pick it off or knock it down outright.
     // The note of the last try (CatchNote) is only for the TV (View/Moves.cs: the dive, the leap, the tangle); not hashed.
     public static class CatchPlay
     {

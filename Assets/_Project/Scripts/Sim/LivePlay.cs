@@ -198,27 +198,33 @@ namespace PocketFootball.Sim
                     w.CatchTried.Add(near.Slot);
                     bool offense = near.Team == w.Offense;
                     var rival = CatchPlay.On(w) ? CatchPlay.Rival(w, near) : null;   // FEATURES.catchPlay: a jump ball
-                    float chance = Receiving.Chance(w, near, Weather.Catch(w, Ratings.Catch(w, near, offense ? c.catchChanceOffense : c.catchChanceDefense)));   // WS-05: CATCH timing; FEATURES.weather: a wet ball
-                    if (CatchPlay.On(w)) chance = CatchPlay.Chance(w, chance, dive, rival != null);
-                    bool caught = w.Rng.Value() < chance;
-                    if (CatchPlay.On(w)) CatchPlay.After(w, near, rival, dive, caught);
-                    if (caught)
+                    // FEATURES.tightCoverage: the man on him may pick it off or knock it down first
+                    var tight = TightCoverage.Resolve(w, near, rival);
+                    if (tight == TightCoverage.Result.Picked && w.Phase != Phase.Live) return;
+                    if (tight == TightCoverage.Result.None)
                     {
-                        // FEATURES.oobIncomplete: a catch with his feet out of bounds is no catch (no gain, no first
-                        // down, no interception): incomplete, the ball falls on past him and goes back to the line
-                        if (near.OutOfBounds && w.Cfg.Feature("oobIncomplete"))
+                        float chance = Receiving.Chance(w, near, Weather.Catch(w, Ratings.Catch(w, near, offense ? c.catchChanceOffense : c.catchChanceDefense)));   // WS-05: CATCH timing; FEATURES.weather: a wet ball
+                        if (CatchPlay.On(w)) chance = CatchPlay.Chance(w, chance, dive, rival != null);
+                        bool caught = w.Rng.Value() < chance;
+                        if (CatchPlay.On(w)) CatchPlay.After(w, near, rival, dive, caught);
+                        if (caught)
                         {
-                            w.Events.Push(w, EventKind.Incomplete, qb != null ? qb.Slot : -1, w.Offense, w.Ball.X, w.Ball.Z);
-                            Whistle(w, "INCOMPLETE", w.LineOfScrimmageX);
-                            return;
-                        }
-                        w.Ball.GiveTo(near, w.Cfg.ball);
-                        w.Events.Push(w, offense ? EventKind.Catch : EventKind.Interception, near, qb);
-                        if (!offense)
-                        {
-                            // FEATURES.intreturn: he runs it back until the whistle; off: the play ends at the catch
-                            if (!w.Cfg.Feature("intreturn")) { Whistle(w, "INTERCEPTED", near.X); return; }
-                            w.Intercepted = true;
+                            // FEATURES.oobIncomplete: a catch with his feet out of bounds is no catch (no gain, no first
+                            // down, no interception): incomplete, the ball falls on past him and goes back to the line
+                            if (near.OutOfBounds && w.Cfg.Feature("oobIncomplete"))
+                            {
+                                w.Events.Push(w, EventKind.Incomplete, qb != null ? qb.Slot : -1, w.Offense, w.Ball.X, w.Ball.Z);
+                                Whistle(w, "INCOMPLETE", w.LineOfScrimmageX);
+                                return;
+                            }
+                            w.Ball.GiveTo(near, w.Cfg.ball);
+                            w.Events.Push(w, offense ? EventKind.Catch : EventKind.Interception, near, qb);
+                            if (!offense)
+                            {
+                                // FEATURES.intreturn: he runs it back until the whistle; off: the play ends at the catch
+                                if (!w.Cfg.Feature("intreturn")) { Whistle(w, "INTERCEPTED", near.X); return; }
+                                w.Intercepted = true;
+                            }
                         }
                     }
                 }
