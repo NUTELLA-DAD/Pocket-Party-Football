@@ -1422,7 +1422,7 @@
   },
   "tightCoverage": {
     "closeYd": 0.6,
-    "pickChance": 0.15,
+    "pickChance": 0.12,
     "inFrontBonus": 0.1,
     "breakupChance": 0.2
   },
