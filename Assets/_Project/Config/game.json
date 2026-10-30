@@ -734,6 +734,13 @@
       "TOUCHBACK"
     ]
   },
+  "overtime": {
+    "periodFrac": 0.75,
+    "minS": 60,
+    "maxS": 180,
+    "breakS": 6,
+    "mustWin": false
+  },
   "lobby": {
     "holdUntilKickoff": true,
     "botCoversDropped": true,
@@ -1671,6 +1678,7 @@
     "music": true,
     "season": true,
     "jerseyNames": true,
-    "colorTargets": true
+    "colorTargets": true,
+    "overtime": true
   }
 }

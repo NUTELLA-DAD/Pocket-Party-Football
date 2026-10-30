@@ -92,7 +92,8 @@ namespace PocketFootball.Tests.EditMode
 
             // the end: four quarters, a second half, the final whistle and a winner (or a tie)
             Assert.IsTrue(Clock.IsOver(w), "the game ended inside an hour of play: " + s);
-            Assert.AreEqual(cfg.clock.quarters, w.GameClock.Quarter, s);
+            // (FEATURES.overtime: level after four, one overtime period; a party game can still end level)
+            Assert.AreEqual(cfg.clock.quarters + (w.GameClock.Overtime ? 1 : 0), w.GameClock.Quarter, s);
             Assert.IsTrue(w.GameClock.SecondHalf, "there was a second half: " + s);
             Assert.AreEqual(w.Score[0] > w.Score[1] ? 0 : w.Score[1] > w.Score[0] ? 1 : -1, Clock.Winner(w), "the winner has more points");
 

@@ -13,6 +13,7 @@ namespace PocketFootball.Tests.EditMode
         {
             var cfg = ConfigTests.Load();
             cfg.features["clock"] = true;
+            cfg.features["overtime"] = false;   // (regulation only: OvertimeTests covers a tie)
             if (quarterS > 0f) cfg.clock.quarterS = quarterS;
             return cfg;
         }

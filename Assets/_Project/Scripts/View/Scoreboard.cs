@@ -14,8 +14,10 @@ namespace PocketFootball.View
         public static string QuarterText(World w)
         {
             if (!Clock.On(w)) return QuarterNames[0];
-            if (Clock.IsOver(w)) return "FINAL";
+            if (Clock.IsOver(w)) return Clock.InOvertime(w) ? "F/OT" : "FINAL";
             if (Clock.IsHalftime(w)) return "HALF";
+            int ot = Clock.OvertimePeriod(w);
+            if (ot > 0) return ot == 1 ? "OT" : "OT" + ot;   // FEATURES.overtime
             int q = w.GameClock.Quarter;
             return q >= 1 && q <= QuarterNames.Length ? QuarterNames[q - 1] : q + "TH";
         }
@@ -23,18 +25,18 @@ namespace PocketFootball.View
         // "3:59" (empty with the clock off or once the game is over).
         public static string ClockText(World w)
         {
-            if (!Clock.On(w) || Clock.IsOver(w) || Clock.IsHalftime(w)) return "";
+            if (!Clock.On(w) || Clock.IsOver(w) || Clock.IsHalftime(w) || Clock.IsOvertimeBreak(w)) return "";
             int secs = w.GameClock.Started ? Clock.SecondsLeft(w) : Mathf.RoundToInt(w.Cfg.clock.quarterS);
             return (secs / 60) + ":" + (secs % 60).ToString("00");
         }
 
-        // "ARROWS WIN 21-14" or "TIE GAME 14-14".
+        // "ARROWS WIN 21-14", "ARROWS WIN 24-21 IN OT" or "TIE GAME 14-14".
         public static string WinnerText(World w)
         {
             var teams = w.Cfg.teams;
             int win = Clock.Winner(w);
             string score = w.Score.Length >= 2 ? "  " + Mathf.Max(w.Score[0], w.Score[1]) + "-" + Mathf.Min(w.Score[0], w.Score[1]) : "";
-            return (win >= 0 && win < teams.Count ? teams[win].name + " WIN" : "TIE GAME") + score;
+            return (win >= 0 && win < teams.Count ? teams[win].name + " WIN" : "TIE GAME") + score + (win >= 0 && Clock.InOvertime(w) ? " IN OT" : "");
         }
 
         // The TV's banner line (and the phones' ON THE TV strip): whether each team has called, NEVER what.
@@ -42,6 +44,7 @@ namespace PocketFootball.View
         {
             if (Clock.IsOver(w)) return "FINAL   " + WinnerText(w);
             if (Clock.IsHalftime(w)) return "HALFTIME   (the teams switch ends)";
+            if (Clock.IsOvertimeBreak(w)) return OvertimeLine(w);
             if (!Huddle.On(w)) return "";
             int hz = w.Cfg.sim.tickHz;
             int secs = (w.PhaseTicks + hz - 1) / hz;
@@ -52,7 +55,17 @@ namespace PocketFootball.View
             if (w.Phase != Phase.Huddle) return "LINE UP   (next huddle in " + secs + ")";
             var parts = new List<string> { "HUDDLE 0:" + secs.ToString("00") };
             for (int t = 0; t < w.Cfg.teams.Count; t++) parts.Add(w.Cfg.teams[t].name + (Huddle.IsLocked(w, t) ? " CALLED ✓" : " ..."));
+            if (Clock.InOvertime(w) && w.GameClock.OtStage == OtStage.SuddenDeath) parts.Add("OT: NEXT SCORE WINS");
             return string.Join("     ", parts);
+        }
+
+        // FEATURES.overtime: the break before overtime, the toss and the rule.
+        public static string OvertimeLine(World w)
+        {
+            var teams = w.Cfg.teams;
+            int first = w.GameClock.OtFirst;
+            string toss = first >= 0 && first < teams.Count ? teams[first].name + " WIN THE TOSS AND RECEIVE" : "";
+            return "OVERTIME   " + toss + "   (both teams get the ball, then next score wins)";
         }
 
         // The bar at the top centre, and at the end of the game the winner banner. s = screen scale (height / 1080).

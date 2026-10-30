@@ -92,6 +92,7 @@ namespace PocketFootball.Boot
             TeamPick.Apply(cfg, m.Away, m.Home);
             if (cfg.teams.Count < 2 || cfg.teams[0].@short != m.Away || cfg.teams[1].@short != m.Home) return;
             Live = m;
+            cfg.overtime.mustWin = true;   // FEATURES.overtime: no ties in a season game, overtime plays on until somebody scores
             Debug.Log("[season] week " + (m.Week + 1) + ": " + m.Away + " at " + m.Home);
         }
 
