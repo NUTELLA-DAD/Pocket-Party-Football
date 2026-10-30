@@ -41,12 +41,16 @@ namespace PocketFootball.Boot
         const string WeatherKey = "pp.weather";   // FEATURES.weather: clear, rain, snow or random
         const string LengthKey = "pp.length";     // FEATURES.gameLength: a gameLength.lengths id (quick, short, medium, full)
         public static readonly string[] HelperNames = { "FLIGHT LINE", "LANDING RING", "TACKLE RING" };   // FlightMarks.Switches, in order
-        // settings rows: 0 sound, then (FEATURES.teamPick, more than two teams) away and home, (FEATURES.weather) the
-        // weather, (FEATURES.gameLength) the game length, full screen, the helpers, (FEATURES.hotspotQr) the hotspot, back
+        // settings rows: 0 sound, (FEATURES.music) music, then (FEATURES.teamPick, more than two teams) away and home,
+        // (FEATURES.weather) the weather, (FEATURES.gameLength) the game length, full screen, the helpers,
+        // (FEATURES.hotspotQr) the hotspot, back
+        int MusicRows => MusicDirector.On(cfg) ? 1 : 0;
+        int MusicRow => MusicRows > 0 ? 1 : -1;
+        int TeamRow => 1 + MusicRows;   // the first team row (away)
         int TeamRows => cfg.Feature("teamPick") && TeamPick.League(cfg).Count > 2 ? 2 : 0;
-        int WeatherRow => Weather.On(cfg) ? 1 + TeamRows : -1;
-        int LengthRow => GameLength.On(cfg) ? 1 + TeamRows + (Weather.On(cfg) ? 1 : 0) : -1;
-        int ScreenRow => 1 + TeamRows + (Weather.On(cfg) ? 1 : 0) + (GameLength.On(cfg) ? 1 : 0);
+        int WeatherRow => Weather.On(cfg) ? TeamRow + TeamRows : -1;
+        int LengthRow => GameLength.On(cfg) ? TeamRow + TeamRows + (Weather.On(cfg) ? 1 : 0) : -1;
+        int ScreenRow => TeamRow + TeamRows + (Weather.On(cfg) ? 1 : 0) + (GameLength.On(cfg) ? 1 : 0);
         int HelperRow => ScreenRow + 1;
         int HotspotRow => HotspotJoin.On(cfg) ? HelperRow + FlightMarks.Switches.Length : -1;
         int SettingsRows => HelperRow + FlightMarks.Switches.Length + (HotspotRow >= 0 ? 1 : 0) + 1;
@@ -253,11 +257,12 @@ namespace PocketFootball.Boot
                 if (left || (clickRow && mp.x < rows[pick].center.x)) StepLength(-1);
                 if (right || ok || (clickRow && mp.x >= rows[pick].center.x)) StepLength(+1);
             }
-            else if (pick >= 1 && pick < 1 + TeamRows)
+            else if (pick == MusicRow && (ok || left || right || (click && rows[pick].Contains(mp)))) Music.Toggle();
+            else if (pick >= TeamRow && pick < TeamRow + TeamRows)
             {
                 bool clickRow = click && rows[pick].Contains(mp);
-                if (left || (clickRow && mp.x < rows[pick].center.x)) PickTeam(pick == 1, -1);
-                if (right || ok || (clickRow && mp.x >= rows[pick].center.x)) PickTeam(pick == 1, +1);
+                if (left || (clickRow && mp.x < rows[pick].center.x)) PickTeam(pick == TeamRow, -1);
+                if (right || ok || (clickRow && mp.x >= rows[pick].center.x)) PickTeam(pick == TeamRow, +1);
             }
             else if (pick == ScreenRow && (ok || left || right || (click && rows[pick].Contains(mp)))) Screen.fullScreen = !Screen.fullScreen;
             else if (pick == HotspotRow && (ok || (click && rows[pick].Contains(mp)))) OpenHotspot();
@@ -509,10 +514,11 @@ namespace PocketFootball.Boot
             var text = new string[SettingsRows];
             text[0] = "SOUND   ◄  " + Mathf.RoundToInt(AudioListener.volume * 100f) + "%  ►";
             var league = TeamPick.League(cfg);
+            if (MusicRow >= 0) text[MusicRow] = "MUSIC   " + (Music.Enabled ? "ON" : "OFF");
             if (TeamRows > 0)
             {
-                text[1] = "AWAY   ◄  " + league[away].name + "  ►";
-                text[2] = "HOME   ◄  " + league[home].name + "  ►";
+                text[TeamRow] = "AWAY   ◄  " + league[away].name + "  ►";
+                text[TeamRow + 1] = "HOME   ◄  " + league[home].name + "  ►";
             }
             if (WeatherRow >= 0) text[WeatherRow] = "WEATHER   ◄  " + (weatherPick ?? "clear").ToUpperInvariant() + "  ►";
             if (LengthRow >= 0) text[LengthRow] = "GAME   ◄  " + GameLength.Get(cfg, lengthPick).label + "  ►";
@@ -520,18 +526,18 @@ namespace PocketFootball.Boot
             for (int i = 0; i < HelperNames.Length; i++) text[HelperRow + i] = HelperNames[i] + "   " + (cfg.Feature(FlightMarks.Switches[i]) ? "ON" : "OFF");
             if (HotspotRow >= 0) text[HotspotRow] = "HOTSPOT WI-FI   " + (HotspotJoin.SavedName.Trim().Length > 0 ? HotspotJoin.SavedName.Trim() : "OFF");
             text[text.Length - 1] = "BACK";
-            bool tight = text.Length > 6, tighter = text.Length > 8, tightest = text.Length > 10;   // (the team, weather and length rows: a little less room each, so all fit above the hint)
-            float rw = Mathf.Min(r.width - 120 * s, 760 * s), rh = (tightest ? 52 : tighter ? 58 : tight ? 62 : 70) * s, gap = (tightest ? 6 : tighter ? 8 : tight ? 10 : 14) * s, y = r.y + (tightest ? 128 : tighter ? 135 : 150) * s;
+            bool tight = text.Length > 6, tighter = text.Length > 8, tightest = text.Length > 10, packed = text.Length > 11;   // (the team, weather and length rows: a little less room each, so all fit above the hint)
+            float rw = Mathf.Min(r.width - 120 * s, 760 * s), rh = (packed ? 48 : tightest ? 52 : tighter ? 58 : tight ? 62 : 70) * s, gap = (packed ? 5 : tightest ? 6 : tighter ? 8 : tight ? 10 : 14) * s, y = r.y + (packed ? 122 : tightest ? 128 : tighter ? 135 : 150) * s;
             for (int i = 0; i < text.Length; i++)
             {
                 var rr = new Rect((W - rw) * 0.5f, y, rw, rh);
                 rows[i] = rr;
                 bool on = i == pick;
                 Fill(rr, on ? new Color(1f, 0.78f, 0.12f, 1f) : new Color(1f, 1f, 1f, 0.08f));
-                if (i >= 1 && i < 1 + TeamRows)
+                if (i >= TeamRow && i < TeamRow + TeamRows)
                 {
                     // the team's two colours, a stripe each at the row's left end
-                    var t = league[i == 1 ? away : home];
+                    var t = league[i == TeamRow ? away : home];
                     float sw = 18 * s, sx = rr.x + 14 * s, sy = rr.y + 10 * s, sh = rh - 20 * s;
                     Fill(new Rect(sx, sy, sw, sh), Colors.Hex(t.color));
                     Fill(new Rect(sx + sw, sy, sw, sh), Colors.Hex(t.color2));
