@@ -6,6 +6,7 @@ using System.Text;
 using PocketFootball.Sim;
 using PocketFootball.View;
 using UnityEngine;
+using CrashReport = PocketFootball.View.CrashReport;   // UnityEngine has its own CrashReport
 
 namespace PocketFootball.Boot
 {
