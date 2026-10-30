@@ -1,5 +1,8 @@
 # Rig fixes (rig gauntlet thread)
 
+The last step for every player model is `apose/` (arms resting down instead of the T-pose; see apose/README.md):
+the tools below expect the T-pose, so run them on the model from before its apose commit, then apose it again.
+
 Blender as a Python module (`pip install bpy`), run with `python script.py -- args`.
 
 - `rigfix.py -- in.fbx params.json out.fbx`: re-places the 22 Humanoid joints and rebuilds every skin weight from
