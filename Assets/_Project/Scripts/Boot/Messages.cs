@@ -24,14 +24,18 @@ namespace PocketFootball.Boot
 
         public static string Lobby(GameConfig cfg, Roster r) => PhoneProtocol.Text(new JObject { ["t"] = "lobby", ["teams"] = Teams(cfg, r) });
 
-        public static string Picked(Seat s, Player p, GameConfig cfg)
+        // w (FEATURES.season): the recruit this person plays as goes in `as` (his name), when he wears one.
+        public static string Picked(Seat s, Player p, GameConfig cfg, World w = null)
         {
             var t = cfg.teams[s.Team];
-            return PhoneProtocol.Text(new JObject
+            var o = new JObject
             {
                 ["t"] = "picked", ["team"] = s.Team, ["number"] = p.Number, ["pos"] = p.Pos, ["name"] = s.Name,
                 ["teamName"] = t.name, ["color"] = t.color, ["color2"] = t.color2,
-            });
+            };
+            string recruit = w != null ? SeasonRules.NameOf(w, p) : null;
+            if (!string.IsNullOrEmpty(recruit)) o["as"] = recruit;
+            return PhoneProtocol.Text(o);
         }
 
         // The phone's own numbers: stamina 0-100, tired (sprint locked until it refills), out of bounds.

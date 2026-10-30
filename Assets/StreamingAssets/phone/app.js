@@ -100,7 +100,7 @@
     document.documentElement.style.setProperty('--team', msg.color);
     document.documentElement.style.setProperty('--team-2', msg.color2);
     $('meName').textContent = msg.name + ' · ' + msg.teamName;
-    $('meNum').textContent = msg.pos + ' #' + msg.number;
+    $('meNum').textContent = msg.pos + ' #' + msg.number + (msg.as ? '  ·  ' + msg.as : '');   // a season recruit's name
     drawTeams();
   }
 

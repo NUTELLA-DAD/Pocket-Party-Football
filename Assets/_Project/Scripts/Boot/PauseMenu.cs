@@ -150,7 +150,7 @@ namespace PocketFootball.Boot
         {
             Debug.Log("[pause] MAIN MENU");
             Resume();
-            TitleScreen.ReturnTo(CupHost.Live != null ? "cup" : null);
+            TitleScreen.ReturnTo(CupHost.Live != null ? "cup" : SeasonHost.Live != null ? "season" : null);
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
 

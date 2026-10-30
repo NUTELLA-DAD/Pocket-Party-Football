@@ -1235,8 +1235,8 @@
     "logoTopFrac": 0.025,
     "logoHeightFrac": 0.47,
     "playHeightFrac": 0.135,
-    "otherHeightFrac": 0.095,
-    "gapFrac": 0.012,
+    "otherHeightFrac": 0.082,
+    "gapFrac": 0.01,
     "hoverScale": 1.07,
     "dimOthers": 0.8,
     "tint": 0.2,
@@ -1503,6 +1503,53 @@
   "crashLog": {
     "maxEntries": 40
   },
+  "season": {
+    "weeks": 0,
+    "startCoins": 300,
+    "coinsWin": 150,
+    "coinsTie": 90,
+    "coinsLoss": 60,
+    "coinsPerTd": 15,
+    "coinsPerPick": 20,
+    "coinsPerSack": 10,
+    "offers": 3,
+    "scoutCost": 40,
+    "recruitSpread": 3,
+    "signFree": 15,
+    "signCostPerPoint": 20,
+    "boostCostBase": 60,
+    "boostCostStep": 30,
+    "boostMax": 0,
+    "coaching": {
+      "playbook": {
+        "name": "PLAYBOOK", "blurb": "More plays to call.", "costs": [150, 250], "perLevel": 0,
+        "plays": [
+          ["dive", "slants", "sneak", "cover3", "mblitz", "goalline"],
+          ["toss", "verts", "cover2", "zblitz"],
+          ["boot", "screen", "prevent"]
+        ]
+      },
+      "recovery": { "name": "RECOVERY", "blurb": "Stamina comes back faster.", "costs": [120, 200, 300], "perLevel": 0.25 },
+      "sprint": { "name": "SPRINT", "blurb": "Sprints last longer.", "costs": [120, 200, 300], "perLevel": 0.15 }
+    },
+    "firstNames": [
+      "DASH", "BRICK", "MOOSE", "TANK", "JET", "ROCKY", "BLAZE", "DUKE", "ACE", "BUCK", "SLY", "REX", "ZEKE", "OTIS",
+      "GUS", "MAC", "HANK", "LEO", "IKE", "JAX", "KIP", "NED", "ROSCO", "TUCK", "VIC", "WADE", "ZANE", "BO",
+      "CASH", "DREW", "FINN", "HUGO", "JUDE", "KNOX", "LUKE", "MILO", "NASH", "OWEN", "PIKE", "QUINN", "RUDY", "SAM",
+      "THEO", "UDO", "VERN", "WES", "YURI", "AXEL", "RUBY", "JADE", "NOVA", "SKYE", "ZOE", "LUX", "MAE", "PIP",
+      "TESS", "ROXY", "IVY", "GIGI"
+    ],
+    "lastNames": [
+      "OKAFOR", "VANCE", "DELGADO", "BRANNIGAN", "KOWALSKI", "NAKAMURA", "OYELARAN", "PETROV", "SANTIAGO", "THORNE",
+      "UNDERWOOD", "VASQUEZ", "WHITLOCK", "YAMADA", "ZIMMER", "ABARA", "BLACKWOOD", "CASTILLO", "DUBOIS", "EKWUEME",
+      "FERRARO", "GRANT", "HOLLOWAY", "IBRAHIM", "JOHANSSON", "KANE", "LINDQVIST", "MBEKI", "NOVAK", "OSEI",
+      "PRESCOTT", "QUIROGA", "RAMOS", "STEELE", "TAKAHASHI", "UPTON", "VOLKOV", "WARD", "XAVIER", "YOUNG",
+      "ZAPATA", "BIGELOW", "CROSS", "DRAKE", "FOX", "HALE", "IRONS", "KNIGHT", "LOCKE", "MARSH", "NORTH", "PRICE",
+      "REED", "STONE", "WOLFE", "BANKS"
+    ],
+    "walkOn": "WALK-ON",
+    "jerseyName": { "letterCm": 9, "penFrac": 0.2, "gapFrac": 0.22, "maxWidthCm": 44, "aboveTorsoCm": 36, "backCm": 18 }
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
@@ -1604,6 +1651,8 @@
     "driveRush": true,
     "gameLength": true,
     "crashLog": true,
-    "tutorial": true
+    "tutorial": true,
+    "season": true,
+    "jerseyNames": true
   }
 }

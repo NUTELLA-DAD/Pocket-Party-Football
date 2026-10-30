@@ -122,10 +122,14 @@ namespace PocketFootball.Boot
         }
     }
 
-    // The gold strip under the post-game screen of a cup game: the result, and the way back to the bracket.
+    // The gold strip under the post-game screen of a cup game: the result, and the way back to the bracket. A season
+    // game (SeasonHost) uses it too, with its own Heading, Hint and Press.
     public sealed class CupStrip : MonoBehaviour
     {
         public string Text;
+        public string Heading = "COUCH CUP";
+        public string Hint = "Enter, (A) or click: see the bracket";
+        public System.Action Press;   // what Enter / (A) / a click does (null: the bracket)
         GUIStyle big, small;
         Rect hit;
 
@@ -142,7 +146,9 @@ namespace PocketFootball.Boot
                 var mp = mouse.position.ReadValue();
                 if (hit.Contains(new Vector2(mp.x, Screen.height - mp.y))) ok = true;
             }
-            if (ok) CupHost.ToBracket();
+            if (!ok) return;
+            if (Press != null) Press();
+            else CupHost.ToBracket();
         }
 
         void OnGUI()
@@ -160,9 +166,9 @@ namespace PocketFootball.Boot
             Fill(r, CupColors.Navy);
             Fill(new Rect(r.x, r.y, r.width, 6 * s), CupColors.Gold);
             big.normal.textColor = CupColors.GoldText;
-            GUI.Label(new Rect(r.x, r.y + 14 * s, r.width, 70 * s), "COUCH CUP  ·  " + Text, big);
+            GUI.Label(new Rect(r.x, r.y + 14 * s, r.width, 70 * s), Heading + "  ·  " + Text, big);
             small.normal.textColor = Color.white;
-            GUI.Label(new Rect(r.x, r.y + 86 * s, r.width, 40 * s), "Enter, (A) or click: see the bracket", small);
+            GUI.Label(new Rect(r.x, r.y + 86 * s, r.width, 40 * s), Hint, small);
         }
 
         static void Fill(Rect r, Color c)
