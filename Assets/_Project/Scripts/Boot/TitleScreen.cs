@@ -126,7 +126,7 @@ namespace PocketFootball.Boot
             return t;
         }
 
-        // by Item (no picture yet for TUTORIAL: it is drawn as a navy button with its word)
+        // by Item (a missing picture is drawn as a navy button with its word)
         static readonly string[] ButtonArt = { "Title/ButtonPlay", "Title/ButtonCup", "Title/ButtonHowToPlay", "Title/ButtonSettings", "Title/ButtonRoster", "Title/ButtonTutorial" };
         static readonly string[] ButtonText = { "PLAY", "COUCH CUP", "HOW TO PLAY", "SETTINGS", "ROSTER", "TUTORIAL" };
 
