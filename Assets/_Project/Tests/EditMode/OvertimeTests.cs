@@ -158,7 +158,7 @@ namespace PocketFootball.Tests.EditMode
             StringAssert.StartsWith("OVERTIME", Scoreboard.TvLine(w));
             StringAssert.Contains(cfg.teams[first].name + " WIN THE TOSS AND RECEIVE", Scoreboard.TvLine(w));
 
-            float dir0 = Clock.AttackDir(w, 0);
+            float dir0 = -w.GameClock.FirstDir[0];   // (EndRegulationLevel skips halftime, so the second-half end is the other one)
             int huddles = w.HuddleNumber;
             for (int i = 0; i < Ticks(cfg, cfg.overtime.breakS) - 2; i++) { w.Step(null); Assert.AreEqual(Phase.Whistle, w.Phase); }
             Assert.AreEqual(huddles, w.HuddleNumber, "nobody plays in the break");
@@ -191,10 +191,11 @@ namespace PocketFootball.Tests.EditMode
             bool zero = false, one = false;
             for (int seed = 1; seed <= 16 && !(zero && one); seed++)
             {
-                int t = new Rng(seed).Value() < 0.5f ? 0 : 1;
+                int t = Clock.Toss(seed, 0);
                 zero |= t == 0; one |= t == 1;
             }
             Assert.IsTrue(zero && one, "either team can win the toss");
+            Assert.AreNotEqual(Clock.Toss(1, 40), Clock.Toss(1, 41), "a seed-1 game: the toss moves with the plays run");
         }
 
         // ---- the possessions ----
@@ -338,6 +339,7 @@ namespace PocketFootball.Tests.EditMode
             var cfg = Cfg();
             var w = Fresh(cfg);
             w.GameClock.Quarter = cfg.clock.quarters;
+            Play(w, "TACKLED");   // the opening kickoff, run back: the touchdown must come on a scrimmage play
             GoLive(w);
             w.Score[0] = 0; w.Score[1] = 0;
             int scorer = w.Offense;
