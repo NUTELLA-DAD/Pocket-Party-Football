@@ -40,6 +40,7 @@ namespace PocketFootball.Sim
         public bool BotHelp;                              // a bot is playing for an idle person this tick
         public bool Blocking;                             // this player is blocking this tick (a person holding BLOCK, or a bot)
         public int OffenseSpot = -1, DefenseSpot = -1;    // WS-07: a person's two-way picks (Formation.cs, FEATURES.lobby; -1 = any free spot)
+        public int Recruit = -1;                          // FEATURES.season: the recruit he wears, an index into World.Season.Roster[Team] (-1: none, a walk-on)
         // bot v0
         public float GoalX, GoalZ;
         public int NextThinkTick;
@@ -101,6 +102,7 @@ namespace PocketFootball.Sim
         public readonly Pursuit.Plan ChasePlan = new Pursuit.Plan();   // FEATURES.pursuitLanes: this tick's chase (Pursuit.cs); not hashed, rebuilt every tick
         public readonly DriveBlock.State Drive = new DriveBlock.State();   // FEATURES.driveBlock: this tick's shoves, for the TV (DriveBlock.cs); not hashed
         public readonly DriveRush.State Rush = new DriveRush.State();      // FEATURES.driveRush: the rushers' shoves this tick, for the TV (DriveRush.cs); not hashed
+        public SeasonLive Season;                      // FEATURES.season: this game's recruits, coaching and playbook (Season.cs); set before the first step, never changed by it
 
         public World(GameConfig cfg, int seed)
         {
@@ -135,13 +137,15 @@ namespace PocketFootball.Sim
         public List<SpotConfig> Spots(int team) => Formation.SpotsOf(this, team);
 
         // Adds a player on the team's first free formation spot (spot >= 0: that one). Null when the team is full.
-        // A player already in the world on another team moves over.
-        public Player AddPlayer(int slot, int team, bool human, int spot = -1)
+        // A player already in the world on another team moves over (and leaves his recruit behind). recruit >= 0:
+        // the season recruit he wears (FEATURES.season).
+        public Player AddPlayer(int slot, int team, bool human, int spot = -1, int recruit = -1)
         {
             var p = Find(slot);
-            if (p != null && p.Team == team) { p.Human = human; return p; }
+            if (p != null && p.Team == team) { p.Human = human; if (recruit >= 0) p.Recruit = recruit; return p; }
             if (spot < 0) spot = FreeSpot(team);
             if (spot < 0) return null;
+            if (p != null) p.Recruit = -1;
             if (p == null)
             {
                 p = new Player { Slot = slot };
@@ -153,6 +157,7 @@ namespace PocketFootball.Sim
             p.Human = human;
             p.Team = team;
             p.Spot = spot;
+            if (recruit >= 0) p.Recruit = recruit;
             Formation.Place(this, p);
             p.X = p.HomeX; p.Z = p.HomeZ;
             p.VX = p.VZ = 0;
@@ -183,13 +188,22 @@ namespace PocketFootball.Sim
             if (bot == null) return null;
             float x = bot.X, z = bot.Z;
             bool hadBall = Ball.Carrier == bot.Slot;
+            int recruit = bot.Recruit;   // FEATURES.season: the person wears the bot's recruit (his name, look and ratings)
             RemovePlayer(bot.Slot);
             var old = Find(humanSlot);
             if (old != null) RemovePlayer(humanSlot);
-            var p = AddPlayer(humanSlot, team, true, bot.Spot);
+            var p = AddPlayer(humanSlot, team, true, bot.Spot, recruit);
             p.X = x; p.Z = z;
             if (hadBall) Ball.GiveTo(p, Cfg.ball);
             return p;
+        }
+
+        // FEATURES.season: the recruit a player wears (an index into Season.Roster[p.Team]; -1 takes it off).
+        public void SetRecruit(Player p, int recruit)
+        {
+            if (p == null) return;
+            var team = Season != null && Season.Roster != null && p.Team >= 0 && p.Team < Season.Roster.Length ? Season.Roster[p.Team] : null;
+            p.Recruit = team != null && recruit >= 0 && recruit < team.Length ? recruit : -1;
         }
 
         public void RemovePlayer(int slot)
@@ -283,9 +297,11 @@ namespace PocketFootball.Sim
             Mix(PlayTicks); MixS(Result); MixF(NextLos); MixF(LineOfScrimmageX); Mix(Thrown ? 1 : 0); Mix(Intercepted ? 1 : 0); Mix(PlaysRun); Mix(YardsGained);
             foreach (var c in Calls) MixS(c);
             foreach (var kv in Suggestions) { Mix(kv.Key); MixS(kv.Value); }
+            if (Season != null) Mix(Season.Club);   // FEATURES.season (only in a season game, so plain games hash as before)
             foreach (var p in Players)
             {
                 Mix(p.Slot); Mix(p.Team); Mix(p.Spot); Mix(p.Number); Mix(p.Human ? 1 : 0);
+                if (Season != null) Mix(p.Recruit);
                 MixF(p.X); MixF(p.Z); MixF(p.VX); MixF(p.VZ); MixF(p.Stamina);
                 Mix(p.Tired ? 1 : 0); Mix(p.OutOfBounds ? 1 : 0);
                 Mix(p.TackleCooldown); Mix(p.StumbleTicks); Mix(p.JukeTicks); Mix(p.JukeCooldown); Mix(p.RouteIndex);

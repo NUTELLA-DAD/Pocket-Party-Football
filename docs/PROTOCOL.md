@@ -146,7 +146,7 @@ With `FEATURES.kickArc` (punts and field goals) it is the HIKE button: the aim h
 `{teams: [{name, short, color, color2, people, players}]}`. `people` = phones on that team, `players` = spots per team. Sent to every connected phone after any join or pick.
 
 ### `picked` (this phone)
-`{team, number, pos, name, teamName, color, color2}`. The spot this person now plays. Colours are `#rrggbb`.
+`{team, number, pos, name, teamName, color, color2, as?}`. The spot this person now plays. Colours are `#rrggbb`. `as` (only in a season game, `FEATURES.season`): the name of the recruit this person plays as, the one on the back of their jersey.
 
 ### `ui` (this phone)
 Which screen to show.

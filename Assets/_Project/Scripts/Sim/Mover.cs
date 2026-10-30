@@ -18,10 +18,10 @@ namespace PocketFootball.Sim
             p.Sprinting = input.Sprint && m > 0f && !p.Tired && p.Stamina > 0f;
             if (p.Sprinting)
             {
-                p.Stamina -= c.staminaDrainPerS * Weather.Stamina(w) * dt;   // FEATURES.weather / sandField
+                p.Stamina -= c.staminaDrainPerS * Weather.Stamina(w) * SeasonRules.SprintDrain(w, p) * dt;   // FEATURES.weather / sandField; FEATURES.season: SPRINT coaching
                 if (p.Stamina <= 0f) { p.Stamina = 0f; p.Tired = true; p.Sprinting = false; }
             }
-            else if (p.Stamina < 1f) p.Stamina = Math.Min(1f, p.Stamina + c.staminaRegenPerS * dt);
+            else if (p.Stamina < 1f) p.Stamina = Math.Min(1f, p.Stamina + c.staminaRegenPerS * SeasonRules.Recovery(w, p) * dt);   // FEATURES.season: RECOVERY coaching
 
             // velocity eases toward the wanted one: accelYdS2 when speeding up, decelYdS2 when slowing or turning hard
             float top = p.Sprinting ? c.sprintSpeedYdS : c.jogSpeedYdS;

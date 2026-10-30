@@ -3,9 +3,9 @@ using UnityEngine;
 
 namespace PocketFootball.View
 {
-    // Bold block digits and a few letters as centre-line strokes, in a box 1 wide and 1.4 tall (y up). Drawn with a
-    // thick pen they read as stadium paint and jersey numbers; the same strokes paint the field, the shirts and the
-    // team marks, so there are no font files.
+    // Bold block digits and the alphabet as centre-line strokes, in a box 1 wide and 1.4 tall (y up). Drawn with a
+    // thick pen they read as stadium paint, jersey numbers and the names on jersey backs (JerseyNames); the same
+    // strokes paint the field, the shirts and the team marks, so there are no font files.
     public static class Glyphs
     {
         public const float Width = 1f, Height = 1.4f;
@@ -40,10 +40,37 @@ namespace PocketFootball.View
             ['7'] = new[] { P(0.04f, 1.36f, 0.96f, 1.36f, 0.36f, 0.02f) },
             ['8'] = new[] { Arc(0.5f, 1.05f, 0.33f, 0.31f, 0f, 360f, 20), Arc(0.5f, 0.38f, 0.42f, 0.37f, 0f, 360f, 22) },
             ['9'] = new[] { Arc(0.5f, 0.98f, 0.42f, 0.4f, 0f, 360f, 20), Arc(0.08f, 0.78f, 0.84f, 0.76f, -90f, 5f, 10) },
-            ['K'] = new[] { P(0.12f, 1.38f, 0.12f, 0.02f), P(0.9f, 1.38f, 0.14f, 0.62f), P(0.38f, 0.82f, 0.92f, 0.02f) },
+            ['A'] = new[] { P(0.06f, 0.02f, 0.5f, 1.38f, 0.94f, 0.02f), P(0.24f, 0.5f, 0.76f, 0.5f) },
+            ['B'] = new[] { P(0.12f, 0.02f, 0.12f, 1.38f, 0.52f, 1.38f), Arc(0.52f, 1.04f, 0.38f, 0.34f, 90f, -90f, 10), P(0.52f, 0.7f, 0.12f, 0.7f), Arc(0.54f, 0.36f, 0.42f, 0.34f, 90f, -90f, 10), P(0.54f, 0.02f, 0.12f, 0.02f) },
             ['C'] = new[] { Arc(0.56f, 0.7f, 0.46f, 0.64f, 50f, 310f, 22) },
+            ['D'] = new[] { P(0.12f, 0.02f, 0.12f, 1.38f, 0.4f, 1.38f), Arc(0.4f, 0.7f, 0.54f, 0.68f, 90f, -90f, 14), P(0.4f, 0.02f, 0.12f, 0.02f) },
+            ['E'] = new[] { P(0.92f, 1.38f, 0.12f, 1.38f, 0.12f, 0.02f, 0.92f, 0.02f), P(0.12f, 0.72f, 0.8f, 0.72f) },
+            ['F'] = new[] { P(0.92f, 1.38f, 0.12f, 1.38f, 0.12f, 0.02f), P(0.12f, 0.72f, 0.8f, 0.72f) },
+            ['G'] = new[] { Arc(0.54f, 0.7f, 0.44f, 0.66f, 40f, 320f, 22), P(0.9f, 0.26f, 0.9f, 0.64f, 0.58f, 0.64f) },
+            ['H'] = new[] { P(0.1f, 0.02f, 0.1f, 1.38f), P(0.9f, 0.02f, 0.9f, 1.38f), P(0.1f, 0.7f, 0.9f, 0.7f) },
+            ['I'] = new[] { P(0.5f, 0.02f, 0.5f, 1.38f), P(0.2f, 1.38f, 0.8f, 1.38f), P(0.2f, 0.02f, 0.8f, 0.02f) },
+            ['J'] = new[] { P(0.2f, 1.38f, 0.92f, 1.38f), P(0.66f, 1.38f, 0.66f, 0.4f), Arc(0.4f, 0.4f, 0.26f, 0.38f, 0f, -180f, 10) },
+            ['K'] = new[] { P(0.12f, 1.38f, 0.12f, 0.02f), P(0.9f, 1.38f, 0.14f, 0.62f), P(0.38f, 0.82f, 0.92f, 0.02f) },
+            ['L'] = new[] { P(0.14f, 1.38f, 0.14f, 0.02f, 0.92f, 0.02f) },
+            ['M'] = new[] { P(0.08f, 0.02f, 0.08f, 1.38f, 0.5f, 0.5f, 0.92f, 1.38f, 0.92f, 0.02f) },
+            ['N'] = new[] { P(0.1f, 0.02f, 0.1f, 1.38f, 0.9f, 0.02f, 0.9f, 1.38f) },
+            ['O'] = new[] { Arc(0.5f, 0.7f, 0.44f, 0.66f, 0f, 360f, 28) },
+            ['P'] = new[] { P(0.12f, 0.02f, 0.12f, 1.38f, 0.52f, 1.38f), Arc(0.52f, 1.0f, 0.4f, 0.38f, 90f, -90f, 12), P(0.52f, 0.62f, 0.12f, 0.62f) },
+            ['Q'] = new[] { Arc(0.5f, 0.7f, 0.44f, 0.66f, 0f, 360f, 28), P(0.6f, 0.4f, 0.98f, 0.0f) },
+            ['R'] = new[] { P(0.12f, 0.02f, 0.12f, 1.38f, 0.52f, 1.38f), Arc(0.52f, 1.0f, 0.4f, 0.38f, 90f, -90f, 12), P(0.52f, 0.62f, 0.12f, 0.62f), P(0.5f, 0.62f, 0.94f, 0.02f) },
             ['S'] = new[] { Arc(0.5f, 1.04f, 0.4f, 0.34f, 20f, 270f, 14), Arc(0.5f, 0.36f, 0.42f, 0.34f, 90f, -160f, 14) },
+            ['T'] = new[] { P(0.06f, 1.38f, 0.94f, 1.38f), P(0.5f, 1.38f, 0.5f, 0.02f) },
+            ['U'] = new[] { P(0.1f, 1.38f, 0.1f, 0.44f), Arc(0.5f, 0.44f, 0.4f, 0.42f, 180f, 360f, 12), P(0.9f, 0.44f, 0.9f, 1.38f) },
+            ['V'] = new[] { P(0.06f, 1.38f, 0.5f, 0.02f, 0.94f, 1.38f) },
+            ['W'] = new[] { P(0.04f, 1.38f, 0.26f, 0.02f, 0.5f, 0.9f, 0.74f, 0.02f, 0.96f, 1.38f) },
+            ['X'] = new[] { P(0.08f, 1.38f, 0.92f, 0.02f), P(0.92f, 1.38f, 0.08f, 0.02f) },
+            ['Y'] = new[] { P(0.08f, 1.38f, 0.5f, 0.7f, 0.92f, 1.38f), P(0.5f, 0.7f, 0.5f, 0.02f) },
+            ['Z'] = new[] { P(0.08f, 1.38f, 0.92f, 1.38f, 0.08f, 0.02f, 0.92f, 0.02f) },
+            ['-'] = new[] { P(0.2f, 0.7f, 0.8f, 0.7f) },
+            ['\''] = new[] { P(0.5f, 1.38f, 0.44f, 1.1f) },
         };
+
+        public static bool Has(char c) => Map.ContainsKey(c);
 
         public static Vector2[][] Of(char c) => Map.TryGetValue(c, out var s) ? s : new Vector2[0][];
 

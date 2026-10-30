@@ -34,7 +34,7 @@ namespace PocketFootball.Sim
         {
             var list = new List<PlayConfig>();
             string side = SideOf(w, team);
-            foreach (var p in w.Cfg.plays) if (p.side == side && Kicking.InBook(w, p)) list.Add(p);   // WS-01: PUNT and FIELD GOAL only on 4th down / a try
+            foreach (var p in w.Cfg.plays) if (p.side == side && Kicking.InBook(w, p) && SeasonRules.InBook(w, team, p)) list.Add(p);   // WS-01: PUNT and FIELD GOAL only on 4th down / a try; FEATURES.season: the club's PLAYBOOK level
             return list;
         }
 

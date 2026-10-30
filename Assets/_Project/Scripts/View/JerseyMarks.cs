@@ -116,13 +116,29 @@ namespace PocketFootball.View
         // FEATURES.skinTones: a man's own skin colour, one of marks.skinTones picked by u (0..1), drawn as its ratio to the
         // model's own skin (so the shading painted on the model stays), on every renderer under him. FEATURES.hairColors:
         // and, on a model with hair showing, her own hair colour (HairOf), picked from the same u.
-        public static void SetSkin(GameObject holder, GameConfig cfg, string model, float u)
+        public static void SetSkin(GameObject holder, GameConfig cfg, string model, float u) => Apply(holder, cfg, model, u, HairPick(u));
+
+        // FEATURES.season: a recruit's own look, the skin tone and hair colour he was drafted with (indexes into marks.skinTones
+        // and marks.hairColors), the same every game.
+        public static void SetSkin(GameObject holder, GameConfig cfg, string model, int skinIndex, int hairIndex) =>
+            Apply(holder, cfg, model, IndexU(skinIndex, cfg.marks.skinTones), IndexU(hairIndex, cfg.marks.hairColors));
+
+        // The u (0..1) that picks list[index] the way SkinRatio and HairOf pick: the middle of its share.
+        static float IndexU(int index, List<string> list)
+        {
+            int n = list != null ? list.Count : 0;
+            if (n <= 0) return 0f;
+            index = ((index % n) + n) % n;
+            return (index + 0.5f) / n;
+        }
+
+        static void Apply(GameObject holder, GameConfig cfg, string model, float skinU, float hairU)
         {
             if (holder == null) return;
             bool skin = cfg.Feature("skinTones"), hair = cfg.Feature("hairColors");
             if (!skin && !hair) return;
-            var r = SkinRatio(cfg, model, u);
-            var h = HairOf(cfg, model, HairPick(u));
+            var r = SkinRatio(cfg, model, skinU);
+            var h = HairOf(cfg, model, hairU);
             foreach (var rend in holder.GetComponentsInChildren<Renderer>(true))
             {
                 if (skin) Set(rend, SkinId, r);

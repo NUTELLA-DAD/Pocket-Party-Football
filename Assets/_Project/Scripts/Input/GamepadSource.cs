@@ -211,7 +211,7 @@ namespace PocketFootball.Input
             if (p == null || p.Team != team)
             {
                 bool had = p != null;
-                int oldTeam = had ? p.Team : -1, oldSpot = had ? p.Spot : -1;
+                int oldTeam = had ? p.Team : -1, oldSpot = had ? p.Spot : -1, oldRecruit = had ? p.Recruit : -1;
                 float ox = had ? p.X : 0f, oz = had ? p.Z : 0f;
                 var taken = w.ReplaceBot(team, seat.Slot);
                 if (taken == null) return null;
@@ -220,7 +220,7 @@ namespace PocketFootball.Input
                 {
                     int slot = botSlotBase;
                     while (w.Find(slot) != null) slot++;
-                    var bot = w.AddPlayer(slot, oldTeam, false, oldSpot);
+                    var bot = w.AddPlayer(slot, oldTeam, false, oldSpot, oldRecruit);   // (FEATURES.season: the recruit stays with the spot)
                     if (bot != null) { bot.X = ox; bot.Z = oz; }
                 }
             }

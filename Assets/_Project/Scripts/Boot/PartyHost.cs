@@ -86,6 +86,7 @@ namespace PocketFootball.Boot
             else h.StartServer(args.Bind);
             HotspotJoin.Attach(h, cfg);   // FEATURES.hotspotQr: the Wi-Fi join code for a game with no router
             h.FillWithBots();
+            SeasonHost.Dress(h.World);   // FEATURES.season: a season game's recruits (names, looks, ratings, coaching)
             if (kept != null) h.SeatCarriedPeople();
             GamepadHost.Attach(h, cfg);   // WS-14: Xbox pads join as players (FEATURES.gamepad)
             if (args.Wander) h.World.BotsWander = true;
@@ -223,7 +224,7 @@ namespace PocketFootball.Boot
                 Server.Send(seat.Conn, Messages.Joined(seat, RoomCode, cfg, Roster));
                 Server.Send(seat.Conn, Messages.Status(World));
                 var mine = World.Find(seat.Slot);
-                if (seat.Team >= 0 && mine != null) Server.Send(seat.Conn, Messages.Picked(seat, mine, cfg));
+                if (seat.Team >= 0 && mine != null) Server.Send(seat.Conn, Messages.Picked(seat, mine, cfg, World));
                 else SendUi(src, "pick");
             }
             BroadcastLobby();
@@ -586,7 +587,7 @@ namespace PocketFootball.Boot
             Server.Send(conn, Messages.Status(World));
             if (seat.Team >= 0 && mine != null)
             {
-                Server.Send(conn, Messages.Picked(seat, mine, cfg));
+                Server.Send(conn, Messages.Picked(seat, mine, cfg, World));
                 SendPhaseTo(src);
             }
             else SendUi(src, "pick");
@@ -603,7 +604,7 @@ namespace PocketFootball.Boot
             {
                 // take a bot's spot on the new team; the spot left behind goes back to a bot
                 bool had = p != null;
-                int oldTeam = had ? p.Team : -1, oldSpot = had ? p.Spot : -1;
+                int oldTeam = had ? p.Team : -1, oldSpot = had ? p.Spot : -1, oldRecruit = had ? p.Recruit : -1;
                 float ox = had ? p.X : 0f, oz = had ? p.Z : 0f;
                 var taken = World.ReplaceBot(team, seat.Slot);
                 if (taken == null)
@@ -612,10 +613,10 @@ namespace PocketFootball.Boot
                     return;
                 }
                 p = taken;
-                if (had) BotBack(oldTeam, oldSpot, ox, oz);
+                if (had) BotBack(oldTeam, oldSpot, ox, oz, oldRecruit);
             }
             seat.Team = team;
-            Server.Send(seat.Conn, Messages.Picked(seat, p, cfg));
+            Server.Send(seat.Conn, Messages.Picked(seat, p, cfg, World));
             // the whole team's huddle screens refresh (the caller may have changed); this phone gets its own too
             foreach (var (tsrc, _) in TeamPhones(team)) SendPhaseTo(tsrc);
             Debug.Log("[net] " + seat.Name + " picked " + cfg.teams[team].name + " " + p.Pos + " #" + p.Number);
@@ -623,9 +624,9 @@ namespace PocketFootball.Boot
         }
 
         // A person left a spot (changed team): a bot takes it, standing where they stood.
-        void BotBack(int team, int spot, float x, float z)
+        void BotBack(int team, int spot, float x, float z, int recruit = -1)
         {
-            var bot = World.AddPlayer(FreeBotSlot(), team, false, spot);
+            var bot = World.AddPlayer(FreeBotSlot(), team, false, spot, recruit);   // (FEATURES.season: the recruit stays with the spot)
             if (bot != null) { bot.X = x; bot.Z = z; }
         }
 

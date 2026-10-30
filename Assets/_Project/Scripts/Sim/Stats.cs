@@ -20,6 +20,7 @@ namespace PocketFootball.Sim
         public int Slot, Team, Spot, Number;
         public string Pos = "";
         public bool Human;
+        public int Recruit = -1;   // FEATURES.season: the recruit he wore (Season.Record puts the line on him)
         public int Rushes, RushYd, Catches, RecYd;
         public int PassAtt, PassComp, PassYd;
         public int Tackles, Sacks, Picks, Jukes;
@@ -75,7 +76,7 @@ namespace PocketFootball.Sim
 
         static void Fill(PlayerLine l, Player p)
         {
-            l.Team = p.Team; l.Spot = p.Spot; l.Number = p.Number; l.Pos = p.Pos; l.Human = p.Human;
+            l.Team = p.Team; l.Spot = p.Spot; l.Number = p.Number; l.Pos = p.Pos; l.Human = p.Human; l.Recruit = p.Recruit;
         }
 
         PlayerLine Line(World w, int slot)

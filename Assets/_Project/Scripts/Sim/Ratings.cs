@@ -16,6 +16,8 @@ namespace PocketFootball.Sim
 
         static PosRating Of(World w, Player p)
         {
+            var own = SeasonRules.Rating(w, p);   // FEATURES.season: a recruit plays on his own numbers
+            if (own != null) return own;
             var by = w.Cfg.ratings.positions;
             return p != null && by != null && p.Pos != null && by.TryGetValue(p.Pos, out var r) ? r : null;
         }
