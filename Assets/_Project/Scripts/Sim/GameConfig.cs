@@ -37,6 +37,9 @@ namespace PocketFootball.Sim
         public KickingConfig kicking = new KickingConfig();   // WS-01 (Kicking.cs)
         public StadiumConfig stadium = new StadiumConfig();   // WS-10 the stadium and crowd (StadiumConfig.cs, View/Stadium.cs)
         public SkyConfig sky = new SkyConfig();   // the sunset sky and its light (SkyConfig.cs, View/SkyView.cs)
+        // FEATURES.goldenStadium: the golden-hour stadium (StadiumLook.cs): game.json blocks laid over the sky, the
+        // stadium and the field paint before anything is built
+        public Newtonsoft.Json.Linq.JObject stadiumLook;
         public AudiblesConfig audibles = new AudiblesConfig();   // WS-13 (Audibles.cs)
         public CustomPlaysConfig customPlays = new CustomPlaysConfig();   // FEATURES.customPlays: draw-your-own plays (CustomPlays.cs)
         public StatsConfig stats = new StatsConfig();      // WS-12 (Stats.cs, View/PostGame.cs, View/Celebrations.cs)

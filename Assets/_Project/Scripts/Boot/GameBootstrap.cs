@@ -39,6 +39,7 @@ namespace PocketFootball.Boot
             if (tutorial) TutorialMode.Prepare(Config);   // no lobby, clock, replays or stats in the tutorial
             CupHost.Apply(Config, title);   // FEATURES.cup: the Couch Cup's next game wears its two teams
             SeasonHost.Apply(Config, title);   // FEATURES.season: the season's next game wears the club and its opponent
+            StadiumLook.Apply(Config);   // FEATURES.goldenStadium: the golden-hour sky, the roofs, the team end zones
             Weather.ApplyLook(Config);   // FEATURES.weather / sandField: the sky, haze and grass for rain, snow or a sand field
 
             BuildLight();
