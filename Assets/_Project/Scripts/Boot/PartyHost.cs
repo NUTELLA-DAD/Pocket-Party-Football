@@ -478,6 +478,16 @@ namespace PocketFootball.Boot
             if (lockIn) BroadcastStatus();
         }
 
+        // FEATURES.customPlays: like a LOCK IN, with the caller's drawn routes on top of the base play.
+        void OnCustom(PhoneSource src, JObject m)
+        {
+            if (PhoneProtocol.Str(m, "aid") != src.Aid) return;
+            var p = World.Find(src.Seat.Slot);
+            if (p == null || !CustomPlays.Lock(World, p.Slot, PhoneProtocol.Str(m, "base"), Messages.CustomRoutes(m))) return;
+            foreach (var (tsrc, tp) in TeamPhones(p.Team)) Server.Send(tsrc.Seat.Conn, Messages.ThumbsFor(World, p.Team, tp));
+            BroadcastStatus();
+        }
+
         // The TV's huddle line: whether each team has called, NEVER what. (WS-02: it lives in View/Scoreboard.cs now)
         public static string TvLine(World w, GameConfig cfg) => Scoreboard.TvLine(w);
 
@@ -546,6 +556,7 @@ namespace PocketFootball.Boot
                     else if (t == "pick") OnPick(src, PhoneProtocol.Int(m, "team", -1));
                     else if (t == "suggest") OnCall(src, m, false);
                     else if (t == "lock") OnCall(src, m, true);
+                    else if (t == "custom") OnCustom(src, m);   // FEATURES.customPlays: the caller locks in a drawn play
                     else if (t == "aim") src.OnAim(PhoneProtocol.Float(m, "x", -1f, 1f), PhoneProtocol.Float(m, "y", -1f, 1f), PhoneProtocol.Float(m, "arc", 0f, 1f),
                                                    PhoneProtocol.Int(m, "cancel") == 1, PhoneProtocol.Str(m, "aid"));
                     else if (t == "throw") src.OnThrowStick(PhoneProtocol.Float(m, "x", -1f, 1f), PhoneProtocol.Float(m, "y", -1f, 1f), PhoneProtocol.Float(m, "arc", 0f, 1f),
