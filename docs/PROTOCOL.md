@@ -47,7 +47,7 @@ Every game-to-phone message has one of these audiences. A new message must say w
 | --- | --- | --- |
 | **this phone** | Only the socket that asked, or the seat it is about | `joined`, `err`, `pong`, `picked`, `ui`, `me` |
 | **public** | Every connected phone, and the TV may show it | `lobby`, `status` |
-| **team only (SECRET)** | Only the phones of seats on that team, checked with `PartyHost.TeamPhones(team)` (WS-13: `AudibleHost.TeamSeats`) | `huddle`, `thumbs`, `job`, `audible`; `call` (narrower still: only the offense QB's phone, from `Boot/ReceivingHud.cs`) |
+| **team only (SECRET)** | Only the phones of seats on that team, checked with `PartyHost.TeamPhones(team)` (WS-13: `AudibleHost.TeamSeats`) | `huddle` (with `draw`), `thumbs`, `job` (with drawn routes), `audible`; `call` (narrower still: only the offense QB's phone, from `Boot/ReceivingHud.cs`) |
 | **public** | Every connected phone, and the TV may show it | `lobby`, `status`, `postgame` (all but its `mine`, which is this phone's own) |
 | **team only (SECRET)** | Only the phones of seats on that team, checked with `PartyHost.TeamPhones(team)` | `huddle`, `thumbs`, `job`; `call` (narrower still: only the offense QB's phone, from `Boot/ReceivingHud.cs`) |
 
@@ -110,6 +110,9 @@ Actions the page already sends but the game ignores (reserved for the workstream
 ### `suggest`, `lock`
 `{id: string, aid: string}`. A play id from this team's `huddle.plays`, with the huddle screen's aid. `suggest` adds a thumb from anyone on the team. `lock` calls the play and only works for the team's caller. Both are checked in `Huddle.Suggest` / `Huddle.Lock` (wrong side, unknown id, not the caller: ignored). Afterwards the team gets `thumbs`; after a lock everyone gets `status`.
 
+### `custom` (`FEATURES.customPlays`, `NO_CUSTOM_PLAYS=1`)
+`{base: playId, routes: [{spot, pts: [[ahead, z], ...]}], aid}`. The caller's DRAW YOUR OWN play: like `lock`, with drawn routes on top of the `base` play. Only the offense's caller, in the huddle, before the lock (`CustomPlays.Lock`). `base` must be one of `huddle.draw.bases` (an offense pass play in the book now); each route is for a different spot in `play.receivers`, with 1..`customPlays.maxPoints` points in the play frame; points past `maxAheadYd` / `maxBackYd` / the sidelines are pulled back inside. Anything else is ignored. Afterwards the team gets `thumbs` and everyone gets `status` (only "called"). The drawn routes reach the team's phones in `job` and nowhere else. Proved by `PlaySecrecyTests.TheOtherTeamNeverGetsADrawnPlay`.
+
 ### `audible`, `hot` (WS-13, `FEATURES.audibles`)
 `{id: string, aid: string}`, at the line only (after the huddle, before the hike), with the aid of the screen on show.
 `audible` changes the team's call to another play from its own playbook; only the team's caller, `audibles.perDown` times a down (`Audibles.Call`). Afterwards the team gets `job` again (the new play) and `audible`.
@@ -143,7 +146,7 @@ With `FEATURES.kickArc` (punts and field goals) it is the HIKE button: the aim h
 `{teams: [{name, short, color, color2, people, players}]}`. `people` = phones on that team, `players` = spots per team. Sent to every connected phone after any join or pick.
 
 ### `picked` (this phone)
-`{team, number, pos, name, teamName, color, color2}`. The spot this person now plays. Colours are `#rrggbb`.
+`{team, number, pos, name, teamName, color, color2, as?}`. The spot this person now plays. Colours are `#rrggbb`. `as` (only in a season game, `FEATURES.season`): the name of the recruit this person plays as, the one on the back of their jersey.
 
 ### `ui` (this phone)
 Which screen to show.
@@ -195,6 +198,7 @@ The final card, once the game clock ends the game (or F8 on the TV previews it).
 | `spots`, `opp` | Both formations, `[{pos, number, ahead, z}]` in yards from the ball, `ahead` = this team's way |
 | `me` | This phone's spot index |
 | `thumbs` | `{playId: count}` for this team |
+| `draw` | `FEATURES.customPlays`, the offense's caller only (else `null`): `{bases, receivers, maxPoints, maxAheadYd, maxBackYd, maxZYd, name}`, what DRAW YOUR OWN may draw on |
 
 ### `thumbs` (team only, SECRET)
 `{counts: {playId: count}, mine, locked}`. After any suggest or lock on that team.
@@ -203,7 +207,7 @@ The final card, once the game clock ends the game (or F8 on the TV previews it).
 After kickoff, each huddle screen also gets the team's `lineup` (from `Boot/Lobby.cs`, same shape as in the lobby, with `switch: true`). The huddle's POSITION button lists the spots on the side the team plays this down. Tapping one sends the lobby's `spot {side, spot, aid}`, and a swap question is answered with `swap {yes, aid}`, both with the huddle screen's aid and only while the phase is the huddle. A bot's spot is yours at once; a person's spot asks them. After a change the spots are relabelled and every phone of the team gets its `huddle` and `ui` again. Proved by `LobbyTests.SwitchPositionFromTheHuddle`.
 
 ### `job` (team only, SECRET)
-`{side, play, spots, opp, me}`. The called play and this player's spot, for the job diagram. Sent when the huddle ends, only if the team has a call.
+`{side, play, spots, opp, me}`. The called play and this player's spot, for the job diagram. Sent when the huddle ends, only if the team has a call. A drawn play (`FEATURES.customPlays`) comes as its base play with the drawn routes in `play.jobs`, `play.name` = `customPlays.name` and `play.custom: true`.
 
 ### `call` (the offense QB's phone only, SECRET; WS-05)
 `{k, shape, number, pos, ms}`. A receiver tapped CALL FOR IT: `k` is his shape number (1-based, `play.receivers` order), `shape` the same character as `ui.receivers[].shape`, `number` and `pos` like `21` and `RB`, `ms` how long to pulse his button. Sent once per call by `Boot/ReceivingHud.cs`, only to the seat of the QB, only if that seat is on the receiver's team. Never in `status`, never to the receiver's own phone. The TV draws the same pulse over his head (the room can see the TV, as the design says), but it is not in `TvLine`, so not in `status.tv`. Proved by `ReceivingSecrecyTests`.

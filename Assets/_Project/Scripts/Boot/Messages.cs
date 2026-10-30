@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using PocketFootball.Sim;
 using PocketParty.Net;
@@ -9,9 +10,10 @@ namespace PocketFootball.Boot
     //                  ui {layout: pick | huddle | walk, aid},
     //                  me {st, tired, oob} (stamina 0-100),
     //                  status {phase, secs, called[]}                       <- PUBLIC: never a play id or name
-    //                  huddle {side, plays, spots, opp, me, caller, ...}    <- that team's phones ONLY (secret)
+    //                  huddle {side, plays, spots, opp, me, caller, draw, ...}   <- that team's phones ONLY (secret)
     //                  thumbs {counts, mine}, job {play, jobs, spots, me}   <- that team's phones ONLY (secret)
     //   phone -> game: pick {team}, suggest {id, aid}, lock {id, aid}
+    //                  custom {base, routes: [{spot, pts}], aid}   (FEATURES.customPlays: the caller's drawn play)
     public static class Messages
     {
         public static string Joined(Seat s, string code, GameConfig cfg, Roster r) => PhoneProtocol.Text(new JObject
@@ -22,14 +24,18 @@ namespace PocketFootball.Boot
 
         public static string Lobby(GameConfig cfg, Roster r) => PhoneProtocol.Text(new JObject { ["t"] = "lobby", ["teams"] = Teams(cfg, r) });
 
-        public static string Picked(Seat s, Player p, GameConfig cfg)
+        // w (FEATURES.season): the recruit this person plays as goes in `as` (his name), when he wears one.
+        public static string Picked(Seat s, Player p, GameConfig cfg, World w = null)
         {
             var t = cfg.teams[s.Team];
-            return PhoneProtocol.Text(new JObject
+            var o = new JObject
             {
                 ["t"] = "picked", ["team"] = s.Team, ["number"] = p.Number, ["pos"] = p.Pos, ["name"] = s.Name,
                 ["teamName"] = t.name, ["color"] = t.color, ["color2"] = t.color2,
-            });
+            };
+            string recruit = w != null ? SeasonRules.NameOf(w, p) : null;
+            if (!string.IsNullOrEmpty(recruit)) o["as"] = recruit;
+            return PhoneProtocol.Text(o);
         }
 
         // The phone's own numbers: stamina 0-100, tired (sprint locked until it refills), out of bounds.
@@ -78,9 +84,52 @@ namespace PocketFootball.Boot
                 ["caller"] = caller == me, ["callerNumber"] = caller != null ? caller.Number : 0,
                 ["locked"] = Huddle.IsLocked(w, team), ["mine"] = mine ?? "",
                 ["plays"] = plays, ["spots"] = Spots(w, team), ["opp"] = Spots(w, Other(w, team)), ["me"] = me.Spot,
-                ["thumbs"] = Counts(w, team),
+                ["thumbs"] = Counts(w, team), ["draw"] = Draw(w, me),
             });
         }
+
+        // FEATURES.customPlays: what the caller may draw on (null for everyone else): the pass plays that can be the
+        // base, the receiver spots, how many points a path keeps, and how far it may go (ahead, back, across). SECRET like the rest of HuddleFor.
+        static JObject Draw(World w, Player me)
+        {
+            if (!CustomPlays.CanDraw(w, me)) return null;
+            var c = w.Cfg.customPlays;
+            var bases = new JArray();
+            foreach (var p in Huddle.Playbook(w, me.Team)) if (CustomPlays.IsBase(w, me.Team, p)) bases.Add(p.id);
+            if (bases.Count == 0) return null;
+            return new JObject
+            {
+                ["bases"] = bases, ["receivers"] = new JArray(w.Cfg.play.receivers), ["maxPoints"] = c.maxPoints,
+                ["maxAheadYd"] = c.maxAheadYd, ["maxBackYd"] = c.maxBackYd, ["maxZYd"] = w.Cfg.field.HalfWidth - c.sidelineInYd,
+                ["name"] = c.name ?? "",
+            };
+        }
+
+        // FEATURES.customPlays: the caller's "custom" press, {base, routes: [{spot, pts: [[ahead, z], ...]}], aid}, as
+        // the sim's CustomRoutes (null when it is not that shape; CustomPlays.Lock checks the rest).
+        public static List<CustomRoute> CustomRoutes(JObject m)
+        {
+            if (!(m["routes"] is JArray a)) return null;
+            var list = new List<CustomRoute>();
+            try
+            {
+                foreach (var r in a)
+                {
+                    if (!(r is JObject o) || !(o["spot"] is JValue sv) || sv.Type != JTokenType.Integer || !(o["pts"] is JArray pa)) return null;
+                    var cr = new CustomRoute { spot = (int)sv };
+                    foreach (var q in pa)
+                    {
+                        if (!(q is JArray xy) || xy.Count != 2 || !Num(xy[0]) || !Num(xy[1])) return null;
+                        cr.pts.Add(new[] { (float)xy[0], (float)xy[1] });
+                    }
+                    list.Add(cr);
+                }
+            }
+            catch (System.OverflowException) { return null; }   // a spot number too big for an int
+            return list;
+        }
+
+        static bool Num(JToken t) => t.Type == JTokenType.Float || t.Type == JTokenType.Integer;
 
         // SECRET: only for phones on `team`.
         public static string ThumbsFor(World w, int team, Player me)
@@ -94,9 +143,17 @@ namespace PocketFootball.Boot
         {
             var play = Huddle.Find(w, w.Calls[team]);
             if (play == null) return null;
+            var shown = Play(w, team, play);
+            if (CustomPlays.IsCustom(w, team))   // FEATURES.customPlays: the drawn routes in place of the base play's
+            {
+                var jobs = (JArray)shown["jobs"];
+                foreach (var kv in CustomPlays.Jobs(w, team)) if (kv.Key < jobs.Count) jobs[kv.Key] = JObject.FromObject(kv.Value);
+                shown["name"] = w.Cfg.customPlays.name ?? "";
+                shown["custom"] = true;
+            }
             return PhoneProtocol.Text(new JObject
             {
-                ["t"] = "job", ["side"] = Huddle.SideOf(w, team), ["play"] = Play(w, team, play),
+                ["t"] = "job", ["side"] = Huddle.SideOf(w, team), ["play"] = shown,
                 ["spots"] = Spots(w, team), ["opp"] = Spots(w, Other(w, team)), ["me"] = me.Spot,
             });
         }

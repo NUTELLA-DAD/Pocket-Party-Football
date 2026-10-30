@@ -497,11 +497,13 @@ namespace PocketFootball.View
 
         public Vector3 FeetPosition(int slot) => bodies.TryGetValue(slot, out var f) ? f.transform.position : Vector3.zero;
 
-        // A kit change (a new team, number or position, or the QB turning into the kicker for a kick) builds a new body.
+        // A kit change (a new team, number or position, or the QB turning into the kicker for a kick, or another season
+        // recruit) builds a new body.
         FootballFigure Body(World w, Player p)
         {
             string pos = Kicking.ShowsKicker(w, p) ? "K" : p.Pos;
-            string kit = p.Team + "/" + p.Number + "/" + pos;
+            var rec = SeasonRules.RecruitOf(w, p);   // FEATURES.season: the recruit he wears (his look, his name on his back)
+            string kit = p.Team + "/" + p.Number + "/" + pos + (rec != null ? "/" + rec.id : "");
             if (bodies.TryGetValue(p.Slot, out var fig) && kitOf.TryGetValue(p.Slot, out var was) && was == kit) return fig;
             if (fig != null) Object.Destroy(fig.gameObject);
             var team = cfg.teams[Mathf.Clamp(p.Team, 0, cfg.teams.Count - 1)];
@@ -509,7 +511,12 @@ namespace PocketFootball.View
             ModelSkin.Wear(fig, team, pos, cfg, mat, p.Number);   // the team's (or the position's) rigged model over the pose rig
             JerseyMarks.SetNumber(fig.gameObject, cfg, p.Number);   // FEATURES.jerseyNumbers: his own number
             team.ModelFor(pos, cfg.Feature("posModels"), out string model, out _, out _, p.Number);
-            JerseyMarks.SetSkin(fig.gameObject, cfg, model, JerseyMarks.SkinPick(p.Slot));   // FEATURES.skinTones: his own skin
+            if (rec != null)
+            {
+                JerseyMarks.SetSkin(fig.gameObject, cfg, model, rec.skin, rec.hair);   // the recruit's own skin and hair, every game
+                JerseyNames.Wear(fig, cfg, team, rec.Surname, mat);   // FEATURES.jerseyNames: his surname across his shoulders
+            }
+            else JerseyMarks.SetSkin(fig.gameObject, cfg, model, JerseyMarks.SkinPick(p.Slot));   // FEATURES.skinTones: his own skin
             skins[p.Slot] = fig.GetComponentInChildren<ModelSkin>();
             fig.SwayCm = cfg.anim.idleSwayCm; fig.RollDeg = cfg.anim.idleRollDeg; fig.KneeDeg = cfg.anim.idleKneeDeg;
             bodies[p.Slot] = fig;

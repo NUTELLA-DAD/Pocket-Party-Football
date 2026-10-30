@@ -166,6 +166,74 @@ namespace PocketFootball.Tests.PlayMode
             grains.Dispose();
         }
 
+        // FEATURES.customPlays: a drawn play stays on its own team. The Arrows QB draws a route for the RB on top of
+        // Four Verticals and locks it in; the Arrows RB's job card carries the drawn route, the Grains phone and the TV
+        // only ever hear "called" (never the base play, the drawing, its points, or that it was drawn at all).
+        [UnityTest]
+        public IEnumerator TheOtherTeamNeverGetsADrawnPlay()
+        {
+            SceneManager.LoadScene("Boot");
+            for (int i = 0; i < 10; i++) yield return null;
+            var host = PartyHost.Instance;
+            var w = host.World;
+            var cfg = GameBootstrap.Instance.Config;
+            bool was = cfg.Feature("customPlays");
+            cfg.features["customPlays"] = true;
+            int port = host.Server.Port;
+            int off = w.Offense, def = w.Defense;
+
+            var qb = new FakePhone();
+            var rb = new FakePhone();
+            var grains = new FakePhone();
+            yield return qb.JoinAndPick(port, host.RoomCode, "Kay", off);
+            yield return rb.JoinAndPick(port, host.RoomCode, "Bo", off);
+            yield return grains.JoinAndPick(port, host.RoomCode, "Ray", def);
+
+            Huddle.Begin(w);
+            yield return qb.Settle();
+            yield return rb.Settle();
+            yield return grains.Settle();
+            Assert.AreEqual(JTokenType.Object, qb.Latest["huddle"]["draw"]?.Type, "the QB is the caller: he may draw");
+            Assert.AreNotEqual(JTokenType.Object, rb.Latest["huddle"]["draw"]?.Type, "the RB may not");
+            Assert.AreNotEqual(JTokenType.Object, grains.Latest["huddle"]["draw"]?.Type, "nor the defense");
+
+            // a stale screen's press does nothing; the right aid locks it in
+            var route = new JArray { new JObject { ["spot"] = 1, ["pts"] = new JArray { new JArray(3.25f, 7.75f), new JArray(17.25f, 7.75f) } } };
+            qb.Send(new JObject { ["t"] = "custom", ["base"] = "verts", ["routes"] = route, ["aid"] = "old1" });
+            for (int i = 0; i < 10; i++) yield return null;
+            Assert.IsFalse(Huddle.IsLocked(w, off), "a drawn play from an old screen does nothing");
+            qb.Send(new JObject { ["t"] = "custom", ["base"] = "verts", ["routes"] = route, ["aid"] = qb.Aid });
+            yield return grains.Expect("status", m => { }, m => (bool)m["called"][off]);
+            Assert.AreEqual("verts", w.Calls[off]);
+            Assert.IsTrue(CustomPlays.IsCustom(w, off));
+            grains.Send(new JObject { ["t"] = "lock", ["id"] = "cover3", ["aid"] = grains.Aid });
+
+            JObject job = null;
+            yield return rb.Expect("job", m => job = m);
+            Assert.IsTrue((bool)job["play"]["custom"]);
+            Assert.AreEqual(cfg.customPlays.name, (string)job["play"]["name"]);
+            Assert.AreEqual(17.25f, (float)job["play"]["jobs"][1]["pts"][1][0], 1e-3f, "the RB's job card is the drawn route");
+            yield return grains.Expect("job", m => { });
+            for (int i = 0; i < 10; i++) yield return null;
+
+            foreach (var text in grains.All)
+            {
+                StringAssert.DoesNotContain("\"verts\"", text, "the base play reached the defense");
+                StringAssert.DoesNotContain(cfg.customPlays.name, text, "the defense heard it was a drawn play");
+                StringAssert.DoesNotContain(cfg.customPlays.text, text);
+                StringAssert.DoesNotContain("17.25", text, "the drawn points reached the defense");
+                StringAssert.DoesNotContain("\"bases\"", text);
+            }
+            string tv = PartyHost.TvLine(w, cfg);
+            StringAssert.DoesNotContain(cfg.customPlays.name, tv);
+            StringAssert.DoesNotContain("verts", tv);
+
+            cfg.features["customPlays"] = was;
+            qb.Dispose();
+            rb.Dispose();
+            grains.Dispose();
+        }
+
         [UnityTest]
         public IEnumerator AStalePressIsIgnored()
         {
