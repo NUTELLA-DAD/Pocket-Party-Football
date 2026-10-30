@@ -387,6 +387,9 @@ namespace PocketFootball.Sim
         // the spine); the neck takes neckShare of the head's turn
         public float[] spineBendShare, spineTwistShare;
         public float neckShare;
+        // FEATURES.armHang (View/ModelSkin.cs): a model's arms hanging at rest come in until each wrist is at most
+        // armHangGap (figure heights) outside its hips (long arms on wide shoulders, the cornerback, stuck out far)
+        public float armHangGap;
         // FEATURES.strideHips (View/Stride.cs): in a stride the pelvis turns strideHipYawDeg each way with the leg reaching
         // forward and dips strideHipRollDeg on the swinging side (walk, jog, sprint)
         public float[] strideHipYawDeg, strideHipRollDeg;

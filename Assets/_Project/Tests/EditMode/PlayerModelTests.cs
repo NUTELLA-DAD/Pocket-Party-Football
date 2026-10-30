@@ -114,6 +114,60 @@ namespace PocketFootball.Tests.EditMode
             Assert.IsTrue(ConfigTests.Load().Feature("handCurl"));
         }
 
+        // tools/rig/apose: every player's model (and the referee's) rests with its arms hanging, not out in the T-pose it
+        // was modelled in, so the shoulders and pads aren't crushed in every frame by the big turn down to the sides.
+        [Test]
+        public void EveryPlayerModelRestsWithItsArmsDown()
+        {
+            var cfg = ConfigTests.Load();
+            var models = new SortedSet<string> { cfg.stadium.refModel };
+            foreach (var team in cfg.teams)
+            {
+                models.Add(team.model);
+                foreach (var pm in team.posModels) models.Add(pm.model);
+            }
+            foreach (var path in models)
+            {
+                var prefab = Resources.Load<GameObject>(path);
+                Assert.IsNotNull(prefab, path);
+                foreach (var side in new[] { "Left", "Right" })
+                {
+                    Vector3 arm = Find(prefab.transform, side + "LowerArm").position - Find(prefab.transform, side + "UpperArm").position;
+                    float below = Mathf.Asin(Mathf.Clamp(-arm.normalized.y, -1f, 1f)) * Mathf.Rad2Deg;
+                    Assert.Greater(below, 45f, path + ": the " + side + " arm rests hanging (degrees below level)");
+                }
+            }
+        }
+
+        // FEATURES.armHang: the cornerback's long arms on wide shoulders over narrow hips hung her hands far out from her
+        // sides; they come in to armHangGap outside her hips. A model whose hands
+        // already hang about that close (the quarterback) hardly moves.
+        [Test]
+        public void TheCornerbacksArmsHangCloseToHerSides()
+        {
+            float Wrist(bool on, string pos)
+            {
+                var cfg = ConfigTests.Load();
+                cfg.features["armHang"] = on;
+                var fig = FootballFigure.Create(null, "Arms", cfg.view.playerHeightM);
+                try
+                {
+                    Assert.IsTrue(ModelSkin.Wear(fig, cfg.teams[0], pos, cfg, Looks.Toon(null)));
+                    fig.Pose(FootballFigure.PoseKind.Stand, 0);
+                    fig.GetComponentInChildren<ModelSkin>().Follow();
+                    float l = fig.transform.InverseTransformPoint(Find(fig.transform, "LeftHand").position).z;
+                    float r = -fig.transform.InverseTransformPoint(Find(fig.transform, "RightHand").position).z;
+                    return (l + r) / 2f / FootballFigure.RigHeight;   // (figure heights out from the middle)
+                }
+                finally { Object.DestroyImmediate(fig.gameObject); }
+            }
+            float cbOn = Wrist(true, "CB"), cbOff = Wrist(false, "CB");
+            Assert.Less(cbOn, cbOff - 0.02f, "her hands come in toward her sides");
+            Assert.AreEqual(Wrist(false, "QB"), Wrist(true, "QB"), 0.01f, "the quarterback's already hang close: (almost) untouched");
+            Assert.AreEqual("NO_ARM_HANG", ConfigLoader.EnvName("armHang"));
+            Assert.IsTrue(ConfigTests.Load().Feature("armHang"));
+        }
+
         // FEATURES.narrowLegs: standing, every player's legs come down under his hips (the linebacker's model, also worn
         // by the linemen, is built with its legs leaning far out and ran bow-legged); switched off, the linebacker's lean out.
         [Test]

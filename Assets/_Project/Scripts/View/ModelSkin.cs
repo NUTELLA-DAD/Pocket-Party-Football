@@ -72,7 +72,7 @@ namespace PocketFootball.View
         {
             team.ModelFor(pos, cfg.Feature("posModels"), out string model, out string modelTexture, out float bend, number);
             if (string.IsNullOrEmpty(model)) { Debug.LogError("[model] team " + team.@short + " has no \"model\" in game.json; its players don't show"); return false; }
-            var skin = Wear(fig, model, modelTexture, kit, true, cfg.Feature("narrowLegs"), cfg, team);
+            var skin = Wear(fig, model, modelTexture, kit, true, cfg.Feature("narrowLegs"), cfg, team, cfg.Feature("armHang") ? cfg.anim.armHangGap : 0f);
             if (skin != null && cfg.Feature("handCurl")) skin.Hands(cfg.anim);
             if (skin != null && cfg.Feature("spineChain")) skin.Spine(cfg.anim);
             if (skin != null) { var legs = fig.Legs; legs.Bend = bend; fig.Legs = legs; }
@@ -82,9 +82,10 @@ namespace PocketFootball.View
         // Any rigged Humanoid model (Resources path) and colour map on the figure; null if it's missing (logged).
         // fixArms: the arm fixes for a model with a big helmet and short arms. narrowLegs (FEATURES.narrowLegs,
         // NO_NARROW_LEGS=1): the legs brought in under the hips (LegSplayDeg). cfg and team: the team's jersey numbers
-        // and the model's eyes (JerseyMarks), when the model has a marks map.
+        // and the model's eyes (JerseyMarks), when the model has a marks map. armHangGap (FEATURES.armHang, NO_ARM_HANG=1;
+        // 0 off): a hanging arm comes in until its wrist is at most this far (in figure heights) outside the hips.
         public static ModelSkin Wear(FootballFigure fig, string model, string modelTexture, Material kit, bool fixArms, bool narrowLegs = true,
-            GameConfig cfg = null, TeamConfig team = null)
+            GameConfig cfg = null, TeamConfig team = null, float armHangGap = 0f)
         {
             if (string.IsNullOrEmpty(model)) return null;
             if (!prefabs.TryGetValue(model, out var prefab))
@@ -130,8 +131,13 @@ namespace PocketFootball.View
             hb = BoundsIn(holder, smr);
             pivot.localPosition = new Vector3(-hb.center.x, -hb.min.y, -hb.center.z);
 
-            // the finger bones' curl axes, in the T-pose (palms down: each curls about its own length x down)
+            // the finger bones' curl axes, in the model's rest (palms down in a T-pose; a model resting with its arms
+            // lower, tools/rig/apose, has its palms turned down with them): each curls about its own length x its palm
             Vector3 down = -holder.up;
+            var palmRest = new Dictionary<string, Vector3>();
+            foreach (var side in new[] { ("Left", 1f), ("Right", -1f) })
+                palmRest[side.Item1] = Quaternion.FromToRotation(holder.forward * side.Item2,
+                    b[side.Item1 + "LowerArm"].position - b[side.Item1 + "UpperArm"].position) * down;
             var fingerBones = new List<Transform>();
             var fingerAxes = new List<Vector3>();
             var fingerKeys = new List<int>();
@@ -142,7 +148,7 @@ namespace PocketFootball.View
                     Transform root = Find(inst.transform, side + digit), tip = Find(inst.transform, side + digit + "Tip");
                     if (root == null || tip == null) continue;
                     Vector3 along = tip.position - root.position;
-                    Vector3 axis = Vector3.Cross(along, down);
+                    Vector3 axis = Vector3.Cross(along, palmRest[side]);
                     if (axis.sqrMagnitude < 1e-12f) continue;
                     // (the tip carries on the way its bone points: it has no bone past it to measure by)
                     int digitKey = digit == "Thumb" ? 2 : 0;
@@ -155,13 +161,27 @@ namespace PocketFootball.View
 
             // the arms down by the sides, like the figure's at rest (the T-pose's palms face down; they turn with the arm)
             var palm = new Dictionary<string, Vector3>();
+            float hipHalf = armHangGap > 0f ? HipHalfWidth(holder, smr) : 0f;
             foreach (var side in new[] { ("Left", 1f), ("Right", -1f) })
             {
                 Transform up = b[side.Item1 + "UpperArm"], lo = b[side.Item1 + "LowerArm"];
                 Vector3 want = Quaternion.AngleAxis(-side.Item2 * ArmOutDeg, holder.right) * down;
                 var turn = Quaternion.FromToRotation(lo.position - up.position, want);
                 up.rotation = turn * up.rotation;
-                palm[side.Item1] = turn * down;
+                palm[side.Item1] = turn * palmRest[side.Item1];
+                if (hipHalf <= 0f) continue;
+                // FEATURES.armHang: a model with long arms on wide shoulders over narrow hips (the cornerback) would hang
+                // its hands well clear of its sides; that arm comes in until the wrist is armHangGap outside the hips
+                Vector3 d = holder.InverseTransformPoint(b[side.Item1 + "Hand"].position) - holder.InverseTransformPoint(up.position);
+                float sh = holder.InverseTransformPoint(up.position).z * side.Item2;
+                float over = sh + d.z * side.Item2 - (hipHalf + armHangGap * FootballFigure.RigHeight);
+                float yz = Mathf.Sqrt(d.y * d.y + d.z * d.z);
+                if (over <= 0f || yz < 1e-4f) continue;
+                float lat = Mathf.Max(0f, d.z * side.Item2 - over);
+                var t = new Vector3(d.x, -Mathf.Sqrt(Mathf.Max(0f, yz * yz - lat * lat)), lat * side.Item2);
+                var inward = Quaternion.FromToRotation(holder.TransformDirection(d), holder.TransformDirection(t));
+                up.rotation = inward * up.rotation;
+                palm[side.Item1] = inward * palm[side.Item1];
             }
 
             // the legs in under the hips (LegSplayDeg)
@@ -506,6 +526,30 @@ namespace PocketFootball.View
             g.position = hand.position + fore * PalmAlongHand + palm.normalized * (fore.magnitude * PalmIn);
             g.rotation = turn;
             return g;
+        }
+
+        // Half the width of the model's hips at rest, in the holder's space: the widest point (across, its z) of the body
+        // between HipBandLow and HipBandHigh of its height, counting only the skin the hips, spine and thighs carry (not
+        // a hand hanging beside them). 0 when the mesh can't be read.
+        const float HipBandLow = 0.25f, HipBandHigh = 0.36f;
+        static float HipHalfWidth(Transform holder, SkinnedMeshRenderer smr)
+        {
+            var mesh = smr.sharedMesh;
+            if (mesh == null || !mesh.isReadable) return 0f;
+            var keep = new HashSet<int>();
+            for (int i = 0; i < smr.bones.Length; i++)
+                if (smr.bones[i] != null && (smr.bones[i].name == "Hips" || smr.bones[i].name == "Spine" || smr.bones[i].name.EndsWith("UpperLeg"))) keep.Add(i);
+            var verts = mesh.vertices; var bw = mesh.boneWeights;
+            if (bw.Length != verts.Length) return 0f;
+            var toHolder = holder.worldToLocalMatrix * smr.transform.localToWorldMatrix;
+            float lo = HipBandLow * FootballFigure.RigHeight, hi = HipBandHigh * FootballFigure.RigHeight, half = 0f;
+            for (int i = 0; i < verts.Length; i++)
+            {
+                if (!keep.Contains(bw[i].boneIndex0)) continue;
+                Vector3 p = toHolder.MultiplyPoint3x4(verts[i]);
+                if (p.y >= lo && p.y <= hi) half = Mathf.Max(half, Mathf.Abs(p.z));
+            }
+            return half;
         }
 
         // the model's bounds at rest, in the holder's space (at rest the skinned mesh sits where its renderer does)
