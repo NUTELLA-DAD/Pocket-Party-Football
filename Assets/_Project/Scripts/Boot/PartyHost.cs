@@ -260,6 +260,7 @@ namespace PocketFootball.Boot
             RefreshLayouts();
             Players.Render(World, lockstep || Photo != null ? 1f : Mathf.Clamp01(accumulator / dt));
             CarrierMovesView.Apply(World, Players);   // WS-04: spin, stiff arm, dive, fumbles on the TV
+            AfterPlayView.Apply(World, Players);   // FEATURES.afterPlay: huffing, high fives, looking about after the whistle
             if (Photo == null && !holdCamera) FollowBall(Time.deltaTime);   // (-look-x holds the camera where it was put)
             var replay = Replay.Drive(gameObject, cfg, World, Players, rig, s => Roster[s]?.Name);   // WS-08: the instant replay and the result card
             // the lines on the grass: the replayed play's while a replay is on, else the live game's

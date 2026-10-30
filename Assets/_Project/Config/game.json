@@ -1683,6 +1683,29 @@
     "walkOn": "WALK-ON",
     "jerseyName": { "letterCm": 9, "penFrac": 0.2, "gapFrac": 0.22, "maxWidthCm": 44, "aboveTorsoCm": 36, "backCm": 18 }
   },
+  "afterPlay": {
+    "reactMinS": 0.2,
+    "reactMaxS": 1.1,
+    "walkFracMin": 0.28,
+    "walkFracMax": 0.45,
+    "weights": [0.22, 0.2, 0.28, 0.15, 0.15],
+    "tiredHuffBoost": 0.6,
+    "huffMinS": 2.0,
+    "huffMaxS": 4.5,
+    "lingerMinS": 1.5,
+    "lingerMaxS": 4.0,
+    "wanderYd": 6,
+    "fiveYd": 9,
+    "fiveReachYd": 1.3,
+    "fiveHoldS": 0.6,
+    "arriveYd": 0.4,
+    "homeByS": 6,
+    "hurryFrac": 0.7,
+    "huffKeyFrames": 3,
+    "raiseYd": 3,
+    "lookKeyFrames": 6,
+    "lookDeg": 35
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
@@ -1791,6 +1814,7 @@
     "jerseyNames": true,
     "colorTargets": true,
     "overtime": true,
-    "tightCoverage": true
+    "tightCoverage": true,
+    "afterPlay": false
   }
 }
