@@ -1,6 +1,7 @@
 using PocketFootball.Sim;
 using PocketFootball.View;
 using UnityEngine;
+using CrashReport = PocketFootball.View.CrashReport;   // UnityEngine has its own CrashReport
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
