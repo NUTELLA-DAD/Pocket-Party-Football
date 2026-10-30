@@ -152,7 +152,7 @@ Which screen to show.
 | --- | --- |
 | `layout` | `pick`, `huddle`, `walk`, or one of the play layouts `qbpre qb carrier route block rush lb cover wait`, `kick` (the kicker) or `hold` (a field goal's holder, `FEATURES.fgHolder`) (see `PhoneLayouts.cs`). |
 | `aid` | A new id every time (`<layout><counter>`). Presses must echo it. |
-| `receivers` | `qb` only: `[{shape, label}]` in throw order. `shape` comes from `game.json` `play.shapes`, `label` like `WR #11`. |
+| `receivers` | `qb` only: `[{shape, label, color?}]` in throw order. `shape` comes from `game.json` `play.shapes`, `label` like `WR #11`. `color` (`"#rrggbb"`, `play.shapeColors`, `FEATURES.colorTargets`, off with `NO_COLOR_TARGETS=1`) paints the button the same colour as the badge over that receiver on the TV; left out when the switch is off. |
 | `driveStick` | `block` (`FEATURES.driveBlock`) and `rush` (`FEATURES.driveRush`) only: draw the BLOCK or BULL RUSH button as a stick that also sends `drive`. |
 | `line` | `wait` during the whistle only: what happened, for example `Tackled! Back to the huddle...`. |
 

@@ -436,7 +436,7 @@ namespace PocketFootball.Boot
             return what + " Back to the huddle...";
         }
 
-        // The receivers the QB can throw to, in shape order, for the "qb" layout.
+        // The receivers the QB can throw to, in shape order, for the "qb" layout (each with his colour, FEATURES.colorTargets).
         Newtonsoft.Json.Linq.JArray Receivers()
         {
             var a = new Newtonsoft.Json.Linq.JArray();
@@ -444,7 +444,10 @@ namespace PocketFootball.Boot
             {
                 var r = LivePlay.Receiver(World, k);
                 if (r == null) continue;
-                a.Add(new Newtonsoft.Json.Linq.JObject { ["shape"] = cfg.play.shapes[k - 1], ["label"] = r.Pos + " #" + r.Number });
+                var o = new Newtonsoft.Json.Linq.JObject { ["shape"] = cfg.play.shapes[k - 1], ["label"] = r.Pos + " #" + r.Number };
+                string color = Receiving.ColorOf(cfg, k);   // FEATURES.colorTargets: the same colour as his badge on the TV
+                if (color.Length > 0) o["color"] = color;
+                a.Add(o);
             }
             return a;
         }
@@ -704,7 +707,7 @@ namespace PocketFootball.Boot
                     if (Photo == null && LivePlay.On(World) && (World.Phase == Phase.Set || World.Phase == Phase.Live) && !World.Thrown && p.Team == World.Offense)
                     {
                         int k = cfg.play.receivers.IndexOf(p.Spot);
-                        if (k >= 0) Hud.ShapeBadge(new Vector2(sp.x, Screen.height - sp.y - 4 * s), k, s);
+                        if (k >= 0) Hud.ShapeBadge(new Vector2(sp.x, Screen.height - sp.y - 4 * s), k, s, Hud.ShapeColor(cfg, k + 1));
                     }
                     if (Photo != null && Photo.Badges.TryGetValue(p.Slot, out var badge)) Hud.Badge(new Vector2(sp.x, Screen.height - sp.y - 4 * s), badge, p.Spot == 3 ? new Color(0.36f, 0.85f, 0.5f) : new Color(1f, 0.82f, 0.25f), s);
                 }

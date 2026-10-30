@@ -21,6 +21,15 @@ const { chromium } = require('playwright');
   }
   // QB: tap = bullet, hold = lob, both carry tgt and the aid
   await page.evaluate(() => go('qb'));
+  // FEATURES.colorTargets: each receiver gem is painted his own colour (the same as his badge on the TV)
+  const tints = await page.$$eval('.btn.rcv', els => els.map(e => getComputedStyle(e).getPropertyValue('--g').trim()));
+  ok(tints.join(' ') === '#3a8cff #ec3a3f #3fe0b4 #8b4ee8', 'receiver gems should take their colours: ' + tints.join(' '));
+  const inks = await page.$$eval('.btn.rcv', els => els.map(e => getComputedStyle(e).getPropertyValue('--g-ink').trim()));
+  ok(inks[2] === '#0a1640' && inks[0] === '#ffffff', 'dark shape on light gems, white on dark ones: ' + inks.join(' '));
+  await page.evaluate(() => { PPLayouts.show('qb', { receivers: [{ shape: '△', label: 'WR #11' }] }); });
+  const plain = await page.$eval('.btn.rcv', e => getComputedStyle(e).getPropertyValue('--g').trim());
+  ok(plain === '#f4e9cc', 'no colour sent (NO_COLOR_TARGETS=1): the plain ivory gem, got ' + plain);
+  await page.evaluate(() => go('qb'));
   await page.evaluate(() => { window.sent = []; });
   const rcv = page.locator('[data-tgt="△"]');
   await rcv.dispatchEvent('pointerdown', { pointerId: 1 });

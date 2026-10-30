@@ -162,6 +162,7 @@ namespace PocketFootball.Sim
         public float throwDeadZone;   // ...and let go nearer the middle than this (0..1): no throw
         public List<int> receivers = new List<int>();
         public List<string> shapes = new List<string>();
+        public List<string> shapeColors = new List<string>();   // FEATURES.colorTargets: shapeColors[i] ("#rrggbb") paints shapes[i]
     }
 
     // Downs (M1-e): 10 yards in 4 downs for a new set; a touchdown is 6 points, then the other team starts at its own 25.
