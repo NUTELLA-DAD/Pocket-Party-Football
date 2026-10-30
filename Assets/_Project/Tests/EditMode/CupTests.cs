@@ -159,5 +159,31 @@ namespace PocketFootball.Tests.EditMode
             Assert.IsFalse(late.AddTeam("N8"), "1 already played its semifinal");
             Assert.AreEqual("N7", late.Next().Away);
         }
+
+        [Test]
+        public void AWinIsKeptAndTheRoundsOtherGamesComeNext()
+        {
+            // a real saved cup after one game: the Arrows beat the Bats in the first quarterfinal
+            var cup = Cup.Load("ARR,COB,GRN,WHL,CAC,SNB,CMT,BAT;ARR,,,/,/");
+            Assert.IsNotNull(cup);
+            Assert.AreEqual("ARR", cup.Winner(0, 0));
+            Assert.AreEqual("ARR", cup.Team(1, 0, 0), "the Arrows wait in the first semifinal");
+            Assert.AreEqual(4, cup.Games(0));
+            var m = cup.Next();
+            Assert.AreEqual(0, m.Round, "the other three quarterfinals come before any semifinal");
+            Assert.AreEqual(1, m.Index);
+            Assert.AreEqual(2, cup.GameNumber(m.Round, m.Index), "QUARTERFINALS, GAME 2 OF 4");
+            Assert.AreEqual("CAC", m.Away);
+            Assert.AreEqual("WHL", m.Home);
+            Assert.AreEqual("CAC", cup.Record(14, 7));
+            cup = Cup.Load(cup.Save());
+            Assert.AreEqual("CAC", cup.Team(1, 0, 1), "the Cacti go through to meet the Arrows");
+            Assert.AreEqual(3, cup.GameNumber(cup.Next().Round, cup.Next().Index));
+            // six teams: the two byes are not games
+            var six = new Cup(Six);
+            Assert.AreEqual(2, six.Games(0));
+            Assert.AreEqual(1, six.GameNumber(0, 1), "4 v 5 is the first quarterfinal game");
+            Assert.AreEqual(2, six.GameNumber(0, 3));
+        }
     }
 }

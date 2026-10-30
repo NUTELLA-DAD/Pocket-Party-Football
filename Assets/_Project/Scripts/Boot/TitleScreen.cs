@@ -606,12 +606,12 @@ namespace PocketFootball.Boot
             // the line under the title: what's next
             string sub = cup == null ? "Every team in one knockout bracket. Win and go through; lose and you're out."
                 : cup.Over ? "CHAMPIONS: " + (TeamOf(cup.Champion)?.name ?? cup.Champion).ToUpperInvariant()
-                : next != null ? cup.RoundName(next.Round) + ":  " + Name(next.Away) + "  at  " + Name(next.Home) : "";
+                : next != null ? NextLine(next) : "";
             hint.normal.textColor = Color.white;
             Shadowed(new Rect(r.x, r.y + 92 * s, r.width, 36 * s), sub, hint);
 
-            // the bracket: a column a round, then the champion
-            float top = r.y + 140 * s, bottom = r.yMax - 170 * s;
+            // the bracket: a column a round, then the champion (its round names sit clear under the line above)
+            float top = r.y + 176 * s, bottom = r.yMax - 170 * s;
             if (cup != null) DrawBracket(new Rect(r.x + pad, top, r.width - 2 * pad, bottom - top), s, next);
             else
             {
@@ -648,6 +648,14 @@ namespace PocketFootball.Boot
                 row.fontSize = was;
             }
             Shadowed(new Rect(r.x, r.yMax - 70 * s, r.width, 40 * s), "Left / Right to pick, Enter or (A) to press, Esc or (B) to go back", hint);
+        }
+
+        // "QUARTERFINALS, GAME 2 OF 4:  CACTI at WHALES", so a round with games still to play doesn't look stuck
+        string NextLine(CupMatch next)
+        {
+            int games = cup.Games(next.Round);
+            string game = games > 1 ? ", GAME " + cup.GameNumber(next.Round, next.Index) + " OF " + games : "";
+            return cup.RoundName(next.Round) + game + ":  " + Name(next.Away) + "  at  " + Name(next.Home);
         }
 
         string Name(string code) => (TeamOf(code)?.name ?? code).ToUpperInvariant();
