@@ -1,6 +1,6 @@
-/* Pocket Party Football phone controller. Offline only: system fonts, nothing loaded from the internet.
+/* Couch Bowl phone controller. Offline only: system fonts, nothing loaded from the internet.
    One screen, never scrolls. Held sideways (landscape) is the main way to play: stick on the left, buttons on the right.
-   The look (Kenny's mockup): a navy pad, gold-rimmed glossy gem buttons, the POCKET PARTY logo and a player tag. */
+   The look (Kenny's mockup): a navy pad, gold-rimmed glossy gem buttons, the COUCH BOWL logo and a player tag. */
 :root {
   /* the old token names stay so every screen picks up the navy look; turf = the pad, ink = the deepest panels */
   --turf: #10215a; --turf-2: #1b3478; --chalk: #fbf3dc; --ink: #0a1640; --muted: #a9b8e2;
@@ -75,7 +75,7 @@ button:focus-visible { outline: 3px solid var(--warn); outline-offset: 2px; }
 .pill .bars { display: inline-flex; gap: 4px; }
 .pill .bars i { display: block; width: 5px; height: 16px; border-radius: 2px; background: var(--gold); }
 
-/* the logo: POCKET PARTY in system fonts, and a football */
+/* the logo: COUCH BOWL in system fonts, and a football */
 .logo { display: flex; flex-direction: column; align-items: center; line-height: .86; pointer-events: none; }
 .logo .w1, .logo .w2 {
   font-family: var(--display); font-weight: 900; letter-spacing: .01em; font-style: italic;

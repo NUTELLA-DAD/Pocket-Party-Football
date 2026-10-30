@@ -1,4 +1,4 @@
-// Pocket Party Football phone controller. Served by the game itself; no internet needed.
+// Couch Bowl phone controller. Served by the game itself; no internet needed.
 (function () {
   'use strict';
   var STICK_HZ = 25, RETRY_MIN_MS = 500, RETRY_MAX_MS = 4000;

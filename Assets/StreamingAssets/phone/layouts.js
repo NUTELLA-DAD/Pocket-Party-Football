@@ -1,4 +1,4 @@
-// Pocket Party Football phone layouts: the right-hand buttons for each moment of a play (M1-f).
+// Couch Bowl phone layouts: the right-hand buttons for each moment of a play (M1-f).
 // The game picks the layout with a `layout` message; this file only draws buttons and reports presses.
 // Usage from app.js:
 //   PPLayouts.mount(document.getElementById('btnBox'), send, function () { return aid; });

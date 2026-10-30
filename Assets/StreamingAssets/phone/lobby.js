@@ -1,4 +1,4 @@
-// Pocket Party Football: the lobby (WS-07, FEATURES.lobby). Before kickoff each person picks one offense spot and one
+// Couch Bowl: the lobby (WS-07, FEATURES.lobby). Before kickoff each person picks one offense spot and one
 // defense spot on their team (two-way players). A bot's spot is yours at once; a person's spot asks them to swap.
 // Any phone taps KICK OFF to start. The game sends: ui {layout: 'lobby'}, lineup {...} (your team only).
 // This page sends: spot {side, spot, aid}, swap {yes, aid}, kickoff {aid}, lobbyme {} (back to the lobby screen).

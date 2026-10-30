@@ -7,8 +7,8 @@ using UnityEngine.SceneManagement;
 
 namespace PocketFootball.Boot
 {
-    // The Pocket Cup between games (FEATURES.cup, NO_CUP=1 hides it; the bracket itself is Sim/Cup.cs). The title's
-    // POCKET CUP page draws the bracket and starts each game. The cup is kept in PlayerPrefs, so it survives the scene
+    // The Couch Cup between games (FEATURES.cup, NO_CUP=1 hides it; the bracket itself is Sim/Cup.cs). The title's
+    // COUCH CUP page draws the bracket and starts each game. The cup is kept in PlayerPrefs, so it survives the scene
     // reloads between games and quitting the game: pp.cup is the bracket, pp.cup.live is 1 while the game the TV is
     // about to play (or playing) is the cup's next one. That game wears the two cup teams (Apply, at boot). When the
     // clock ends it, the winner goes into the bracket (Drive, from PostGameHost) and the post-game screen gets a gold
@@ -44,7 +44,7 @@ namespace PocketFootball.Boot
             // teams added to the league since the draw fill the byes while those games are still to play
             bool added = false;
             foreach (var code in Teams(cfg))
-                if (cup.SeedOf(code) == 0 && cup.AddTeam(code)) { added = true; Debug.Log("[cup] " + code + " joins the Pocket Cup in a bye"); }
+                if (cup.SeedOf(code) == 0 && cup.AddTeam(code)) { added = true; Debug.Log("[cup] " + code + " joins the Couch Cup in a bye"); }
             if (added) Save(cup);
             return cup;
         }
@@ -60,7 +60,7 @@ namespace PocketFootball.Boot
         {
             var cup = Cup.Draw(Teams(cfg), System.Environment.TickCount & 0x7fffffff, cfg.cup.randomDraw);
             Save(cup);
-            Debug.Log("[cup] new Pocket Cup: " + string.Join(", ", cup.Seeds));
+            Debug.Log("[cup] new Couch Cup: " + string.Join(", ", cup.Seeds));
             return cup;
         }
 
@@ -102,7 +102,7 @@ namespace PocketFootball.Boot
                     SetLive(false);
                     var t = w.Cfg.teams[winner == Live.Home ? 1 : 0];
                     string name = t.name.ToUpperInvariant();
-                    result = cup.Over ? name + " WIN THE POCKET CUP!"
+                    result = cup.Over ? name + " WIN THE COUCH CUP!"
                         : name + " GO THROUGH TO THE " + cup.RoundName(m.Round + 1);
                     if (w.Score[0] == w.Score[1]) result += "  (a tie: the higher seed goes through)";
                     Debug.Log("[cup] " + result);
@@ -160,7 +160,7 @@ namespace PocketFootball.Boot
             Fill(r, CupColors.Navy);
             Fill(new Rect(r.x, r.y, r.width, 6 * s), CupColors.Gold);
             big.normal.textColor = CupColors.GoldText;
-            GUI.Label(new Rect(r.x, r.y + 14 * s, r.width, 70 * s), "POCKET CUP  ·  " + Text, big);
+            GUI.Label(new Rect(r.x, r.y + 14 * s, r.width, 70 * s), "COUCH CUP  ·  " + Text, big);
             small.normal.textColor = Color.white;
             GUI.Label(new Rect(r.x, r.y + 86 * s, r.width, 40 * s), "Enter, (A) or click: see the bracket", small);
         }

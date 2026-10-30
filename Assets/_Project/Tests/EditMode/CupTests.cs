@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace PocketFootball.Tests.EditMode
 {
-    // FEATURES.cup (Sim/Cup.cs): the Pocket Cup, a knockout bracket. Six teams: seeds 1 and 2 get byes, five games.
+    // FEATURES.cup (Sim/Cup.cs): the Couch Cup, a knockout bracket. Six teams: seeds 1 and 2 get byes, five games.
     public sealed class CupTests
     {
         static readonly List<string> Six = new List<string> { "S1", "S2", "S3", "S4", "S5", "S6" };

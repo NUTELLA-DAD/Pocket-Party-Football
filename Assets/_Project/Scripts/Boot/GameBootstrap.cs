@@ -37,7 +37,7 @@ namespace PocketFootball.Boot
             bool title = !tutorial && TitleScreen.Requested(Config, Args);
             if (title) TitleScreen.PrepareAttract(Config, Args);   // the bots' show game behind the title
             if (tutorial) TutorialMode.Prepare(Config);   // no lobby, clock, replays or stats in the tutorial
-            CupHost.Apply(Config, title);   // FEATURES.cup: the Pocket Cup's next game wears its two teams
+            CupHost.Apply(Config, title);   // FEATURES.cup: the Couch Cup's next game wears its two teams
             Weather.ApplyLook(Config);   // FEATURES.weather / sandField: the sky, haze and grass for rain, snow or a sand field
 
             BuildLight();
@@ -62,7 +62,7 @@ namespace PocketFootball.Boot
                 if (BotReel.Requested(out int reelEvery)) BotReel.Attach(gameObject, Host, Lab, Args.ShotsDir, reelEvery);   // the bots' film (tools/botreel.ps1)
                 if (PursuitReel.Requested(out string pursuitCam)) PursuitReel.Attach(gameObject, Config, Host, Lab, Rig, Args.ShotsDir, pursuitCam);   // the pursuit gauntlet (tools/pursuit.ps1)
             }
-            Debug.Log($"[boot] Pocket Party Football up: field {Config.field.lengthYd} x {Config.field.widthYd} yd, camera {Config.camera.visibleYards} yd wide");
+            Debug.Log($"[boot] Couch Bowl up: field {Config.field.lengthYd} x {Config.field.widthYd} yd, camera {Config.camera.visibleYards} yd wide");
         }
 
         // A steady view.frameRate. Vsync on alone ran a 240 Hz laptop at an uneven 130-155 fps (Unity ignores

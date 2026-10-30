@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#10215a">
-<title>Pocket Party Football</title>
+<title>Couch Bowl</title>
 <link rel="stylesheet" href="/style.css">
 <link rel="stylesheet" href="/huddle.css">
 <link rel="stylesheet" href="/layouts.css">
@@ -16,7 +16,7 @@
 <div class="app">
   <div class="tvstrip hidden" id="tvStrip" aria-live="polite"><span class="dot" id="netDot" title="Connected" aria-hidden="true"></span><span class="tag">ON THE TV</span><span class="msg" id="tvMsg"></span><span class="score" id="tvScore"></span></div>
   <section id="joinView" class="view">
-    <h1 class="logo" aria-label="Pocket Party Football"><span class="w1">POCKET</span><span class="w2">PARTY</span><svg viewBox="0 0 64 36" aria-hidden="true"><ellipse cx="32" cy="18" rx="29" ry="15" fill="#8a3d17" stroke="#060d2b" stroke-width="3"/><path d="M9 12c2-4 5-6 8-7M55 12c-2-4-5-6-8-7M9 24c2 4 5 6 8 7M55 24c-2 4-5 6-8 7" stroke="#fbf3dc" stroke-width="3" fill="none"/><path d="M20 18h24M24 14v8M28 14v8M32 14v8M36 14v8M40 14v8" stroke="#fbf3dc" stroke-width="2.5" stroke-linecap="round"/></svg></h1>
+    <h1 class="logo" aria-label="Couch Bowl"><span class="w1">COUCH</span><span class="w2">BOWL</span><svg viewBox="0 0 64 36" aria-hidden="true"><ellipse cx="32" cy="18" rx="29" ry="15" fill="#8a3d17" stroke="#060d2b" stroke-width="3"/><path d="M9 12c2-4 5-6 8-7M55 12c-2-4-5-6-8-7M9 24c2 4 5 6 8 7M55 24c-2 4-5 6-8 7" stroke="#fbf3dc" stroke-width="3" fill="none"/><path d="M20 18h24M24 14v8M28 14v8M32 14v8M36 14v8M40 14v8" stroke="#fbf3dc" stroke-width="2.5" stroke-linecap="round"/></svg></h1>
     <label class="field">Your name<input id="name" maxlength="12" autocomplete="nickname" autocapitalize="characters"></label>
     <label class="field">Room code (on the TV)<input id="code" maxlength="4" autocomplete="off" autocapitalize="characters"></label>
     <button id="joinBtn" class="big" aria-label="Join the game">JOIN</button>
@@ -50,7 +50,7 @@
   <section id="playView" class="view hidden">
     <header class="me" id="me"><div class="tag-me"><svg class="helmet" viewBox="0 0 64 50" aria-hidden="true"><path class="shell" d="M8 34C6 15 19 3 35 3c15 0 25 11 25 25v5H41l-4 10H17C12 43 8 40 8 34z"/><path class="stripe" d="M24 5c6 7 9 17 9 28"/><circle class="hole" cx="34" cy="28" r="4"/><path class="mask" d="M42 33h18M46 33v10M53 33v10M41 43h19"/></svg><span class="who"><span id="meName">YOU</span><span id="meNum" class="num">#1</span></span></div></header>
     <div class="info">
-      <div class="logo small" aria-hidden="true"><span class="w1">POCKET</span><span class="w2">PARTY</span><svg viewBox="0 0 64 36" aria-hidden="true"><ellipse cx="32" cy="18" rx="29" ry="15" fill="#8a3d17" stroke="#060d2b" stroke-width="3"/><path d="M9 12c2-4 5-6 8-7M55 12c-2-4-5-6-8-7M9 24c2 4 5 6 8 7M55 24c-2 4-5 6-8 7" stroke="#fbf3dc" stroke-width="3" fill="none"/><path d="M20 18h24M24 14v8M28 14v8M32 14v8M36 14v8M40 14v8" stroke="#fbf3dc" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+      <div class="logo small" aria-hidden="true"><span class="w1">COUCH</span><span class="w2">BOWL</span><svg viewBox="0 0 64 36" aria-hidden="true"><ellipse cx="32" cy="18" rx="29" ry="15" fill="#8a3d17" stroke="#060d2b" stroke-width="3"/><path d="M9 12c2-4 5-6 8-7M55 12c-2-4-5-6-8-7M9 24c2 4 5 6 8 7M55 24c-2 4-5 6-8 7" stroke="#fbf3dc" stroke-width="3" fill="none"/><path d="M20 18h24M24 14v8M28 14v8M32 14v8M36 14v8M40 14v8" stroke="#fbf3dc" stroke-width="2.5" stroke-linecap="round"/></svg></div>
       <div class="job hidden" id="job"><p class="sub" id="jobPlay"></p><h3 id="jobText"></h3><div id="jobField"></div></div>
       <p class="line" id="line" aria-live="polite">Run with the stick. Hold SPRINT to go faster.</p>
       <div class="stam" aria-label="Stamina"><i id="stam"></i></div>

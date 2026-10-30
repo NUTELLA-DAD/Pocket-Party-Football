@@ -34,7 +34,7 @@ namespace PocketFootball.Tests.EditMode
             {
                 Assert.IsTrue(srv.Start(IPAddress.Loopback, 0, 1));
                 StringAssert.StartsWith("HTTP/1.1 200", Http(srv.Port, "/"));
-                StringAssert.Contains("Pocket Party Football", Http(srv.Port, "/join/ABCD"));
+                StringAssert.Contains("Couch Bowl", Http(srv.Port, "/join/ABCD"));
                 StringAssert.StartsWith("HTTP/1.1 200", Http(srv.Port, "/app.js"));
                 StringAssert.StartsWith("HTTP/1.1 200", Http(srv.Port, "/style.css"));
                 StringAssert.StartsWith("HTTP/1.1 404", Http(srv.Port, "/../ProjectSettings/ProjectVersion.txt"));

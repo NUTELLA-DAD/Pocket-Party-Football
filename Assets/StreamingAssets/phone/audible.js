@@ -1,4 +1,4 @@
-// Pocket Party Football: audibles and hot routes at the line (WS-13). Only this team's phones get the 'audible'
+// Couch Bowl: audibles and hot routes at the line (WS-13). Only this team's phones get the 'audible'
 // message; the TV and the other team never see an audible or a hot route.
 //   The caller: AUDIBLE opens the playbook; tap a play to change the call (once a down).
 //   A receiver: HOT buttons swap his route; tap the lit one again to go back to the called route.

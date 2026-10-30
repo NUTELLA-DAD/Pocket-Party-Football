@@ -27,7 +27,7 @@ namespace PocketFootball.View
         // The header: one "key: value" line each (game version, Unity, Windows, graphics card, ...), then a blank line.
         public void Header(IEnumerable<KeyValuePair<string, string>> facts)
         {
-            w.WriteLine("# Pocket Party Football crash log. Send this file (and the game log next to it) to the developer.");
+            w.WriteLine("# Couch Bowl crash log. Send this file (and the game log next to it) to the developer.");
             foreach (var kv in facts) w.WriteLine(kv.Key + ": " + Clean(kv.Value));
             w.WriteLine();
             w.Flush();

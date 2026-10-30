@@ -27,7 +27,7 @@ namespace PocketFootball.Tests.EditMode
             r.Header(new[] { new KeyValuePair<string, string>("game", "0.9"), new KeyValuePair<string, string>("os", "Windows 11") });
             Assert.IsTrue(r.Add("2026-10-30 20:00:00", "EXCEPTION", "NullReferenceException: boom", "A.B () (at A.cs:1)\nC.D () (at C.cs:2)\n"));
             string text = sw.ToString();
-            StringAssert.StartsWith("# Pocket Party Football crash log", text);
+            StringAssert.StartsWith("# Couch Bowl crash log", text);
             StringAssert.Contains("game: 0.9", text);
             StringAssert.Contains("os: Windows 11", text);
             StringAssert.Contains("== 2026-10-30 20:00:00  EXCEPTION", text);
