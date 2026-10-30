@@ -1019,6 +1019,14 @@
       "trunkColor": "#6b4a33"
     }
   },
+  "customPlays": {
+    "maxPoints": 6,
+    "maxAheadYd": 40,
+    "maxBackYd": 10,
+    "sidelineInYd": 1,
+    "name": "Custom Play",
+    "text": "Your caller drew this route: run it, then get open"
+  },
   "audibles": {
     "perDown": 1,
     "hotRoutes": [
@@ -1513,6 +1521,7 @@
     "botsV2": true,
     "grassShader": true,
     "audibles": true,
+    "customPlays": true,
     "stats": true,
     "gamelog": true,
     "gamepad": true,

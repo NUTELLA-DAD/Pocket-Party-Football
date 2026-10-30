@@ -17,6 +17,9 @@
             o: '#f7efd2', ink: '#14203a', x: '#ee4a3c', xInk: '#6e1414', route: '#ffd21f' };
   function wz(z) { var a = Math.abs(z), d = a <= 5 ? a * 2.4 : 12 + (a - 5) * 0.68; return z < 0 ? d : -d; }   // across (yards)
   function wa(a) { var d = Math.abs(a), v = d <= 2 ? d * 3.5 : d <= 12 ? 7 + (d - 2) * 1.5 : 22 + (d - 12) * 0.55; return a < 0 ? -v : v; }   // ahead (yards)
+  // ...and back: a spot on the picture to play yards (FEATURES.customPlays: where the finger drew)
+  function zw(u) { var d = Math.abs(u), a = d <= 12 ? d / 2.4 : 5 + (d - 12) / 0.68; return u > 0 ? -a : a; }
+  function aw(v) { var d = Math.abs(v), a = d <= 7 ? d / 3.5 : d <= 22 ? 2 + (d - 7) / 1.5 : 12 + (d - 22) / 0.55; return v < 0 ? -a : a; }
   function el(name, attrs, parent) {
     var e = document.createElementNS(SVG, name);
     for (var k in attrs) e.setAttribute(k, attrs[k]);
@@ -27,7 +30,9 @@
 
   // side: 'offense' or 'defense' (whose phones these are). aspect: width / height of the box to fill, or 0 to fit tight.
   // whole: also draw every teammate's job, so the caller sees the shape of the whole play.
-  function diagram(play, spots, opp, me, whole, side, aspect) {
+  // win: [u0, u1, v0, v1] a fixed window in drawing yards (the drawing board: the picture never jumps while you draw).
+  // The svg it returns knows its own mapping: svg.ppXY(ahead, z) -> picture units, svg.ppPlay(x, y) -> [ahead, z].
+  function diagram(play, spots, opp, me, whole, side, aspect, win) {
     var mineOff = side ? side === 'offense' : !spots.length || spots.reduce(function (t, s) { return t + s.ahead; }, 0) <= 0;
     var jobs = play && play.jobs ? play.jobs : [];
     // everything in drawing yards: u across (left = +z), v ahead (up = +ahead)
@@ -41,6 +46,7 @@
     var u0 = -12, u1 = 12, v0 = -6, v1 = 10;
     pts.forEach(function (p) { u0 = Math.min(u0, p[0]); u1 = Math.max(u1, p[0]); v0 = Math.min(v0, p[1]); v1 = Math.max(v1, p[1]); });
     u0 -= 3; u1 += 3; v0 -= 3; v1 += 4;
+    if (win) { u0 = win[0]; u1 = win[1]; v0 = win[2]; v1 = win[3]; }
     if (aspect > 0) {   // grow the window (never shrink it) so the picture fills its box
       var wd = u1 - u0, ht = v1 - v0;
       if (wd / ht < aspect) { var gu = (ht * aspect - wd) / 2; u0 -= gu; u1 += gu; }
@@ -162,6 +168,9 @@
         'font-family': 'Arial Rounded MT Bold, Trebuchet MS, system-ui, sans-serif', 'font-weight': '800' }, svg);
       tx2.textContent = 'YOU';
     }
+    svg.ppXY = xy;
+    svg.ppPlay = function (x, y) { return [aw(v1 - y / S), zw(x / S + u0)]; };
+    svg.ppR = R;
     return svg;
   }
 
@@ -169,7 +178,7 @@
   function onHuddle(msg) {
     H.plays = msg.plays || []; H.spots = msg.spots || []; H.opp = msg.opp || []; H.me = msg.me;
     H.caller = !!msg.caller; H.locked = !!msg.locked; H.mine = msg.mine || ''; H.thumbs = msg.thumbs || {};
-    H.side = msg.side; H.pick = H.mine || H.pick;
+    H.side = msg.side; H.pick = H.mine || H.pick; H.draw = msg.draw || null;
     if (!H.plays.some(function (p) { return p.id === H.pick; })) H.pick = '';
     H.ends = Date.now() + msg.secs * 1000;
     var me = H.spots[H.me] || {};
@@ -180,6 +189,7 @@
     H.tab = g || (groups().indexOf(H.tab) >= 0 ? H.tab : groups()[0] || '');
     $('hGo').setAttribute('aria-label', H.caller ? 'Lock in the chosen play' : 'Suggest the chosen play to your caller');
     drawPlays();
+    Draw.onHuddle();
     tick();
     clearInterval(clockTimer);
     clockTimer = setInterval(tick, 250);
@@ -231,6 +241,19 @@
     var box = $('hPlays');
     box.innerHTML = '';
     var shown = H.plays.filter(function (p) { return groups().length < 2 || groupOf(p) === H.tab; });
+    if (Draw.offered() && (groups().length < 2 || H.tab === 'PASS')) {   // FEATURES.customPlays: the first card on the PASS tab
+      var d = document.createElement('button');
+      d.className = 'play drawcard';
+      d.setAttribute('aria-label', 'Draw your own play: drag a route from each receiver with your finger');
+      d.disabled = H.locked;
+      var df = document.createElement('div'); df.className = 'pf';
+      var pen = document.createElement('span'); pen.className = 'pen'; pen.textContent = '\u270F\uFE0F'; df.appendChild(pen);
+      var dh = document.createElement('i'); dh.textContent = 'Drag from a receiver'; df.appendChild(dh);
+      d.appendChild(df);
+      var dt = document.createElement('b'); dt.textContent = 'DRAW YOUR OWN'; d.appendChild(dt);
+      d.addEventListener('click', function () { if (!H.locked) Draw.open(true); });
+      box.appendChild(d);
+    }
     shown.forEach(function (p) {
       var b = document.createElement('button');
       b.className = 'play';
@@ -253,7 +276,7 @@
   // every card's picture, fitted to the card (all cards are the same size, so measure the first)
   var lastSize = '';
   function drawPictures() {
-    var fs = $('hPlays').querySelectorAll('.pf');
+    var fs = $('hPlays').querySelectorAll('.play:not(.drawcard) .pf');   // (the DRAW YOUR OWN card keeps its pencil)
     if (!fs.length) return;
     var r = fs[0].getBoundingClientRect();
     lastSize = Math.round(r.width) + 'x' + Math.round(r.height);
@@ -294,7 +317,7 @@
   }
   // redraw the pictures when the cards change size (turning the phone, or the huddle screen appearing after the plays arrived)
   function refit() {
-    var f = $('hPlays').querySelector('.pf');
+    var f = $('hPlays').querySelector('.play:not(.drawcard) .pf');
     if (!f) return;
     var r = f.getBoundingClientRect(), sz = Math.round(r.width) + 'x' + Math.round(r.height);
     if (sz !== lastSize && r.width > 0) drawPictures();
@@ -371,10 +394,171 @@
   function onThumbs(msg) {
     H.thumbs = msg.counts || {}; H.mine = msg.mine || ''; H.locked = !!msg.locked;
     drawPlays();
+    if (H.locked) Draw.reset();
   }
+
+  // ---- draw your own play (FEATURES.customPlays): the caller drags a route from any receiver with a finger ----
+  // The board is the base play's formation on the same chalkboard as the cards (its blocking stays, its routes are
+  // the ones you don't redraw). FORMATION steps through the pass plays the game offers as a base (huddle.draw.bases).
+  // A drag that starts on a receiver draws his route; a tap on a receiver erases it. The finger's trail is thinned to
+  // draw.maxPoints corners and kept inside draw.maxBackYd / maxAheadYd. LOCK IN sends custom {base, routes, aid}.
+  var Draw = (function () {
+    var D = { open: false, base: 0, routes: {}, svg: null, live: null, spot: -1, trail: [] };
+    function offered() { return !!(H.draw && H.caller && H.side === 'offense' && bases().length); }
+    function bases() { return ((H.draw && H.draw.bases) || []).map(playById).filter(Boolean); }
+    function basePlay() { var b = bases(); return b.length ? b[((D.base % b.length) + b.length) % b.length] : null; }
+    function receivers() { return (H.draw && H.draw.receivers) || []; }
+    function count() { return Object.keys(D.routes).length; }
+
+    // the huddle screen again (the same down, a teammate joined): keep what is drawn
+    function onHuddle() { if (!offered() || H.locked) open(false); else if (D.open) board(); }
+    // the play is called (locked, or the job card): the next down starts with a clean board
+    function reset() { D.routes = {}; D.base = 0; open(false); }
+    function open(on) {
+      D.open = !!on && offered() && !H.locked;
+      $('hDraw').classList.toggle('hidden', !D.open);
+      if (D.open) board();
+    }
+
+    // the base play with the drawn routes in place of its own
+    function drawnPlay() {
+      var p = basePlay();
+      if (!p) return null;
+      var jobs = (p.jobs || []).map(function (j, i) { return D.routes[i] ? { kind: 'route', pts: D.routes[i], text: '' } : j; });
+      return Object.assign({}, p, { jobs: jobs });
+    }
+    function board() {
+      var p = drawnPlay(), f = $('hDrawField');
+      if (!p) return;
+      var r = f.getBoundingClientRect(), aspect = r.height > 0 ? r.width / r.height : 0;
+      var ahead = (H.draw.maxAheadYd || 40), back = (H.draw.maxBackYd || 10), u = wz(-SIDE) + 3;
+      f.innerHTML = '';
+      D.svg = diagram(p, p.spots || H.spots, H.opp, H.me, true, 'offense', aspect, [-u, u, wa(-back) - 3, wa(ahead) + 3]);
+      f.appendChild(D.svg);
+      // a dashed chalk ring round each receiver you can draw for
+      receivers().forEach(function (i) {
+        var s = (p.spots || H.spots)[i]; if (!s) return;
+        var c = D.svg.ppXY(s.ahead, s.z);
+        el('circle', { cx: c[0], cy: c[1], r: f1(D.svg.ppR * 1.9), fill: 'none', stroke: '#fff', 'stroke-width': f1(S * 0.3),
+          'stroke-dasharray': f1(S * 0.8) + ' ' + f1(S * 0.6), 'pointer-events': 'none' }, D.svg);
+      });
+      D.live = null;
+      var form = p.formationName || p.name;
+      $('hDrawForm').textContent = form.toUpperCase() + ' \u25B8';
+      $('hDrawForm').setAttribute('aria-label', 'Formation: ' + form + ' (from ' + p.name + '). Tap for the next one');
+      $('hDrawForm').classList.toggle('hidden', bases().length < 2);
+      $('hDrawClear').disabled = count() === 0;
+      $('hDrawGo').disabled = count() === 0 || H.locked;
+      $('hDrawLine').textContent = count() === 0 ? 'Drag from a ringed receiver to draw his route.'
+        : count() + ' route' + (count() > 1 ? 's' : '') + ' drawn. Tap a receiver to erase his. The rest run ' + p.name + '.';
+    }
+
+    // the finger, in picture units
+    function at(e) {
+      var m = D.svg && D.svg.getScreenCTM();
+      if (!m) return null;
+      var pt = D.svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+      var q = pt.matrixTransform(m.inverse());
+      return [q.x, q.y];
+    }
+    function nearest(q) {
+      var p = basePlay(), spots = (p && p.spots) || H.spots, best = -1, bd = D.svg.ppR * 2.6;
+      receivers().forEach(function (i) {
+        var s = spots[i]; if (!s) return;
+        var c = D.svg.ppXY(s.ahead, s.z), d = Math.hypot(c[0] - q[0], c[1] - q[1]);
+        if (d < bd) { bd = d; best = i; }
+      });
+      return best;
+    }
+    function down(e) {
+      if (!D.open || H.locked || !D.svg) return;
+      var q = at(e); if (!q) return;
+      var i = nearest(q);
+      if (i < 0) { $('hDrawLine').textContent = 'Start on a ringed receiver, then drag where he should run.'; return; }
+      e.preventDefault();
+      try { $('hDrawField').setPointerCapture(e.pointerId); } catch (x) { /* an old browser: the drag still works */ }
+      D.spot = i; D.trail = [q];
+      D.live = el('polyline', { points: '', fill: 'none', stroke: C.route, 'stroke-width': f1(S * 0.7), 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'pointer-events': 'none' }, D.svg);
+    }
+    function move(e) {
+      if (D.spot < 0) return;
+      e.preventDefault();
+      var q = at(e); if (!q) return;
+      var l = D.trail[D.trail.length - 1];
+      if (Math.hypot(q[0] - l[0], q[1] - l[1]) < S * 0.6) return;
+      D.trail.push(q);
+      if (D.live) D.live.setAttribute('points', D.trail.map(function (t) { return f1(t[0]) + ',' + f1(t[1]); }).join(' '));
+    }
+    function up(e) {
+      if (D.spot < 0) return;
+      var i = D.spot, tr = D.trail;
+      D.spot = -1; D.trail = [];
+      var len = 0;
+      for (var k = 1; k < tr.length; k++) len += Math.hypot(tr[k][0] - tr[k - 1][0], tr[k][1] - tr[k - 1][1]);
+      if (len < S * 2.5) delete D.routes[i];   // a tap: erase his route (he runs the base play's again)
+      else {
+        var p = basePlay(), s = ((p && p.spots) || H.spots)[i];
+        var yd = [[s.ahead, s.z]].concat(tr.slice(1).map(function (t) { return D.svg.ppPlay(t[0], t[1]); }));
+        D.routes[i] = thin(yd, (H.draw.maxPoints || 6) + 1).slice(1).map(inside);
+      }
+      board();
+    }
+    function inside(q) {
+      var side = H.draw.maxZYd || SIDE - 1;
+      var a = Math.max(-(H.draw.maxBackYd || 10), Math.min(H.draw.maxAheadYd || 40, q[0])), z = Math.max(-side, Math.min(side, q[1]));
+      return [f1(a), f1(z)];
+    }
+    // keep the corners: the fewest points (at most n, the first and last always) that stay close to the trail
+    function thin(pts, n) {
+      if (pts.length <= 2) return pts;
+      for (var eps = 0.5; ; eps *= 1.5) {
+        var keep = rdp(pts, eps);
+        if (keep.length <= n) return keep;
+      }
+    }
+    function rdp(pts, eps) {
+      var a = pts[0], b = pts[pts.length - 1], far = -1, fd = 0;
+      for (var i = 1; i < pts.length - 1; i++) {
+        var d = offLine(pts[i], a, b);
+        if (d > fd) { fd = d; far = i; }
+      }
+      if (far < 0 || fd <= eps) return [a, b];
+      var l = rdp(pts.slice(0, far + 1), eps), r = rdp(pts.slice(far), eps);
+      return l.slice(0, -1).concat(r);
+    }
+    function offLine(p, a, b) {
+      var dx = b[0] - a[0], dz = b[1] - a[1], l2 = dx * dx + dz * dz;
+      if (l2 === 0) return Math.hypot(p[0] - a[0], p[1] - a[1]);
+      var t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dz) / l2));
+      return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dz);
+    }
+
+    var fld = $('hDrawField');
+    fld.addEventListener('pointerdown', down);
+    fld.addEventListener('pointermove', move);
+    fld.addEventListener('pointerup', up);
+    fld.addEventListener('pointercancel', up);
+    $('hDrawBack').addEventListener('click', function () { open(false); });
+    $('hDrawClear').addEventListener('click', function () { D.routes = {}; board(); });
+    $('hDrawForm').addEventListener('click', function () {   // a new formation moves everyone, so the board starts clean
+      D.base++; D.routes = {}; board();
+      $('hDrawLine').textContent = 'New formation. Drag from a ringed receiver to draw his route.';
+    });
+    $('hDrawGo').addEventListener('click', function () {
+      var p = basePlay();
+      if (!p || !count() || H.locked) return;
+      var routes = Object.keys(D.routes).map(Number).sort(function (a, b) { return a - b; })
+        .map(function (i) { return { spot: i, pts: D.routes[i] }; });
+      window.PP.send({ t: 'custom', base: p.id, routes: routes, aid: window.PP.aid() });
+      $('hDrawLine').textContent = 'Sending your play...';
+    });
+    if (window.ResizeObserver) new ResizeObserver(function () { if (D.open && D.spot < 0) board(); }).observe(fld);
+    return { offered: offered, open: open, onHuddle: onHuddle, reset: reset };
+  })();
 
   // ---- your job, shown above the stick once the plays are called ----
   function onJob(msg) {
+    Draw.reset();
     openPos(false);   // the plays are called: the position picker is done until the next huddle
     $('hSwitch').classList.add('hidden');
     var me = (msg.spots || [])[msg.me] || {};

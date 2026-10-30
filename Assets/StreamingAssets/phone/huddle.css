@@ -94,6 +94,26 @@
 .hpos button { touch-action: manipulation; }
 .hpos .line { font-size: 13px; color: var(--muted); margin: 0; }
 
+/* FEATURES.customPlays: the DRAW YOUR OWN card, and the drawing board that covers the plays like the position picker */
+.play.drawcard { grid-template-rows: minmax(0, 1fr) auto; }
+.play.drawcard .pf { align-items: center; justify-content: center; flex-direction: column; gap: 4px;
+  background: repeating-linear-gradient(0deg, #12932f 0 18px, #0f8529 18px 36px); border: 2px dashed var(--chalk); }
+.play.drawcard .pen { font-size: 34px; line-height: 1; }
+.play.drawcard .pf i { font-style: normal; font-size: 11px; font-weight: 800; color: var(--chalk); padding: 0 6px; }
+.hdraw {
+  grid-row: 2 / -1; grid-column: 1 / -1; z-index: 6; min-height: 0; border-radius: 16px; padding: 8px; border: 3px solid transparent;
+  background: linear-gradient(#1b3478, #0d1d55) padding-box, var(--rim) border-box; box-shadow: 0 0 0 2px var(--edge);
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 6px;
+}
+.hdraw-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.hdraw-head h3 { font-family: var(--display); font-weight: 900; font-size: 17px; margin: 0 auto 0 0; color: var(--gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hdraw-head .pill { min-height: 36px; padding: 3px 10px; font-size: 13px; touch-action: manipulation; white-space: nowrap; }
+.hdraw-field { min-height: 0; border-radius: 10px; overflow: hidden; display: flex; touch-action: none; user-select: none; -webkit-user-select: none; }
+.hdraw-field svg { display: block; width: 100%; height: 100%; touch-action: none; }
+.hdraw-foot { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.hdraw-foot .line { margin: 0; font-size: 13px; font-weight: 800; }
+.hdraw-foot .big { padding: 8px 20px; font-size: 20px; touch-action: manipulation; }
+
 /* sideways: the cards in one row (swipe for more), LOCK IN bottom right */
 @media (orientation: landscape) {
   #huddleView { row-gap: 7px; }
@@ -110,6 +130,7 @@
   .hpos .lask .btn { min-height: 44px; }
 }
 @media (orientation: portrait) {
+  .hdraw-head .dw { display: none; }
   #hTitle { font-size: 20px; }
   .hclock .lbl { display: none; }
 }
@@ -117,6 +138,9 @@
   #hSub { display: none; }
 }
 @media (orientation: landscape) and (max-height: 400px) {
+  .hdraw { padding: 5px 8px; gap: 4px; }
+  .hdraw-head .pill { min-height: 32px; }
+  .hdraw-foot .big { padding: 5px 18px; font-size: 18px; }
   #hTitle { font-size: 19px; }
   .hbar { font-size: 12px; padding: 2px; }
   .htab { min-height: 32px; font-size: 14px; }

@@ -37,6 +37,7 @@ namespace PocketFootball.Sim
         public StadiumConfig stadium = new StadiumConfig();   // WS-10 the stadium and crowd (StadiumConfig.cs, View/Stadium.cs)
         public SkyConfig sky = new SkyConfig();   // the sunset sky and its light (SkyConfig.cs, View/SkyView.cs)
         public AudiblesConfig audibles = new AudiblesConfig();   // WS-13 (Audibles.cs)
+        public CustomPlaysConfig customPlays = new CustomPlaysConfig();   // FEATURES.customPlays: draw-your-own plays (CustomPlays.cs)
         public StatsConfig stats = new StatsConfig();      // WS-12 (Stats.cs, View/PostGame.cs, View/Celebrations.cs)
         public GamepadConfig gamepad = new GamepadConfig();   // WS-14 Xbox pads (GamepadConfig.cs, Input/GamepadSource.cs)
         public AudioConfig audio = new AudioConfig();   // WS-09 sound on the TV (AudioConfig.cs, View/Audio.cs)
