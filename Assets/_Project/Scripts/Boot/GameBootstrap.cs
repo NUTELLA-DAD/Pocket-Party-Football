@@ -38,6 +38,7 @@ namespace PocketFootball.Boot
             if (title) TitleScreen.PrepareAttract(Config, Args);   // the bots' show game behind the title
             if (tutorial) TutorialMode.Prepare(Config);   // no lobby, clock, replays or stats in the tutorial
             CupHost.Apply(Config, title);   // FEATURES.cup: the Couch Cup's next game wears its two teams
+            SeasonHost.Apply(Config, title);   // FEATURES.season: the season's next game wears the club and its opponent
             Weather.ApplyLook(Config);   // FEATURES.weather / sandField: the sky, haze and grass for rain, snow or a sand field
 
             BuildLight();

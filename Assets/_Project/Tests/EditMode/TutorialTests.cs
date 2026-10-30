@@ -38,6 +38,9 @@ namespace PocketFootball.Tests.EditMode
             var cfg = ConfigTests.Load();
             Assert.IsTrue(cfg.Feature("tutorial"));
             Assert.AreEqual("NO_TUTORIAL", ConfigLoader.EnvName("tutorial"));
+            var tex = UnityEngine.Resources.Load<UnityEngine.Texture2D>("Title/ButtonTutorial");
+            Assert.IsNotNull(tex, "Resources/Title/ButtonTutorial.png");
+            Assert.Greater(tex.width, tex.height);
             var t = Make();
             Assert.IsTrue(t.Ready);
             Assert.AreEqual(4, t.StepCount);

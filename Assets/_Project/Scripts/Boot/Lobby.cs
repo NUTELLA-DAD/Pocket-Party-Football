@@ -167,7 +167,7 @@ namespace PocketFootball.Boot
         // ---- picking the teams on the TV (FEATURES.lobbyScreen + teamPick) ----
         public bool FullScreen => Holding && cfg.Feature("lobbyScreen");
         // (not in a Pocket Cup game: the bracket picked its two teams, CupHost.cs)
-        bool CanPick => cfg.Feature("teamPick") && TeamPick.League(cfg).Count > 2 && cfg.teams.Count >= 2 && CupHost.Live == null;
+        bool CanPick => cfg.Feature("teamPick") && TeamPick.League(cfg).Count > 2 && cfg.teams.Count >= 2 && CupHost.Live == null && SeasonHost.Live == null;
         bool Waiting => pickedAt >= 0f || applyFrame >= 0 || switching;   // a new team is on its way: no kickoff yet
 
         readonly int[] shown = new int[2];      // the league team on each card (away, home); differs from cfg.teams while one waits

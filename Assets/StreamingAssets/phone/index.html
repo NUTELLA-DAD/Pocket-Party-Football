@@ -45,6 +45,15 @@
       <div class="lspots" id="hSpots"></div>
       <p class="line" id="hPosLine" aria-live="polite">Tap a bot's spot to take it. Tap a person to ask them to swap.</p>
     </div>
+    <div class="hdraw hidden" id="hDraw" role="dialog" aria-label="Draw your own play"><!-- FEATURES.customPlays -->
+      <div class="hdraw-head"><h3>DRAW<span class="dw"> YOUR PLAY</span></h3>
+        <button class="pill" id="hDrawForm" aria-label="Change the formation">FORMATION</button>
+        <button class="pill" id="hDrawClear" aria-label="Erase every route you drew">CLEAR</button>
+        <button class="pill" id="hDrawBack" aria-label="Close and go back to the playbook">BACK</button></div>
+      <div class="hdraw-field" id="hDrawField" aria-label="The field: drag from a receiver to draw his route"></div>
+      <div class="hdraw-foot"><p class="line" id="hDrawLine" aria-live="polite"></p>
+        <button class="big gold" id="hDrawGo" disabled aria-label="Lock in the play you drew">LOCK IN ✓</button></div>
+    </div>
   </section>
 
   <section id="playView" class="view hidden">

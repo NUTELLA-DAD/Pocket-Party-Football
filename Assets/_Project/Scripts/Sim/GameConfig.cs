@@ -37,6 +37,7 @@ namespace PocketFootball.Sim
         public StadiumConfig stadium = new StadiumConfig();   // WS-10 the stadium and crowd (StadiumConfig.cs, View/Stadium.cs)
         public SkyConfig sky = new SkyConfig();   // the sunset sky and its light (SkyConfig.cs, View/SkyView.cs)
         public AudiblesConfig audibles = new AudiblesConfig();   // WS-13 (Audibles.cs)
+        public CustomPlaysConfig customPlays = new CustomPlaysConfig();   // FEATURES.customPlays: draw-your-own plays (CustomPlays.cs)
         public StatsConfig stats = new StatsConfig();      // WS-12 (Stats.cs, View/PostGame.cs, View/Celebrations.cs)
         public GamepadConfig gamepad = new GamepadConfig();   // WS-14 Xbox pads (GamepadConfig.cs, Input/GamepadSource.cs)
         public AudioConfig audio = new AudioConfig();   // WS-09 sound on the TV (AudioConfig.cs, View/Audio.cs)
@@ -57,6 +58,7 @@ namespace PocketFootball.Sim
         public DriveRushConfig driveRush = new DriveRushConfig();      // FEATURES.driveRush: the rusher shoving his blocker with the BULL RUSH stick (DriveRush.cs)
         public GameLengthConfig gameLength = new GameLengthConfig();   // FEATURES.gameLength: the SETTINGS page's game lengths (GameLength.cs)
         public CrashLogConfig crashLog = new CrashLogConfig();   // FEATURES.crashLog: errors written to a crash file (View/CrashReport.cs, Boot/CrashLog.cs)
+        public SeasonConfig season = new SeasonConfig();   // FEATURES.season: run a club through a season of recruits, boosts and coaching (Season.cs, Boot/SeasonHost.cs)
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 

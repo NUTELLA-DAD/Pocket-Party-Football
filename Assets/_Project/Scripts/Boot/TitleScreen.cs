@@ -58,8 +58,8 @@ namespace PocketFootball.Boot
         string weatherPick;   // FEATURES.weather: the picked weather (saved at once; the game after PLAY plays in it)
         string lengthPick;    // FEATURES.gameLength: the picked game length (saved at once; the game after PLAY runs that long)
 
-        enum Page { Menu, HowTo, Settings, Cup, Roster, Hotspot }
-        enum Item { Play, Cup, HowTo, Settings, Roster, Tutorial }
+        enum Page { Menu, HowTo, Settings, Cup, Roster, Hotspot, Season }
+        enum Item { Play, Cup, HowTo, Settings, Roster, Tutorial, Season }
 
         GameConfig cfg;
         PartyHost host;
@@ -105,6 +105,7 @@ namespace PocketFootball.Boot
             var list = new System.Collections.Generic.List<Item> { Item.Play };
             if (TutorialMode.On(cfg)) list.Add(Item.Tutorial);   // FEATURES.tutorial: the first drive on one phone
             if (CupHost.On(cfg)) list.Add(Item.Cup);
+            if (SeasonHost.On(cfg)) list.Add(Item.Season);   // FEATURES.season: the front office
             if (RosterCards.On(cfg)) list.Add(Item.Roster);
             list.Add(Item.HowTo);
             list.Add(Item.Settings);
@@ -124,15 +125,16 @@ namespace PocketFootball.Boot
             else if (startPage == "settings") t.page = Page.Settings;
             else if (startPage == "hotspot" && HotspotJoin.On(cfg)) t.OpenHotspot();
             else if (startPage == "cup" && System.Array.IndexOf(t.items, Item.Cup) >= 0) { t.page = Page.Cup; t.cup = CupHost.Load(cfg); }
+            else if (startPage == "season" && System.Array.IndexOf(t.items, Item.Season) >= 0) t.OpenSeason();
             else if (startPage != null && startPage.StartsWith("roster") && System.Array.IndexOf(t.items, Item.Roster) >= 0) t.OpenRoster(startPage);
             Instance = t;
             Debug.Log("[title] title screen up (attract mode behind it)");
             return t;
         }
 
-        // by Item (no picture yet for TUTORIAL: it is drawn as a navy button with its word)
-        static readonly string[] ButtonArt = { "Title/ButtonPlay", "Title/ButtonCup", "Title/ButtonHowToPlay", "Title/ButtonSettings", "Title/ButtonRoster", "Title/ButtonTutorial" };
-        static readonly string[] ButtonText = { "PLAY", "COUCH CUP", "HOW TO PLAY", "SETTINGS", "ROSTER", "TUTORIAL" };
+        // by Item (a missing picture is drawn as a navy button with its word)
+        static readonly string[] ButtonArt = { "Title/ButtonPlay", "Title/ButtonCup", "Title/ButtonHowToPlay", "Title/ButtonSettings", "Title/ButtonRoster", "Title/ButtonTutorial", "Title/ButtonSeason" };
+        static readonly string[] ButtonText = { "PLAY", "COUCH CUP", "HOW TO PLAY", "SETTINGS", "ROSTER", "TUTORIAL", "SEASON" };
 
         void OnDestroy() { if (Instance == this) Instance = null; }
 
@@ -232,6 +234,11 @@ namespace PocketFootball.Boot
                 RosterInput(left, right, up, down, ok, click, moved, mp);
                 return;
             }
+            if (page == Page.Season)
+            {
+                SeasonInput(left, right, up, down, ok, click, moved, mp);
+                return;
+            }
 
             // settings: 0 sound, the teams, full screen, the helpers, back
             int rowsN = SettingsRows;
@@ -278,9 +285,10 @@ namespace PocketFootball.Boot
 
         void Choose(Item i)
         {
-            if (i == Item.Play) { CupHost.SetLive(false); fadeT = 0f; Debug.Log("[title] PLAY"); }
-            else if (i == Item.Tutorial) { CupHost.SetLive(false); TutorialMode.Request(); fadeT = 0f; Debug.Log("[title] TUTORIAL"); }
+            if (i == Item.Play) { CupHost.SetLive(false); SeasonHost.SetLive(false); fadeT = 0f; Debug.Log("[title] PLAY"); }
+            else if (i == Item.Tutorial) { CupHost.SetLive(false); SeasonHost.SetLive(false); TutorialMode.Request(); fadeT = 0f; Debug.Log("[title] TUTORIAL"); }
             else if (i == Item.Cup) { cup = CupHost.Load(cfg); Open(Page.Cup); }
+            else if (i == Item.Season) OpenSeason();
             else if (i == Item.Roster) OpenRoster(null);
             else Open(i == Item.HowTo ? Page.HowTo : Page.Settings);
         }
@@ -290,7 +298,7 @@ namespace PocketFootball.Boot
             if (p == Page.Menu)
             {
                 var from = page == Page.HowTo ? Item.HowTo : page == Page.Settings ? Item.Settings : page == Page.Cup ? Item.Cup
-                    : page == Page.Roster ? Item.Roster : Item.Play;
+                    : page == Page.Roster ? Item.Roster : page == Page.Season ? Item.Season : Item.Play;
                 pick = Mathf.Max(0, System.Array.IndexOf(items, from));
             }
             else pick = 0;
@@ -415,6 +423,7 @@ namespace PocketFootball.Boot
             else if (page == Page.HowTo) DrawHowTo(W, H, s);
             else if (page == Page.Cup) DrawCup(W, H, s);
             else if (page == Page.Roster) DrawRoster(W, H, s);
+            else if (page == Page.Season) DrawSeason(W, H, s);
             else if (page == Page.Hotspot) DrawHotspot(W, H, s);
             else DrawSettings(W, H, s);
 
@@ -431,7 +440,7 @@ namespace PocketFootball.Boot
             float y = H * t.logoTopFrac;
             if (logo != null)
             {
-                // a fourth button (COUCH CUP): the logo gives up the room, so the buttons stay clear of the hint
+                // more buttons (COUCH CUP, SEASON, ...): the logo gives up the room, so the buttons stay clear of the hint
                 float below = t.playHeightFrac + (items.Length - 1) * t.otherHeightFrac + (items.Length + 1) * t.gapFrac;
                 float fit = Mathf.Max(0.2f, t.menuBottomFrac - t.logoTopFrac - below);
                 float lh = H * Mathf.Min(t.logoHeightFrac, fit), lw = lh * logo.width / logo.height;
@@ -587,6 +596,7 @@ namespace PocketFootball.Boot
             }
             // the cup's next game: the Boot scene again, wearing its two teams, opening on the lobby
             confirmNew = false;
+            SeasonHost.SetLive(false);
             CupHost.SetLive(true);
             fadeT = 0f;
             Debug.Log("[title] COUCH CUP: next game");
