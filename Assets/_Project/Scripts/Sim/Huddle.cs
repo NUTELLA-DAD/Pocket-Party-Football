@@ -119,7 +119,10 @@ namespace PocketFootball.Sim
                     if (w.PendingTurnover) { w.Offense = w.Defense; w.Dir = -w.Dir; w.PendingTurnover = false; }
                     w.LineOfScrimmageX = w.NextLos;
                 }
+                bool carry = AfterPlay.Carries(w);   // FEATURES.afterPlay: they keep standing where they were and walk to their new spots
+                if (carry) AfterPlay.Save(w);
                 Begin(w);
+                if (carry) AfterPlay.Restore(w);
             }
         }
 

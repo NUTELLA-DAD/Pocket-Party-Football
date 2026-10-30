@@ -79,7 +79,7 @@ namespace PocketFootball.Sim
             float gap = w.Cfg.players.onsideGapYd;
             foreach (var p in w.Players)
             {
-                if (!p.Human) continue;
+                if (!p.Human || AfterPlay.WalkingBack(w, p)) continue;   // (FEATURES.afterPlay: walking back across the line in the huddle)
                 float own = p.Team == w.Offense ? -w.Dir : w.Dir;     // which way is "back" for this team
                 float limit = w.LineOfScrimmageX + own * gap;
                 if ((p.X - limit) * own >= 0f) continue;

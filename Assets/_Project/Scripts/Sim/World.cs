@@ -102,6 +102,7 @@ namespace PocketFootball.Sim
         public readonly Pursuit.Plan ChasePlan = new Pursuit.Plan();   // FEATURES.pursuitLanes: this tick's chase (Pursuit.cs); not hashed, rebuilt every tick
         public readonly DriveBlock.State Drive = new DriveBlock.State();   // FEATURES.driveBlock: this tick's shoves, for the TV (DriveBlock.cs); not hashed
         public readonly DriveRush.State Rush = new DriveRush.State();      // FEATURES.driveRush: the rushers' shoves this tick, for the TV (DriveRush.cs); not hashed
+        public readonly AfterPlay.State After = new AfterPlay.State();   // FEATURES.afterPlay: what each man does between the whistle and the line-up (AfterPlay.cs); not hashed, drawn again at every whistle
         public SeasonLive Season;                      // FEATURES.season: this game's recruits, coaching and playbook (Season.cs); set before the first step, never changed by it
 
         public World(GameConfig cfg, int seed)
@@ -240,6 +241,7 @@ namespace PocketFootball.Sim
         {
             float dt = Dt;
             Events.BeginTick();   // WS-00
+            AfterPlay.Step(this);   // FEATURES.afterPlay: a fresh whistle, everyone's mood
             foreach (var p in Players)
             {
                 PlayerInput input = default;
@@ -252,8 +254,9 @@ namespace PocketFootball.Sim
                     p.IdleTicks = idle ? p.IdleTicks + 1 : 0;
                     // a person who has put the phone down: a bot plays for them until they touch it again
                     if (Phase == Phase.Live && p.IdleTicks >= Cfg.bots.idleTakeoverS * Cfg.sim.tickHz) { input = Bots.Think(this, p); p.BotHelp = true; }
+                    else if (AfterPlay.Drives(this, p, input)) input = AfterPlay.Think(this, p);   // FEATURES.afterPlay: walked back after the whistle unless he pushes his stick
                 }
-                else input = Bots.Think(this, p);
+                else input = AfterPlay.Drives(this, p, default) ? AfterPlay.Think(this, p) : Bots.Think(this, p);
                 p.Blocking = input.Block;
                 Mover.Move(this, p, input, dt);
                 DefenseMoves.Act(this, p, ref input);   // WS-03: before LivePlay.Act, so a DIVE TACKLE isn't also a plain tackle

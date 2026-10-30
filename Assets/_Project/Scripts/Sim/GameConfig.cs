@@ -64,6 +64,7 @@ namespace PocketFootball.Sim
         public GameLengthConfig gameLength = new GameLengthConfig();   // FEATURES.gameLength: the SETTINGS page's game lengths (GameLength.cs)
         public CrashLogConfig crashLog = new CrashLogConfig();   // FEATURES.crashLog: errors written to a crash file (View/CrashReport.cs, Boot/CrashLog.cs)
         public SeasonConfig season = new SeasonConfig();   // FEATURES.season: run a club through a season of recruits, boosts and coaching (Season.cs, Boot/SeasonHost.cs)
+        public AfterPlayConfig afterPlay = new AfterPlayConfig();   // FEATURES.afterPlay: huffing, high fives and walking back after the whistle (AfterPlay.cs, View/AfterPlayView.cs)
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 
