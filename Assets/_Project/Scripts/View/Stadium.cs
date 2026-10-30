@@ -10,7 +10,9 @@ namespace PocketFootball.View
     // with their numbers, staff in caps, a ref, coolers, tents behind). Chunky goal posts on both end lines.
     // Orange down markers on both sidelines. FEATURES.cheerleaders (NO_CHEERLEADERS=1): each team's cheer squad in
     // front of its half of the far sideline, Kenny's rigged cheerleader in the team's colours, cheering together in
-    // stepped poses. FEATURES.refModel (NO_REF_MODEL=1): the sideline refs wear Kenny's rigged referee. Every number is
+    // stepped poses. FEATURES.refModel (NO_REF_MODEL=1): the sideline refs wear Kenny's rigged referee.
+    // FEATURES.refsOnLines (NO_REFS_ON_LINES=1): a ref stands at each down marker, on the line of scrimmage and the
+    // first-down line, and moves with them. Every number is
     // in game.json "stadium". Built once from code, seeded (the same stadium every run).
     //
     // The crowd: every fan is a flat card (shirt, head, cap, arms, sometimes a sign). The stands are cut into slices;
@@ -644,9 +646,30 @@ namespace PocketFootball.View
             k.Ellipsoid(new Vector3(0, 2.4f, -0.05f), new Vector3(0.2f, 0.2f, 0.06f), Quaternion.identity, Colors.Hex("#1e1e22"), 6, 12);
             Looks.Static(go.transform, "Flag", k, mat);
             float crewS = side > 0 ? sc.crewScale : sc.nearScale * sc.crewScale;
+            if (LineRef(go.transform, side, crewS)) return go.transform;
             var crew = Person(new Vector3(0, 0, side * sc.crewBackM), Color.white, Colors.Hex("#1e1e22"), Colors.Hex(sc.crewCapColor), true, side > 0 ? 90f : -90f, crewS, true);
             crew.transform.SetParent(go.transform, false);
             return go.transform;
+        }
+
+        // FEATURES.refsOnLines (NO_REFS_ON_LINES=1): the one who minds a down marker is Kenny's rigged referee
+        // (stadium.refModel), standing just off the field lineRefBackM behind the pole and facing the field, so a ref
+        // stands on the line of scrimmage and on the first-down line on both sidelines and moves with them every
+        // play. False (the code-built chain crew holds the pole instead) when the switch or the model is missing.
+        bool LineRef(Transform marker, float side, float scale)
+        {
+            if (!cfg.Feature("refsOnLines") || !cfg.Feature("refModel")) return false;
+            var f = FootballFigure.Create(marker, "Line ref", cfg.view.playerHeightM * scale);
+            f.transform.localPosition = new Vector3(0, 0, side * sc.lineRefBackM);
+            f.transform.localRotation = Quaternion.Euler(0, side > 0 ? 90f : -90f, 0);
+            if (ModelSkin.Wear(f, sc.refModel, sc.refTexture, FootballFigure.KitMaterial(mat, cfg.view), false) != null)
+            {
+                ModelSkin.Freeze(f, FootballFigure.PoseKind.Stand);
+                Rand();   // (what the code-built crew drew: skin; the rest of the seeded layout stays put)
+                return true;
+            }
+            if (Application.isPlaying) Object.Destroy(f.gameObject); else Object.DestroyImmediate(f.gameObject);
+            return false;
         }
 
         // The markers stand at the line of scrimmage and the first-down line, on both sidelines (yards).

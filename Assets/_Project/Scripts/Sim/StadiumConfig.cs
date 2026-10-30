@@ -54,7 +54,8 @@ namespace PocketFootball.Sim
 
         // The chain crew (gauntlet 3): one person in stripes holds each down marker, crewBackM behind it (off the
         // field), crewScale of a player's height, an orange cap.
-        public float crewScale, crewBackM;
+        // FEATURES.refsOnLines: Kenny's referee (refModel) minds each marker instead, lineRefBackM behind the pole.
+        public float crewScale, crewBackM, lineRefBackM;
         public string crewCapColor;
 
         // The goal posts on each end line: a padded base post postBackM behind it, a gooseneck, the crossbar
