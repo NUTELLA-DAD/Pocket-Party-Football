@@ -1,4 +1,4 @@
-// Pocket Party Football: CALL FOR IT on the QB's phone (WS-05).
+// Couch Bowl: CALL FOR IT on the QB's phone (WS-05).
 // The game sends { t:'call', k, shape, number, pos, ms } to the QB's phone only, when a receiver taps CALL FOR IT.
 // That receiver's button pulses (two stepped looks, no smooth wobble) for ms, and the line under the name says who.
 // The pulse stops by itself, or when the buttons change (the throw, the whistle).

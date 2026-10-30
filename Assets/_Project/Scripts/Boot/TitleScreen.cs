@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 namespace PocketFootball.Boot
 {
     // The title screen (FEATURES.titleScreen, NO_TITLE_SCREEN=1 goes straight to the lobby). Kenny's logo and the
-    // buttons: PLAY, POCKET CUP (FEATURES.cup: the bracket page, CupHost.cs), ROSTER (FEATURES.rosterPage: every player
+    // buttons: PLAY, COUCH CUP (FEATURES.cup: the bracket page, CupHost.cs), ROSTER (FEATURES.rosterPage: every player
     // model with its positions and ratings, TitleScreen.Roster.cs), HOW TO PLAY, SETTINGS. Behind them the
     // bots play a game of their own (attract mode), filmed from a new angle every play (title.shots,
     // View/TitleShots.cs). That game is only for show: no lobby, no game clock, no replays, no game log, no pads
@@ -128,7 +128,7 @@ namespace PocketFootball.Boot
 
         // by Item (no picture yet for TUTORIAL: it is drawn as a navy button with its word)
         static readonly string[] ButtonArt = { "Title/ButtonPlay", "Title/ButtonCup", "Title/ButtonHowToPlay", "Title/ButtonSettings", "Title/ButtonRoster", "Title/ButtonTutorial" };
-        static readonly string[] ButtonText = { "PLAY", "POCKET CUP", "HOW TO PLAY", "SETTINGS", "ROSTER", "TUTORIAL" };
+        static readonly string[] ButtonText = { "PLAY", "COUCH CUP", "HOW TO PLAY", "SETTINGS", "ROSTER", "TUTORIAL" };
 
         void OnDestroy() { if (Instance == this) Instance = null; }
 
@@ -426,7 +426,7 @@ namespace PocketFootball.Boot
             float y = H * t.logoTopFrac;
             if (logo != null)
             {
-                // a fourth button (POCKET CUP): the logo gives up the room, so the buttons stay clear of the hint
+                // a fourth button (COUCH CUP): the logo gives up the room, so the buttons stay clear of the hint
                 float below = t.playHeightFrac + (items.Length - 1) * t.otherHeightFrac + (items.Length + 1) * t.gapFrac;
                 float fit = Mathf.Max(0.2f, t.menuBottomFrac - t.logoTopFrac - below);
                 float lh = H * Mathf.Min(t.logoHeightFrac, fit), lw = lh * logo.width / logo.height;
@@ -481,7 +481,7 @@ namespace PocketFootball.Boot
         static readonly string[] HowTo =
         {
             "<b>1. Join.</b> Press PLAY. Everyone scans the QR code on the TV with their phone (same Wi-Fi as the TV). No Wi-Fi? Turn on this PC's Mobile hotspot and set it up under SETTINGS > HOTSPOT WI-FI.",
-            "<b>2. Pick a side.</b> The two teams on the TV (change them with the arrows on the join screen or under SETTINGS, or play through the POCKET CUP). Bots play every spot nobody took.",
+            "<b>2. Pick a side.</b> The two teams on the TV (change them with the arrows on the join screen or under SETTINGS, or play through the COUCH CUP). Bots play every spot nobody took.",
             "<b>3. Lobby.</b> Pick your offense spot and your defense spot. Any phone taps KICK OFF to start.",
             "<b>4. Huddle.</b> Call a play on your phone in secret. The TV only shows CALLED, never which play.",
             "<b>5. Offense.</b> QB: tap HIKE, then a receiver's shape to throw (tap = bullet, hold = lob). With the ball: SPRINT, JUKE, SPIN, STIFF ARM.",
@@ -543,7 +543,7 @@ namespace PocketFootball.Boot
             Shadowed(new Rect(r.x, r.yMax - 70 * s, r.width, 40 * s), "Up / Down to pick, Left / Right to change, Esc or (B) to go back", hint);
         }
 
-        // ---- the Pocket Cup page (FEATURES.cup): the bracket, and PLAY NEXT GAME / NEW CUP / BACK under it ----
+        // ---- the Couch Cup page (FEATURES.cup): the bracket, and PLAY NEXT GAME / NEW CUP / BACK under it ----
         Cup cup;                 // the saved cup (null: none yet)
         bool confirmNew;         // NEW CUP pressed once while a cup is under way: the second press starts over
         readonly Rect[] cupHit = new Rect[3];
@@ -583,7 +583,7 @@ namespace PocketFootball.Boot
             confirmNew = false;
             CupHost.SetLive(true);
             fadeT = 0f;
-            Debug.Log("[title] POCKET CUP: next game");
+            Debug.Log("[title] COUCH CUP: next game");
         }
 
         TeamConfig TeamOf(string code)
@@ -600,7 +600,7 @@ namespace PocketFootball.Boot
 
         void DrawCup(float W, float H, float s)
         {
-            var r = Panel(W, H, s, "POCKET CUP");
+            var r = Panel(W, H, s, "COUCH CUP");
             var next = cup?.Next();
             float pad = 48 * s;
             // the line under the title: what's next

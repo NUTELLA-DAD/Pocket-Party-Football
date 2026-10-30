@@ -1,4 +1,4 @@
-// Pocket Party Football: the kick meter (WS-01). Only the kicker's phone ever shows it: the game sends the 'kick'
+// Couch Bowl: the kick meter (WS-01). Only the kicker's phone ever shows it: the game sends the 'kick'
 // layout and { t:'kickmeter', on, kind, yards } to that one phone. It covers the whole screen while he lines up.
 // Swipe up from anywhere on the field: the further up, the harder the kick; drift sideways to aim (right = the
 // kicker's right). Letting go sends { t:'kick', power: 0..1, aim: -1..1, aid } with the aid of the screen on show.

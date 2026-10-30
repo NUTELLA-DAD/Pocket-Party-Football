@@ -48,7 +48,7 @@ namespace PocketFootball.Sim
         public BotsV3Config botsV3 = new BotsV3Config();   // bots v3: reactions, blocking assignments, kick lanes (BotsV3.cs, FEATURES.botsV3)
         public CatchPlayConfig catchPlay = new CatchPlayConfig();   // FEATURES.catchPlay: diving and contested catches (CatchPlay.cs)
         public PursuitConfig pursuit = new PursuitConfig();   // FEATURES.pursuitLanes: chasing the ball carrier in lanes (Pursuit.cs)
-        public CupConfig cup = new CupConfig();   // FEATURES.cup: the Pocket Cup bracket (Cup.cs, Boot/CupHost.cs)
+        public CupConfig cup = new CupConfig();   // FEATURES.cup: the Couch Cup bracket (Cup.cs, Boot/CupHost.cs)
         public WeatherConfig weather = new WeatherConfig();   // FEATURES.weather / sandField: rain, snow, a sand field (Weather.cs)
         public WeatherLookConfig weatherLook = new WeatherLookConfig();   // ...and how they look on the TV (View/WeatherView.cs)
         public RosterConfig roster = new RosterConfig();   // FEATURES.rosterPage: the title's ROSTER page (RosterCards.cs, Boot/RosterPage.cs)

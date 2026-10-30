@@ -3,7 +3,7 @@ using System.Text;
 
 namespace PocketFootball.Sim
 {
-    // FEATURES.cup (NO_CUP=1 hides it): the Pocket Cup, a knockout bracket for the whole league. The teams are drawn
+    // FEATURES.cup (NO_CUP=1 hides it): the Couch Cup, a knockout bracket for the whole league. The teams are drawn
     // into seeds (1 is the best), the bracket is the smallest power of two that holds them, and the seeds fill it the
     // usual way (with 8 slots: 1 v 8, 4 v 5, 2 v 7, 3 v 6), so when the league doesn't fill the bracket the top seeds
     // get the empty slots: a bye straight into the next round. Six teams: seeds 1 and 2 sit out the first round,

@@ -1,4 +1,4 @@
-// Pocket Party Football: the secret huddle and the job diagram (M1-b).
+// Couch Bowl: the secret huddle and the job diagram (M1-b).
 // Only this team's phones ever get the plays; the TV and the other team see check marks.
 (function () {
   'use strict';

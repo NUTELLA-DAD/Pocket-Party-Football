@@ -1,4 +1,4 @@
-# Pocket Party Football
+# Couch Bowl
 
 An 11-on-11 toon football party game (Arrows vs Grains) for one TV. Everyone plays with their phone: scan the QR code, pick a side and a position, call plays in secret, and play with position-specific buttons. Bots fill every empty spot.
 

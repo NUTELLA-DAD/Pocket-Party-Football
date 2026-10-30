@@ -126,7 +126,7 @@ namespace PocketFootball.Boot
 
         public void Header(string started, int seed, string version, string url)
         {
-            Raw("# Pocket Party Football game log");
+            Raw("# Couch Bowl game log");
             Raw("# started " + started + ", seed " + seed + ", version " + version + (string.IsNullOrEmpty(url) ? "" : ", phones join at " + url));
             Raw("# columns: tick (" + cfg.sim.tickHz + " a second), seconds since the log began, what happened, then key=value");
             Raw("# teams: " + string.Join(", ", TeamNames()));

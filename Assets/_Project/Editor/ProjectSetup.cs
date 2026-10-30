@@ -40,7 +40,7 @@ namespace PocketFootball.Editor
         static void ApplyPlayerSettings()
         {
             PlayerSettings.companyName = "PocketParty";
-            PlayerSettings.productName = "Pocket Party Football";
+            PlayerSettings.productName = "Couch Bowl";
             PlayerSettings.colorSpace = ColorSpace.Linear;
             PlayerSettings.runInBackground = true;
             PlayerSettings.defaultScreenWidth = 1920;

@@ -1,4 +1,4 @@
-// Pocket Party Football: the final card on the phone (WS-12). When the game ends the TV sends `postgame`: the final
+// Couch Bowl: the final card on the phone (WS-12). When the game ends the TV sends `postgame`: the final
 // score, the winner, the player of the game, both teams' totals (public) and this person's own numbers (`mine`, only
 // to this phone). The card covers the screen until HIDE; it comes back only if the numbers change, and goes away
 // when a new huddle starts. Names are set as text, never as HTML. Offline: no fonts or files from the internet.

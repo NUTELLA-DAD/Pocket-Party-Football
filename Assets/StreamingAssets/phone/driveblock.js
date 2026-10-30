@@ -1,4 +1,4 @@
-// Pocket Party Football phone: the linemen's drive sticks (the game's FEATURES.driveBlock and FEATURES.driveRush).
+// Couch Bowl phone: the linemen's drive sticks (the game's FEATURES.driveBlock and FEATURES.driveRush).
 // When the game sends the 'block' layout with driveStick: true, layouts.js asks this file for the right-hand side:
 // a small SPRINT gem and, instead of the BLOCK gem, a BLOCK stick.
 //   Touch the stick: BLOCK is held ({ t:'btn', b:'block', d:1, aid }), exactly like holding the old button.
