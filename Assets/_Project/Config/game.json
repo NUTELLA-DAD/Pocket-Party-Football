@@ -1098,7 +1098,7 @@
     "fadeS": 1.2,
     "tracks": {
       "title": { "file": "Music/title", "level": 1, "loop": true },
-      "huddle": { "file": "Music/huddle", "level": 0.6, "loop": true },
+      "huddle": { "file": "Music/title", "level": 0.6, "loop": true },
       "postgame": { "file": "Music/postgame", "level": 1, "loop": false }
     }
   },
