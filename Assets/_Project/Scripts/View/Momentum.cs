@@ -29,15 +29,20 @@ namespace PocketFootball.View
 
         public static float YawOf(float x, float z) => Mathf.Atan2(-z, x) * Mathf.Rad2Deg;
 
-        // One sim tick. standYaw: the facing when standing (its team's way of play); topSpeed: sprint speed (yd/s).
-        public static void Step(ref MomentumState s, AnimConfig a, float x, float z, float vx, float vz, float standYaw, float topSpeed, float dt)
+        // One sim tick. standYaw: the facing when standing (its team's way of play); topSpeed: sprint speed (yd/s);
+        // faceYaw: a facing that wins over where it runs (NaN: none; Facing.cs: a locked block, the QB's aim), turned to
+        // at the running turn rate; (fx, fz): the way it runs, for the facing (NaN: its velocity). True: it was placed
+        // (the first tick, or moved further than it can run), facing set outright. maxDegS: no turn faster (0: no cap).
+        public static bool Step(ref MomentumState s, AnimConfig a, float x, float z, float vx, float vz, float standYaw, float topSpeed, float dt,
+            float faceYaw = float.NaN, float fx = float.NaN, float fz = float.NaN, float maxDegS = 0f)
         {
             float speed = Mathf.Sqrt(vx * vx + vz * vz);
             float moved = Mathf.Sqrt((x - s.X) * (x - s.X) + (z - s.Z) * (z - s.Z));
+            if (float.IsNaN(fx)) { fx = vx; fz = vz; }
             if (!s.Ready || moved > JumpYd + speed * dt)
             {
-                s = new MomentumState { Ready = true, Yaw = speed > RunningYdS ? YawOf(vx, vz) : standYaw, Vx = vx, Vz = vz, X = x, Z = z };
-                return;
+                s = new MomentumState { Ready = true, Yaw = !float.IsNaN(faceYaw) ? faceYaw : speed > RunningYdS ? YawOf(fx, fz) : standYaw, Vx = vx, Vz = vz, X = x, Z = z };
+                return true;
             }
             float ax = (vx - s.Vx) / dt, az = (vz - s.Vz) / dt;
             float cap = 2f * Mathf.Max(1f, a.leanRefYdS2), am = Mathf.Sqrt(ax * ax + az * az);
@@ -52,9 +57,11 @@ namespace PocketFootball.View
             // moving (a reverse passing through zero, a hard stop), then its team's way
             float lean = Mathf.Sqrt(s.Lx * s.Lx + s.Lz * s.Lz);
             bool settling = speed <= RunningYdS && lean <= 0.25f * a.leanRefYdS2;
-            float target = speed > RunningYdS ? YawOf(vx, vz) : settling ? standYaw : s.Yaw;
+            bool told = !float.IsNaN(faceYaw);
+            float target = told ? faceYaw : speed > RunningYdS ? YawOf(fx, fz) : settling ? standYaw : s.Yaw;
             // (stood still, it turns to face its team's way slowly, turnSettleDegS: no snap once stopped)
-            float rate = (settling ? a.turnSettleDegS : Mathf.Lerp(a.turnSlowDegS, a.turnFastDegS, Mathf.Clamp01(speed / Mathf.Max(0.1f, topSpeed)))) * dt;
+            float rate = (settling && !told ? a.turnSettleDegS : Mathf.Lerp(a.turnSlowDegS, a.turnFastDegS, Mathf.Clamp01(speed / Mathf.Max(0.1f, topSpeed)))) * dt;
+            if (maxDegS > 0f) rate = Mathf.Min(rate, maxDegS * dt);
             s.Yaw = Mathf.Repeat(s.Yaw + Turn(s.Yaw, target, rate) + 180f, 360f) - 180f;
             s.Vx = vx; s.Vz = vz; s.X = x; s.Z = z;
 
@@ -62,11 +69,12 @@ namespace PocketFootball.View
             // forward over a few ticks instead of flipping
             Raw(s, a, topSpeed, out float fwd, out float side, out float plant);
             // still swinging round at a walk after a plant: the feet stay planted, the pivot is over them
-            if (plant == 0f && s.Plant > 0f && speed < 3f && Mathf.Abs(Mathf.DeltaAngle(s.Yaw, YawOf(vx, vz))) > 30f) plant = 0.5f;
+            if (!told && plant == 0f && s.Plant > 0f && speed < 3f && Mathf.Abs(Mathf.DeltaAngle(s.Yaw, YawOf(vx, vz))) > 30f) plant = 0.5f;
             s.Plant = plant;
             float most = a.leanRateDegS > 0f ? a.leanRateDegS * dt : 360f;
             s.Fwd += Mathf.Clamp(fwd - s.Fwd, -most, most);
             s.Side += Mathf.Clamp(side - s.Side, -most, most);
+            return false;
         }
 
         // How far to turn this tick toward target (degrees, at most rate). The short way round, except a near turn-around

@@ -292,7 +292,7 @@ namespace PocketFootball.View
         public bool HoldL, HoldR;
         const float CarryArmDeg = 10f, CarryArmSwing = 0.08f, CarryForeDeg = 80f;   // the ball arm tucked, barely swinging
 
-        // The stride pose for the next Run, Carry, Reach and Secure poses (the legs only in a Reach or Secure).
+        // The stride pose for the next Run, Carry, Reach, Secure and Throw poses (the legs only in a Reach, Secure or Throw).
         // Stride(false, default): the poses' own two frames.
         public void Stride(bool on, StridePose s)
         {
@@ -330,7 +330,8 @@ namespace PocketFootball.View
         {
             strideTwist = strideHipYaw = strideHipRoll = 0f; ToeL = ToeR = 0f; BallL = BallR = 0f;
             bool run = current == PoseKind.Run, carrier = current == PoseKind.Carry;
-            if (!striding || !(run || carrier || current == PoseKind.Reach || current == PoseKind.ReachOne || current == PoseKind.Secure)) return p;
+            // (FEATURES.qbStrafe: the QB's cocked arm, Throw, on the move: the legs only)
+            if (!striding || !(run || carrier || current == PoseKind.Reach || current == PoseKind.ReachOne || current == PoseKind.Secure || current == PoseKind.Throw)) return p;
             var s = stride;
             p.drop = s.Drop;
             p.thighL = s.ThighL; p.shinL = s.ShinL; p.thighR = s.ThighR; p.shinR = s.ShinR;
@@ -343,6 +344,26 @@ namespace PocketFootball.View
                 p.armR = CarryArmDeg + CarryArmSwing * s.ArmR; p.foreR = CarryForeDeg;
             }
             if (run || carrier) { strideTwist = s.Twist; strideHipYaw = s.HipYaw; strideHipRoll = s.HipRoll; }
+            return p;
+        }
+
+        // FEATURES.reachTrack (PlayersView, Facing.ReachUp): the arms reaching for a pass point at the ball, upDeg above
+        // level from his shoulders, swung between lo and hi; ReachAt(float.NaN, 0, 0): the pose's own arms.
+        public void ReachAt(float upDeg, float lo, float hi)
+        {
+            if (upDeg == reachUp || (float.IsNaN(upDeg) && float.IsNaN(reachUp))) return;
+            reachUp = upDeg; reachLo = lo; reachHi = hi;
+            carryDirty = true;
+        }
+        float reachUp = float.NaN, reachLo, reachHi;
+
+        P Reached(P p)
+        {
+            if (float.IsNaN(reachUp)) return p;
+            // (the chest's lean tips the arms with it: take it back off so they still point at the ball)
+            float arm = Mathf.Clamp(90f + reachUp + p.lean, reachLo, reachHi);
+            if (current == PoseKind.Reach) { p.armL = arm; p.armR = arm; }
+            else if (current == PoseKind.ReachOne) { if (currentFrame < 2) p.armL = arm; else p.armR = arm; }
             return p;
         }
 
@@ -396,7 +417,7 @@ namespace PocketFootball.View
             if (kind != current || frame != currentFrame || carryDirty)
             {
                 current = kind; currentFrame = frame; carryDirty = false;
-                var p = Carried(Strode(Get(kind, frame)));
+                var p = Reached(Carried(Strode(Get(kind, frame))));
                 if (striding) { strode = p; strodeTwist = strideTwist; strodeToeL = ToeL; strodeToeR = ToeR; strodeBallL = BallL; strodeBallR = BallR; strodeHipYaw = strideHipYaw; strodeHipRoll = strideHipRoll; }
                 else if (settle > 0f)
                 {

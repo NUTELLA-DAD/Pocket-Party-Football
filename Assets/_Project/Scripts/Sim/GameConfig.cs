@@ -349,6 +349,14 @@ namespace PocketFootball.Sim
         // the lean shown moves at most leanRateDegS; a forward lean while still turning round stops at turnLeanCapDeg;
         // stood still, a figure turns to face its team's way at turnSettleDegS
         public float leanRateDegS, turnLeanCapDeg, turnSettleDegS;
+        // FEATURES.calmTurns (View/Facing.cs): a run slower than a jog faces its velocity smoothed over turnTauS (all of
+        // it at turnTrustFromYdS and slower, none of it at jog speed); a ball straight behind a man watching it stays over
+        // his shoulder until it is behindHoldDeg round the other side; a turn on the spot steps the feet once every
+        // turnStepDeg; nothing turns faster than turnMaxDegS. FEATURES.reachTrack: arms reaching for a pass point at the ball, between reachLowDeg and reachHighDeg.
+        public float turnTauS, turnTrustFromYdS, turnMaxDegS, behindHoldDeg, turnStepDeg, reachLowDeg, reachHighDeg;
+        // FEATURES.qbStrafe (View/Facing.cs): the QB in the pocket faces where he aims; running on a diagonal to that his
+        // legs turn up to strafeHipDeg toward it (his shoulders stay square)
+        public float strafeHipDeg;
         // FEATURES.idleMotion (View/Alive.cs): a man standing still breathes, his chest up idleBreathDeg and back over
         // idleBreathKeys key frames, and shifts his weight foot to foot over idleShiftKeys: hips idleSwayCm over, the
         // other hip idleRollDeg lower, that knee eased idleKneeDeg

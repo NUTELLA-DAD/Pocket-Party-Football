@@ -100,6 +100,28 @@ What it tunes:
 
 `-Drill breakaway` films the long chase from behind instead (into `.shots\pursuit\round-N-breakaway\`).
 
+## The turn gauntlet (`Tests/EditMode/TurnAudit.cs`, `tools/turn-audit`)
+
+Plays whole 22-bot games with no window and runs every man's facing through the same steps the TV draws with
+(`View/Facing.cs`, `View/Momentum.cs`, the stride's phase), then counts what looks wrong: **snaps** (a body turning more
+than 20 degrees in one tick), **spins** (120 degrees inside a fifth of a second), **skates** (the body turning while the
+feet don't step), the **QB facing away from the field** in the pocket, and how far his body is **off his throw** as the
+ball leaves. `TurnAuditTests` holds the limits (all zero, throws under 35 degrees off) and checks the old turning
+(`NO_CALM_TURNS=1 NO_QB_STRAFE=1`) still fails, so the audit is known to see the problem. Without Unity:
+`dotnet run -c Release -- 300 3` in `tools/turn-audit` (add `NO_CALM_TURNS=1` etc. to compare).
+
+First round (5 minute bot game, seed 1): old turning 5,811 snaps, 906 spins, 5,454 skates, QB facing away 659 of 1,075
+pocket ticks, throws 78 degrees off; with FEATURES.calmTurns and qbStrafe 0, 0, 0, 0 of 1,075, 25 degrees.
+
+- FEATURES.calmTurns (`NO_CALM_TURNS=1`): nothing turns faster than `anim.turnMaxDegS`; a slow run faces its smoothed
+  velocity (`turnTauS`), so a jostle doesn't swing a man round; a locked block and a man watching a pass turn at that
+  rate too, and a ball straight behind him stays over one shoulder (`behindHoldDeg`); a turn on the spot steps the feet
+  (one step every `turnStepDeg`).
+- FEATURES.qbStrafe (`NO_QB_STRAFE=1`): the QB in the pocket faces where his throw stick aims (else down the field),
+  his shoulders square to it while his legs stride, shuffle or backpedal under him (`strafeHipDeg`), the ball cocked;
+  letting it go he faces where it goes.
+- FEATURES.reachTrack (`NO_REACH_TRACK=1`): hands up for a pass point at the ball (`reachLowDeg`..`reachHighDeg`).
+
 ## Catch plays (FEATURES.catchPlay, `NO_CATCH_PLAY=1`)
 
 - A diving catch (`Sim/CatchPlay.cs`): a low ball (under `catchPlay.diveMaxHeightYd`) nobody has in the catch circle
