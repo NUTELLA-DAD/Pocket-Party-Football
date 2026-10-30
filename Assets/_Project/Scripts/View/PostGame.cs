@@ -7,7 +7,8 @@ namespace PocketFootball.View
 {
     // The post-game screen on the TV (WS-12, FEATURES.stats; NO_STATS=1 turns it off): when the game clock (WS-02)
     // ends the game, stats.showAfterS after the final whistle, FINAL and the score, the winner, the player of the
-    // game, and both teams side by side, all 22 players with their yards, catches, tackles, picks and touchdowns.
+    // game, and both teams side by side, each team's offense and defense (22 rows a team: everyone plays both ways)
+    // with their yards, catches, tackles, picks and touchdowns.
     // It also keeps the stats (Sim/Stats.cs) and the score celebrations (Celebrations.cs) for the live game.
     // Boot/PostGameHost.cs drives it with one line at the end of PartyHost.Update and sends the phones their card.
     public sealed class PostGame : MonoBehaviour
@@ -53,7 +54,7 @@ namespace PocketFootball.View
             Showing = over && (Preview || overFor >= live.Cfg.stats.showAfterS);
         }
 
-        // ---- the layout: pure, so a test can check 22 rows fit without overlapping on any TV ----
+        // ---- the layout: pure, so a test can check 22 rows a team fit without overlapping on any TV ----
 
         public static readonly string[] Columns = { "#", "POS", "NAME", "YDS", "REC", "TKL", "INT", "TD" };
         public static readonly float[] ColumnFrac = { 0.08f, 0.09f, 0.35f, 0.12f, 0.09f, 0.09f, 0.09f, 0.09f };
@@ -105,17 +106,23 @@ namespace PocketFootball.View
             return new[] { l.Number.ToString(), l.Pos, n, l.Yards.ToString(), l.Catches.ToString(), l.Tackles.ToString(), l.Picks.ToString(), l.Tds.ToString() };
         }
 
-        // A team's players for the screen: the biggest impact first, then by spot.
+        // A team's rows for the screen: its offense, then its defense (everyone plays both ways, so each player has a row
+        // in each), the biggest impact first in each, then by spot.
         public static List<PlayerLine> TeamRows(World w, Stats stats, int team)
         {
             var rows = new List<PlayerLine>();
-            foreach (var p in w.Players) if (p.Team == team) rows.Add(stats.Of(p));
             var c = w.Cfg.stats;
-            rows.Sort((a, b) =>
+            foreach (bool offense in new[] { true, false })
             {
-                float ia = Stats.Impact(a, c), ib = Stats.Impact(b, c);
-                return ia != ib ? ib.CompareTo(ia) : a.Spot != b.Spot ? a.Spot.CompareTo(b.Spot) : a.Slot.CompareTo(b.Slot);
-            });
+                var unit = new List<PlayerLine>();
+                foreach (var p in w.Players) if (p.Team == team) unit.Add(stats.Unit(w, p, offense));
+                unit.Sort((a, b) =>
+                {
+                    float ia = Stats.Impact(a, c), ib = Stats.Impact(b, c);
+                    return ia != ib ? ib.CompareTo(ia) : a.Spot != b.Spot ? a.Spot.CompareTo(b.Spot) : a.Slot.CompareTo(b.Slot);
+                });
+                rows.AddRange(unit);
+            }
             return rows;
         }
 
@@ -136,8 +143,6 @@ namespace PocketFootball.View
         {
             var m = stats.Mvp(w.Cfg.stats);
             if (m == null) return "";
-            var p = w.Find(m.Slot);
-            if (p != null) m = stats.Of(p);
             string name = names != null ? names(m.Slot) : null;
             string who = "#" + m.Number + " " + m.Pos;
             return "Player of the game: " + (string.IsNullOrEmpty(name) ? who : name.ToUpperInvariant() + " (" + who + ")") + " · " + Stats.Summary(m);
@@ -153,8 +158,8 @@ namespace PocketFootball.View
             var cfg = live.Cfg;
             var c = cfg.stats;
             int teams = cfg.teams.Count;
-            int rows = cfg.players.perTeam;
-            for (int t = 0; t < teams; t++) rows = Mathf.Max(rows, live.TeamCount(t));
+            int rows = 2 * cfg.players.perTeam;   // offense and defense
+            for (int t = 0; t < teams; t++) rows = Mathf.Max(rows, 2 * live.TeamCount(t));
             var l = Lay(Screen.width, Screen.height, teams, rows, c);
 
             title ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold };

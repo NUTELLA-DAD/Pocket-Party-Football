@@ -15,12 +15,16 @@ namespace PocketFootball.Sim
     // A touchdown's points go to the scorer: whatever his team's score went up by (6, or 2 on a try with
     // FEATURES.kicking). Points with no scorer in the events (kicks and safeties: WS-01 pushes no event for them) go
     // to the team's Extra, so the team totals always match the score.
+    // Everyone plays both ways, so each player keeps two lines, one for each unit: what he did while his team had the
+    // ball at the hike (the offense) and what he did while the other team did (the defense). The post-game screen lists
+    // both, so a team's offense still shows when the game ends with it on defense.
     public sealed class PlayerLine
     {
         public int Slot, Team, Spot, Number;
         public string Pos = "";
         public bool Human;
         public int Recruit = -1;   // FEATURES.season: the recruit he wore (Season.Record puts the line on him)
+        public bool Offense;       // the unit: his team had the ball at the hike
         public int Rushes, RushYd, Catches, RecYd;
         public int PassAtt, PassComp, PassYd;
         public int Tackles, Sacks, Picks, Jukes;
@@ -56,6 +60,7 @@ namespace PocketFootball.Sim
         // the play under way
         bool live, picked, kick;
         float los, dir;
+        bool started;
         int offense, holder = -1, passer = -1, receiver = -1;
 
         public static bool On(GameConfig cfg) => cfg.Feature("stats");
@@ -65,12 +70,25 @@ namespace PocketFootball.Sim
         // Points a team scored that no player's touchdown explains (kicks, safeties).
         public int Extra(int team) => team >= 0 && team < extra.Length ? extra[team] : 0;
 
-        // A player's line (a zero line for someone who has done nothing yet; it is not stored).
+        static int Key(int slot, bool offense) => slot + slot + (offense ? 0 : 1);   // (two lines a slot)
+
+        // A player's whole game, both units added up, with the spot he stands in now (a new line, not stored).
         public PlayerLine Of(Player p)
         {
             if (p == null) return new PlayerLine { Slot = -1, Team = -1 };
-            if (!lines.TryGetValue(p.Slot, out var l)) l = new PlayerLine { Slot = p.Slot };
+            var l = new PlayerLine { Slot = p.Slot };
+            if (lines.TryGetValue(Key(p.Slot, true), out var o)) Add(l, o);
+            if (lines.TryGetValue(Key(p.Slot, false), out var d)) Add(l, d);
             Fill(l, p);
+            return l;
+        }
+
+        // A player's line for one unit, with that unit's spot, position and number (a zero line when he did nothing there).
+        public PlayerLine Unit(World w, Player p, bool offense)
+        {
+            if (p == null) return new PlayerLine { Slot = -1, Team = -1 };
+            if (!lines.TryGetValue(Key(p.Slot, offense), out var l)) l = new PlayerLine { Slot = p.Slot, Offense = offense };
+            Fill(l, w, p, offense);
             return l;
         }
 
@@ -79,12 +97,34 @@ namespace PocketFootball.Sim
             l.Team = p.Team; l.Spot = p.Spot; l.Number = p.Number; l.Pos = p.Pos; l.Human = p.Human; l.Recruit = p.Recruit;
         }
 
+        // ...as he lines up with that unit (his spot there, and its position and number).
+        static void Fill(PlayerLine l, World w, Player p, bool offense)
+        {
+            Fill(l, p);
+            l.Offense = offense;
+            var spots = offense ? w.Cfg.formation.offense : w.Cfg.formation.defense;
+            int spot = Formation.TwoWay(w) ? Formation.SpotOn(w, p, offense) : p.Spot;
+            if (spot < 0 || spot >= spots.Count) return;
+            l.Spot = spot; l.Pos = spots[spot].pos; l.Number = spots[spot].number;
+        }
+
+        static void Add(PlayerLine to, PlayerLine l)
+        {
+            to.Rushes += l.Rushes; to.RushYd += l.RushYd; to.Catches += l.Catches; to.RecYd += l.RecYd;
+            to.PassAtt += l.PassAtt; to.PassComp += l.PassComp; to.PassYd += l.PassYd;
+            to.Tackles += l.Tackles; to.Sacks += l.Sacks; to.Picks += l.Picks; to.Jukes += l.Jukes;
+            to.Tds += l.Tds; to.Points += l.Points;
+        }
+
+        // The line of the unit the player is on this play (his team had the ball at the hike, or not).
         PlayerLine Line(World w, int slot)
         {
             if (slot < 0) return null;
-            if (!lines.TryGetValue(slot, out var l)) { l = new PlayerLine { Slot = slot, Team = -1 }; lines[slot] = l; }
             var p = w.Find(slot);
-            if (p != null) Fill(l, p);
+            bool unit = p == null || p.Team == offense;
+            int key = Key(slot, unit);
+            if (!lines.TryGetValue(key, out var l)) { l = new PlayerLine { Slot = slot, Team = -1, Offense = unit }; lines[key] = l; }
+            if (p != null) Fill(l, w, p, unit);
             return l;
         }
 
@@ -94,6 +134,7 @@ namespace PocketFootball.Sim
             if (!On(w.Cfg)) return;
             int teams = w.Score.Length;
             if (lastScore == null) { lastScore = new int[teams]; scorer = new int[teams]; extra = new int[teams]; }
+            if (!started) { offense = w.Offense; started = true; }   // (before the first hike: the team that starts with it)
             for (int t = 0; t < teams; t++) scorer[t] = -1;
             fresh.Clear();
             w.Events.Since(nextSeq, fresh);
@@ -193,14 +234,7 @@ namespace PocketFootball.Sim
         public PlayerLine Team(int team)
         {
             var t = new PlayerLine { Slot = -1, Team = team };
-            foreach (var l in lines.Values)
-            {
-                if (l.Team != team) continue;
-                t.Rushes += l.Rushes; t.RushYd += l.RushYd; t.Catches += l.Catches; t.RecYd += l.RecYd;
-                t.PassAtt += l.PassAtt; t.PassComp += l.PassComp; t.PassYd += l.PassYd;
-                t.Tackles += l.Tackles; t.Sacks += l.Sacks; t.Picks += l.Picks; t.Jukes += l.Jukes;
-                t.Tds += l.Tds; t.Points += l.Points;
-            }
+            foreach (var l in lines.Values) if (l.Team == team) Add(t, l);
             t.Points += Extra(team);
             return t;
         }
@@ -210,16 +244,31 @@ namespace PocketFootball.Sim
             l.Yards * c.mvpPerYd + l.Catches * c.mvpPerCatch + l.Tackles * c.mvpPerTackle + l.Sacks * c.mvpPerSack
             + l.Picks * c.mvpPerPick + l.Tds * c.mvpPerTd;
 
-        // The player of the game: the biggest impact (the lowest slot on a tie); null when nobody did anything.
+        // The player of the game: the biggest impact over both units (the lowest slot on a tie); null when nobody did
+        // anything. His line adds up both units and shows the one where he did the most.
         public PlayerLine Mvp(StatsConfig c)
         {
             PlayerLine best = null; float most = 0f;
             foreach (var l in lines.Values)
             {
-                float v = Impact(l, c);
-                if (v > most) { best = l; most = v; }
+                if (!l.Offense && lines.ContainsKey(Key(l.Slot, true))) continue;   // (counted with his offense line)
+                var whole = Whole(l.Slot, c);
+                float v = Impact(whole, c);
+                if (v > most) { best = whole; most = v; }
             }
             return best;
+        }
+
+        // Both of a slot's units added up, labelled with the unit where he did more.
+        PlayerLine Whole(int slot, StatsConfig c)
+        {
+            lines.TryGetValue(Key(slot, true), out var o);
+            lines.TryGetValue(Key(slot, false), out var d);
+            var top = o == null ? d : d == null ? o : Impact(d, c) > Impact(o, c) ? d : o;
+            var l = new PlayerLine { Slot = slot, Team = top.Team, Spot = top.Spot, Number = top.Number, Pos = top.Pos, Human = top.Human, Recruit = top.Recruit, Offense = top.Offense };
+            if (o != null) Add(l, o);
+            if (d != null) Add(l, d);
+            return l;
         }
 
         // "112 YDS · 3 REC · 1 TD": the numbers that are not zero, the biggest kinds first ("NO STATS" for none).
