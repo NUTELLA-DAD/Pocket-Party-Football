@@ -68,7 +68,7 @@ namespace PocketFootball.Sim
 
         // The overtime coin toss: 0 or 1, from the game's seed and how many plays it took (the seed alone is 1 in most
         // games, which always gave the same team the toss; the top bits of a first draw barely move between close seeds).
-        public static int Toss(int seed, int plays) => new Rng(seed * 31 + plays).Below(2);
+        public static int Toss(int seed, int plays) => new Rng(seed * 31 + plays).Below(2);   // hygiene:allow (a prime spread; two sides of the coin)
         public static bool IsOvertimeBreak(World w) => InOvertime(w) && w.GameClock.BreakTicks > 0;
 
         // 1 for the first overtime period, 2 for the second... (0 in regulation).
