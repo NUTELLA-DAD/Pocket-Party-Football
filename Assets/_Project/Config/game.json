@@ -1592,6 +1592,7 @@
     "driveBlock": true,
     "driveRush": true,
     "gameLength": true,
-    "crashLog": true
+    "crashLog": true,
+    "tutorial": true
   }
 }
