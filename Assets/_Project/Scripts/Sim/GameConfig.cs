@@ -54,6 +54,7 @@ namespace PocketFootball.Sim
         public RosterConfig roster = new RosterConfig();   // FEATURES.rosterPage: the title's ROSTER page (RosterCards.cs, Boot/RosterPage.cs)
         public DriveBlockConfig driveBlock = new DriveBlockConfig();   // FEATURES.driveBlock: shoving your man with the drive stick (DriveBlock.cs)
         public DriveRushConfig driveRush = new DriveRushConfig();      // FEATURES.driveRush: the rusher shoving his blocker with the BULL RUSH stick (DriveRush.cs)
+        public GameLengthConfig gameLength = new GameLengthConfig();   // FEATURES.gameLength: the SETTINGS page's game lengths (GameLength.cs)
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 
