@@ -49,7 +49,8 @@ namespace PocketFootball.Tests.EditMode
                 int onLos = 0, onFirst = 0;
                 foreach (var r in refs)
                 {
-                    Assert.IsNotNull(r.GetComponentInChildren<SkinnedMeshRenderer>(), "wearing the referee model");
+                    var mf = r.GetComponentInChildren<MeshFilter>();   // (ModelSkin.Freeze bakes the skinned referee into a still mesh)
+                    Assert.IsTrue(mf != null && mf.sharedMesh != null && mf.sharedMesh.name.EndsWith("(Stand)"), "wearing the referee model, frozen standing");
                     Assert.Greater(Mathf.Abs(r.position.z), edge, "off the field, on the sideline");
                     if (Mathf.Abs(r.position.x - 30f * m) < 0.01f) onLos++;
                     if (Mathf.Abs(r.position.x - 40f * m) < 0.01f) onFirst++;
