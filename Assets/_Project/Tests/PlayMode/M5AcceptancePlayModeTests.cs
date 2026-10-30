@@ -40,6 +40,7 @@ namespace PocketFootball.Tests.PlayMode
                 var c = w.GameClock;
                 Assert.IsTrue(c.Started, "the clock has started");
                 c.Quarter = w.Cfg.clock.quarters; c.SecondHalf = true; c.BreakTicks = 0;
+                w.Cfg.features["overtime"] = false;   // (this test times the final whistle; a level score would go to overtime)
                 c.TicksLeft = 3 * w.Cfg.sim.tickHz;
                 var early = host.GetComponent<PostGame>();
                 Assert.IsFalse(early != null && early.Showing, "no post-game before the end");

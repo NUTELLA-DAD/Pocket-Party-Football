@@ -30,6 +30,7 @@ namespace PocketFootball.Sim
         public EventsConfig events = new EventsConfig();   // WS-00 (Events.cs)
         public ReplayConfig replay = new ReplayConfig();   // WS-08 (ReplayConfig.cs, View/Replay.cs)
         public ClockConfig clock = new ClockConfig();   // WS-02 (Clock.cs)
+        public OvertimeConfig overtime = new OvertimeConfig();   // FEATURES.overtime: a tied game goes to overtime (Clock.cs)
         public LobbyConfig lobby = new LobbyConfig();   // WS-07
         public CarrierConfig carrier = new CarrierConfig();   // WS-04 (CarrierMoves.cs)
         public DefenseConfig defense = new DefenseConfig();   // WS-03 defender moves (DefenseMoves.cs)
