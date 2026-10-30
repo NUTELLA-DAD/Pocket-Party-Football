@@ -16,6 +16,7 @@ namespace PocketFootball.Tests.EditMode
             cfg.features["defmoves"] = true;
             cfg.defense.botCoverChance = 0f;   // only the person under test swats or dives
             cfg.defense.botDiveChance = 0f;
+            cfg.features["tightCoverage"] = false;   // (FEATURES.tightCoverage: no automatic pick or knock-down either)
             tune?.Invoke(cfg);
             return cfg;
         }

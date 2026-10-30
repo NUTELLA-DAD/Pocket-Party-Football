@@ -141,7 +141,7 @@ namespace PocketFootball.Tests.EditMode
         [Test]
         public void ADefenderCanIntercept()
         {
-            var w = AtTheLine(tune: c => { c.play.catchChanceOffense = 0f; c.play.catchChanceDefense = 1f; c.features["formations"] = false; });
+            var w = AtTheLine(tune: c => { c.play.catchChanceOffense = 0f; c.play.catchChanceDefense = 1f; c.tightCoverage.breakupChance = 0f; c.features["formations"] = false; });
             w.Step(Press(new PlayerInput { Hike = true }));
             var target = LivePlay.Receiver(w, 1);
             // a defender standing on the receiver
@@ -203,7 +203,7 @@ namespace PocketFootball.Tests.EditMode
         static (World w, Player picker) PickedOff(System.Action<GameConfig> tune = null)
         {
             // (the base line-up these were written for: in a play's own formation nobody may be near enough to stop the return)
-            var w = AtTheLine(tune: c => { c.play.catchChanceOffense = 0f; c.play.catchChanceDefense = 1f; c.features["formations"] = false; tune?.Invoke(c); });
+            var w = AtTheLine(tune: c => { c.play.catchChanceOffense = 0f; c.play.catchChanceDefense = 1f; c.tightCoverage.breakupChance = 0f; c.features["formations"] = false; tune?.Invoke(c); });
             w.Step(Press(new PlayerInput { Hike = true }));
             var target = LivePlay.Receiver(w, 1);
             target.X = w.LineOfScrimmageX + w.Dir * 12f; target.Z = -15f;
