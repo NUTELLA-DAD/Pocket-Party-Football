@@ -1491,6 +1491,9 @@
       { "id": "full", "label": "FULL  4 x 4 MIN", "quarters": 4, "quarterS": 240, "halftimeAfterQuarter": 2 }
     ]
   },
+  "crashLog": {
+    "maxEntries": 40
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
@@ -1588,6 +1591,7 @@
     "kickArc": true,
     "driveBlock": true,
     "driveRush": true,
-    "gameLength": true
+    "gameLength": true,
+    "crashLog": true
   }
 }

@@ -55,6 +55,7 @@ namespace PocketFootball.Sim
         public DriveBlockConfig driveBlock = new DriveBlockConfig();   // FEATURES.driveBlock: shoving your man with the drive stick (DriveBlock.cs)
         public DriveRushConfig driveRush = new DriveRushConfig();      // FEATURES.driveRush: the rusher shoving his blocker with the BULL RUSH stick (DriveRush.cs)
         public GameLengthConfig gameLength = new GameLengthConfig();   // FEATURES.gameLength: the SETTINGS page's game lengths (GameLength.cs)
+        public CrashLogConfig crashLog = new CrashLogConfig();   // FEATURES.crashLog: errors written to a crash file (View/CrashReport.cs, Boot/CrashLog.cs)
         // Every rule switch. ConfigLoader turns FEATURES.<name> off when NO_<NAME>=1 is set.
         public SortedDictionary<string, bool> features = new SortedDictionary<string, bool>();
 
@@ -453,5 +454,12 @@ namespace PocketFootball.Sim
     {
         public string name;
         public float yawDeg, pitchDeg, fovDeg, visibleYards;
+    }
+
+    // FEATURES.crashLog: how many different errors one run writes to its crash file (a repeat of one already written
+    // only counts).
+    public sealed class CrashLogConfig
+    {
+        public int maxEntries;
     }
 }
