@@ -237,29 +237,30 @@ namespace PocketFootball.Tests.EditMode
         [Test]
         public void ARecruitPlaysOnHisOwnNumbers()
         {
+            int spot = 2;   // a WR (speed 8): the RB in spot 1 is already 10, the top of the scale
             var cfg = Cfg();
             cfg.features["ratings"] = true;
             var s = Season.Start(cfg, Club(cfg), 2);
             int max = Season.StatMax(cfg);
-            s.lineup[1].SetStat(Season.Speed, max);
-            float quick = Speed(Sprinter(cfg, s, 0, 1, true));
-            s.lineup[1].SetStat(Season.Speed, 1);
-            float slow = Speed(Sprinter(cfg, s, 0, 1, true));
-            float plain = Speed(Sprinter(cfg, s, 0, 1, false));
+            s.lineup[spot].SetStat(Season.Speed, max);
+            float quick = Speed(Sprinter(cfg, s, 0, spot, true));
+            s.lineup[spot].SetStat(Season.Speed, 1);
+            float slow = Speed(Sprinter(cfg, s, 0, spot, true));
+            float plain = Speed(Sprinter(cfg, s, 0, spot, false));
             Assert.Greater(quick, plain, "a 10 SPEED recruit beats the position's own number");
             Assert.Less(slow, plain, "a 1 SPEED recruit trails it");
             // the visitors wear names but play on their positions' numbers
-            var visitor = Sprinter(cfg, s, 1, 1, true);
-            Assert.AreEqual(1, visitor.Recruit);
-            Assert.AreEqual(Speed(Sprinter(cfg, s, 1, 1, false)), Speed(visitor), 1e-4f);
+            var visitor = Sprinter(cfg, s, 1, spot, true);
+            Assert.AreEqual(spot, visitor.Recruit);
+            Assert.AreEqual(Speed(Sprinter(cfg, s, 1, spot, false)), Speed(visitor), 1e-4f);
             var live = s.Live(cfg);
             Assert.AreEqual(0, live.Club);
-            Assert.IsNotNull(live.Roster[1][1]);
-            Assert.IsFalse(live.Roster[1][1].Rated);
-            Assert.IsFalse(string.IsNullOrEmpty(live.Roster[1][1].name));
+            Assert.IsNotNull(live.Roster[1][spot]);
+            Assert.IsFalse(live.Roster[1][spot].Rated);
+            Assert.IsFalse(string.IsNullOrEmpty(live.Roster[1][spot].name));
             // a cut spot: a walk-on, the position's numbers
-            s.Cut(1);
-            Assert.AreEqual(plain, Speed(Sprinter(cfg, s, 0, 1, true)), 1e-4f);
+            s.Cut(spot);
+            Assert.AreEqual(plain, Speed(Sprinter(cfg, s, 0, spot, true)), 1e-4f);
         }
 
         [Test]
@@ -381,7 +382,8 @@ namespace PocketFootball.Tests.EditMode
                 Assert.Greater(mesh.vertexCount, 0);
                 var b = mesh.bounds;
                 Assert.LessOrEqual(b.size.z, jc.maxWidthCm + pen, name + " fits across the shoulders");
-                Assert.LessOrEqual(b.size.y, jc.letterCm + pen, name + " is letterCm tall");
+                // (square caps on a diagonal stroke, the X in FOX, reach up to half a pen times root 2 past its end)
+                Assert.LessOrEqual(b.size.y, jc.letterCm + pen * 1.415f, name + " is letterCm tall");
                 Assert.Less(Mathf.Abs(b.center.z), 0.5f, name + " is centred");
                 Assert.AreEqual(0f, b.size.x, 1e-4f, "flat, in the plane of the back");
                 foreach (var n in mesh.normals) Assert.AreEqual(Vector3.left, n, "faces out of the back");
