@@ -195,9 +195,10 @@ namespace PocketFootball.View
                 nearPass = near;
                 Stands();
                 Flags();
+                Roofs();
             }
             nearPass = false;
-            Towers();
+            if (bc.towerHeightM > 0f) Towers();
             Scoreboard();
             Outside();
             root.gameObject.AddComponent<BowlCutaway>().Bowl = this;
@@ -252,10 +253,17 @@ namespace PocketFootball.View
         }
 
         // One row of steps: its riser up from the row below, then its tread.
-        void Row(Blocks b, float d, float depth, float yBelow, float y, Color c)
+        void Row(Blocks b, float d, float depth, float yBelow, float y, Color riser, Color tread)
         {
-            Riser(b, d - depth * 0.5f, yBelow, y, c);
-            Tread(b, d - depth * 0.5f, d + depth * 0.5f, y, c);
+            Riser(b, d - depth * 0.5f, yBelow, y, riser);
+            Tread(b, d - depth * 0.5f, d + depth * 0.5f, y, tread);
+        }
+
+        // A row's colours: concrete riser and seat tread (bowl.seatTreads), or the whole row one or the other in turn.
+        void RowColors(int r, Color concrete, Color seat, out Color riser, out Color tread)
+        {
+            if (bc.seatTreads) { riser = concrete; tread = seat; return; }
+            riser = tread = r % 2 == 0 ? concrete : seat;
         }
 
         void Stands()
@@ -270,14 +278,20 @@ namespace PocketFootball.View
             Riser(hard, 0f, 0f, sc.wallHeightM, Colors.Hex(sc.wallColor));
             Tread(rows, 0f, LowerD(0) - dep * 0.5f, sc.wallHeightM, concrete);
             for (int r = 0; r < sc.rows; r++)
-                Row(rows, LowerD(r), dep, r == 0 ? sc.wallHeightM : LowerY(r - 1), LowerY(r), r % 2 == 0 ? concrete : seat);
+            {
+                RowColors(r, concrete, seat, out var riser, out var tread);
+                Row(rows, LowerD(r), dep, r == 0 ? sc.wallHeightM : LowerY(r - 1), LowerY(r), riser, tread);
+            }
 
             // the concourse, the fascia (a ribbon board glowing along its middle), the upper tier
             Tread(rows, ConcourseD, FasciaD, LowerTopY, concrete);
             Riser(hard, FasciaD, LowerTopY, UpperBaseY, Colors.Hex(bc.fasciaColor));
             Tread(rows, FasciaD, UpperD(0) - udep * 0.5f, UpperBaseY, uConcrete);
             for (int r = 0; r < bc.upperRows; r++)
-                Row(rows, UpperD(r), udep, r == 0 ? UpperBaseY : UpperY(r - 1), UpperY(r), r % 2 == 0 ? uConcrete : uSeat);
+            {
+                RowColors(r, uConcrete, uSeat, out var riser, out var tread);
+                Row(rows, UpperD(r), udep, r == 0 ? UpperBaseY : UpperY(r - 1), UpperY(r), riser, tread);
+            }
 
             // the rim, its cap and the outer wall (a dark band where the concourse opens to the outside), pilasters
             Riser(hard, RimD, UpperY(bc.upperRows - 1), RimTopY, Colors.Hex(bc.rimColor));
@@ -389,6 +403,110 @@ namespace PocketFootball.View
             }
             var q = Looks.Flat(Parent, "BowlMark", at, new Vector2(size, size), Color.white, mark);
             q.transform.localRotation = Quaternion.LookRotation(Vector3.up, facing);
+        }
+
+        // ---- FEATURES.goldenStadium: white truss roofs over the sideline stands (bowl.roofDepthM; 0: none) ----
+        // The canopy slopes up from just over the rim to its front edge, roofDepthM in toward the field, with a fascia
+        // along the front and floodlights hung under it; trusses underneath carry it back to columns on the rim. Built
+        // per side like the stands, so the near side's roof is cut away with them.
+        bool RoofOver(float t)
+        {
+            if (bc.roofEnds) return true;
+            int s = Path.Segment(t, out _);
+            return s != 2 && s != 6;
+        }
+
+        void Roofs()
+        {
+            if (bc.roofDepthM <= 0f) return;
+            var shell = new Blocks();
+            var steel = new Blocks { Flag = Looks.Paint };   // thin members: no ink line round each (it would turn to noise)
+            var lamps = new Blocks { Flag = 1f };
+            Color top = Colors.Hex(bc.canopyColor), under = Colors.Hex(bc.canopyUnderColor), truss = Colors.Hex(bc.trussColor);
+            Color lamp = Colors.Hex(bc.lampColor) * bc.lampGlow;
+            float dB = OuterD, dF = Mathf.Max(0.5f, OuterD - bc.roofDepthM), dMid = (dB + dF) * 0.5f;
+            float yB = RimTopY + bc.roofLiftM, yF = yB + bc.roofRiseM, th = bc.roofThickM, fas = bc.roofFasciaM;
+            var up = Vector3.up;
+
+            // the canopy: top, underside, the fascia along the front, the back edge, and a cap where it stops
+            for (int i = 0; i + 1 < ts.Count; i++)
+            {
+                float ta = ts[i], tb = ts[i + 1], tm = (ta + tb) * 0.5f;
+                if (IsNear(tm) != nearPass || !RoofOver(tm)) continue;
+                Vector3 b0 = Path.At(ta, dB) + up * yB, b1 = Path.At(tb, dB) + up * yB, f0 = Path.At(ta, dF) + up * yF, f1 = Path.At(tb, dF) + up * yF;
+                var n = Path.Out(tm);
+                shell.Quad(b0, f0, f1, b1, top, up);
+                shell.Quad(b0 - up * th, f0 - up * th, f1 - up * th, b1 - up * th, under, Vector3.down);
+                shell.Quad(f0 - up * (th + fas), f0, f1, f1 - up * (th + fas), top, -n);
+                shell.Quad(f0 - up * (th + fas), f0 - up * th, f1 - up * th, f1 - up * (th + fas), under, Vector3.down);
+                shell.Quad(b0 - up * th, b0, b1, b1 - up * th, top, n);
+                // (the loop closes: the piece before the first is the last, and the other way round)
+                int last = ts.Count - 2, prev = i == 0 ? last : i - 1, next = i == last ? 0 : i + 1;
+                if (!RoofOver((ts[prev] + ts[prev + 1]) * 0.5f)) RoofCap(shell, b0, f0, b0 - b1, th, fas, top);
+                if (!RoofOver((ts[next] + ts[next + 1]) * 0.5f)) RoofCap(shell, b1, f1, b1 - b0, th, fas, top);
+            }
+
+            // the trusses: a column on the rim, top and bottom chords, a zig-zag web between them
+            if (bc.roofTrussEveryM > 0f)
+            {
+                const int Panels = 6;
+                float w = bc.roofBeamM;
+                for (float t = 0f; t < Path.Length; t += bc.roofTrussEveryM / Path.Stretch(t, dMid))
+                {
+                    if (IsNear(t) != nearPass || !RoofOver(t)) continue;
+                    var col = Path.At(t, RimD + bc.rimThickM * 0.5f);
+                    Beam(steel, col + up * RimTopY, col + up * (yB - th), w * 1.6f, truss);
+                    Vector3 topB = Path.At(t, dB - w) + up * (yB - th - w * 0.5f), topF = Path.At(t, dF + w) + up * (yF - th - w * 0.5f);
+                    Vector3 botB = Path.At(t, dB - w) + up * (yB - th - bc.roofTrussDepthM), botF = topF - up * w * 1.5f;
+                    Beam(steel, topB, topF, w, truss);
+                    Beam(steel, botB, botF, w, truss);
+                    for (int k = 0; k <= Panels; k++)
+                    {
+                        Vector3 tk = Vector3.Lerp(topB, topF, k / (float)Panels), bk = Vector3.Lerp(botB, botF, k / (float)Panels);
+                        if (k < Panels) Beam(steel, bk, Vector3.Lerp(topB, topF, (k + 1) / (float)Panels), w * 0.6f, truss);
+                        Beam(steel, bk, tk, w * 0.6f, truss);
+                    }
+                }
+            }
+
+            // the floodlights along the front, aimed down at the field
+            if (bc.roofLampEveryM > 0f && bc.roofLampM > 0f)
+            {
+                float lm = bc.roofLampM;
+                for (float t = bc.roofLampEveryM * 0.5f; t < Path.Length; t += bc.roofLampEveryM / Path.Stretch(t, dF))
+                {
+                    if (IsNear(t) != nearPass || !RoofOver(t)) continue;
+                    var n = Path.Out(t);
+                    var facing = (-n + Vector3.down * 0.7f).normalized;
+                    var c = Path.At(t, dF + lm * 0.8f) + up * (yF - th - fas - lm * 0.3f);
+                    var q = Quaternion.LookRotation(facing, up);
+                    steel.Box(c - facing * 0.2f, new Vector3(lm * 0.55f, lm * 0.36f, 0.2f), truss, q);
+                    Vector3 rx = q * Vector3.right * lm * 0.5f, ry = q * Vector3.up * lm * 0.3f, at = c + facing * 0.02f;
+                    lamps.Quad(at - rx - ry, at - rx + ry, at + rx + ry, at + rx - ry, lamp, facing);
+                }
+            }
+
+            shell.Build(Parent, "RoofCanopy", mat, false);
+            steel.Build(Parent, "RoofTrusses", mat, false);
+            if (glow != null && lamps.Count > 0) lamps.Build(Parent, "RoofLights", glow, false);
+        }
+
+        // The end of a roof: its side from the back edge to the front, down to the fascia's bottom.
+        static void RoofCap(Blocks b, Vector3 back, Vector3 front, Vector3 facing, float th, float fas, Color c)
+        {
+            var up = Vector3.up;
+            b.Quad(back - up * th, back, front, front - up * (th + fas), c, facing);
+        }
+
+        // A straight member from p0 to p1, w thick.
+        static void Beam(Blocks b, Vector3 p0, Vector3 p1, float w, Color c)
+        {
+            var dir = p1 - p0;
+            float len = dir.magnitude;
+            if (len < 1e-3f) return;
+            dir /= len;
+            var up = Mathf.Abs(dir.y) > 0.99f ? Vector3.forward : Vector3.up;
+            b.Box((p0 + p1) * 0.5f, new Vector3(w * 0.5f, w * 0.5f, len * 0.5f), c, Quaternion.LookRotation(dir, up));
         }
 
         // ---- a light tower outside each corner: a tapering mast, a lamp head aimed at the middle of the field ----
@@ -550,6 +668,9 @@ namespace PocketFootball.View
 
             var trees = new Blocks();
             Color leaf = Colors.Hex(bc.treeColor), leafDark = Colors.Hex(bc.treeDarkColor), trunk = Colors.Hex(bc.trunkColor);
+            bool round = bc.treeStyle == "round";
+            bool autumn = round && !string.IsNullOrEmpty(bc.treeAutumnColor) && bc.treeAutumnChance > 0f;
+            Color leafAutumn = autumn ? Colors.Hex(bc.treeAutumnColor) : leaf;
             float inner = OuterD + bc.parkingM + bc.treeInM;
             for (int i = 0; i < bc.trees; i++)
             {
@@ -558,10 +679,63 @@ namespace PocketFootball.View
                 float h = 6f + Rand() * 5f, r = h * (0.3f + Rand() * 0.08f);
                 trees.Box(at + Vector3.up * h * 0.12f, new Vector3(0.3f, h * 0.12f, 0.3f), trunk);
                 var c = Rand() < 0.5f ? leaf : leafDark;
+                if (round)
+                {
+                    // a leafy tree: a wide puff, a smaller one on top a little to the side
+                    if (autumn && Rand() < bc.treeAutumnChance) c = leafAutumn;
+                    float turn = Rand() * 60f, a = turn * Mathf.Deg2Rad;
+                    var side = new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a)) * r * 0.3f;
+                    Puff(trees, at + Vector3.up * h * 0.5f, r * 1.1f, h * 0.3f, c, turn);
+                    Puff(trees, at + Vector3.up * h * 0.75f + side, r * 0.75f, h * 0.24f, c, turn + 30f);
+                    continue;
+                }
                 Cone(trees, at + Vector3.up * h * 0.2f, r, h * 0.55f, c, Rand() * 60f);
                 Cone(trees, at + Vector3.up * h * 0.48f, r * 0.72f, h * 0.52f, c, Rand() * 60f);
             }
             trees.Build(root, "Trees", mat, false);
+            Skyline();
+        }
+
+        // FEATURES.goldenStadium: a town's blocks of buildings on the horizon in a few clusters (bowl.skylineBuildings; 0:
+        // none), tallest in each cluster's middle, turned to face the stadium; the haze melts them into the sky.
+        void Skyline()
+        {
+            if (bc.skylineBuildings <= 0) return;
+            var city = new Blocks { Flag = Looks.Paint };
+            Color c1 = Colors.Hex(bc.skylineColor), c2 = Colors.Hex(bc.skylineColor2);
+            float zc = (Path.ZFar + Path.ZNear) * 0.5f;
+            int towns = Mathf.Max(1, bc.skylineClusters);
+            var centres = new float[towns];
+            for (int i = 0; i < towns; i++) centres[i] = (i + Rand() * 0.6f) * 360f / towns;
+            for (int i = 0; i < bc.skylineBuildings; i++)
+            {
+                float k = Rand() + Rand() - 1f;   // -1..1, most near the middle
+                float deg = centres[i % towns] + k * bc.skylineSpreadDeg * 0.5f, a = deg * Mathf.Deg2Rad;
+                float rad = bc.skylineRadiusM + Rand() * bc.skylineDepthM;
+                var at = new Vector3(Mathf.Cos(a) * rad, 0f, zc + Mathf.Sin(a) * rad);
+                float h = Mathf.Lerp(bc.skylineMinM, bc.skylineMaxM, (1f - Mathf.Abs(k)) * (0.35f + 0.65f * Rand()));
+                float wx = bc.skylineWidthM * (1f + Rand()), wz = bc.skylineWidthM * (1f + Rand());
+                var q = Quaternion.Euler(0f, 90f - deg, 0f);
+                var col = Color.Lerp(c1, c2, Rand());
+                city.Box(at + Vector3.up * h * 0.5f, new Vector3(wx * 0.5f, h * 0.5f, wz * 0.5f), col, q);
+                if (Rand() < 0.12f) city.Box(at + Vector3.up * (h + h * 0.12f), new Vector3(wx * 0.08f, h * 0.12f, wx * 0.08f), col, q);   // a spire
+            }
+            city.Build(root, "Skyline", mat, false);
+        }
+
+        // A six-sided puff (a toon tree top): a ring round `at`, r wide, a point hh above it and one a little less below.
+        static void Puff(Blocks b, Vector3 at, float r, float hh, Color c, float turnDeg)
+        {
+            const int Sides = 6;
+            Vector3 top = at + Vector3.up * hh, bottom = at - Vector3.up * hh * 0.7f;
+            for (int i = 0; i < Sides; i++)
+            {
+                float a0 = (turnDeg + i * 360f / Sides) * Mathf.Deg2Rad, a1 = (turnDeg + (i + 1) * 360f / Sides) * Mathf.Deg2Rad;
+                Vector3 p0 = at + new Vector3(Mathf.Cos(a0), 0, Mathf.Sin(a0)) * r, p1 = at + new Vector3(Mathf.Cos(a1), 0, Mathf.Sin(a1)) * r;
+                var mid = ((p0 + p1) * 0.5f - at).normalized;
+                b.Quad(p0, p1, top, top, c, mid * hh + Vector3.up * r);
+                b.Quad(p1, p0, bottom, bottom, c, mid * hh - Vector3.up * r);
+            }
         }
 
         // A six-sided cone (a toon pine) standing on `at`.

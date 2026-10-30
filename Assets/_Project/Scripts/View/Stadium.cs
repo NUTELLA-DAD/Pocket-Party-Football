@@ -577,6 +577,7 @@ namespace PocketFootball.View
         {
             float endX = cfg.field.HalfLength * cfg.field.yardM;
             Color yellow = Colors.Hex(sc.postColor), pad = Colors.Hex(sc.postPadColor), ribbon = Colors.Hex(sc.postRibbonColor);
+            if (sc.postPadHomeColor && cfg.teams.Count > 1) pad = Colors.Hex(cfg.teams[1].color);   // FEATURES.goldenStadium
             float t = sc.postThickM * 0.5f, bar = sc.postCrossbarM, half = sc.postWidthM * 0.5f, up = sc.postUprightM;
             var b = new Blocks();
             foreach (float sx in new[] { -1f, 1f })
