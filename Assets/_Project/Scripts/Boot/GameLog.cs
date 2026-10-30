@@ -38,11 +38,7 @@ namespace PocketFootball.Boot
             world = host.World;
             try
             {
-#if UNITY_EDITOR
-                string dir = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Application.dataPath), ".logs", "games");
-#else
-                string dir = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Application.dataPath), "logs");
-#endif
+                string dir = CrashLog.Folder;   // (the crash file goes there too)
                 Directory.CreateDirectory(dir);
                 var now = DateTime.Now;
                 Path = System.IO.Path.Combine(dir, "game-" + now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + ".txt");

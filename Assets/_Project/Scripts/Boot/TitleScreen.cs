@@ -39,17 +39,20 @@ namespace PocketFootball.Boot
         const string VolumeKey = "pp.volume", HelperKey = "pp.";   // (a helper switch saves as pp.<name>: 1 on, 0 off)
         const string AwayKey = "pp.team.away", HomeKey = "pp.team.home";   // FEATURES.teamPick: the two teams' short codes
         const string WeatherKey = "pp.weather";   // FEATURES.weather: clear, rain, snow or random
+        const string LengthKey = "pp.length";     // FEATURES.gameLength: a gameLength.lengths id (quick, short, medium, full)
         public static readonly string[] HelperNames = { "FLIGHT LINE", "LANDING RING", "TACKLE RING" };   // FlightMarks.Switches, in order
         // settings rows: 0 sound, then (FEATURES.teamPick, more than two teams) away and home, (FEATURES.weather) the
-        // weather, full screen, the helpers, (FEATURES.hotspotQr) the hotspot, back
+        // weather, (FEATURES.gameLength) the game length, full screen, the helpers, (FEATURES.hotspotQr) the hotspot, back
         int TeamRows => cfg.Feature("teamPick") && TeamPick.League(cfg).Count > 2 ? 2 : 0;
         int WeatherRow => Weather.On(cfg) ? 1 + TeamRows : -1;
-        int ScreenRow => 1 + TeamRows + (Weather.On(cfg) ? 1 : 0);
+        int LengthRow => GameLength.On(cfg) ? 1 + TeamRows + (Weather.On(cfg) ? 1 : 0) : -1;
+        int ScreenRow => 1 + TeamRows + (Weather.On(cfg) ? 1 : 0) + (GameLength.On(cfg) ? 1 : 0);
         int HelperRow => ScreenRow + 1;
         int HotspotRow => HotspotJoin.On(cfg) ? HelperRow + FlightMarks.Switches.Length : -1;
         int SettingsRows => HelperRow + FlightMarks.Switches.Length + (HotspotRow >= 0 ? 1 : 0) + 1;
         int away, home;   // the picked teams, as league indexes (saved at once; the game after PLAY wears them)
         string weatherPick;   // FEATURES.weather: the picked weather (saved at once; the game after PLAY plays in it)
+        string lengthPick;    // FEATURES.gameLength: the picked game length (saved at once; the game after PLAY runs that long)
 
         enum Page { Menu, HowTo, Settings, Cup, Roster, Hotspot }
         enum Item { Play, Cup, HowTo, Settings, Roster }
@@ -110,6 +113,7 @@ namespace PocketFootball.Boot
             t.home = Mathf.Max(0, TeamPick.Find(cfg, cfg.teams.Count > 1 ? cfg.teams[1].@short : null));
             if (t.home == t.away) t.home = TeamPick.Step(cfg, t.home, t.away, +1);
             t.weatherPick = PlayerPrefs.GetString(WeatherKey, "clear");
+            t.lengthPick = PlayerPrefs.GetString(LengthKey, cfg.gameLength.defaultId ?? "");
             if (returnPage != null) { startPage = returnPage; returnPage = null; }
             if (startPage == "howto") t.page = Page.HowTo;
             else if (startPage == "settings") t.page = Page.Settings;
@@ -143,6 +147,11 @@ namespace PocketFootball.Boot
             if (string.IsNullOrEmpty(pick) && !Application.isBatchMode) pick = PlayerPrefs.GetString(WeatherKey, "");
             if (!string.IsNullOrEmpty(pick)) cfg.weather.now = Weather.Name(Weather.Resolve(cfg, pick, Random.value));
             if (Weather.On(cfg)) Debug.Log("[title] weather: " + cfg.weather.now + (string.IsNullOrEmpty(pick) ? "" : " (picked " + pick + ")"));
+            // FEATURES.gameLength: the SETTINGS pick (PP_LENGTH=quick|short|medium|full beats it; the tests keep game.json's)
+            string length = System.Environment.GetEnvironmentVariable("PP_LENGTH");
+            if (string.IsNullOrEmpty(length) && !Application.isBatchMode) length = PlayerPrefs.GetString(LengthKey, "");
+            if (!string.IsNullOrEmpty(length) && GameLength.Apply(cfg, length))
+                Debug.Log("[title] game length: " + GameLength.Get(cfg, length).id + " (" + cfg.clock.quarters + " x " + cfg.clock.quarterS + " s)");
         }
 
         // The lobby screen's pick (FEATURES.lobbyScreen): saved for later runs, like the SETTINGS page, and kept for this
@@ -236,7 +245,13 @@ namespace PocketFootball.Boot
                 if (left || (clickRow && mp.x < rows[pick].center.x)) StepWeather(-1);
                 if (right || ok || (clickRow && mp.x >= rows[pick].center.x)) StepWeather(+1);
             }
-            else if (pick >= 1 && pick < ScreenRow)
+            else if (pick == LengthRow)
+            {
+                bool clickRow = click && rows[pick].Contains(mp);
+                if (left || (clickRow && mp.x < rows[pick].center.x)) StepLength(-1);
+                if (right || ok || (clickRow && mp.x >= rows[pick].center.x)) StepLength(+1);
+            }
+            else if (pick >= 1 && pick < 1 + TeamRows)
             {
                 bool clickRow = click && rows[pick].Contains(mp);
                 if (left || (clickRow && mp.x < rows[pick].center.x)) PickTeam(pick == 1, -1);
@@ -304,6 +319,14 @@ namespace PocketFootball.Boot
         {
             weatherPick = Weather.Step(weatherPick, dir);
             PlayerPrefs.SetString(WeatherKey, weatherPick);
+            PlayerPrefs.Save();
+        }
+
+        // FEATURES.gameLength: the next or last game length, saved for the game after PLAY.
+        void StepLength(int dir)
+        {
+            lengthPick = GameLength.Step(cfg, lengthPick, dir);
+            PlayerPrefs.SetString(LengthKey, lengthPick);
             PlayerPrefs.Save();
         }
 
@@ -479,12 +502,13 @@ namespace PocketFootball.Boot
                 text[2] = "HOME   ◄  " + league[home].name + "  ►";
             }
             if (WeatherRow >= 0) text[WeatherRow] = "WEATHER   ◄  " + (weatherPick ?? "clear").ToUpperInvariant() + "  ►";
+            if (LengthRow >= 0) text[LengthRow] = "GAME   ◄  " + GameLength.Get(cfg, lengthPick).label + "  ►";
             text[ScreenRow] = "FULL SCREEN   " + (Screen.fullScreen ? "ON" : "OFF");
             for (int i = 0; i < HelperNames.Length; i++) text[HelperRow + i] = HelperNames[i] + "   " + (cfg.Feature(FlightMarks.Switches[i]) ? "ON" : "OFF");
             if (HotspotRow >= 0) text[HotspotRow] = "HOTSPOT WI-FI   " + (HotspotJoin.SavedName.Trim().Length > 0 ? HotspotJoin.SavedName.Trim() : "OFF");
             text[text.Length - 1] = "BACK";
-            bool tight = text.Length > 6, tighter = text.Length > 8;   // (the team and weather rows: a little less room each, so all fit above the hint)
-            float rw = Mathf.Min(r.width - 120 * s, 760 * s), rh = (tighter ? 58 : tight ? 62 : 70) * s, gap = (tighter ? 8 : tight ? 10 : 14) * s, y = r.y + (tighter ? 135 : 150) * s;
+            bool tight = text.Length > 6, tighter = text.Length > 8, tightest = text.Length > 10;   // (the team, weather and length rows: a little less room each, so all fit above the hint)
+            float rw = Mathf.Min(r.width - 120 * s, 760 * s), rh = (tightest ? 52 : tighter ? 58 : tight ? 62 : 70) * s, gap = (tightest ? 6 : tighter ? 8 : tight ? 10 : 14) * s, y = r.y + (tightest ? 128 : tighter ? 135 : 150) * s;
             for (int i = 0; i < text.Length; i++)
             {
                 var rr = new Rect((W - rw) * 0.5f, y, rw, rh);

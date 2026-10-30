@@ -1482,6 +1482,18 @@
     "staminaPerS": 0.22,
     "tiredFrac": 0.4
   },
+  "gameLength": {
+    "defaultId": "full",
+    "lengths": [
+      { "id": "quick", "label": "QUICK  2 x 1 MIN", "quarters": 2, "quarterS": 60, "halftimeAfterQuarter": 1 },
+      { "id": "short", "label": "SHORT  2 x 2 MIN", "quarters": 2, "quarterS": 120, "halftimeAfterQuarter": 1 },
+      { "id": "medium", "label": "MEDIUM  4 x 2 MIN", "quarters": 4, "quarterS": 120, "halftimeAfterQuarter": 2 },
+      { "id": "full", "label": "FULL  4 x 4 MIN", "quarters": 4, "quarterS": 240, "halftimeAfterQuarter": 2 }
+    ]
+  },
+  "crashLog": {
+    "maxEntries": 40
+  },
   "features": {
     "fieldStripes": true,
     "huddle": true,
@@ -1578,6 +1590,8 @@
     "hotspotQr": true,
     "kickArc": true,
     "driveBlock": true,
-    "driveRush": true
+    "driveRush": true,
+    "gameLength": true,
+    "crashLog": true
   }
 }

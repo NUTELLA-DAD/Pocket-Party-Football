@@ -27,6 +27,7 @@ namespace PocketFootball.Boot
             Instance = this;
             Args = CliArgs.FromEnvironment();
             Config = ConfigLoader.Parse(LoadConfigText(), Environment.GetEnvironmentVariable);
+            CrashLog.Install(Config);   // FEATURES.crashLog: from here on, errors go to a crash file next to the game log
             ConfigLoader.AddPlays(Config, LoadPlays());
             PaceFrames(Config);
             UiFont.Configure(Config.Feature("toonHud"));   // the game's own lettering on every TV overlay
