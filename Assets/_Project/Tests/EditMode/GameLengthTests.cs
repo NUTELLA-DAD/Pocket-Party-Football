@@ -66,6 +66,7 @@ namespace PocketFootball.Tests.EditMode
         {
             var cfg = ConfigTests.Load();
             cfg.features["clock"] = true;
+            cfg.features["overtime"] = false;   // (a level game would go to overtime: OvertimeTests)
             GameLength.Apply(cfg, "quick");
             var w = WorldTests.Full(cfg, 1);
             w.Step(null);

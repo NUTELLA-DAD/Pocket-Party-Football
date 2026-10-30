@@ -1,0 +1,17 @@
+Music credits - Pocket Party Football
+All tracks are CC0 1.0 Universal (public domain): https://creativecommons.org/publicdomain/zero/1.0/
+Credit is not required; we give it anyway.
+
+title.mp3 (title screen and lobby, looped; also the huddle bed at a lower level, see game.json music.tracks)
+  Track:   "Hella Bumps (menu music)"
+  Author:  cynicmusic (cynicmusic.com), from the game Pixelsphere
+  Source:  https://opengameart.org/content/hella-bumps-menu-music
+  File:    hella bumps.mp3 (unchanged)
+  License: CC0
+
+postgame.ogg (end of the game, played once)
+  Track:   "jingles_SAX10" from the "Music Jingles" pack (Sax jingles)
+  Author:  Kenney Vleugels (Kenney, www.kenney.nl)
+  Source:  https://kenney.nl/assets/music-jingles
+  File:    Audio/Sax jingles/jingles_SAX10.ogg (unchanged)
+  License: CC0

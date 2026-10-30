@@ -30,17 +30,22 @@ namespace PocketFootball.Sim
         public EventsConfig events = new EventsConfig();   // WS-00 (Events.cs)
         public ReplayConfig replay = new ReplayConfig();   // WS-08 (ReplayConfig.cs, View/Replay.cs)
         public ClockConfig clock = new ClockConfig();   // WS-02 (Clock.cs)
+        public OvertimeConfig overtime = new OvertimeConfig();   // FEATURES.overtime: a tied game goes to overtime (Clock.cs)
         public LobbyConfig lobby = new LobbyConfig();   // WS-07
         public CarrierConfig carrier = new CarrierConfig();   // WS-04 (CarrierMoves.cs)
         public DefenseConfig defense = new DefenseConfig();   // WS-03 defender moves (DefenseMoves.cs)
         public KickingConfig kicking = new KickingConfig();   // WS-01 (Kicking.cs)
         public StadiumConfig stadium = new StadiumConfig();   // WS-10 the stadium and crowd (StadiumConfig.cs, View/Stadium.cs)
         public SkyConfig sky = new SkyConfig();   // the sunset sky and its light (SkyConfig.cs, View/SkyView.cs)
+        // FEATURES.goldenStadium: the golden-hour stadium (StadiumLook.cs): game.json blocks laid over the sky, the
+        // stadium and the field paint before anything is built
+        public Newtonsoft.Json.Linq.JObject stadiumLook;
         public AudiblesConfig audibles = new AudiblesConfig();   // WS-13 (Audibles.cs)
         public CustomPlaysConfig customPlays = new CustomPlaysConfig();   // FEATURES.customPlays: draw-your-own plays (CustomPlays.cs)
         public StatsConfig stats = new StatsConfig();      // WS-12 (Stats.cs, View/PostGame.cs, View/Celebrations.cs)
         public GamepadConfig gamepad = new GamepadConfig();   // WS-14 Xbox pads (GamepadConfig.cs, Input/GamepadSource.cs)
         public AudioConfig audio = new AudioConfig();   // WS-09 sound on the TV (AudioConfig.cs, View/Audio.cs)
+        public MusicConfig music = new MusicConfig();   // FEATURES.music: the title, huddle and post-game music (MusicConfig.cs, View/Music.cs)
         public HitConfig hit = new HitConfig();   // FEATURES.hitAngle: straight-on hits and glancing blows (HitAngle.cs)
         public RatingsConfig ratings = new RatingsConfig();   // player ratings by position (Ratings.cs, FEATURES.ratings)
         public TitleConfig title = new TitleConfig();   // the title screen and its attract mode (TitleConfig.cs, Boot/TitleScreen.cs)

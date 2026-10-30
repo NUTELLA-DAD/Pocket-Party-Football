@@ -128,6 +128,22 @@ namespace PocketFootball.Sim
             return null;
         }
 
+        // The games a round needs: every match, less the first round's byes (four teams in a bye-free 8-slot round: 4).
+        public int Games(int round)
+        {
+            int n = 0;
+            for (int m = 0; m < Matches(round); m++) if (!IsBye(round, m, 0) && !IsBye(round, m, 1)) n++;
+            return n;
+        }
+
+        // Which of its round's games a match is, counted from 1 top to bottom (byes skipped): "GAME 2 OF 4".
+        public int GameNumber(int round, int match)
+        {
+            int n = 0;
+            for (int m = 0; m <= match && m < Matches(round); m++) if (!IsBye(round, m, 0) && !IsBye(round, m, 1)) n++;
+            return n;
+        }
+
         // The next game's result: the winner from the final score (a tie: the home team, the better seed). Returns
         // the winner's code, or null when there is no game to play.
         public string Record(int awayScore, int homeScore)

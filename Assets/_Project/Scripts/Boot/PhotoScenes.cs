@@ -47,8 +47,11 @@ namespace PocketFootball.Boot
                 case "throwold": return Hands(w, view, rig, "throwold", new[] { Pose.Throw, Pose.Release, Pose.Release }, new[] { 0, 0, 1 });
                 case "kick": return Hands(w, view, rig, "kick", new[] { Pose.KickSet, Pose.Kick, Pose.Kick, Pose.Kick, Pose.Kick, Pose.Kick }, new[] { 0, 0, 1, 2, 3, 4 });
                 case "punt": return Hands(w, view, rig, "punt", new[] { Pose.KickSet, Pose.Kick, Pose.Kick }, new[] { 1, 0, 2 });
-                case "stadium": return StadiumShot(w, view, rig, new Vector3(-40f, 45f, -175f), new Vector3(0f, 25f, 0f), 50f);
-                case "sunset": return StadiumShot(w, view, rig, new Vector3(-25f, 3f, -18f), new Vector3(3.7f, 13.6f, 23f), 55f);
+                case "stadium": return StadiumShot(w, view, rig, "stadium", new Vector3(-40f, 45f, -175f), new Vector3(0f, 25f, 0f), 50f);
+                case "sunset": return StadiumShot(w, view, rig, "sunset", new Vector3(-25f, 3f, -18f), new Vector3(3.7f, 13.6f, 23f), 55f);
+                // FEATURES.goldenStadium: the stadium reference picture, from high over the right end looking down the field to the
+                // scoreboard end, the near roof down the left of the picture
+                case "golden": return StadiumShot(w, view, rig, "golden", new Vector3(84f, 30f, 2f), new Vector3(-30f, 0f, -4f), 60f);
             }
             Debug.LogWarning("[photo] unknown scene " + name);
             return null;
@@ -70,10 +73,10 @@ namespace PocketFootball.Boot
 
         // The stadium and the sunset sky (stadium.bowl, sky): concept 04's moment on the field, seen from a held camera
         // ("stadium": from high outside the near corner; "sunset": low on the field, looking into the sun). No HUD.
-        static PhotoState StadiumShot(World w, PlayersView view, CameraRig rig, Vector3 pos, Vector3 lookAt, float fovDeg)
+        static PhotoState StadiumShot(World w, PlayersView view, CameraRig rig, string name, Vector3 pos, Vector3 lookAt, float fovDeg)
         {
             var st = Concept04(w, view, rig);
-            st.Name = pos.y > 20f ? "stadium" : "sunset";
+            st.Name = name;
             st.Hud = false;
             st.Badges.Clear();
             rig.Hold(pos, lookAt, fovDeg);

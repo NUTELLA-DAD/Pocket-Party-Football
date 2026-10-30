@@ -8,7 +8,7 @@ using UnityEngine.SceneManagement;
 namespace PocketFootball.Boot
 {
     // The pause menu (FEATURES.pauseMenu, NO_PAUSE_MENU=1: Esc quits the game as before). Esc in the game (the lobby
-    // too) stops everything and opens it: CONTINUE, SETTINGS (sound, full screen, the helpers, OPEN LOG FOLDER), MAIN MENU (the title;
+    // too) stops everything and opens it: CONTINUE, SETTINGS (sound, music, full screen, the helpers, OPEN LOG FOLDER), MAIN MENU (the title;
     // a Pocket Cup game goes back to the bracket and is played again later) and QUIT GAME. The last two ask twice.
     // Esc again (or CONTINUE) carries on where it stopped. The keyboard or the mouse only: a pad's START joins the game
     // and its buttons play, so the pads never open it. Not in the lab (P pauses there), nor in tool runs.
@@ -27,8 +27,10 @@ namespace PocketFootball.Boot
         float scaleWas = 1f;
         Texture2D white;
 
-        // settings rows: sound, full screen, the helpers, (FEATURES.crashLog) open log folder, back
-        int HelperRow => 2;
+        // settings rows: sound, (FEATURES.music) music, full screen, the helpers, (FEATURES.crashLog) open log folder, back
+        int MusicRow => MusicDirector.On(cfg) ? 1 : -1;
+        int ScreenRow => MusicRow >= 0 ? 2 : 1;
+        int HelperRow => ScreenRow + 1;
         int LogRow => cfg.Feature("crashLog") ? HelperRow + FlightMarks.Switches.Length : -1;
         int SettingsRows => HelperRow + FlightMarks.Switches.Length + (LogRow >= 0 ? 1 : 0) + 1;
 
@@ -138,7 +140,8 @@ namespace PocketFootball.Boot
                 if (left || (clickRow && mp.x < rows[0].center.x)) TitleScreen.StepVolume(cfg, -1);
                 if (right || ok || (clickRow && mp.x >= rows[0].center.x)) TitleScreen.StepVolume(cfg, +1);
             }
-            else if (settingsPick == 1 && (ok || left || right || clickRow)) Screen.fullScreen = !Screen.fullScreen;
+            else if (settingsPick == MusicRow && (ok || left || right || clickRow)) Music.Toggle();
+            else if (settingsPick == ScreenRow && (ok || left || right || clickRow)) Screen.fullScreen = !Screen.fullScreen;
             else if (settingsPick == LogRow && (ok || clickRow)) CrashLog.OpenFolder();
             else if (settingsPick >= HelperRow && settingsPick < HelperRow + FlightMarks.Switches.Length && (ok || left || right || clickRow)) TitleScreen.ToggleHelper(cfg, settingsPick - HelperRow);
             else if (settingsPick == n - 1 && (ok || clickRow)) settings = false;
@@ -179,7 +182,8 @@ namespace PocketFootball.Boot
             {
                 text = new string[SettingsRows];
                 text[0] = "SOUND   ◄  " + Mathf.RoundToInt(AudioListener.volume * 100f) + "%  ►";
-                text[1] = "FULL SCREEN   " + (Screen.fullScreen ? "ON" : "OFF");
+                if (MusicRow >= 0) text[MusicRow] = "MUSIC   " + (Music.Enabled ? "ON" : "OFF");
+                text[ScreenRow] = "FULL SCREEN   " + (Screen.fullScreen ? "ON" : "OFF");
                 for (int i = 0; i < TitleScreen.HelperNames.Length; i++)
                     text[HelperRow + i] = TitleScreen.HelperNames[i] + "   " + (cfg.Feature(FlightMarks.Switches[i]) ? "ON" : "OFF");
                 if (LogRow >= 0) text[LogRow] = CrashReport.FolderLabel(CrashLog.Errors);

@@ -120,6 +120,7 @@ namespace PocketFootball.View
             int w = Mathf.CeilToInt(hx * 2 * PxPerYd), h = Mathf.CeilToInt(hz * 2 * PxPerYd);
             var p = new Painter(w, h, Colors.Hex(f.lineColor));
             Color a = Colors.Hex(f.grassColor), b = Colors.Hex(f.grassAltColor), ez = Colors.Hex(f.endZoneColor);
+            Color ezL = EndZoneColor(cfg, ez, -1), ezR = EndZoneColor(cfg, ez, 1);   // FEATURES.goldenStadium: in the team's colour
             bool striped = cfg.Feature("fieldStripes");
             float px(float x) => (x + hx) * PxPerYd;
             float pz(float z) => (z + hz) * PxPerYd;
@@ -148,7 +149,7 @@ namespace PocketFootball.View
                 {
                     float xd = x / (float)PxPerYd - hx;
                     Color c;
-                    if (Mathf.Abs(xd) > f.GoalLineX) c = ez;
+                    if (Mathf.Abs(xd) > f.GoalLineX) c = xd < 0f ? ezL : ezR;
                     else c = Color.Lerp(a, b, striped ? Stripe((xd + f.GoalLineX) / f.stripeYd, stripeSoft) : 0f);
                     float v = dabs[(y - z0) * (x1 - x0) + (x - x0)];
                     float n = (Hash(x, y) - 0.5f) * 2f * pp.grainStrength + (Blotch(x / patch, y / patch) - 0.5f) * 2f * pp.patchStrength;
@@ -218,7 +219,54 @@ namespace PocketFootball.View
                 Color light = Color.Lerp(grass, line, pp.logoLightMix), dark = Color.Lerp(grass, Colors.Hex(home.color), pp.logoDarkMix) * pp.logoDarkValue;
                 CentreMark(p, TeamMarks.For(home), new Vector2(px(0), pz(0)), pp.logoWidthYd * PxPerYd, pp.logoHeightYd * PxPerYd, light, dark, pp.logoSplit, pp.logoAlpha);
             }
+
+            // FEATURES.goldenStadium: each end zone's team name across it, sideline to sideline, tops toward the end line
+            foreach (int side in new[] { -1, 1 })
+            {
+                var team = EndZoneTeam(cfg, side);
+                if (team == null || string.IsNullOrEmpty(team.name)) continue;
+                string name = team.name.ToUpperInvariant();
+                float gapK = pp.endZoneNameGap * Glyphs.Height;   // (Glyphs.Text's gap is in letter widths of a 1-wide box)
+                Glyphs.Text(name, 1f, gapK, out float perYd);
+                float room = 2f * (f.HalfWidth - pp.endZoneNameMarginYd);
+                float hYd = Mathf.Min(pp.endZoneNameHeightYd, room / Mathf.Max(perYd, 1e-3f));
+                if (hYd <= 0f) continue;
+                var strokes = Glyphs.Text(name, hYd * PxPerYd, gapK, out float wPx);
+                float hPx = hYd * PxPerYd;
+                var centre = new Vector2(px(side * (f.GoalLineX + f.endZoneYd * 0.5f)), pz(0f));
+                Vector2 up = new Vector2(side, 0f), right = new Vector2(up.y, -up.x);
+                foreach (var st in strokes)
+                    for (int i = 0; i < st.Length; i++)
+                        st[i] = centre + right * (st[i].x - wPx * 0.5f) + up * (st[i].y - hPx * 0.5f);
+                var edge = Colors.Hex(team.color) * pp.endZoneNameEdgeValue;
+                float pen = pp.endZoneNameStrokeYd * PxPerYd, rim = pp.endZoneNameEdgeYd * PxPerYd;
+                foreach (var st in strokes) p.Stroke(st, pen + rim * 2f, new Color(edge.r, edge.g, edge.b, pp.endZoneNameAlpha));
+                var fill = Colors.Hex(pp.endZoneNameColor);
+                foreach (var st in strokes) p.Stroke(st, pen, new Color(fill.r, fill.g, fill.b, pp.endZoneNameAlpha));
+            }
             return p.ToTexture("FieldPaint");
+        }
+
+        // FEATURES.goldenStadium: whose end zone this is (side -1 the left, +1 the right): field.paint.endZoneTeams "home"
+        // the home team's both, "split" the away team's on the left and the home team's on the right; otherwise none.
+        public static TeamConfig EndZoneTeam(GameConfig cfg, int side)
+        {
+            if (cfg.teams.Count < 2) return null;
+            string mode = cfg.field.paint.endZoneTeams;
+            if (mode == "home") return cfg.teams[1];
+            if (mode == "split") return side < 0 ? cfg.teams[0] : cfg.teams[1];
+            return null;
+        }
+
+        // An end zone's grass: the plain end zone colour, or endZoneMix of the way to its team's colour times endZoneValue.
+        static Color EndZoneColor(GameConfig cfg, Color grass, int side)
+        {
+            var team = EndZoneTeam(cfg, side);
+            if (team == null) return grass;
+            var pp = cfg.field.paint;
+            var c = Color.Lerp(grass, Colors.Hex(team.color), pp.endZoneMix) * pp.endZoneValue;
+            c.a = 1f;
+            return c;
         }
 
         // A pixel of grass with snow on it: two sizes of soft noise, over (1 - cover) is snow, its edge coverEdge sharp;

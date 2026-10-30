@@ -27,6 +27,16 @@ namespace PocketFootball.Sim
         public int bladeShells;
         public float gradeSaturation;
         public float[] gradeGain, gradeLift;
+        // FEATURES.goldenStadium (StadiumLook.cs turns these on): the end zones in a team's colour (endZoneMix of the way from
+        // the end zone grass to the team colour, times endZoneValue) with its name across them, sideline to sideline, the
+        // letters' tops toward the end line. endZoneTeams "home": the home team in both; "split": the away team on the
+        // left, the home team on the right; empty: plain grass as before. The name: endZoneNameHeightYd tall at most
+        // (smaller when a long name would not fit endZoneNameMarginYd in from the sidelines), endZoneNameStrokeYd pen,
+        // endZoneNameGap between letters (a share of a letter's height), in endZoneNameColor with an
+        // endZoneNameEdgeYd edge in the team colour darkened to endZoneNameEdgeValue.
+        public string endZoneTeams, endZoneNameColor;
+        public float endZoneMix, endZoneValue, endZoneNameHeightYd, endZoneNameStrokeYd, endZoneNameGap, endZoneNameMarginYd;
+        public float endZoneNameEdgeYd, endZoneNameEdgeValue, endZoneNameAlpha;
         public float scrimmageWidthYd;
         public string scrimmageColor, firstDownColor;
     }

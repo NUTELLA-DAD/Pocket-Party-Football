@@ -62,6 +62,8 @@ namespace PocketFootball.Sim
         // postCrossbarM up, uprights postWidthM apart and postUprightM tall with a ribbon on top, all postThickM thick.
         public float postCrossbarM, postWidthM, postUprightM, postThickM, postBackM, postPadM, postRibbonM;
         public string postColor, postPadColor, postRibbonColor;
+        // FEATURES.goldenStadium: the pads in the home team's colour instead of postPadColor.
+        public bool postPadHomeColor;
         // FEATURES.wind: a flag on top of each upright instead of the ribbon, flagLengthM by flagHeightM, streaming the way
         // the wind blows; in a calm it hangs flagCalmDroopDeg down, and it flutters up to flagFlutterDeg in stepped keys.
         public float flagLengthM, flagHeightM, flagThickM, flagCalmDroopDeg, flagFlutterDeg;
@@ -98,5 +100,30 @@ namespace PocketFootball.Sim
         public float groundRadiusM, parkingM, treeInM, treeOutM;
         public int trees;
         public string groundColor, parkingColor, treeColor, treeDarkColor, trunkColor;
+
+        // FEATURES.goldenStadium (StadiumLook.cs turns these on; all off at zero):
+        // seatTreads: every row's tread is a seat (seatColor / upperSeatColor) and its riser concrete, instead of rows
+        // alternating between the two.
+        public bool seatTreads;
+        // The roofs: a white canopy over each sideline's stands (and round the corners; over the ends too with
+        // roofEnds), from the outer wall roofDepthM in toward the field, its back edge roofLiftM over the rim and its
+        // front edge roofRiseM higher still, roofThickM thick with a fascia roofFasciaM deep along the front. Under it a
+        // truss every roofTrussEveryM: a column on the rim, a top chord under the roof, a bottom chord roofTrussDepthM
+        // lower at the back, tapering to the front, zig-zag web members between. A floodlight every roofLampEveryM along
+        // the front, roofLampM wide (lampColor at lampGlow). With roofs, light towers only when towerHeightM is set.
+        public float roofDepthM, roofLiftM, roofRiseM, roofThickM, roofFasciaM, roofTrussEveryM, roofTrussDepthM, roofBeamM;
+        public float roofLampEveryM, roofLampM;
+        public bool roofEnds;
+        public string canopyColor, canopyUnderColor, trussColor;
+        // The skyline: skylineBuildings blocks in skylineClusters towns round the horizon, skylineRadiusM out (plus up to
+        // skylineDepthM), skylineSpreadDeg across each town, skylineMinM..skylineMaxM tall (tallest in each town's
+        // middle), skylineWidthM wide (up to twice), in skylineColor and skylineColor2 (the haze softens them).
+        public int skylineBuildings, skylineClusters;
+        public float skylineRadiusM, skylineDepthM, skylineSpreadDeg, skylineMinM, skylineMaxM, skylineWidthM;
+        public string skylineColor, skylineColor2;
+        // treeStyle "round": leafy round-topped trees (two or three puffs) instead of pines; treeAutumnChance of them
+        // in treeAutumnColor.
+        public string treeStyle, treeAutumnColor;
+        public float treeAutumnChance;
     }
 }
