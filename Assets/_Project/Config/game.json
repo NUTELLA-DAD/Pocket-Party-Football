@@ -260,6 +260,13 @@
       "\u25a1",
       "\u25c7",
       "\u2606"
+    ],
+    "shapeColors": [
+      "#3a8cff",
+      "#ec3a3f",
+      "#3fe0b4",
+      "#8b4ee8",
+      "#ffd02e"
     ]
   },
   "downs": {
@@ -1663,6 +1670,7 @@
     "tutorial": true,
     "music": true,
     "season": true,
-    "jerseyNames": true
+    "jerseyNames": true,
+    "colorTargets": true
   }
 }

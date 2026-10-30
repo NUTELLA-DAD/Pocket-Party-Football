@@ -2,7 +2,7 @@
 // The game picks the layout with a `layout` message; this file only draws buttons and reports presses.
 // Usage from app.js:
 //   PPLayouts.mount(document.getElementById('btnBox'), send, function () { return aid; });
-//   PPLayouts.show('qb', { receivers: [{ shape: '△', label: 'WR #11' }] });
+//   PPLayouts.show('qb', { receivers: [{ shape: '△', label: 'WR #11', color: '#3a8cff' }] });
 // Presses go out as { t:'btn', b, d:1|0, aid } like every other button; a throw adds tgt and lob,
 // a kick sends { t:'kick', power, aim, aid }.
 // With throwStick the QB gets a second stick that aims the pass: while held it streams { t:'aim', x, y, arc, aid },
@@ -123,9 +123,27 @@
     box.appendChild(b);
   }
 
-  // A receiver button: tap = bullet, hold past LOB_HOLD_MS = lob. The shape matches the badge over him on the TV.
+  // r.color ('#rrggbb', FEATURES.colorTargets): the gem takes the receiver's own colour, the same as his badge on
+  // the TV. The light and dark edges are mixed from it; the shape and label go dark on light colours, white on dark.
+  function tint(b, hex) {
+    var m = /^#([0-9a-f]{6})$/i.exec(hex || '');
+    if (!m) return false;
+    var n = parseInt(m[1], 16), c = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    function mix(t, f) { return 'rgb(' + c.map(function (v) { return Math.round(v + (t - v) * f); }).join(',') + ')'; }
+    var lum = (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255;
+    b.style.setProperty('--g', hex);
+    b.style.setProperty('--g-hi', mix(255, 0.55));
+    b.style.setProperty('--g-lo', mix(0, 0.35));
+    b.style.setProperty('--g-ink', lum > 0.55 ? '#0a1640' : '#ffffff');
+    b.classList.add('tint');
+    if (lum <= 0.55) b.classList.add('tint-dark');
+    return true;
+  }
+
+  // A receiver button: tap = bullet, hold past LOB_HOLD_MS = lob. The shape (and colour) matches the badge over him on the TV.
   function addReceiver(r, parent) {
     var b = el('button', 'btn rcv g-ivory');
+    tint(b, r.color);
     b.setAttribute('data-act', 'throw');
     b.setAttribute('data-tgt', r.shape);
     b.setAttribute('aria-label', 'Throw to ' + r.shape + ' ' + r.label + ': tap for a bullet, hold for a lob');
@@ -259,7 +277,7 @@
       box = container; sendFn = send || sendFn; aidFn = getAid || aidFn;
     },
 
-    // data: { line?: string, receivers?: [{ shape, label, open? }] }. Returns { stam, stick, line, layout }:
+    // data: { line?: string, receivers?: [{ shape, label, color?, open? }] }. Returns { stam, stick, line, layout }:
     // the caller shows the stamina bar when stam is true and hides the stick (class no-stick on .pad) when stick is false.
     show: function (name, data) {
       var L = LAYOUTS[name];

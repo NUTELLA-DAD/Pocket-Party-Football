@@ -37,6 +37,14 @@ namespace PocketFootball.Sim
             return w.Cfg.play.receivers.IndexOf(p.Spot) + 1;
         }
 
+        // FEATURES.colorTargets (NO_COLOR_TARGETS=1): receiver k's own colour ("#rrggbb", play.shapeColors), the same on
+        // his badge over him on the TV and on his button on the QB's phone. "" = the plain look (switch off, or no colour).
+        public static string ColorOf(GameConfig cfg, int k)
+        {
+            if (!cfg.Feature("colorTargets") || k < 1 || k > cfg.play.shapeColors.Count) return "";
+            return cfg.play.shapeColors[k - 1] ?? "";
+        }
+
         // The end of World.Step: this tick's CALL FOR IT and CATCH taps from people's phones.
         public static void Step(World w, IReadOnlyDictionary<int, PlayerInput> inputs)
         {

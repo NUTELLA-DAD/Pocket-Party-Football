@@ -36,6 +36,8 @@
 .btn.g-ivory { --g: #f4e9cc; --g-hi: #fffdf4; --g-lo: #d2bd8f; --g-ink: #0a1640; }
 .btn.rcv { font-size: 13px; border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .btn.rcv .shape { display: block; font-size: 26px; line-height: 1; margin-bottom: 2px; }
+.btn.rcv.tint-dark { text-shadow: 0 2px 0 rgba(0,0,0,.35); }
+.btn.rcv.tint { --call: #ffffff; }
 .btn.rcv.open { box-shadow: 0 0 0 2px var(--edge), 0 0 0 6px #2fd36b, 0 5px 0 6px var(--edge); }
 .layout-qb:not(.ts) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .layout-qb .btn[data-act="scramble"] { grid-column: 1 / -1; min-height: 48px; flex-direction: row; gap: 8px; }
